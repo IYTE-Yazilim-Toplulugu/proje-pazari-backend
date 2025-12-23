@@ -15,6 +15,7 @@ import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
  * 
  * All entities should extend this class to inherit these common fields.
  */
+
 public abstract class BaseEntity {
     Long id;
     LocalDateTime createdAt;
