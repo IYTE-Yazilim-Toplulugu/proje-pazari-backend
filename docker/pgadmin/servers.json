@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Proje Pazari DB",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "proje_pazari_db",
+      "Username": "yazilim",
+      "SSLMode": "prefer",
+      "PassFile": "/pgpass"
+    }
+  }
+}
