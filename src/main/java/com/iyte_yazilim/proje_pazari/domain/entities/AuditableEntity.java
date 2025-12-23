@@ -7,7 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @MappedSuperclass
-public abstract class AuditableEntity extends BaseEntity {
+@SuppressWarnings("unused")
+public abstract class AuditableEntity<TId> extends BaseEntity<TId> {
 
     private String createdBy;
     private String updatedBy;
