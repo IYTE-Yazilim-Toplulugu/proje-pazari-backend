@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import lombok.Getter;
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Setter;
 
 @Getter
