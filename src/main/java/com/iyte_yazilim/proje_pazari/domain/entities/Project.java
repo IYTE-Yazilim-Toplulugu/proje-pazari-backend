@@ -23,7 +23,7 @@ public class Project extends BaseEntity<Ulid> {
     private String summary;
     private ProjectStatus status = ProjectStatus.DRAFT; // Default state
     private User owner;
-    private List<ProjectApplication> applications = new ArrayList<>();
+    private List<ProjectApplication> applications;
 
     public void setOwner(User owner) {
         this.owner = owner;
