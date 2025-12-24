@@ -1,7 +1,6 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.github.f4b6a3.ulid.Ulid;
@@ -54,7 +53,7 @@ public class ProjectEntity {
     private UserEntity owner;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProjectApplicationEntity> applications = new ArrayList<>();
+    private List<ProjectApplicationEntity> applications;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
