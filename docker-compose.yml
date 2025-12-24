@@ -1,42 +1,75 @@
-version: '3.8'
-
 services:
+
   postgres:
-    image: postgres:15
+    image: postgres:16-alpine
+    container_name: proje-pazari-db
     environment:
-      POSTGRES_DB: demo_db
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: proje_pazari_db
+      POSTGRES_USER: yazilim
+      POSTGRES_PASSWORD: yazilim123
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d demo_db"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "pg_isready -U yazilim -d proje_pazari_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - app-network
+      - proje-pazari-network
+    restart: unless-stopped
 
-  backend:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: proje-pazari-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/proje_pazari_db
+      SPRING_DATASOURCE_USERNAME: yazilim
+      SPRING_DATASOURCE_PASSWORD: yazilim123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
     ports:
       - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/demo_db
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: secret
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - app-network
+      - proje-pazari-network
+    restart: unless-stopped
+
+  # pgAdmin for database management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: proje-pazari-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@proje-pazari.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./docker/pgadmin/pgpass:/pgpass:ro
+    depends_on:
+      - postgres
+    networks:
+      - proje-pazari-network
+    restart: unless-stopped
+    profiles:
+      - tools
 
 volumes:
   postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
 
 networks:
-  app-network:
+  proje-pazari-network:
     driver: bridge
 

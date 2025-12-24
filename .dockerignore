@@ -4,32 +4,57 @@
 .gitattributes
 
 # IDE
-.idea
-.vscode
+.idea/
+.vscode/
 *.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
 
-# Build
+# Build artifacts
 build/
 target/
 bin/
 out/
+*.jar
+*.war
+*.ear
 
 # Gradle
 .gradle/
 !gradle/wrapper/gradle-wrapper.jar
+gradle-wrapper.properties
 
 # Docker
 Dockerfile
 docker-compose.yml
+docker-compose.*.yml
 .dockerignore
 
 # Documentation
 README.md
+docs/
 *.md
 
 # Logs
 *.log
+logs/
 
 # OS
 .DS_Store
 Thumbs.db
+*.swp
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.*
+
+# Makefile
+Makefile
