@@ -47,7 +47,7 @@ public class ProjectEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProjectStatus status = ProjectStatus.DRAFT;
+    private ProjectStatus status;
 
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
@@ -66,6 +66,9 @@ public class ProjectEntity {
     protected void onCreate() {
         if (id == null || id.isBlank()) {
             id = Ulid.fast().toString();
+        }
+        if (status == null) {
+            status = ProjectStatus.DRAFT;
         }
         createdAt = LocalDateTime.now();
     }
