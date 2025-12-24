@@ -55,13 +55,4 @@ public class ProjectController {
 
         return ResponseEntity.status(status).body(response);
     }
-
-    @GetMapping("/health")
-    @Operation(
-            summary = "Health check",
-            description = "Check if the project service is running"
-    )
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("Project service is running");
-    }
 }
