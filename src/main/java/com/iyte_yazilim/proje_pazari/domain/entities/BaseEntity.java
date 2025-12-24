@@ -22,25 +22,25 @@ import lombok.Setter;
 @Getter
 @Setter
 public abstract class BaseEntity<TId> {
-    TId id;
+    protected TId id;
 
-    LocalDateTime createdAt;
-    LocalDateTime updatedAt;
+    protected LocalDateTime createdAt;
+    protected LocalDateTime updatedAt;
 
-    ArrayList<DomainEvent> domainEvents = new ArrayList<>();
+    protected ArrayList<DomainEvent> domainEvents = new ArrayList<>();
 
-    DomainEvent addomainEvent(DomainEvent domainEvent) {
+    protected DomainEvent addomainEvent(DomainEvent domainEvent) {
         domainEvents.add(domainEvent);
         return domainEvent;
 
     }
 
-    DomainEvent removedomainEvent(DomainEvent domainEvent) {
+    protected DomainEvent removedomainEvent(DomainEvent domainEvent) {
         domainEvents.remove(domainEvent);
         return domainEvent;
     }
 
-    DomainEvent updatedomainEvent(DomainEvent domainEvent) {
+    protected DomainEvent updatedomainEvent(DomainEvent domainEvent) {
         int index = domainEvents.indexOf(domainEvent);
         if (index != -1) {
             domainEvents.set(index, domainEvent);
