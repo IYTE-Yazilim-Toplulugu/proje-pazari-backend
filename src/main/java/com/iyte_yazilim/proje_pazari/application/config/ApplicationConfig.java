@@ -78,8 +78,9 @@ public class ApplicationConfig {
     public IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> loginUserHandler(
             UserRepository userRepository,
             IValidator<LoginUserCommand> validator,
-            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
-        return new LoginUserHandler(userRepository, validator, passwordEncoder);
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+            com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil jwtUtil) {
+        return new LoginUserHandler(userRepository, validator, passwordEncoder, jwtUtil);
     }
 
     // ========== User Query Beans ==========

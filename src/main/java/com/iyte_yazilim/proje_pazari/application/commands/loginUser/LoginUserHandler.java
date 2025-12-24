@@ -6,10 +6,9 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Base64;
 
 @RequiredArgsConstructor
 public class LoginUserHandler
@@ -18,6 +17,7 @@ public class LoginUserHandler
     private final UserRepository userRepository;
     private final IValidator<LoginUserCommand> validator;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Override
     public ApiResponse<LoginUserResult> handle(LoginUserCommand command) {
@@ -40,10 +40,8 @@ public class LoginUserHandler
             return ApiResponse.badRequest("Invalid email or password");
         }
 
-        // --- 4. Generate token ---
-        // TODO: Replace with proper JWT token generation
-        String token = Base64.getEncoder().encodeToString(
-                (user.getEmail() + ":" + System.currentTimeMillis()).getBytes());
+        // --- 4. Generate JWT token ---
+        String token = jwtUtil.generateToken(user.getEmail());
 
         // --- 5. Create result ---
         var result = new LoginUserResult(
