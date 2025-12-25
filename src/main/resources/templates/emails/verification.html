@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Verify Email</title>
+</head>
+<body>
+    <h1>Verify your email</h1>
+    <p>Hello <span th:text="${firstName}"></span>,</p>
+    <p>Please click the link below to activate your account:</p>
+    
+    <a th:href="${verificationLink}">Verify my email</a>
+    
+    <p>If you did not request this, please ignore this email.</p>
+</body>
+</html>
