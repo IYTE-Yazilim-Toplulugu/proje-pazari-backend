@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Project Status Update</title>
+</head>
+<body>
+    <h1>Status Update: <span th:text="${projectTitle}"></span></h1>
+    <p>Hello <span th:text="${firstName}"></span>,</p>
+    <p>The status of the project <strong><span th:text="${projectTitle}"></span></strong> has changed.</p>
+    
+    <p>
+        New Status: <strong th:text="${newStatus}"></strong>
+    </p>
+
+    <a th:href="'https://projepazari.com/projects/' + ${projectId}">View Project Details</a>
+</body>
+</html>
