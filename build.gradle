@@ -29,6 +29,9 @@ repositories {
 }
 
 dependencies {
+    // Spring Boot Thymeleaf Starter
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
     // Spring Boot Mail Starter
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
