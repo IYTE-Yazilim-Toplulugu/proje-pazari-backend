@@ -10,6 +10,7 @@ public interface UserMapper {
 
     // Map Domain Entity -> Persistence Entity
     @Mapping(target = "id", expression = "java(user.getId() != null ? user.getId().toString() : null)")
+    @Mapping(target = "isActive", ignore = true)
     UserEntity domainToEntity(User user);
 
     // Map Persistence Entity -> Domain Entity
