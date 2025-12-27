@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -34,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-        final String username;
+        String username = null;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -62,11 +63,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (JwtException e) {
             // JWT validation failed (malformed token, expired token, invalid signature, etc.)
             // Log for security monitoring but continue filter chain without authentication
-            log.warn("JWT authentication failed due to invalid token");
-        } catch (Exception e) {
-            // Catch any other exceptions (e.g., user not found, database errors)
+            log.warn("JWT authentication failed due to invalid token: {}", e.getClass().getSimpleName());
+        } catch (UsernameNotFoundException e) {
+            // User not found in the system
             // Log for security monitoring but continue filter chain without authentication
-            log.warn("JWT authentication failed");
+            log.warn("JWT authentication failed: {}", e.getClass().getSimpleName());
         }
 
         filterChain.doFilter(request, response);
