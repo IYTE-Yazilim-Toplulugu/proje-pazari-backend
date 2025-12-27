@@ -39,7 +39,7 @@ public class ChangePasswordHandler implements IRequestHandler<ChangePasswordComm
         // Validate new password strength
         if (!isPasswordStrong(command.newPassword())) {
             return ApiResponse.validationError(
-                "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
+                "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
             );
         }
 
