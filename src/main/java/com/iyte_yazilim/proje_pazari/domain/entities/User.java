@@ -26,6 +26,8 @@ public class User extends BaseEntity<Ulid> {
     private String linkedinUrl;
     private String githubUrl;
 
+    private boolean isActive;
+
     public String getFullName() {
         return firstName + " " + lastName;
     }
