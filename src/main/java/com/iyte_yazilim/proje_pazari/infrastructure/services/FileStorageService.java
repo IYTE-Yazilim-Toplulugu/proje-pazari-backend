@@ -30,8 +30,13 @@ public class FileStorageService {
             throw new IllegalArgumentException("File size exceeds 5MB limit");
         }
 
-        // Generate unique filename
-        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+        // Get and validate original filename
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("File must have a valid filename");
+        }
+        
+        originalFilename = StringUtils.cleanPath(originalFilename);
         String extension = "";
         if (originalFilename.contains(".")) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
@@ -39,7 +44,13 @@ public class FileStorageService {
         String fileName = userId + "_" + System.currentTimeMillis() + extension;
 
         // Save file
-        Path targetLocation = fileStorageLocation.resolve(fileName);
+        Path targetLocation = fileStorageLocation.resolve(fileName).normalize();
+        
+        // Verify the normalized path is still within the storage location
+        if (!targetLocation.startsWith(fileStorageLocation)) {
+            throw new IllegalArgumentException("Invalid file path");
+        }
+        
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
         return fileName;
@@ -47,6 +58,12 @@ public class FileStorageService {
 
     public Resource loadFileAsResource(String fileName) throws IOException {
         Path filePath = fileStorageLocation.resolve(fileName).normalize();
+        
+        // Verify the normalized path is still within the storage location
+        if (!filePath.startsWith(fileStorageLocation)) {
+            throw new FileNotFoundException("Invalid file path");
+        }
+        
         Resource resource = new UrlResource(filePath.toUri());
 
         if (resource.exists()) {
@@ -58,11 +75,37 @@ public class FileStorageService {
 
     public void deleteFile(String fileName) throws IOException {
         Path filePath = fileStorageLocation.resolve(fileName).normalize();
+        
+        // Verify the normalized path is still within the storage location
+        if (!filePath.startsWith(fileStorageLocation)) {
+            throw new IOException("Invalid file path");
+        }
+        
         Files.deleteIfExists(filePath);
     }
 
     private boolean isImageFile(MultipartFile file) {
         String contentType = file.getContentType();
-        return contentType != null && contentType.startsWith("image/");
+        
+        // Check content type
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return false;
+        }
+        
+        // Also validate file extension as additional security measure
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null) {
+            String lowerFilename = originalFilename.toLowerCase();
+            boolean hasValidExtension = lowerFilename.endsWith(".jpg") || 
+                                       lowerFilename.endsWith(".jpeg") || 
+                                       lowerFilename.endsWith(".png") || 
+                                       lowerFilename.endsWith(".gif") || 
+                                       lowerFilename.endsWith(".webp");
+            if (!hasValidExtension) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }

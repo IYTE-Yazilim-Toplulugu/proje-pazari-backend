@@ -27,10 +27,12 @@ public record UpdateUserProfileCommand(
         String githubUrl
 ) {
     public void validate() {
-        if (linkedinUrl != null && !linkedinUrl.isBlank() && !linkedinUrl.matches("^https://.*linkedin\\.com/.*")) {
+        if (linkedinUrl != null && !linkedinUrl.isBlank() 
+                && !linkedinUrl.matches("^https://(www\\.)?linkedin\\.com/.*")) {
             throw new IllegalArgumentException("Invalid LinkedIn URL format");
         }
-        if (githubUrl != null && !githubUrl.isBlank() && !githubUrl.matches("^https://github\\.com/.*")) {
+        if (githubUrl != null && !githubUrl.isBlank() 
+                && !githubUrl.matches("^https://github\\.com/[a-zA-Z0-9_-]+(/[a-zA-Z0-9._-]+)?/?$")) {
             throw new IllegalArgumentException("Invalid GitHub URL format");
         }
     }

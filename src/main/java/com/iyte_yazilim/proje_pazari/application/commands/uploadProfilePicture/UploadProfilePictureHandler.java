@@ -31,10 +31,15 @@ public class UploadProfilePictureHandler implements IRequestHandler<UploadProfil
             // Delete old profile picture if exists
             if (user.getProfilePictureUrl() != null && !user.getProfilePictureUrl().isBlank()) {
                 String oldFileName = user.getProfilePictureUrl().substring(user.getProfilePictureUrl().lastIndexOf("/") + 1);
-                try {
-                    fileStorageService.deleteFile(oldFileName);
-                } catch (IOException e) {
-                    // Ignore if old file doesn't exist
+                // Validate extracted filename to prevent path traversal
+                if (!oldFileName.contains("..") 
+                        && !oldFileName.contains("/") 
+                        && !oldFileName.contains("\\")) {
+                    try {
+                        fileStorageService.deleteFile(oldFileName);
+                    } catch (IOException e) {
+                        // Ignore if old file doesn't exist
+                    }
                 }
             }
 
