@@ -57,10 +57,16 @@ public class UserEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @PrePersist
     protected void onCreate() {
         if (id == null || id.isBlank()) {
             id = Ulid.fast().toString();
+        }
+        if (isActive == null) {
+            isActive = true;
         }
         createdAt = LocalDateTime.now();
     }

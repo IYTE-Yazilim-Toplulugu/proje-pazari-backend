@@ -49,8 +49,9 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         // Public authentication endpoints
                         .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
-                        // Health check endpoints
-                        .requestMatchers("/api/v1/projects/health").permitAll()
+                        // File serving endpoints (profile pictures are public)
+                        // TODO: Add authentication if serving private files in the future
+                        .requestMatchers("/api/v1/files/**").permitAll()
                         // All other API endpoints require authentication
                         .requestMatchers("/api/**").authenticated()
                         // All other requests require authentication

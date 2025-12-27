@@ -29,10 +29,14 @@ public abstract class BaseEntity<TId> {
 
     protected ArrayList<DomainEvent> domainEvents = new ArrayList<>();
 
-    protected DomainEvent addomainEvent(DomainEvent domainEvent) {
+    protected DomainEvent addDomainEvent(DomainEvent domainEvent) {
         domainEvents.add(domainEvent);
         return domainEvent;
+    }
 
+    @Deprecated
+    protected DomainEvent addomainEvent(DomainEvent domainEvent) {
+        return addDomainEvent(domainEvent);
     }
 
     protected DomainEvent removeDomainEvent(DomainEvent domainEvent) {
@@ -44,12 +48,18 @@ public abstract class BaseEntity<TId> {
     protected DomainEvent removedomainEvent(DomainEvent domainEvent) {
         return removeDomainEvent(domainEvent);
     }
+    
     protected DomainEvent updateDomainEvent(DomainEvent domainEvent) {
         int index = domainEvents.indexOf(domainEvent);
         if (index != -1) {
             domainEvents.set(index, domainEvent);
         }
         return domainEvent;
+    }
+
+    @Deprecated
+    protected DomainEvent updatedomainEvent(DomainEvent domainEvent) {
+        return updateDomainEvent(domainEvent);
     }
 
 }

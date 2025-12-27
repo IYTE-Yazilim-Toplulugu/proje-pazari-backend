@@ -33,8 +33,9 @@ public class GetUserProfileHandler implements IRequestHandler<GetUserProfileQuer
         int projectsCreated = userRepository.countProjectsByUserId(query.userId());
         int applicationsSubmitted = userRepository.countApplicationsByUserId(query.userId());
 
-        // Get user's projects
+        // Get user's projects using optimized query
         List<ProjectEntity> projectEntities = projectRepository.findByOwnerId(query.userId());
+
         List<ProjectSummaryDTO> projects = projectEntities.stream()
                 .map(p -> new ProjectSummaryDTO(
                         p.getId(),

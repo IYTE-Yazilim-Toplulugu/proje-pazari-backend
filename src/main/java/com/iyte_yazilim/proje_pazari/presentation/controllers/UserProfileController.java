@@ -10,6 +10,7 @@ import com.iyte_yazilim.proje_pazari.application.queries.getCurrentUserProfile.G
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -35,6 +36,17 @@ public class UserProfileController {
     private final IRequestHandler<UploadProfilePictureCommand, ApiResponse<String>> uploadProfilePictureHandler;
     private final IRequestHandler<ChangePasswordCommand, ApiResponse<Void>> changePasswordHandler;
     private final IRequestHandler<DeactivateAccountCommand, ApiResponse<Void>> deactivateAccountHandler;
+    private final UserRepository userRepository;
+
+    /**
+     * Resolves email from JWT token to user ID.
+     * The JWT token contains email as the subject, not the user ID.
+     */
+    private String resolveUserIdFromEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(user -> user.getId())
+                .orElse(null);
+    }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -54,7 +66,15 @@ public class UserProfileController {
             )
     })
     public ResponseEntity<ApiResponse<UserProfileDTO>> getCurrentUserProfile(Authentication auth) {
-        String userId = auth.getName(); // Assumes JWT principal is user ID
+        // JWT principal contains the email, not user ID - resolve to user ID first
+        String email = auth.getName();
+        String userId = resolveUserIdFromEmail(email);
+        
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.notFound("User not found"));
+        }
+        
         ApiResponse<UserProfileDTO> response = getCurrentUserProfileHandler.handle(
                 new GetCurrentUserProfileQuery(userId)
         );
@@ -122,7 +142,15 @@ public class UserProfileController {
             @RequestBody @Valid UpdateUserProfileCommand command,
             Authentication auth
     ) {
-        String userId = auth.getName();
+        // JWT principal contains the email, not user ID - resolve to user ID first
+        String email = auth.getName();
+        String userId = resolveUserIdFromEmail(email);
+        
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.notFound("User not found"));
+        }
+        
         UpdateUserProfileCommand updatedCommand = new UpdateUserProfileCommand(
                 userId,
                 command.firstName(),
@@ -169,7 +197,15 @@ public class UserProfileController {
             @RequestParam("file") MultipartFile file,
             Authentication auth
     ) {
-        String userId = auth.getName();
+        // JWT principal contains the email, not user ID - resolve to user ID first
+        String email = auth.getName();
+        String userId = resolveUserIdFromEmail(email);
+        
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.notFound("User not found"));
+        }
+        
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, file);
 
         ApiResponse<String> response = uploadProfilePictureHandler.handle(command);
@@ -209,7 +245,15 @@ public class UserProfileController {
             @RequestBody @Valid ChangePasswordCommand command,
             Authentication auth
     ) {
-        String userId = auth.getName();
+        // JWT principal contains the email, not user ID - resolve to user ID first
+        String email = auth.getName();
+        String userId = resolveUserIdFromEmail(email);
+        
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.notFound("User not found"));
+        }
+        
         ChangePasswordCommand updatedCommand = new ChangePasswordCommand(
                 userId,
                 command.currentPassword(),
@@ -250,7 +294,15 @@ public class UserProfileController {
             @RequestParam(required = false) String reason,
             Authentication auth
     ) {
-        String userId = auth.getName();
+        // JWT principal contains the email, not user ID - resolve to user ID first
+        String email = auth.getName();
+        String userId = resolveUserIdFromEmail(email);
+        
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.notFound("User not found"));
+        }
+        
         DeactivateAccountCommand command = new DeactivateAccountCommand(userId, reason);
 
         ApiResponse<Void> response = deactivateAccountHandler.handle(command);
