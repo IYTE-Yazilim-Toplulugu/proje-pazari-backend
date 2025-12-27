@@ -1,13 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.mappers;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface CreateProjectMapper {
@@ -25,9 +24,14 @@ public interface CreateProjectMapper {
     Project commandToDomain(CreateProjectCommand command);
 
     // Map Domain Entity -> Result DTO
-    @Mapping(target = "projectId", expression = "java(project.getId() != null ? project.getId().toString() : null)")
+    @Mapping(
+            target = "projectId",
+            expression = "java(project.getId() != null ? project.getId().toString() : null)")
     @Mapping(target = "projectName", source = "title")
-    @Mapping(target = "ownerId", expression = "java(project.getOwner() != null ? project.getOwner().getId().toString() : null)")
+    @Mapping(
+            target = "ownerId",
+            expression =
+                    "java(project.getOwner() != null ? project.getOwner().getId().toString() : null)")
     @Mapping(target = "teamMemberIds", expression = "java(new String[0])")
     @Mapping(target = "tags", expression = "java(new String[0])")
     CreateProjectCommandResult domainToResult(Project project);

@@ -2,7 +2,6 @@ package com.iyte_yazilim.proje_pazari.presentation.config;
 
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -30,39 +29,50 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
         return config.getAuthenticationManager();
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        // Swagger/OpenAPI endpoints
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/swagger-resources/**",
-                                "/webjars/**")
-                        .permitAll()
-                        // Actuator health endpoints
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/api/v1/health").permitAll()
-                        // Public authentication endpoints
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        // File serving endpoints (profile pictures are public)
-                        .requestMatchers("/api/v1/files/**").permitAll()
-                        // Public read-only endpoints - anyone can view user profiles and projects
-                        .requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/**").permitAll()
-                        // All other requests require authentication
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(
+                        auth ->
+                                auth
+                                        // Swagger/OpenAPI endpoints
+                                        .requestMatchers(
+                                                "/swagger-ui/**",
+                                                "/swagger-ui",
+                                                "/v3/api-docs/**",
+                                                "/swagger-ui.html",
+                                                "/swagger-resources/**",
+                                                "/webjars/**")
+                                        .permitAll()
+                                        // Actuator health endpoints
+                                        .requestMatchers("/actuator/**")
+                                        .permitAll()
+                                        .requestMatchers("/api/v1/health")
+                                        .permitAll()
+                                        // Public authentication endpoints
+                                        .requestMatchers("/api/v1/auth/**")
+                                        .permitAll()
+                                        // File serving endpoints (profile pictures are public)
+                                        .requestMatchers("/api/v1/files/**")
+                                        .permitAll()
+                                        // Public read-only endpoints - anyone can view user
+                                        // profiles and projects
+                                        .requestMatchers(HttpMethod.GET, "/api/v1/users/**")
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/**")
+                                        .permitAll()
+                                        // All other requests require authentication
+                                        .anyRequest()
+                                        .authenticated())
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(
+                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

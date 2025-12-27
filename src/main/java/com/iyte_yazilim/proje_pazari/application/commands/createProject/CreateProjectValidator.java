@@ -1,10 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
-import java.util.ArrayList;
-
-import org.springframework.stereotype.Component;
-
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
+import java.util.ArrayList;
+import org.springframework.stereotype.Component;
 
 @Component
 public class CreateProjectValidator implements IValidator<CreateProjectCommand> {

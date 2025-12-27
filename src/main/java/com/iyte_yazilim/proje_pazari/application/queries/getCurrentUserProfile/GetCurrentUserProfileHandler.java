@@ -9,9 +9,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class GetCurrentUserProfileHandler implements IRequestHandler<GetCurrentUserProfileQuery, ApiResponse<UserProfileDTO>> {
+public class GetCurrentUserProfileHandler
+        implements IRequestHandler<GetCurrentUserProfileQuery, ApiResponse<UserProfileDTO>> {
 
-    private final IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>> getUserProfileHandler;
+    private final IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>>
+            getUserProfileHandler;
 
     @Override
     public ApiResponse<UserProfileDTO> handle(GetCurrentUserProfileQuery query) {

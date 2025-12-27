@@ -29,6 +29,7 @@ A Spring Boot backend application for IYTE Project Marketplace, where students c
 - **Documentation**: Swagger/OpenAPI 3.0
 - **ID Generation**: ULID
 - **Mapping**: MapStruct 1.5.5
+- **Code Quality**: Spotless (Google Java Format), JaCoCo (Coverage)
 
 ## ⚙️ Prerequisites
 
@@ -236,15 +237,27 @@ For detailed API documentation, visit the **Swagger UI** when the app is running
 
 ```bash
 ./gradlew test
+# or
+make test
 ```
 
 ### Run Tests with Coverage
 
 ```bash
 ./gradlew test jacocoTestReport
+# or
+make coverage
 ```
 
 View coverage report: `build/reports/jacoco/test/html/index.html`
+
+### Verify Coverage Threshold
+
+```bash
+./gradlew jacocoTestCoverageVerification
+# or
+make coverage-verify
+```
 
 ### Run Specific Test Class
 
@@ -297,6 +310,37 @@ class RegisterUserHandlerTest {
 - Use meaningful variable and method names
 - Write self-documenting code
 - Add comments only where logic isn't self-evident
+
+### Code Formatting
+
+Format your code with Google Java Format:
+
+```bash
+# Auto-format all code
+make format
+# or
+./gradlew spotlessApply
+
+# Check formatting without changing files
+make format-check
+# or
+./gradlew spotlessCheck
+```
+
+### Code Quality
+
+Run all quality checks before committing:
+
+```bash
+# Run format check, tests, and coverage
+make quality
+
+# Individual checks
+make lint           # Check code formatting
+make test           # Run all tests
+make coverage       # Generate coverage report
+make coverage-verify # Verify coverage meets threshold (70%)
+```
 
 ### Database
 

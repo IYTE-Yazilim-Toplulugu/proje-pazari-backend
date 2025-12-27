@@ -2,7 +2,6 @@ package com.iyte_yazilim.proje_pazari.domain.validators;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-
 import java.net.URI;
 import java.util.Arrays;
 

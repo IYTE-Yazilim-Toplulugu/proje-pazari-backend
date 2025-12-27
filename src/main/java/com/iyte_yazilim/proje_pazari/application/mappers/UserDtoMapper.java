@@ -10,7 +10,9 @@ import org.mapstruct.Mapping;
 public interface UserDtoMapper {
 
     // Map Domain Entity -> DTO
-    @Mapping(target = "userId", expression = "java(user.getId() != null ? user.getId().toString() : null)")
+    @Mapping(
+            target = "userId",
+            expression = "java(user.getId() != null ? user.getId().toString() : null)")
     UserDto domainToDto(User user);
 
     // Map UserEntity -> DTO

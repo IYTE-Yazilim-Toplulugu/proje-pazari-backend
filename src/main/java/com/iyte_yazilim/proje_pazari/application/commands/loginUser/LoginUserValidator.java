@@ -1,8 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
-import org.springframework.stereotype.Component;
-
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
+import org.springframework.stereotype.Component;
 
 @Component
 public class LoginUserValidator implements IValidator<LoginUserCommand> {

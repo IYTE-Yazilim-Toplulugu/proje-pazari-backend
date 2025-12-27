@@ -11,7 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class ChangePasswordHandler implements IRequestHandler<ChangePasswordCommand, ApiResponse<Void>> {
+public class ChangePasswordHandler
+        implements IRequestHandler<ChangePasswordCommand, ApiResponse<Void>> {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -39,8 +40,7 @@ public class ChangePasswordHandler implements IRequestHandler<ChangePasswordComm
         // Validate new password strength
         if (!isPasswordStrong(command.newPassword())) {
             return ApiResponse.validationError(
-                "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
-            );
+                    "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
         }
 
         // Hash and save new password
@@ -52,10 +52,10 @@ public class ChangePasswordHandler implements IRequestHandler<ChangePasswordComm
 
     private boolean isPasswordStrong(String password) {
         // At least 8 characters, one uppercase, one lowercase, one digit, one special char
-        return password.length() >= 8 &&
-               password.matches(".*[A-Z].*") &&
-               password.matches(".*[a-z].*") &&
-               password.matches(".*\\d.*") &&
-               password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
+        return password.length() >= 8
+                && password.matches(".*[A-Z].*")
+                && password.matches(".*[a-z].*")
+                && password.matches(".*\\d.*")
+                && password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
     }
 }

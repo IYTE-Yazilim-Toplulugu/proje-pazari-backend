@@ -12,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class UpdateUserProfileHandler implements IRequestHandler<UpdateUserProfileCommand, ApiResponse<UserDto>> {
+public class UpdateUserProfileHandler
+        implements IRequestHandler<UpdateUserProfileCommand, ApiResponse<UserDto>> {
 
     private final UserRepository userRepository;
     private final UserDtoMapper userDtoMapper;

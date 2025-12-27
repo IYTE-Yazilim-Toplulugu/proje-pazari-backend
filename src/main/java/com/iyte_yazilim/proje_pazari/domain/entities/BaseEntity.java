@@ -1,24 +1,19 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
+import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-
-import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
-
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * Base entity class that provides common fields for all entities.
  *
- * Responsibilities:
- * - Provides auto-generated primary key (id)
- * - Tracks creation timestamp (createdAt)
- * - Tracks last modification timestamp (updatedAt)
+ * <p>Responsibilities: - Provides auto-generated primary key (id) - Tracks creation timestamp
+ * (createdAt) - Tracks last modification timestamp (updatedAt)
  *
- * All entities should extend this class to inherit these common fields.
+ * <p>All entities should extend this class to inherit these common fields.
  */
-
 @Getter
 @Setter
 public abstract class BaseEntity<TId> {
@@ -48,7 +43,7 @@ public abstract class BaseEntity<TId> {
     protected DomainEvent removedomainEvent(DomainEvent domainEvent) {
         return removeDomainEvent(domainEvent);
     }
-    
+
     protected DomainEvent updateDomainEvent(DomainEvent domainEvent) {
         int index = domainEvents.indexOf(domainEvent);
         if (index != -1) {
@@ -61,5 +56,4 @@ public abstract class BaseEntity<TId> {
     protected DomainEvent updatedomainEvent(DomainEvent domainEvent) {
         return updateDomainEvent(domainEvent);
     }
-
 }

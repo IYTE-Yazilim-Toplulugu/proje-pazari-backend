@@ -1,16 +1,12 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence;
 
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-
-import java.util.Optional;
-
-/**
- * UserRepository - JPA Repository for user persistence layer
- */
+/** UserRepository - JPA Repository for user persistence layer */
 public interface UserRepository extends JpaRepository<UserEntity, String> {
 
     Optional<UserEntity> findByEmail(String email);

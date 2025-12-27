@@ -6,10 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 @Schema(description = "Command to deactivate user account")
 public record DeactivateAccountCommand(
         @Schema(description = "User ID", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank(message = "User ID is required")
-        String userId,
-
-        @Schema(description = "Reason for deactivation")
-        String reason
-) {
-}
+                @NotBlank(message = "User ID is required")
+                String userId,
+        @Schema(description = "Reason for deactivation") String reason) {}

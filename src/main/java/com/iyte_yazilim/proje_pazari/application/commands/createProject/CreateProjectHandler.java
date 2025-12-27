@@ -1,7 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
-import org.springframework.stereotype.Service;
-
 import com.iyte_yazilim.proje_pazari.application.mappers.CreateProjectMapper;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
@@ -15,8 +13,8 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectM
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

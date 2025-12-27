@@ -51,12 +51,13 @@ public class LoginUserHandler
         String token = jwtUtil.generateToken(user.getEmail());
 
         // --- 6. Create result ---
-        var result = new LoginUserResult(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                token);
+        var result =
+                new LoginUserResult(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        token);
 
         // --- 7. Response ---
         return ApiResponse.success(result, "Login successful");

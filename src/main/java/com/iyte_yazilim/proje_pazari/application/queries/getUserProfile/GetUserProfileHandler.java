@@ -8,15 +8,15 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepositor
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
-public class GetUserProfileHandler implements IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>> {
+public class GetUserProfileHandler
+        implements IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>> {
 
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
@@ -36,33 +36,35 @@ public class GetUserProfileHandler implements IRequestHandler<GetUserProfileQuer
         // Get user's projects using optimized query
         List<ProjectEntity> projectEntities = projectRepository.findByOwnerId(query.userId());
 
-        List<ProjectSummaryDTO> projects = projectEntities.stream()
-                .map(p -> new ProjectSummaryDTO(
-                        p.getId(),
-                        p.getTitle(),
-                        p.getDescription(),
-                        p.getStatus().name(),
-                        p.getCreatedAt()
-                ))
-                .collect(Collectors.toList());
+        List<ProjectSummaryDTO> projects =
+                projectEntities.stream()
+                        .map(
+                                p ->
+                                        new ProjectSummaryDTO(
+                                                p.getId(),
+                                                p.getTitle(),
+                                                p.getDescription(),
+                                                p.getStatus().name(),
+                                                p.getCreatedAt()))
+                        .collect(Collectors.toList());
 
-        UserProfileDTO profile = new UserProfileDTO(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                (user.getFirstName() != null && user.getLastName() != null) 
-                    ? user.getFirstName() + " " + user.getLastName() 
-                    : null,
-                user.getDescription(),
-                user.getProfilePictureUrl(),
-                user.getLinkedinUrl(),
-                user.getGithubUrl(),
-                user.getCreatedAt(),
-                projectsCreated,
-                applicationsSubmitted,
-                projects
-        );
+        UserProfileDTO profile =
+                new UserProfileDTO(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        (user.getFirstName() != null && user.getLastName() != null)
+                                ? user.getFirstName() + " " + user.getLastName()
+                                : null,
+                        user.getDescription(),
+                        user.getProfilePictureUrl(),
+                        user.getLinkedinUrl(),
+                        user.getGithubUrl(),
+                        user.getCreatedAt(),
+                        projectsCreated,
+                        applicationsSubmitted,
+                        projects);
 
         return ApiResponse.success(profile, "User profile retrieved successfully");
     }

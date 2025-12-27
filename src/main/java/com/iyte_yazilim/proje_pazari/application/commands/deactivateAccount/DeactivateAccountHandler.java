@@ -12,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DeactivateAccountHandler implements IRequestHandler<DeactivateAccountCommand, ApiResponse<Void>> {
+public class DeactivateAccountHandler
+        implements IRequestHandler<DeactivateAccountCommand, ApiResponse<Void>> {
 
     private final UserRepository userRepository;
 

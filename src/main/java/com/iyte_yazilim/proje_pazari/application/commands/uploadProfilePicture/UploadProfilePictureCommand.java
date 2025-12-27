@@ -8,11 +8,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Schema(description = "Command to upload user profile picture")
 public record UploadProfilePictureCommand(
         @Schema(description = "User ID", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotBlank(message = "User ID is required")
-        String userId,
-
+                @NotBlank(message = "User ID is required")
+                String userId,
         @Schema(description = "Profile picture file", requiredMode = Schema.RequiredMode.REQUIRED)
-        @NotNull(message = "File is required")
-        MultipartFile file
-) {
-}
+                @NotNull(message = "File is required")
+                MultipartFile file) {}
