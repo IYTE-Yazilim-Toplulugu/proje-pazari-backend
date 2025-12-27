@@ -22,6 +22,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         UserEntity userEntity = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
+        // Check if user account is active
+        if (!userEntity.getIsActive()) {
+            throw new UsernameNotFoundException("User account is deactivated");
+        }
+
         return new User(
                 userEntity.getEmail(),
                 userEntity.getPassword(),

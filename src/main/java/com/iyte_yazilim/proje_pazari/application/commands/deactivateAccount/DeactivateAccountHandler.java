@@ -30,9 +30,10 @@ public class DeactivateAccountHandler implements IRequestHandler<DeactivateAccou
             log.info("User {} deactivated account. Reason: {}", command.userId(), command.reason());
         }
 
-        // For now, we'll delete the user. In production, you might want to soft-delete
-        // by adding an 'active' or 'deactivated' flag to UserEntity
-        userRepository.delete(user);
+        // Soft-delete the user by marking the account as inactive
+        // This preserves referential integrity with related entities (e.g., projects, applications)
+        user.setIsActive(false);
+        userRepository.save(user);
 
         return ApiResponse.success(null, "Account deactivated successfully");
     }
