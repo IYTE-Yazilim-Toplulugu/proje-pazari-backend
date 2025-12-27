@@ -1,5 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
+import org.springframework.stereotype.Service;
+
 import com.iyte_yazilim.proje_pazari.application.mappers.CreateProjectMapper;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
@@ -16,6 +18,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntit
 
 import lombok.RequiredArgsConstructor;
 
+@Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class CreateProjectHandler

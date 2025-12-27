@@ -1,7 +1,10 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
+import org.springframework.stereotype.Component;
+
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 
+@Component
 public class LoginUserValidator implements IValidator<LoginUserCommand> {
 
     @Override

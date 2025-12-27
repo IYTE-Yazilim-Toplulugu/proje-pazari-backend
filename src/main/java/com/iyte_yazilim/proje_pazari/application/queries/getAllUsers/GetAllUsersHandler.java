@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
+@Service
 @RequiredArgsConstructor
 public class GetAllUsersHandler implements IRequestHandler<GetAllUsersQuery, ApiResponse<List<UserDto>>> {
 
