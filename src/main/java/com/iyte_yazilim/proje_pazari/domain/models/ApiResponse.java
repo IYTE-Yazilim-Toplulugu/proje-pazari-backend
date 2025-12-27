@@ -77,4 +77,12 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> noContent(String message) {
         return new ApiResponse<>(null, message, ResponseCode.NO_CONTENT);
     }
+
+    public static <T> ApiResponse<T> validationError(String message) {
+        return new ApiResponse<>(null, message, ResponseCode.VALIDATION_ERROR);
+    }
+
+    public static <T> ApiResponse<T> error(String message) {
+        return new ApiResponse<>(null, message, ResponseCode.INTERNAL_SERVER_ERROR);
+    }
 }

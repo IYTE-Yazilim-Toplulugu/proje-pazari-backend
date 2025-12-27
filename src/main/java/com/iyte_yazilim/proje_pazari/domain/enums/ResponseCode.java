@@ -5,6 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
+@SuppressWarnings("unused")
 public enum ResponseCode {
     // Success
     SUCCESS(0),
@@ -18,6 +19,7 @@ public enum ResponseCode {
     FORBIDDEN(6),
     NOT_FOUND(7),
     CONFLICT(8),
+    VALIDATION_ERROR(10),
 
     // Server Errors
     INTERNAL_SERVER_ERROR(9);
