@@ -44,7 +44,7 @@ public abstract class BaseEntity<TId> {
     protected DomainEvent removedomainEvent(DomainEvent domainEvent) {
         return removeDomainEvent(domainEvent);
     }
-    protected DomainEvent updatedomainEvent(DomainEvent domainEvent) {
+    protected DomainEvent updateDomainEvent(DomainEvent domainEvent) {
         int index = domainEvents.indexOf(domainEvent);
         if (index != -1) {
             domainEvents.set(index, domainEvent);
