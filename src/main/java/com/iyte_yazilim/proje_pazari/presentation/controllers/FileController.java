@@ -26,7 +26,9 @@ public class FileController {
     @GetMapping("/{fileName:.+}")
     @Operation(
             summary = "Download file",
-            description = "Serves uploaded files (e.g., profile pictures)"
+            description = "Serves uploaded files (e.g., profile pictures). " +
+                    "Currently public for profile pictures. " +
+                    "TODO: Add authentication/authorization if used for private files."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
