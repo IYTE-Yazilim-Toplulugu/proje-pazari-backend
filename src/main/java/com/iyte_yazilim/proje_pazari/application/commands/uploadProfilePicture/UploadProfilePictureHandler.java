@@ -32,8 +32,10 @@ public class UploadProfilePictureHandler implements IRequestHandler<UploadProfil
             if (user.getProfilePictureUrl() != null && !user.getProfilePictureUrl().isBlank()) {
                 String oldFileName = user.getProfilePictureUrl().substring(user.getProfilePictureUrl().lastIndexOf("/") + 1);
                 // Validate extracted filename to prevent path traversal
-                if (!oldFileName.contains("..") 
-                        && !oldFileName.contains("/") 
+                if (oldFileName != null
+                        && !oldFileName.isBlank()
+                        && !oldFileName.contains("..")
+                        && !oldFileName.contains("/")
                         && !oldFileName.contains("\\")) {
                     try {
                         fileStorageService.deleteFile(oldFileName);
