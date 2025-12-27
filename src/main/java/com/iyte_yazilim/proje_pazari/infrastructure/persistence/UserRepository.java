@@ -12,7 +12,9 @@ import java.util.Optional;
  * UserRepository - JPA Repository for user persistence layer
  */
 public interface UserRepository extends JpaRepository<UserEntity, String> {
+
     Optional<UserEntity> findByEmail(String email);
+
     boolean existsByEmail(String email);
 
     @Query("SELECT COUNT(p) FROM ProjectEntity p WHERE p.owner.id = :userId")
