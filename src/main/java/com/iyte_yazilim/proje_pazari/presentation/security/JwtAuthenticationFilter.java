@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (JwtException e) {
             // JWT validation failed (malformed token, expired token, invalid signature, etc.)
             // Log for security monitoring but continue filter chain without authentication
-            log.debug("JWT validation failed: {}", e.getMessage());
+            log.warn("JWT validation failed: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
