@@ -24,21 +24,12 @@ public class FileController {
     private final FileStorageService fileStorageService;
 
     @GetMapping("/{fileName:.+}")
-    @Operation(
-            summary = "Download file",
-            description = "Serves uploaded files (e.g., profile pictures). " +
-                    "Currently public for profile pictures. " +
-                    "TODO: Add authentication/authorization if used for private files."
-    )
+    @Operation(summary = "Download file", description = "Serves uploaded files (e.g., profile pictures). " +
+            "Currently public for profile pictures. " +
+            "TODO: Add authentication/authorization if used for private files.")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "File retrieved successfully"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "File not found"
-            )
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "File retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "File not found")
     })
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName) {
         try {
