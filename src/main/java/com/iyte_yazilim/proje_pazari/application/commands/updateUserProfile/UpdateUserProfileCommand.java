@@ -32,7 +32,7 @@ public record UpdateUserProfileCommand(
             throw new IllegalArgumentException("Invalid LinkedIn URL format");
         }
         if (githubUrl != null && !githubUrl.isBlank() 
-                && !githubUrl.matches("^https://github\\.com/[a-zA-Z0-9_-]+(/[a-zA-Z0-9._-]+)?/?$")) {
+                && !githubUrl.matches("^https://github\\.com/[a-zA-Z0-9_-]+(/.*)?$")) {
             throw new IllegalArgumentException("Invalid GitHub URL format");
         }
     }
