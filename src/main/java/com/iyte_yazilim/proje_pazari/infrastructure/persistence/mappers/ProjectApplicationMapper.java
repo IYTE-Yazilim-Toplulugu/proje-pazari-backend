@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers;
 
-import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import org.mapstruct.Mapper;

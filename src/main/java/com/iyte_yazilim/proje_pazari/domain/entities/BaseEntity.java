@@ -35,12 +35,16 @@ public abstract class BaseEntity<TId> {
 
     }
 
-    protected DomainEvent removedomainEvent(DomainEvent domainEvent) {
+    protected DomainEvent removeDomainEvent(DomainEvent domainEvent) {
         domainEvents.remove(domainEvent);
         return domainEvent;
     }
 
-    protected DomainEvent updatedomainEvent(DomainEvent domainEvent) {
+    @Deprecated
+    protected DomainEvent removedomainEvent(DomainEvent domainEvent) {
+        return removeDomainEvent(domainEvent);
+    }
+    protected DomainEvent updateDomainEvent(DomainEvent domainEvent) {
         int index = domainEvents.indexOf(domainEvent);
         if (index != -1) {
             domainEvents.set(index, domainEvent);
