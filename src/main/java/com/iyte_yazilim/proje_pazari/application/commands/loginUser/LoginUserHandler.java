@@ -1,5 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
+import java.util.List;
+
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -41,7 +43,8 @@ public class LoginUserHandler
         }
 
         // --- 4. Generate JWT token ---
-        String token = jwtUtil.generateToken(user.getEmail());
+        List<String> roles = List.of("USER"); // Default role, update when roles are added to UserEntity
+        String token = jwtUtil.generateToken(user.getEmail(), roles, user.getId());
 
         // --- 5. Create result ---
         var result = new LoginUserResult(
