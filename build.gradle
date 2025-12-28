@@ -40,6 +40,10 @@ dependencies {
     // For JSON processing with Elasticsearch
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
     // ULID
     implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
 
