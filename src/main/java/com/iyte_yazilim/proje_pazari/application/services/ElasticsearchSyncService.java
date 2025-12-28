@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.services;
 
-import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectSearchRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
@@ -14,6 +13,8 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,7 +45,7 @@ public class ElasticsearchSyncService {
     }
 
     public void indexProject(String projectId) {
-        Project project = projectRepository.findById(projectId)
+        ProjectEntity project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));//TODO: Create exception.
 
         ProjectDocument document = mapper.toDocument(project);
@@ -59,11 +60,20 @@ public class ElasticsearchSyncService {
     public void reindexAllProjects() {
         projectSearchRepository.deleteAll();
 
-        List<ProjectEntity> projects = projectRepository.findAll();
-        List<ProjectDocument> documents = projects.stream()
-                .map(mapper::toDocument)
-                .collect(Collectors.toList());
+        int batchSize = 100;
+        Page<ProjectEntity> page;
+        int pageNumber = 0;
 
-        projectSearchRepository.saveAll(documents);
+        do {
+            page = projectRepository.findAll(PageRequest.of(pageNumber, batchSize));
+
+            List<ProjectDocument> documents = page.getContent().stream()
+                    .map(mapper::toDocument)
+                    .collect(Collectors.toList());
+
+            projectSearchRepository.saveAll(documents);
+            pageNumber++;
+
+        } while (page.hasNext());
     }
 }
