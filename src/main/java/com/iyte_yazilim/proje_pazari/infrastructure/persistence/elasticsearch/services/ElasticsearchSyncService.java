@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.application.services;
+package com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch.services;
 
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectSearchRepository;
@@ -27,7 +27,7 @@ public class ElasticsearchSyncService {
 
     private final ProjectRepository projectRepository;
     private final ProjectSearchRepository projectSearchRepository;
-    private final ProjectDocumentMapper mapper;//TODO: Create mapper.
+    private final ProjectDocumentMapper mapper;// TODO: Create mapper.
     private ElasticsearchOperations elasticsearchOperations;
 
     @PostConstruct
@@ -46,7 +46,7 @@ public class ElasticsearchSyncService {
 
     public void indexProject(String projectId) {
         ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ProjectNotFoundException(projectId));//TODO: Create exception.
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));// TODO: Create exception.
 
         ProjectDocument document = mapper.toDocument(project);
         projectSearchRepository.save(document);

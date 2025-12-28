@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.application.services;
+package com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch.services;
 
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
@@ -40,15 +40,12 @@ public class ProjectSearchService {
                 .withQuery(q -> q
                         .multiMatch(m -> m
                                 .query(keyword)
-                                .fields("title^3", "description^2", "summary")  // Boosting
+                                .fields("title^3", "description^2", "summary") // Boosting
                                 .fuzziness("AUTO")
-                                .operator(Operator.Or)
-                        )
-                )
+                                .operator(Operator.Or)))
                 .build();
 
-        SearchHits<ProjectDocument> searchHits =
-                elasticsearchOperations.search(query, ProjectDocument.class);
+        SearchHits<ProjectDocument> searchHits = elasticsearchOperations.search(query, ProjectDocument.class);
 
         return searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
@@ -60,15 +57,13 @@ public class ProjectSearchService {
             String keyword,
             String status,
             List<String> tags,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         CriteriaQuery query = new CriteriaQuery(new Criteria());
 
         if (keyword != null && !keyword.isBlank()) {
             query.addCriteria(
                     new Criteria("title").contains(keyword)
-                            .or("description").contains(keyword)
-            );
+                            .or("description").contains(keyword));
         }
 
         if (status != null) {
@@ -81,8 +76,7 @@ public class ProjectSearchService {
 
         query.setPageable(pageable);
 
-        SearchHits<ProjectDocument> searchHits =
-                elasticsearchOperations.search(query, ProjectDocument.class);
+        SearchHits<ProjectDocument> searchHits = elasticsearchOperations.search(query, ProjectDocument.class);
 
         return SearchHitSupport.searchPageFor(searchHits, pageable); // Returns SearchPage
     }
@@ -92,13 +86,10 @@ public class ProjectSearchService {
         Query query = NativeQuery.builder()
                 .withAggregation("status_count",
                         Aggregation.of(a -> a
-                                .terms(t -> t.field("status"))
-                        )
-                )
+                                .terms(t -> t.field("status"))))
                 .build();
 
-        SearchHits<ProjectDocument> searchHits =
-                elasticsearchOperations.search(query, ProjectDocument.class);
+        SearchHits<ProjectDocument> searchHits = elasticsearchOperations.search(query, ProjectDocument.class);
 
         // Process aggregations
         return extractAggregationResults(searchHits);
