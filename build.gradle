@@ -34,9 +34,11 @@ dependencies {
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
-    // Lombok
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    // Elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    
+    // For JSON processing with Elasticsearch
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
 
     // ULID
     implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
