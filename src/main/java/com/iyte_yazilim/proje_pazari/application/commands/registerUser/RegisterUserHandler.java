@@ -3,14 +3,21 @@ package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.converters.UlidConverter;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -68,6 +75,7 @@ public class RegisterUserHandler
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final MessageService messageService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * Handles user registration command.
@@ -117,6 +125,18 @@ public class RegisterUserHandler
 
         // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
         var result = registerUserMapper.domainToResult(savedDomainUser);
+
+        String verificationToken = UUID.randomUUID().toString();
+
+        UlidConverter ulidConverter = new UlidConverter();
+        // Publish event
+        applicationEventPublisher.publishEvent(
+                new UserRegisteredEvent(
+                        ulidConverter.convertToDatabaseColumn(savedDomainUser.getId()),
+                        savedDomainUser.getEmail(),
+                        savedDomainUser.getFirstName(),
+                        verificationToken,
+                        LocalDateTime.now()));
 
         // --- 9. Response with localized message ---
         return ApiResponse.created(result, messageService.getMessage("user.registered.success"));
