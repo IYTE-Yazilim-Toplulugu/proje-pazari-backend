@@ -29,6 +29,9 @@ repositories {
 }
 
 dependencies {
+    // GreenMail for email testing
+    testImplementation 'com.icegreen:greenmail-spring:2.0.0'
+
     // Spring Boot Thymeleaf Starter
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
