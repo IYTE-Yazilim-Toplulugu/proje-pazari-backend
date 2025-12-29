@@ -36,7 +36,32 @@ public class EmailEventListener {
     @EventListener
     public void handleApplicationSubmitted(ApplicationSubmittedEvent event) {
         // Send confirmation to applicant
+        Map<String, Object> applicantVariables = Map.of(
+                "subject", "Application Received - " + event.projectTitle(),
+                "firstName", event.applicantFirstName(),
+                "projectTitle", event.projectTitle(),
+                "userId", event.applicantId()
+        );
+
+        emailService.sendTemplateEmailAsync(
+                event.applicantEmail(),
+                "application-recived.html",
+                applicantVariables
+        );
+
         // Send notification to project owner
+        Map<String, Object> ownerVariables = Map.of(
+                "subject", "New Application Received - " + event.projectTitle(),
+                "firstName", event.ownerFirstName(),
+                "projectTitle", event.projectTitle(),
+                "applicantName", event.applicantFirstName()
+        );
+
+        emailService.sendTemplateEmailAsync(
+                event.ownerEmail(),
+                "application-recived.html",
+                ownerVariables
+        );
     }
 
     @EventListener
