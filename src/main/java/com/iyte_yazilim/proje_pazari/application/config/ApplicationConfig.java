@@ -26,6 +26,7 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -70,8 +71,9 @@ public class ApplicationConfig {
             IValidator<RegisterUserCommand> validator,
             RegisterUserMapper registerUserMapper,
             com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper userMapper,
-            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
-        return new RegisterUserHandler(userRepository, validator, registerUserMapper, userMapper, passwordEncoder);
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+            ApplicationEventPublisher applicationEventPublisher) {
+        return new RegisterUserHandler(userRepository, validator, registerUserMapper, userMapper, passwordEncoder, applicationEventPublisher);
     }
 
     @Bean
