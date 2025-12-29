@@ -6,6 +6,9 @@ public record ApplicationReviewedEvent(
         String applicationId,
         String applicantEmail,
         String projectTitle,
+        String applicantFirstName,
+        String ownerFirstName,
+        String ownerEmail,
         ApplicationStatus status,
-        String reviewMessage
-) implements IDomainEvent {}
+        String reviewMessage) implements IDomainEvent {
+}
