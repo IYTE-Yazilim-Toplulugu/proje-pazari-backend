@@ -36,43 +36,32 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(
-                        auth ->
-                                auth
-                                        // Swagger/OpenAPI endpoints
-                                        .requestMatchers(
-                                                "/swagger-ui/**",
-                                                "/swagger-ui",
-                                                "/v3/api-docs/**",
-                                                "/swagger-ui.html",
-                                                "/swagger-resources/**",
-                                                "/webjars/**")
-                                        .permitAll()
-                                        // Actuator health endpoints
-                                        .requestMatchers("/actuator/**")
-                                        .permitAll()
-                                        .requestMatchers("/api/v1/health")
-                                        .permitAll()
-                                        // Public authentication endpoints
-                                        .requestMatchers("/api/v1/auth/**")
-                                        .permitAll()
-                                        // File serving endpoints (profile pictures are public)
-                                        .requestMatchers("/api/v1/files/**")
-                                        .permitAll()
-                                        // Public read-only endpoints - anyone can view user
-                                        // profiles and projects
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/users/**")
-                                        .permitAll()
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/**")
-                                        .permitAll()
-                                        // All other requests require authentication
-                                        .anyRequest()
-                                        .authenticated())
-                .sessionManagement(
-                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(
-                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        // Swagger/OpenAPI endpoints
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
+                        // Actuator health endpoints
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        // Public authentication endpoints
+                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+                        // Health check endpoints
+                        .requestMatchers("/api/v1/health").permitAll()
+                        // All other API endpoints require authentication
+                        .requestMatchers("/api/**").authenticated()
+                        // All other requests require authentication
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
