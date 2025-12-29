@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -38,6 +39,11 @@ public class LoginUserHandler
         // --- 3. Verify password with BCrypt ---
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
             return ApiResponse.badRequest("Invalid email or password");
+        }
+
+        // --- 3.5. Check email verification ---
+        if (!user.isEmailVerified()) {
+            throw new EmailNotVerifiedException("Please verify your email before logging in. Check your inbox.");
         }
 
         // --- 4. Generate JWT token ---

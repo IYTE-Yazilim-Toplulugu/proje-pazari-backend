@@ -9,6 +9,10 @@ import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserVal
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserHandler;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserValidator;
+import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailHandler;
+import com.iyte_yazilim.proje_pazari.application.commands.verifyEmail.VerifyEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.verifyEmail.VerifyEmailHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.CreateProjectMapper;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
@@ -23,6 +27,7 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
+import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
@@ -35,8 +40,6 @@ import java.util.List;
 public class ApplicationConfig {
 
     // ========== Project Beans ==========
-
-    @Bean
     public IValidator<CreateProjectCommand> createProjectValidator() {
         return new CreateProjectValidator();
     }
@@ -53,8 +56,6 @@ public class ApplicationConfig {
     }
 
     // ========== User Auth Beans ==========
-
-    @Bean
     public IValidator<RegisterUserCommand> registerUserValidator() {
         return new RegisterUserValidator();
     }
@@ -70,8 +71,10 @@ public class ApplicationConfig {
             IValidator<RegisterUserCommand> validator,
             RegisterUserMapper registerUserMapper,
             com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper userMapper,
-            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
-        return new RegisterUserHandler(userRepository, validator, registerUserMapper, userMapper, passwordEncoder);
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+            com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService verificationTokenService,
+            org.springframework.context.ApplicationEventPublisher eventPublisher) {
+        return new RegisterUserHandler(userRepository, validator, registerUserMapper, userMapper, passwordEncoder, verificationTokenService, eventPublisher);
     }
 
     @Bean
@@ -83,8 +86,26 @@ public class ApplicationConfig {
         return new LoginUserHandler(userRepository, validator, passwordEncoder, jwtUtil);
     }
 
-    // ========== User Query Beans ==========
+    @Bean
+    public IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler(
+            UserRepository userRepository,
+            com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService tokenService,
+            com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper userMapper
+    ) {
+        return new VerifyEmailHandler(userRepository, tokenService, userMapper);
+    }
 
+    @Bean
+    public IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>> resendVerificationEmailHandler(
+            UserRepository userRepository,
+            com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService tokenService,
+            org.springframework.context.ApplicationEventPublisher eventPublisher,
+            com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper userMapper
+    ) {
+        return new ResendVerificationEmailHandler(userRepository, tokenService, eventPublisher, userMapper);
+    }
+
+    // ========== User Query Beans ==========
     @Bean
     public IRequestHandler<GetUserQuery, ApiResponse<UserDto>> getUserHandler(
             UserRepository userRepository,
