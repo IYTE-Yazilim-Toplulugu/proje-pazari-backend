@@ -30,6 +30,7 @@ repositories {
 
 dependencies {
     // GreenMail for email testing
+    testImplementation 'com.icegreen:greenmail-junit5:2.0.0'
     testImplementation 'com.icegreen:greenmail-spring:2.0.0'
 
     // Spring Boot Thymeleaf Starter
