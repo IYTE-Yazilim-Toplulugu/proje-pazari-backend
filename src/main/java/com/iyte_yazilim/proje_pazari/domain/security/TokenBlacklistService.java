@@ -1,6 +1,6 @@
 package com.iyte_yazilim.proje_pazari.domain.security;
 
-import org.springframework.data.redis.core.StringRedisTemplate;
+import java.time.Duration;
 
 /**
  * TokenBlacklistService
