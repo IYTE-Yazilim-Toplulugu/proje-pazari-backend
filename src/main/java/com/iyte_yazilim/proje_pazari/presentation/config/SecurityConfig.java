@@ -50,7 +50,7 @@ public class SecurityConfig {
                         // Public authentication endpoints
                         .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                         // Health check endpoints
-                        .requestMatchers("/api/v1/projects/health").permitAll()
+                        .requestMatchers("/api/v1/health").permitAll()
                         // All other API endpoints require authentication
                         .requestMatchers("/api/**").authenticated()
                         // All other requests require authentication
