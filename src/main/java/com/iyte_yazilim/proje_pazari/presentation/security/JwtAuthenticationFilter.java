@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.security;
 
+import com.iyte_yazilim.proje_pazari.domain.security.TokenBlacklistService;
 import io.jsonwebtoken.JwtException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
@@ -53,6 +54,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final TokenBlacklistService tokenBlacklistService;
 
     /**
      * Processes each request for JWT authentication.
@@ -84,6 +86,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
 
         try {
+            // Check if token is blacklisted
+            if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             if (jwtUtil.validateToken(jwt)) {
                 // Extract all user info from JWT - NO database lookup!
                 UserPrincipal userPrincipal = jwtUtil.extractUserPrincipal(jwt);
