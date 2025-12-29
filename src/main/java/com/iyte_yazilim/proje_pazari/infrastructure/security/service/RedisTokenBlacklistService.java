@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.infrastructure.security;
+package com.iyte_yazilim.proje_pazari.infrastructure.security.service;
 
 import com.iyte_yazilim.proje_pazari.domain.security.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
