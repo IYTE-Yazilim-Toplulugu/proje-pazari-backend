@@ -23,14 +23,12 @@ public class EmailEventListener {
         Map<String, Object> variables = Map.of(
                 "subject", "Welcome to Proje Pazarı!",
                 "userName", event.firstName(),
-                "verificationLink", "http://localhost:3000/verify?token=" + event.verificationToken()
-        );
+                "verificationLink", "http://localhost:3000/verify?token=" + event.verificationToken());
 
         emailService.sendTemplateEmailAsync(
                 event.email(),
                 "welcome.html",
-                variables
-        );
+                variables);
     }
 
     @EventListener
@@ -40,28 +38,25 @@ public class EmailEventListener {
                 "subject", "Application Received - " + event.projectTitle(),
                 "firstName", event.applicantFirstName(),
                 "projectTitle", event.projectTitle(),
-                "userId", event.applicantId()
-        );
+                "userId", event.applicantId());
 
         emailService.sendTemplateEmailAsync(
                 event.applicantEmail(),
                 "application-recived.html",
-                applicantVariables
-        );
+                applicantVariables);
 
         // Send notification to project owner
         Map<String, Object> ownerVariables = Map.of(
                 "subject", "New Application Received - " + event.projectTitle(),
                 "firstName", event.ownerFirstName(),
                 "projectTitle", event.projectTitle(),
-                "applicantName", event.applicantFirstName()
-        );
+                "projectId", event.projectId(),
+                "applicantName", event.applicantFirstName());
 
         emailService.sendTemplateEmailAsync(
                 event.ownerEmail(),
-                "application-recived.html",
-                ownerVariables
-        );
+                "new-application-notification.html",
+                ownerVariables);
     }
 
     @EventListener
@@ -70,5 +65,12 @@ public class EmailEventListener {
                 ? "application-approved.html"
                 : "application-rejected.html";
         // Send email
+        Map<String, Object> applicantVariables = Map.of(
+                "subject", "Application " + event.status(),
+                "firstName", event.applicantFirstName(),
+                "projectTitle", event.projectTitle(),
+                "reviewMessage", event.reviewMessage());
+
+        emailService.sendTemplateEmail(event.ownerEmail(), "application-reviewed", applicantVariables);
     }
 }
