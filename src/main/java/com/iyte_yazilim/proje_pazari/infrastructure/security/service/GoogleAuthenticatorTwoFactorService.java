@@ -27,7 +27,7 @@ import java.util.Map;
 public class GoogleAuthenticatorTwoFactorService implements TwoFactorAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(GoogleAuthenticatorTwoFactorService.class);
-    private static final String ISSUER = "IZTHECH SOFTWARE SOCIETY";
+    private static final String ISSUER = "IZTECH SOFTWARE SOCIETY";
     private static final int QR_CODE_SIZE = 200;
     
     private final GoogleAuthenticator googleAuthenticator;
