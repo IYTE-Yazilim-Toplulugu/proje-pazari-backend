@@ -6,11 +6,12 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
-import java.util.Base64;
-
+@Service
 @RequiredArgsConstructor
 public class LoginUserHandler
         implements IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> {
@@ -18,6 +19,7 @@ public class LoginUserHandler
     private final UserRepository userRepository;
     private final IValidator<LoginUserCommand> validator;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Override
     public ApiResponse<LoginUserResult> handle(LoginUserCommand command) {
@@ -35,25 +37,29 @@ public class LoginUserHandler
             return ApiResponse.badRequest("Invalid email or password");
         }
 
-        // --- 3. Verify password with BCrypt ---
+        // --- 3. Check if account is active ---
+        if (user.getIsActive() == null || !user.getIsActive()) {
+            return ApiResponse.badRequest("Account has been deactivated");
+        }
+
+        // --- 4. Verify password with BCrypt ---
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
             return ApiResponse.badRequest("Invalid email or password");
         }
 
-        // --- 4. Generate token ---
-        // TODO: Replace with proper JWT token generation
-        String token = Base64.getEncoder().encodeToString(
-                (user.getEmail() + ":" + System.currentTimeMillis()).getBytes());
+        // --- 5. Generate JWT token ---
+        String token = jwtUtil.generateToken(user.getEmail());
 
-        // --- 5. Create result ---
-        var result = new LoginUserResult(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                token);
+        // --- 6. Create result ---
+        var result =
+                new LoginUserResult(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        token);
 
-        // --- 6. Response ---
+        // --- 7. Response ---
         return ApiResponse.success(result, "Login successful");
     }
 }

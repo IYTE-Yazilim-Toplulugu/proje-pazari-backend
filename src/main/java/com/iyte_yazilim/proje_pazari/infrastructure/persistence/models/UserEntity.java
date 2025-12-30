@@ -1,15 +1,13 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 
-import java.time.LocalDateTime;
-
 import com.github.f4b6a3.ulid.Ulid;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -57,10 +55,16 @@ public class UserEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
+    private Boolean isActive = true;
+
     @PrePersist
     protected void onCreate() {
         if (id == null || id.isBlank()) {
             id = Ulid.fast().toString();
+        }
+        if (isActive == null) {
+            isActive = true;
         }
         createdAt = LocalDateTime.now();
     }
