@@ -31,7 +31,7 @@ public class UserEntity {
     @Column(nullable = false)
     private boolean isTwoFactorEnabled = false;
 
-    @Column(nullable = true, unique = false)
+    @Column
     private String twoFactorSecret;
 
     @Column(nullable = false, unique = true)
