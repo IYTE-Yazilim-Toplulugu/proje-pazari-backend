@@ -26,7 +26,7 @@ public class RedisTokenBlacklistService implements TokenBlacklistService {
         String key = BLACKLIST_PREFIX + token;
 
         if (ttl != null && !ttl.isNegative() && !ttl.isZero()) {
-            redisTemplate.opsForValue().set(key, "blaclklisted", ttl);
+            redisTemplate.opsForValue().set(key, "blacklisted", ttl);
         } else {
             redisTemplate.opsForValue().set(key, "blacklisted", DEFAULT_TTL);
         }
