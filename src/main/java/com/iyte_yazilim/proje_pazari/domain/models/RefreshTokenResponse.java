@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.application.dtos;
+package com.iyte_yazilim.proje_pazari.domain.models;
 
 import lombok.Builder;
 import lombok.Data;
