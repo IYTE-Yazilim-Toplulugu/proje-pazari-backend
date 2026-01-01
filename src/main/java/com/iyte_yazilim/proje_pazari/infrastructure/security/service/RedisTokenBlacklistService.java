@@ -16,11 +16,6 @@ public class RedisTokenBlacklistService implements TokenBlacklistService {
     private final StringRedisTemplate redisTemplate;
 
     @Override
-    public void blacklistToken(String token) {
-        String key = BLACKLIST_PREFIX + token;
-        redisTemplate.opsForValue().set(key, "blacklisted", DEFAULT_TTL);
-    }
-
     public void blacklistToken(String token, Duration ttl) {
         String key = BLACKLIST_PREFIX + token;
 
@@ -29,5 +24,11 @@ public class RedisTokenBlacklistService implements TokenBlacklistService {
         } else {
             redisTemplate.opsForValue().set(key, "blacklisted", DEFAULT_TTL);
         }
+    }
+
+    @Override
+    public boolean isTokenBlacklisted(String token) {
+        String key = BLACKLIST_PREFIX + token;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 }
