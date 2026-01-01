@@ -31,8 +31,7 @@ public class UserEntity {
     @Column(nullable = false)
     private boolean isTwoFactorEnabled = false;
 
-    @Column
-    private String twoFactorSecret;
+    @Column private String twoFactorSecret;
 
     @Column(nullable = false, unique = true)
     private String email;
