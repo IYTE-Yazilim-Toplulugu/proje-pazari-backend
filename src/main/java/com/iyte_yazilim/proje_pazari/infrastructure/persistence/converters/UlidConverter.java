@@ -4,10 +4,7 @@ import com.github.f4b6a3.ulid.Ulid;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-/**
- * JPA Converter for ULID type
- * Converts ULID to String for database storage and vice versa
- */
+/** JPA Converter for ULID type Converts ULID to String for database storage and vice versa */
 @Converter(autoApply = true)
 public class UlidConverter implements AttributeConverter<Ulid, String> {
 

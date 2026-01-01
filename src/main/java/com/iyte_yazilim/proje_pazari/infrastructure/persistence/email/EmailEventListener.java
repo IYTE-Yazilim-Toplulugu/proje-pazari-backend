@@ -5,9 +5,9 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationReviewedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationSubmittedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
+import java.util.Map;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import java.util.Map;
 
 @Component
 public class EmailEventListener {
@@ -20,57 +20,59 @@ public class EmailEventListener {
 
     @EventListener
     public void handleUserRegistered(UserRegisteredEvent event) {
-        Map<String, Object> variables = Map.of(
-                "subject", "Welcome to Proje Pazarı!",
-                "userName", event.firstName(),
-                "verificationLink", "http://localhost:3000/verify?token=" + event.verificationToken());
+        Map<String, Object> variables =
+                Map.of(
+                        "subject",
+                        "Welcome to Proje Pazarı!",
+                        "userName",
+                        event.firstName(),
+                        "verificationLink",
+                        "http://localhost:3000/verify?token=" + event.verificationToken());
 
-        emailService.sendTemplateEmailAsync(
-                event.email(),
-                "welcome.html",
-                variables);
+        emailService.sendTemplateEmailAsync(event.email(), "welcome.html", variables);
     }
 
     @EventListener
     public void handleApplicationSubmitted(ApplicationSubmittedEvent event) {
         // Send confirmation to applicant
-        Map<String, Object> applicantVariables = Map.of(
-                "subject", "Application Received - " + event.projectTitle(),
-                "firstName", event.applicantFirstName(),
-                "projectTitle", event.projectTitle(),
-                "userId", event.applicantId());
+        Map<String, Object> applicantVariables =
+                Map.of(
+                        "subject", "Application Received - " + event.projectTitle(),
+                        "firstName", event.applicantFirstName(),
+                        "projectTitle", event.projectTitle(),
+                        "userId", event.applicantId());
 
         emailService.sendTemplateEmailAsync(
-                event.applicantEmail(),
-                "application-recived.html",
-                applicantVariables);
+                event.applicantEmail(), "application-recived.html", applicantVariables);
 
         // Send notification to project owner
-        Map<String, Object> ownerVariables = Map.of(
-                "subject", "New Application Received - " + event.projectTitle(),
-                "firstName", event.ownerFirstName(),
-                "projectTitle", event.projectTitle(),
-                "projectId", event.projectId(),
-                "applicantName", event.applicantFirstName());
+        Map<String, Object> ownerVariables =
+                Map.of(
+                        "subject", "New Application Received - " + event.projectTitle(),
+                        "firstName", event.ownerFirstName(),
+                        "projectTitle", event.projectTitle(),
+                        "projectId", event.projectId(),
+                        "applicantName", event.applicantFirstName());
 
         emailService.sendTemplateEmailAsync(
-                event.ownerEmail(),
-                "new-application-notification.html",
-                ownerVariables);
+                event.ownerEmail(), "new-application-notification.html", ownerVariables);
     }
 
     @EventListener
     public void handleApplicationReviewed(ApplicationReviewedEvent event) {
-        String template = event.status() == ApplicationStatus.APPROVED
-                ? "application-approved.html"
-                : "application-rejected.html";
+        String template =
+                event.status() == ApplicationStatus.APPROVED
+                        ? "application-approved.html"
+                        : "application-rejected.html";
         // Send email
-        Map<String, Object> applicantVariables = Map.of(
-                "subject", "Application " + event.status(),
-                "firstName", event.applicantFirstName(),
-                "projectTitle", event.projectTitle(),
-                "reviewMessage", event.reviewMessage());
+        Map<String, Object> applicantVariables =
+                Map.of(
+                        "subject", "Application " + event.status(),
+                        "firstName", event.applicantFirstName(),
+                        "projectTitle", event.projectTitle(),
+                        "reviewMessage", event.reviewMessage());
 
-        emailService.sendTemplateEmail(event.ownerEmail(), "application-reviewed", applicantVariables);
+        emailService.sendTemplateEmail(
+                event.ownerEmail(), "application-reviewed", applicantVariables);
     }
 }

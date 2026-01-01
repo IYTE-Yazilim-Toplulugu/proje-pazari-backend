@@ -10,5 +10,5 @@ public record ApplicationReviewedEvent(
         String ownerFirstName,
         String ownerEmail,
         ApplicationStatus status,
-        String reviewMessage) implements IDomainEvent {
-}
+        String reviewMessage)
+        implements IDomainEvent {}

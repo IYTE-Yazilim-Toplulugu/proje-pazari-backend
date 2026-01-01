@@ -1,7 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
+import org.springframework.stereotype.Component;
 
+@Component
 public class RegisterUserValidator implements IValidator<RegisterUserCommand> {
 
     @Override

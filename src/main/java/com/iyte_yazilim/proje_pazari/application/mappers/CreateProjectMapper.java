@@ -24,11 +24,16 @@ public interface CreateProjectMapper {
     Project commandToDomain(CreateProjectCommand command);
 
     // Map Domain Entity -> Result DTO
-    @Mapping(target = "projectId", expression = "java(project.getId() != null ? project.getId().toString() : null)")
+    @Mapping(
+            target = "projectId",
+            expression = "java(project.getId() != null ? project.getId().toString() : null)")
     @Mapping(target = "projectName", source = "title")
-    @Mapping(target = "ownerId", expression = "java(project.getOwner() != null ? project.getOwner().getId().toString() : null)")
-    @Mapping(target = "teamMemberIds", ignore = true)
-    @Mapping(target = "tags", ignore = true)
+    @Mapping(
+            target = "ownerId",
+            expression =
+                    "java(project.getOwner() != null ? project.getOwner().getId().toString() : null)")
+    @Mapping(target = "teamMemberIds", expression = "java(new String[0])")
+    @Mapping(target = "tags", expression = "java(new String[0])")
     CreateProjectCommandResult domainToResult(Project project);
 
     // Helper method to create User with just ID

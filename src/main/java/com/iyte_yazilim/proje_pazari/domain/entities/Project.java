@@ -1,11 +1,8 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
-
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,5 +25,4 @@ public class Project extends BaseEntity<Ulid> {
     public void setOwner(User owner) {
         this.owner = owner;
     }
-
 }

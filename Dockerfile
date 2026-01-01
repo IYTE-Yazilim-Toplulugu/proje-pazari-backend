@@ -23,6 +23,10 @@ WORKDIR /app
 
 # Create non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
+
+# Create uploads directory with proper permissions
+RUN mkdir -p /app/uploads && chown -R spring:spring /app/uploads
+
 USER spring:spring
 
 # Copy the built jar from build stage
