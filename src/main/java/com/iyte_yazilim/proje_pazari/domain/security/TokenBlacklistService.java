@@ -4,7 +4,7 @@ import java.time.Duration;
 
 /** TokenBlacklistService */
 public interface TokenBlacklistService {
-    void blacklistToken(String token);
-
     void blacklistToken(String token, Duration ttl);
+
+    boolean isTokenBlacklisted(String token);
 }
