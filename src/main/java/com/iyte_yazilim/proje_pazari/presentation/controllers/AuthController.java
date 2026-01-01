@@ -18,66 +18,65 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "Authentication endpoints for user registration and login")
+@Tag(
+        name = "Authentication",
+        description = "Authentication endpoints for user registration and login")
 public class AuthController {
 
-    private final IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>> registerUserHandler;
+    private final IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>>
+            registerUserHandler;
     private final IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> loginUserHandler;
 
     @PostMapping("/register")
     @Operation(
             summary = "Register a new user",
-            description = "Creates a new user account with the provided details"
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201",
-                    description = "User registered successfully"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request data or email already exists"
-            )
-    })
+            description = "Creates a new user account with the provided details")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "201",
+                        description = "User registered successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid request data or email already exists")
+            })
     public ResponseEntity<ApiResponse<RegisterUserResult>> register(
             @Valid @RequestBody RegisterUserCommand command) {
 
         ApiResponse<RegisterUserResult> response = registerUserHandler.handle(command);
 
-        HttpStatus status = switch (response.getCode()) {
-            case CREATED -> HttpStatus.CREATED;
-            case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
-            default -> HttpStatus.OK;
-        };
+        HttpStatus status =
+                switch (response.getCode()) {
+                    case CREATED -> HttpStatus.CREATED;
+                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
+                    default -> HttpStatus.OK;
+                };
 
         return ResponseEntity.status(status).body(response);
     }
 
     @PostMapping("/login")
-    @Operation(
-            summary = "Login user",
-            description = "Authenticates a user and returns a token"
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "Login successful"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid credentials"
-            )
-    })
+    @Operation(summary = "Login user", description = "Authenticates a user and returns a token")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Login successful"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid credentials")
+            })
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
             @Valid @RequestBody LoginUserCommand command) {
 
         ApiResponse<LoginUserResult> response = loginUserHandler.handle(command);
 
-        HttpStatus status = switch (response.getCode()) {
-            case SUCCESS -> HttpStatus.OK;
-            case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
-            default -> HttpStatus.OK;
-        };
+        HttpStatus status =
+                switch (response.getCode()) {
+                    case SUCCESS -> HttpStatus.OK;
+                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
+                    default -> HttpStatus.OK;
+                };
 
         return ResponseEntity.status(status).body(response);
     }

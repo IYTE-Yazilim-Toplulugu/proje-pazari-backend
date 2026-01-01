@@ -8,11 +8,10 @@ import jakarta.validation.constraints.Size;
 
 @Schema(description = "Command to register a new user")
 public record RegisterUserCommand(
-
         @Schema(description = "Email address", example = "user@example.com")
-        @NotBlank(message = "Email is required")
-        @Email(message = "Email must be valid")
-        String email,
+                @NotBlank(message = "Email is required")
+                @Email(message = "Email must be valid")
+                String email,
 
         @Schema(description = "Password", example = "SecurePassword123!")
         @NotBlank(message = "Password is required")
@@ -23,12 +22,10 @@ public record RegisterUserCommand(
         String password,
 
         @Schema(description = "First name", example = "John")
-        @NotBlank(message = "First name is required")
-        @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
-        String firstName,
-
+                @NotBlank(message = "First name is required")
+                @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
+                String firstName,
         @Schema(description = "Last name", example = "Doe")
-        @NotBlank(message = "Last name is required")
-        @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
-        String lastName) {
-}
+                @NotBlank(message = "Last name is required")
+                @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
+                String lastName) {}
