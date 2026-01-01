@@ -81,9 +81,6 @@ public class ProjectEntity {
         if (id == null || id.isBlank()) {
             id = Ulid.fast().toString();
         }
-        if (status == null) {
-            status = ProjectStatus.DRAFT;
-        }
         if (currentTeamSize == null) {
             currentTeamSize = 1; // Owner is automatically part of the team
         }
