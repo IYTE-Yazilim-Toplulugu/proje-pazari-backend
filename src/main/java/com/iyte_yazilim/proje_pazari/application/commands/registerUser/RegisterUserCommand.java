@@ -12,15 +12,15 @@ public record RegisterUserCommand(
                 @NotBlank(message = "Email is required")
                 @Email(message = "Email must be valid")
                 String email,
-
         @Schema(description = "Password", example = "SecurePassword123!")
-        @NotBlank(message = "Password is required")
-        @Size(min = 8, message = "Password must be at least 8 characters")
-        @Pattern(
-                regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
-                message = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
-        String password,
-
+                @NotBlank(message = "Password is required")
+                @Size(min = 8, message = "Password must be at least 8 characters")
+                @Pattern(
+                        regexp =
+                                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+                        message =
+                                "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
+                String password,
         @Schema(description = "First name", example = "John")
                 @NotBlank(message = "First name is required")
                 @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")

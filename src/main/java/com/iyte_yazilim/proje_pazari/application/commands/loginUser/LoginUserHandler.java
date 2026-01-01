@@ -1,7 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
-import java.util.List;
-
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -9,6 +7,7 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -50,16 +49,18 @@ public class LoginUserHandler
         }
 
         // --- 5. Generate JWT token ---
-        List<String> roles = List.of("USER"); // Default role, update when roles are added to UserEntity
+        List<String> roles =
+                List.of("USER"); // Default role, update when roles are added to UserEntity
         String token = jwtUtil.generateToken(user.getEmail(), roles, user.getId());
 
         // --- 6. Create result ---
-        var result = new LoginUserResult(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                token);
+        var result =
+                new LoginUserResult(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        token);
 
         // --- 7. Response ---
         return ApiResponse.success(result, "Login successful");
