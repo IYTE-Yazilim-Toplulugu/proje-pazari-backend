@@ -11,8 +11,6 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
 
     Optional<UserEntity> findByEmail(String email);
 
-    Optional<UserEntity> findByVerificationToken(String token);
-
     boolean existsByEmail(String email);
 
     @Query("SELECT COUNT(p) FROM ProjectEntity p WHERE p.owner.id = :userId")

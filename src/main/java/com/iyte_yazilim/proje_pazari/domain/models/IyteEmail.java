@@ -4,15 +4,14 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Value Object for IYTE email addresses
+ * Value Object for IYTE email addresses.
  *
- * <p>Enforces that email addresses must be from allowed IYTE domains.
- * Immutable and self-validating.
+ * <p>Enforces that email addresses must be from allowed IYTE domains. This is an immutable value
+ * object that encapsulates email validation logic within the domain layer.
  */
 public final class IyteEmail {
 
-    private static final List<String> ALLOWED_DOMAINS =
-            List.of("@std.iyte.edu.tr", "@iyte.edu.tr");
+    private static final List<String> ALLOWED_DOMAINS = List.of("@std.iyte.edu.tr", "@iyte.edu.tr");
 
     private final String value;
 
@@ -21,13 +20,18 @@ public final class IyteEmail {
     }
 
     /**
-     * Factory method to create IyteEmail from string
+     * Factory method to create an IyteEmail instance.
      *
      * @param email the email address to validate and wrap
      * @return IyteEmail instance
-     * @throws IllegalArgumentException if email is invalid or not from IYTE domain
+     * @throws IllegalArgumentException if email is invalid or not from an IYTE domain
      */
     public static IyteEmail of(String email) {
+        validate(email);
+        return new IyteEmail(email.trim());
+    }
+
+    private static void validate(String email) {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Email cannot be null or empty");
         }
@@ -42,8 +46,6 @@ public final class IyteEmail {
             throw new IllegalArgumentException(
                     "Email must be from @std.iyte.edu.tr or @iyte.edu.tr domain");
         }
-
-        return new IyteEmail(email.trim());
     }
 
     public String getValue() {
@@ -52,8 +54,12 @@ public final class IyteEmail {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         IyteEmail iyteEmail = (IyteEmail) o;
         return Objects.equals(value.toLowerCase(), iyteEmail.value.toLowerCase());
     }

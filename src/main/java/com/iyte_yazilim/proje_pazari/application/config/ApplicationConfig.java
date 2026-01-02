@@ -38,6 +38,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ApplicationConfig {
 
+    // ========== Domain Services ==========
+    @Bean
+    public com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService
+            verificationTokenService() {
+        return new com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService();
+    }
+
     // ========== Project Beans ==========
     @Bean
     public IValidator<CreateProjectCommand> createProjectValidator() {
@@ -78,6 +85,9 @@ public class ApplicationConfig {
     public IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>>
             registerUserHandler(
                     UserRepository userRepository,
+                    com.iyte_yazilim.proje_pazari.infrastructure.persistence
+                                    .EmailVerificationRepository
+                            emailVerificationRepository,
                     IValidator<RegisterUserCommand> validator,
                     RegisterUserMapper registerUserMapper,
                     com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper
@@ -88,6 +98,7 @@ public class ApplicationConfig {
                     org.springframework.context.ApplicationEventPublisher eventPublisher) {
         return new RegisterUserHandler(
                 userRepository,
+                emailVerificationRepository,
                 validator,
                 registerUserMapper,
                 userMapper,
@@ -99,32 +110,39 @@ public class ApplicationConfig {
     @Bean
     public IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> loginUserHandler(
             UserRepository userRepository,
+            com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository
+                    emailVerificationRepository,
             IValidator<LoginUserCommand> validator,
             org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
             com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil jwtUtil) {
-        return new LoginUserHandler(userRepository, validator, passwordEncoder, jwtUtil);
+        return new LoginUserHandler(
+                userRepository, emailVerificationRepository, validator, passwordEncoder, jwtUtil);
     }
 
     @Bean
     public IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler(
+            com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository
+                    emailVerificationRepository,
             UserRepository userRepository,
             com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService tokenService,
             com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper
                     userMapper) {
-        return new VerifyEmailHandler(userRepository, tokenService, userMapper);
+        return new VerifyEmailHandler(
+                emailVerificationRepository, userRepository, tokenService, userMapper);
     }
 
     @Bean
     public IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
             resendVerificationEmailHandler(
                     UserRepository userRepository,
+                    com.iyte_yazilim.proje_pazari.infrastructure.persistence
+                                    .EmailVerificationRepository
+                            emailVerificationRepository,
                     com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService
                             tokenService,
-                    org.springframework.context.ApplicationEventPublisher eventPublisher,
-                    com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper
-                            userMapper) {
+                    org.springframework.context.ApplicationEventPublisher eventPublisher) {
         return new ResendVerificationEmailHandler(
-                userRepository, tokenService, eventPublisher, userMapper);
+                userRepository, emailVerificationRepository, tokenService, eventPublisher);
     }
 
     // ========== User Query Beans ==========

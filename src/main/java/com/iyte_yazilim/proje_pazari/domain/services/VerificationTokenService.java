@@ -1,11 +1,13 @@
 package com.iyte_yazilim.proje_pazari.domain.services;
 
-import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
 
-@Service
+/**
+ * Domain service for email verification token operations.
+ *
+ * <p>Pure domain logic without framework dependencies.
+ */
 public class VerificationTokenService {
 
     private static final long EXPIRATION_HOURS = 24;
@@ -20,12 +22,5 @@ public class VerificationTokenService {
 
     public boolean isTokenExpired(LocalDateTime expirationDate) {
         return LocalDateTime.now().isAfter(expirationDate);
-    }
-
-    public String generateTokenWithExpiry(User user) {
-        String token = generateToken();
-        user.setVerificationToken(token);
-        user.setVerificationTokenExpiresAt(calculateExpirationDate());
-        return token;
     }
 }

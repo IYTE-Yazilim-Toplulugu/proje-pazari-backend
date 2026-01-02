@@ -8,8 +8,10 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -22,6 +24,7 @@ public class RegisterUserHandler
         implements IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>> {
 
     private final UserRepository userRepository;
+    private final EmailVerificationRepository emailVerificationRepository;
     private final IValidator<RegisterUserCommand> validator;
     private final RegisterUserMapper registerUserMapper;
     private final UserMapper userMapper;
@@ -51,20 +54,25 @@ public class RegisterUserHandler
         String hashedPassword = passwordEncoder.encode(command.password());
         domainUser.setPassword(hashedPassword);
 
-        // --- 4.5. Set email verification fields ---
-        domainUser.setEmailVerified(false);
-        String verificationToken = verificationTokenService.generateTokenWithExpiry(domainUser);
-
         // --- 5. Mapping (Domain -> Persistence) ---
         UserEntity persistenceUser = userMapper.domainToEntity(domainUser);
 
         // --- 6. Persistence ---
         UserEntity savedUser = userRepository.save(persistenceUser);
 
-        // --- 7. Mapping (Persistence -> Domain) ---
+        // --- 7. Create email verification record ---
+        String verificationToken = verificationTokenService.generateToken();
+        EmailVerificationEntity emailVerification = new EmailVerificationEntity();
+        emailVerification.setUserId(savedUser.getId());
+        emailVerification.setEmail(savedUser.getEmail());
+        emailVerification.setToken(verificationToken);
+        emailVerification.setExpiresAt(verificationTokenService.calculateExpirationDate());
+        emailVerificationRepository.save(emailVerification);
+
+        // --- 8. Mapping (Persistence -> Domain) ---
         User savedDomainUser = userMapper.entityToDomain(savedUser);
 
-        // --- 7.5. Publish verification event ---
+        // --- 9. Publish verification event ---
         eventPublisher.publishEvent(
                 new UserRegisteredEvent(
                         savedDomainUser.getId(),
@@ -72,10 +80,10 @@ public class RegisterUserHandler
                         savedDomainUser.getFirstName(),
                         verificationToken));
 
-        // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
+        // --- 10. Result Mapping (Domain Entity -> Result DTO) ---
         var result = registerUserMapper.domainToResult(savedDomainUser);
 
-        // --- 9. Response ---
+        // --- 11. Response ---
         return ApiResponse.created(
                 result,
                 "User registered successfully. Please check your email to verify your account.");

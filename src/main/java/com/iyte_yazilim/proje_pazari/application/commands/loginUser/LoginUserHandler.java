@@ -5,6 +5,7 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
@@ -18,6 +19,7 @@ public class LoginUserHandler
         implements IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> {
 
     private final UserRepository userRepository;
+    private final EmailVerificationRepository emailVerificationRepository;
     private final IValidator<LoginUserCommand> validator;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -49,7 +51,9 @@ public class LoginUserHandler
         }
 
         // --- 5. Check email verification ---
-        if (!user.isEmailVerified()) {
+        boolean isVerified =
+                emailVerificationRepository.existsByEmailAndVerifiedAtIsNotNull(user.getEmail());
+        if (!isVerified) {
             throw new EmailNotVerifiedException(
                     "Please verify your email before logging in. Check your inbox.");
         }
@@ -57,7 +61,7 @@ public class LoginUserHandler
         // --- 6. Generate JWT token ---
         String token = jwtUtil.generateToken(user.getEmail());
 
-        // --- 6. Create result ---
+        // --- 7. Create result ---
         var result =
                 new LoginUserResult(
                         user.getId(),
@@ -66,7 +70,7 @@ public class LoginUserHandler
                         user.getLastName(),
                         token);
 
-        // --- 7. Response ---
+        // --- 8. Response ---
         return ApiResponse.success(result, "Login successful");
     }
 }

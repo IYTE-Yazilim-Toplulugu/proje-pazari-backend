@@ -1,15 +1,15 @@
 package com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail;
 
 import com.github.f4b6a3.ulid.Ulid;
-import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.VerificationEmailRequestedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailAlreadyVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,9 +21,9 @@ public class ResendVerificationEmailHandler
         implements IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>> {
 
     private final UserRepository userRepository;
+    private final EmailVerificationRepository emailVerificationRepository;
     private final VerificationTokenService verificationTokenService;
     private final ApplicationEventPublisher eventPublisher;
-    private final UserMapper userMapper;
 
     @Override
     public ApiResponse<Void> handle(ResendVerificationEmailCommand command) {
@@ -32,20 +32,28 @@ public class ResendVerificationEmailHandler
                         .findByEmail(command.email())
                         .orElseThrow(() -> new UserNotFoundException(command.email()));
 
-        if (userEntity.isEmailVerified()) {
+        // Check if already verified
+        boolean isVerified =
+                emailVerificationRepository.existsByEmailAndVerifiedAtIsNotNull(command.email());
+        if (isVerified) {
             throw new EmailAlreadyVerifiedException("Email is already verified");
         }
 
-        // Map to domain
-        User user = userMapper.entityToDomain(userEntity);
+        // Find existing unverified verification or create new one
+        EmailVerificationEntity verification =
+                emailVerificationRepository
+                        .findByEmailAndVerifiedAtIsNull(command.email())
+                        .orElse(new EmailVerificationEntity());
 
         // Generate new token
-        String token = verificationTokenService.generateTokenWithExpiry(user);
+        String token = verificationTokenService.generateToken();
+        verification.setUserId(userEntity.getId());
+        verification.setEmail(userEntity.getEmail());
+        verification.setToken(token);
+        verification.setExpiresAt(verificationTokenService.calculateExpirationDate());
+        verification.setVerifiedAt(null);
 
-        // Update entity
-        userEntity.setVerificationToken(user.getVerificationToken());
-        userEntity.setVerificationTokenExpiresAt(user.getVerificationTokenExpiresAt());
-        userRepository.save(userEntity);
+        emailVerificationRepository.save(verification);
 
         // Publish event
         eventPublisher.publishEvent(
