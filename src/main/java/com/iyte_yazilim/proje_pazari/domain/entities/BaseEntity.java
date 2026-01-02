@@ -1,8 +1,6 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import lombok.Getter;
@@ -18,7 +16,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@MappedSuperclass
 public abstract class BaseEntity<TId> {
 
     protected TId id;
@@ -26,7 +23,7 @@ public abstract class BaseEntity<TId> {
     protected LocalDateTime createdAt;
     protected LocalDateTime updatedAt;
 
-    @Transient protected ArrayList<DomainEvent> domainEvents = new ArrayList<>();
+    protected ArrayList<DomainEvent> domainEvents = new ArrayList<>();
 
     protected DomainEvent addDomainEvent(DomainEvent domainEvent) {
         domainEvents.add(domainEvent);
