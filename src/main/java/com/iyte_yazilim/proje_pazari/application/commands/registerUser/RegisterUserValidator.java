@@ -20,6 +20,6 @@ public class RegisterUserValidator implements IValidator<RegisterUserCommand> {
             errors.add(e.getMessage());
         }
 
-        return errors.toArray(new String[0]);
+        return errors.toArray(String[]::new);
     }
 }

@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.verifyEmail;
 
-import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailAlreadyVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
@@ -24,7 +23,6 @@ public class VerifyEmailHandler
 
     private final EmailVerificationRepository emailVerificationRepository;
     private final UserRepository userRepository;
-    private final VerificationTokenService tokenService;
     private final UserMapper userMapper;
 
     @Override
