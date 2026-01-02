@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Application Update</title>
+</head>
+<body>
+    <h1>Application Update</h1>
+    <p>Dear <span th:text="${firstName} + ' ' + ${lastName}"></span>,</p>
+    <p>Thank you for your interest in <strong th:text="${projectTitle}"></strong>.</p>
+    <p>Unfortunately, your application was not accepted at this time.</p>
+    <a href="https://projepazari.com/projects">Browse Other Projects</a>
+</body>
+</html>
