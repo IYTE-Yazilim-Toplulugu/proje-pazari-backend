@@ -42,19 +42,19 @@ public class SearchController {
         List<ProjectDocument> documents =
                 results.getContent().stream().map(SearchHit::getContent).toList();
 
-        return ApiResponse.success(documents);
+        return ApiResponse.success(documents, "Projects retrieved successfully");
     }
 
     @GetMapping("/projects/suggest")
     public ApiResponse<List<String>> suggestProjects(
             @RequestParam @NotBlank @Size(min = 1, max = 100) String q) {
         List<String> suggestions = searchService.getSuggestions(q);
-        return ApiResponse.success(suggestions);
+        return ApiResponse.success(suggestions, "Suggestions retrieved successfully");
     }
 
     @GetMapping("/projects/statistics")
     public ApiResponse<Map<String, Long>> getStatistics() {
         Map<String, Long> stats = searchService.getProjectStatistics();
-        return ApiResponse.success(stats);
+        return ApiResponse.success(stats, "Statistics retrieved successfully");
     }
 }
