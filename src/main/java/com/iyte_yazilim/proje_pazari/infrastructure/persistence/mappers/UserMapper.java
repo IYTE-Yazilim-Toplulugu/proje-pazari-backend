@@ -21,5 +21,6 @@ public interface UserMapper {
             expression =
                     "java(userEntity.getId() != null ? com.github.f4b6a3.ulid.Ulid.from(userEntity.getId()) : null)")
     @Mapping(target = "domainEvents", ignore = true)
+    @Mapping(source = "isActive", target = "active")
     User entityToDomain(UserEntity userEntity);
 }

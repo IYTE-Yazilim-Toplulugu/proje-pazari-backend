@@ -17,6 +17,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public abstract class BaseEntity<TId> {
+
     protected TId id;
 
     protected LocalDateTime createdAt;

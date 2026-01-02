@@ -18,6 +18,7 @@ public interface RegisterUserMapper {
     @Mapping(target = "profilePictureUrl", ignore = true)
     @Mapping(target = "linkedinUrl", ignore = true)
     @Mapping(target = "githubUrl", ignore = true)
+    @Mapping(target = "active", constant = "true")
     User commandToDomain(RegisterUserCommand command);
 
     // Map Domain Entity -> Result DTO

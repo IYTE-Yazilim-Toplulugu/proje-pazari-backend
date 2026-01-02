@@ -1,15 +1,20 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
+import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +24,13 @@ public class RegisterUserHandler
         implements IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>> {
 
     private final UserRepository userRepository;
+    private final EmailVerificationRepository emailVerificationRepository;
     private final IValidator<RegisterUserCommand> validator;
     private final RegisterUserMapper registerUserMapper;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final VerificationTokenService verificationTokenService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public ApiResponse<RegisterUserResult> handle(RegisterUserCommand command) {
@@ -52,13 +60,32 @@ public class RegisterUserHandler
         // --- 6. Persistence ---
         UserEntity savedUser = userRepository.save(persistenceUser);
 
-        // --- 7. Mapping (Persistence -> Domain) ---
+        // --- 7. Create email verification record ---
+        String verificationToken = verificationTokenService.generateToken();
+        EmailVerificationEntity emailVerification = new EmailVerificationEntity();
+        emailVerification.setUserId(savedUser.getId());
+        emailVerification.setEmail(savedUser.getEmail());
+        emailVerification.setToken(verificationToken);
+        emailVerification.setExpiresAt(verificationTokenService.calculateExpirationDate());
+        emailVerificationRepository.save(emailVerification);
+
+        // --- 8. Mapping (Persistence -> Domain) ---
         User savedDomainUser = userMapper.entityToDomain(savedUser);
 
-        // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
+        // --- 9. Publish verification event ---
+        eventPublisher.publishEvent(
+                new UserRegisteredEvent(
+                        savedDomainUser.getId(),
+                        savedDomainUser.getEmail(),
+                        savedDomainUser.getFirstName(),
+                        verificationToken));
+
+        // --- 10. Result Mapping (Domain Entity -> Result DTO) ---
         var result = registerUserMapper.domainToResult(savedDomainUser);
 
-        // --- 9. Response ---
-        return ApiResponse.created(result, "User registered successfully");
+        // --- 11. Response ---
+        return ApiResponse.created(
+                result,
+                "User registered successfully. Please check your email to verify your account.");
     }
 }
