@@ -3,7 +3,6 @@ package com.iyte_yazilim.proje_pazari.application.mappers;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -26,6 +25,8 @@ public interface RegisterUserMapper {
     User commandToDomain(RegisterUserCommand command);
 
     // Map Domain Entity -> Result DTO
-    @Mapping(target = "userId", expression = "java(user.getId() != null ? user.getId().toString() : null)")
+    @Mapping(
+            target = "userId",
+            expression = "java(user.getId() != null ? user.getId().toString() : null)")
     RegisterUserResult domainToResult(User user);
 }

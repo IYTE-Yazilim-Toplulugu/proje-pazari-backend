@@ -6,5 +6,4 @@ public record CreateProjectCommandResult(
         String description,
         String ownerId,
         String[] teamMemberIds,
-        String[] tags) {
-}
+        String[] tags) {}

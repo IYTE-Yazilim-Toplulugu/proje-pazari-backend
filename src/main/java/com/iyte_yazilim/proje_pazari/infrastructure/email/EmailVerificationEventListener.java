@@ -2,6 +2,8 @@ package com.iyte_yazilim.proje_pazari.infrastructure.email;
 
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.VerificationEmailRequestedEvent;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +14,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 
 @Slf4j
 @Component
@@ -34,22 +33,14 @@ public class EmailVerificationEventListener {
     @EventListener
     public void handleUserRegistered(UserRegisteredEvent event) {
         log.info("Sending verification email to: {}", event.getEmail());
-        sendVerificationEmail(
-            event.getEmail(),
-            event.getFirstName(),
-            event.getVerificationToken()
-        );
+        sendVerificationEmail(event.getEmail(), event.getFirstName(), event.getVerificationToken());
     }
 
     @Async
     @EventListener
     public void handleVerificationEmailRequested(VerificationEmailRequestedEvent event) {
         log.info("Resending verification email to: {}", event.getEmail());
-        sendVerificationEmail(
-            event.getEmail(),
-            event.getFirstName(),
-            event.getVerificationToken()
-        );
+        sendVerificationEmail(event.getEmail(), event.getFirstName(), event.getVerificationToken());
     }
 
     private void sendVerificationEmail(String toEmail, String userName, String token) {

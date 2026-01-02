@@ -160,3 +160,26 @@ local-build: ## Build application locally
 	@echo "$(GREEN)Building application locally...$(NC)"
 	./gradlew build
 
+##@ Code Quality
+
+format: ## Format code with Google Java Format
+	@echo "$(GREEN)Formatting code with Google Java Format...$(NC)"
+	./gradlew spotlessApply
+
+format-check: ## Check code formatting
+	@echo "$(CYAN)Checking code formatting...$(NC)"
+	./gradlew spotlessCheck
+
+lint: format-check ## Alias for format-check
+
+coverage: ## Generate test coverage report
+	@echo "$(GREEN)Running tests and generating coverage report...$(NC)"
+	./gradlew test jacocoTestReport
+	@echo "$(CYAN)Coverage report available at: build/reports/jacoco/test/html/index.html$(NC)"
+
+coverage-verify: ## Verify code coverage meets minimum threshold
+	@echo "$(GREEN)Verifying code coverage...$(NC)"
+	./gradlew jacocoTestCoverageVerification
+
+quality: format-check test coverage ## Run all quality checks (format, test, coverage)
+

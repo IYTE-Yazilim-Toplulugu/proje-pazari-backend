@@ -11,12 +11,12 @@ import com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @RequiredArgsConstructor
-public class VerifyEmailHandler implements IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> {
+public class VerifyEmailHandler
+        implements IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> {
 
     private final UserRepository userRepository;
     private final VerificationTokenService tokenService;
@@ -25,8 +25,13 @@ public class VerifyEmailHandler implements IRequestHandler<VerifyEmailCommand, A
     @Override
     public ApiResponse<VerifyEmailResult> handle(VerifyEmailCommand command) {
         // Find user by verification token
-        UserEntity userEntity = userRepository.findByVerificationToken(command.token())
-                .orElseThrow(() -> new InvalidVerificationTokenException("Invalid verification token"));
+        UserEntity userEntity =
+                userRepository
+                        .findByVerificationToken(command.token())
+                        .orElseThrow(
+                                () ->
+                                        new InvalidVerificationTokenException(
+                                                "Invalid verification token"));
 
         // Check if already verified
         if (userEntity.isEmailVerified()) {
@@ -47,11 +52,9 @@ public class VerifyEmailHandler implements IRequestHandler<VerifyEmailCommand, A
         UserEntity savedEntity = userRepository.save(userEntity);
         User savedUser = userMapper.entityToDomain(savedEntity);
 
-        VerifyEmailResult result = new VerifyEmailResult(
-                savedUser.getId(),
-                savedUser.getEmail(),
-                "Email verified successfully"
-        );
+        VerifyEmailResult result =
+                new VerifyEmailResult(
+                        savedUser.getId(), savedUser.getEmail(), "Email verified successfully");
 
         return ApiResponse.success(result, "Email verified successfully");
     }

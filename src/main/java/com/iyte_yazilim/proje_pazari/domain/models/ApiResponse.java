@@ -1,17 +1,15 @@
 package com.iyte_yazilim.proje_pazari.domain.models;
 
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Getter;
-
+import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import java.time.LocalDateTime;
+import lombok.Getter;
 
 /**
  * ApiResponse
  *
- * Represents a standardized HTTP response body.
- * Adheres to Clean Architecture by decoupling internal logic from external JSON
- * structure.
+ * <p>Represents a standardized HTTP response body. Adheres to Clean Architecture by decoupling
+ * internal logic from external JSON structure.
  *
  * @param <T> the type of data contained in the response
  */
@@ -76,5 +74,13 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> noContent(String message) {
         return new ApiResponse<>(null, message, ResponseCode.NO_CONTENT);
+    }
+
+    public static <T> ApiResponse<T> validationError(String message) {
+        return new ApiResponse<>(null, message, ResponseCode.VALIDATION_ERROR);
+    }
+
+    public static <T> ApiResponse<T> error(String message) {
+        return new ApiResponse<>(null, message, ResponseCode.INTERNAL_SERVER_ERROR);
     }
 }

@@ -1,9 +1,11 @@
 plugins {
-	  id 'java'
-	  id 'org.springframework.boot' version '4.0.0'
-	  id 'io.spring.dependency-management' version '1.1.7'
-	  id 'eclipse'
-	  id 'idea'
+    id 'java'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'eclipse'
+    id 'idea'
+    id 'jacoco'
+    id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = 'com.example'
@@ -75,6 +77,61 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+// Jacoco configuration for code coverage
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/config/**',
+                '**/dto/**',
+                '**/dtos/**',
+                '**/models/**',
+                '**/*Application.class',
+                '**/infrastructure/persistence/models/**'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.70
+            }
+        }
+    }
+}
+
+// Spotless configuration - Google Java Format with 4-space indentation (AOSP style)
+spotless {
+    java {
+        target 'src/**/*.java'
+        googleJavaFormat('1.19.1').aosp()  // AOSP style uses 4-space indentation
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    format 'misc', {
+        target '*.gradle', '*.md', '.gitignore'
+        trimTrailingWhitespace()
+        indentWithSpaces(4)  // Changed to 4 spaces
+        endWithNewline()
+    }
 }
 
 // Configure annotation processing for IDEs

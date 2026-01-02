@@ -11,5 +11,4 @@ public class ProjePazariApplication {
     public static void main(String[] args) {
         SpringApplication.run(ProjePazariApplication.class, args);
     }
-
 }

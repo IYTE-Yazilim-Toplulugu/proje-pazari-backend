@@ -31,31 +31,40 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
 
 @Configuration
 public class ApplicationConfig {
 
     // ========== Project Beans ==========
+    @Bean
     public IValidator<CreateProjectCommand> createProjectValidator() {
         return new CreateProjectValidator();
     }
 
     @Bean
-    public IRequestHandler<CreateProjectCommand, ApiResponse<CreateProjectCommandResult>> createProjectHandler(
-            ProjectRepository projectRepository,
-            UserRepository userRepository,
-            IValidator<CreateProjectCommand> validator,
-            CreateProjectMapper createProjectMapper,
-            ProjectMapper projectMapper,
-            com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper userMapper) {
-        return new CreateProjectHandler(projectRepository, userRepository, validator, createProjectMapper, projectMapper, userMapper);
+    public IRequestHandler<CreateProjectCommand, ApiResponse<CreateProjectCommandResult>>
+            createProjectHandler(
+                    ProjectRepository projectRepository,
+                    UserRepository userRepository,
+                    IValidator<CreateProjectCommand> validator,
+                    CreateProjectMapper createProjectMapper,
+                    ProjectMapper projectMapper,
+                    com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper
+                            userMapper) {
+        return new CreateProjectHandler(
+                projectRepository,
+                userRepository,
+                validator,
+                createProjectMapper,
+                projectMapper,
+                userMapper);
     }
 
     // ========== User Auth Beans ==========
+    @Bean
     public IValidator<RegisterUserCommand> registerUserValidator() {
         return new RegisterUserValidator();
     }
@@ -66,15 +75,25 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>> registerUserHandler(
-            UserRepository userRepository,
-            IValidator<RegisterUserCommand> validator,
-            RegisterUserMapper registerUserMapper,
-            com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper userMapper,
-            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
-            com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService verificationTokenService,
-            org.springframework.context.ApplicationEventPublisher eventPublisher) {
-        return new RegisterUserHandler(userRepository, validator, registerUserMapper, userMapper, passwordEncoder, verificationTokenService, eventPublisher);
+    public IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>>
+            registerUserHandler(
+                    UserRepository userRepository,
+                    IValidator<RegisterUserCommand> validator,
+                    RegisterUserMapper registerUserMapper,
+                    com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper
+                            userMapper,
+                    org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+                    com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService
+                            verificationTokenService,
+                    org.springframework.context.ApplicationEventPublisher eventPublisher) {
+        return new RegisterUserHandler(
+                userRepository,
+                validator,
+                registerUserMapper,
+                userMapper,
+                passwordEncoder,
+                verificationTokenService,
+                eventPublisher);
     }
 
     @Bean
@@ -90,19 +109,22 @@ public class ApplicationConfig {
     public IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler(
             UserRepository userRepository,
             com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService tokenService,
-            com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper userMapper
-    ) {
+            com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper
+                    userMapper) {
         return new VerifyEmailHandler(userRepository, tokenService, userMapper);
     }
 
     @Bean
-    public IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>> resendVerificationEmailHandler(
-            UserRepository userRepository,
-            com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService tokenService,
-            org.springframework.context.ApplicationEventPublisher eventPublisher,
-            com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper userMapper
-    ) {
-        return new ResendVerificationEmailHandler(userRepository, tokenService, eventPublisher, userMapper);
+    public IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
+            resendVerificationEmailHandler(
+                    UserRepository userRepository,
+                    com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService
+                            tokenService,
+                    org.springframework.context.ApplicationEventPublisher eventPublisher,
+                    com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper
+                            userMapper) {
+        return new ResendVerificationEmailHandler(
+                userRepository, tokenService, eventPublisher, userMapper);
     }
 
     // ========== User Query Beans ==========

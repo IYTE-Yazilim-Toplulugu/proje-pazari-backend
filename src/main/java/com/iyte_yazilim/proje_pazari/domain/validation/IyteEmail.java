@@ -12,6 +12,8 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = IyteEmailValidator.class)
 public @interface IyteEmail {
     String message() default "Email must be from @std.iyte.edu.tr or @iyte.edu.tr domain";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }
