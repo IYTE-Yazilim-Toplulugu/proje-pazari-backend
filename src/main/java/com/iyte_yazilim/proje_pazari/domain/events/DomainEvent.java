@@ -20,29 +20,31 @@ public class DomainEvent {
 
     @Override
     public String toString() {
-        return "DomainEvent{" +
-                "eventType='" + eventType + '\'' +
-                ", entityId='" + entityId + '\'' +
-                ", entityType='" + entityType + '\'' +
-                ", timestamp='" + timestamp + '\'' +
-                '}';
+        return "DomainEvent{"
+                + "eventType='"
+                + eventType
+                + '\''
+                + ", entityId='"
+                + entityId
+                + '\''
+                + ", entityType='"
+                + entityType
+                + '\''
+                + ", timestamp='"
+                + timestamp
+                + '\''
+                + '}';
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof DomainEvent))
-            return false;
+        if (this == o) return true;
+        if (!(o instanceof DomainEvent)) return false;
         DomainEvent that = (DomainEvent) o;
-        return eventType.equals(that.eventType) &&
-
-                entityId.equals(that
-
-                        .entityId)
-                &&
-                entityType.equals(that.entityType) &&
-                timestamp.equals(that.timestamp);
+        return eventType.equals(that.eventType)
+                && entityId.equals(that.entityId)
+                && entityType.equals(that.entityType)
+                && timestamp.equals(that.timestamp);
     }
 
     @Override

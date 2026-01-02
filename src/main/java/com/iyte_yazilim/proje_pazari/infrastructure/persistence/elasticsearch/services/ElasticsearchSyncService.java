@@ -6,18 +6,17 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDo
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserDocument;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Getter
@@ -27,7 +26,7 @@ public class ElasticsearchSyncService {
 
     private final ProjectRepository projectRepository;
     private final ProjectSearchRepository projectSearchRepository;
-    private final ProjectDocumentMapper mapper;// TODO: Create mapper.
+    private final ProjectDocumentMapper mapper; // TODO: Create mapper.
     private ElasticsearchOperations elasticsearchOperations;
 
     @PostConstruct
@@ -45,8 +44,13 @@ public class ElasticsearchSyncService {
     }
 
     public void indexProject(String projectId) {
-        ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ProjectNotFoundException(projectId));// TODO: Create exception.
+        ProjectEntity project =
+                projectRepository
+                        .findById(projectId)
+                        .orElseThrow(
+                                () ->
+                                        new ProjectNotFoundException(
+                                                projectId)); // TODO: Create exception.
 
         ProjectDocument document = mapper.toDocument(project);
         projectSearchRepository.save(document);
@@ -67,9 +71,8 @@ public class ElasticsearchSyncService {
         do {
             page = projectRepository.findAll(PageRequest.of(pageNumber, batchSize));
 
-            List<ProjectDocument> documents = page.getContent().stream()
-                    .map(mapper::toDocument)
-                    .collect(Collectors.toList());
+            List<ProjectDocument> documents =
+                    page.getContent().stream().map(mapper::toDocument).collect(Collectors.toList());
 
             projectSearchRepository.saveAll(documents);
             pageNumber++;
