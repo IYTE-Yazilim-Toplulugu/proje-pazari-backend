@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
+import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
@@ -9,7 +10,6 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.converters.UlidConverter;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
@@ -126,13 +126,12 @@ public class RegisterUserHandler
         // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
         var result = registerUserMapper.domainToResult(savedDomainUser);
 
-        String verificationToken = UUID.randomUUID().toString();
+        String verificationToken = Ulid.fast().toString();
 
-        UlidConverter ulidConverter = new UlidConverter();
-        // Publish event
+        // Publish event for side effects (email sending handled by EmailEventListener)
         applicationEventPublisher.publishEvent(
                 new UserRegisteredEvent(
-                        ulidConverter.convertToDatabaseColumn(savedDomainUser.getId()),
+                        savedDomainUser.getId().toString(),
                         savedDomainUser.getEmail(),
                         savedDomainUser.getFirstName(),
                         verificationToken,
