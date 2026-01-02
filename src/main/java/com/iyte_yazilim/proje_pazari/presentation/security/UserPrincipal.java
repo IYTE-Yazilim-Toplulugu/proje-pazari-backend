@@ -12,9 +12,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 @AllArgsConstructor
 public class UserPrincipal implements UserDetails {
 
-    private String userId;
-    private String email;
-    private String role;
+    private final String userId;
+    private final String email;
+    private final String role;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

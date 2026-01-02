@@ -71,7 +71,14 @@ public class JwtUtil {
         claims.put("userId", userId);
         claims.put("email", email);
         claims.put("role", role);
-        return createToken(claims, email);
+
+        return Jwts.builder()
+                .claims(claims)
+                .subject(email)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
+                .compact();
     }
 
     public String generateToken(String username) {
@@ -92,5 +99,21 @@ public class JwtUtil {
     public Boolean validateToken(String token, String username) {
         final String extractedUsername = extractUsername(token);
         return (extractedUsername.equals(username) && !isTokenExpired(token));
+    }
+
+    public Boolean validateToken(String token) {
+        try {
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public UserPrincipal extractUserPrincipal(String token) {
+        Claims claims = extractAllClaims(token);
+        return new UserPrincipal(
+                claims.get("userId", String.class),
+                claims.get("email", String.class),
+                claims.get("role", String.class));
     }
 }
