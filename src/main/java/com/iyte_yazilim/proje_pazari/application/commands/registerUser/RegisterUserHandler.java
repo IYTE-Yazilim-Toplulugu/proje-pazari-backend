@@ -1,13 +1,13 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
+import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
-import com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;

@@ -39,12 +39,7 @@ import org.springframework.context.annotation.Configuration;
 public class ApplicationConfig {
 
     // ========== Domain Services ==========
-    @Bean
-    public com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService
-            verificationTokenService() {
-        return new com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService();
-    }
-
+    // VerificationTokenService is now a @Service component, no manual bean needed
     // ========== Project Beans ==========
     @Bean
     public IValidator<CreateProjectCommand> createProjectValidator() {
@@ -93,7 +88,7 @@ public class ApplicationConfig {
                     com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper
                             userMapper,
                     org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
-                    com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService
+                    com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService
                             verificationTokenService,
                     org.springframework.context.ApplicationEventPublisher eventPublisher) {
         return new RegisterUserHandler(
@@ -124,7 +119,8 @@ public class ApplicationConfig {
             com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository
                     emailVerificationRepository,
             UserRepository userRepository,
-            com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService tokenService,
+            com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService
+                    tokenService,
             com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper
                     userMapper) {
         return new VerifyEmailHandler(
@@ -138,7 +134,7 @@ public class ApplicationConfig {
                     com.iyte_yazilim.proje_pazari.infrastructure.persistence
                                     .EmailVerificationRepository
                             emailVerificationRepository,
-                    com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService
+                    com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService
                             tokenService,
                     org.springframework.context.ApplicationEventPublisher eventPublisher) {
         return new ResendVerificationEmailHandler(

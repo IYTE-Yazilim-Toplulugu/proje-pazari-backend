@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.verifyEmail;
 
+import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailAlreadyVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
@@ -7,7 +8,6 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredE
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;
-import com.iyte_yazilim.proje_pazari.domain.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;

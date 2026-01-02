@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.infrastructure.email;
+package com.iyte_yazilim.proje_pazari.application.eventhandlers;
 
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.VerificationEmailRequestedEvent;
@@ -18,7 +18,7 @@ import org.thymeleaf.context.Context;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EmailVerificationEventListener {
+public class EmailVerificationEventHandler {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
