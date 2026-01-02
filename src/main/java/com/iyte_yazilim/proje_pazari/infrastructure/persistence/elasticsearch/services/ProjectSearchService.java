@@ -81,6 +81,41 @@ public class ProjectSearchService {
         return SearchHitSupport.searchPageFor(searchHits, pageable); // Returns SearchPage
     }
 
+    public List<String> getSuggestions(String prefix) {
+        Query query =
+                NativeQuery.builder()
+                        .withQuery(
+                                q ->
+                                        q.bool(
+                                                b ->
+                                                        b.should(
+                                                                        s ->
+                                                                                s.matchPhrasePrefix(
+                                                                                        m ->
+                                                                                                m.field(
+                                                                                                                "title")
+                                                                                                        .query(
+                                                                                                                prefix)))
+                                                                .should(
+                                                                        s ->
+                                                                                s.matchPhrasePrefix(
+                                                                                        m ->
+                                                                                                m.field(
+                                                                                                                "summary")
+                                                                                                        .query(
+                                                                                                                prefix)))))
+                        .withMaxResults(10)
+                        .build();
+
+        SearchHits<ProjectDocument> searchHits =
+                elasticsearchOperations.search(query, ProjectDocument.class);
+
+        return searchHits.getSearchHits().stream()
+                .map(hit -> hit.getContent().getTitle())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
     public Map<String, Long> getProjectStatistics() {
         // Aggregation example
         Query query = NativeQuery.builder()
