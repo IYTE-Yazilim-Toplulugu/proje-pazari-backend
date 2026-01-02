@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch.s
 
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectSearchRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectDocumentMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserDocument;
@@ -27,7 +28,7 @@ public class ElasticsearchSyncService {
 
     private final ProjectRepository projectRepository;
     private final ProjectSearchRepository projectSearchRepository;
-    private final ProjectDocumentMapper mapper;// TODO: Create mapper.
+    private final ProjectDocumentMapper mapper;
     private ElasticsearchOperations elasticsearchOperations;
 
     @PostConstruct
