@@ -49,6 +49,10 @@ public class UpdateUserProfileHandler
         if (command.githubUrl() != null) {
             user.setGithubUrl(command.githubUrl().isBlank() ? null : command.githubUrl());
         }
+        // NEW: Update preferred language
+        if (command.preferredLanguage() != null) {
+            user.setPreferredLanguage(command.preferredLanguage());
+        }
 
         UserEntity savedUser = userRepository.save(user);
         UserDto userDto = userDtoMapper.toDto(savedUser);
