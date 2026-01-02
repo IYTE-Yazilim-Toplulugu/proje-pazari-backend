@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.changePassword;
 
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -16,6 +17,7 @@ public class ChangePasswordHandler
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MessageService messageService; // EKLENMELI
 
     @Override
     @Transactional
@@ -29,25 +31,26 @@ public class ChangePasswordHandler
         UserEntity user = userRepository.findById(command.userId()).orElse(null);
 
         if (user == null) {
-            return ApiResponse.notFound("User not found");
+            return ApiResponse.notFound(messageService.getMessage("user.not.found"));
         }
 
         // Verify current password
         if (!passwordEncoder.matches(command.currentPassword(), user.getPassword())) {
-            return ApiResponse.validationError("Current password is incorrect");
+            return ApiResponse.validationError(
+                    messageService.getMessage("user.password.current.incorrect"));
         }
 
         // Validate new password strength
         if (!isPasswordStrong(command.newPassword())) {
             return ApiResponse.validationError(
-                    "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
+                    messageService.getMessage("user.password.weak"));
         }
 
         // Hash and save new password
         user.setPassword(passwordEncoder.encode(command.newPassword()));
         userRepository.save(user);
 
-        return ApiResponse.success(null, "Password changed successfully");
+        return ApiResponse.success(null, messageService.getMessage("user.password.changed"));
     }
 
     private boolean isPasswordStrong(String password) {

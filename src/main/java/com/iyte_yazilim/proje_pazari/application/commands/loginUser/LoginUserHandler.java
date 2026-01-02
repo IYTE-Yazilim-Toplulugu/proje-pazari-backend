@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -20,6 +21,7 @@ public class LoginUserHandler
     private final IValidator<LoginUserCommand> validator;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final MessageService messageService;
 
     @Override
     public ApiResponse<LoginUserResult> handle(LoginUserCommand command) {
@@ -34,17 +36,17 @@ public class LoginUserHandler
         // --- 2. Find user by email ---
         UserEntity user = userRepository.findByEmail(command.email()).orElse(null);
         if (user == null) {
-            return ApiResponse.badRequest("Invalid email or password");
+            return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
         }
 
         // --- 3. Check if account is active ---
         if (user.getIsActive() == null || !user.getIsActive()) {
-            return ApiResponse.badRequest("Account has been deactivated");
+            return ApiResponse.badRequest(messageService.getMessage("auth.account.deactivated"));
         }
 
         // --- 4. Verify password with BCrypt ---
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
-            return ApiResponse.badRequest("Invalid email or password");
+            return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
         }
 
         // --- 5. Generate JWT token ---
@@ -59,7 +61,7 @@ public class LoginUserHandler
                         user.getLastName(),
                         token);
 
-        // --- 7. Response ---
-        return ApiResponse.success(result, "Login successful");
+        // --- 7. Response with localized message ---
+        return ApiResponse.success(result, messageService.getMessage("auth.login.success"));
     }
 }
