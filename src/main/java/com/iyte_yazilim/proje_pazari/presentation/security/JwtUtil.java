@@ -29,6 +29,21 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
+    // Add userId claim extraction
+    public String extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", String.class));
+    }
+
+    // Add email claim extraction
+    public String extractEmail(String token) {
+        return extractClaim(token, claims -> claims.get("email", String.class));
+    }
+
+    // Add role claim extraction
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
@@ -48,6 +63,15 @@ public class JwtUtil {
 
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
+    }
+
+    // Update token generation with userId, email, and role claims
+    public String generateToken(String userId, String email, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("email", email);
+        claims.put("role", role);
+        return createToken(claims, email);
     }
 
     public String generateToken(String username) {
