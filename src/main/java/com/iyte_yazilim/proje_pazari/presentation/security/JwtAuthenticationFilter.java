@@ -11,9 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -24,7 +21,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -49,27 +45,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (username != null
                     && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-                if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
+                // Extract claims from token
+                String userId = jwtUtil.extractUserId(jwt);
+                String email = jwtUtil.extractEmail(jwt);
+                String role = jwtUtil.extractRole(jwt);
+
+                if (jwtUtil.validateToken(jwt, username)) {
+                    // Create UserPrincipal with all claims
+                    UserPrincipal userPrincipal = new UserPrincipal(userId, email, role);
+
+                    // Update SecurityContext with UserPrincipal
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
-                                    userDetails, null, userDetails.getAuthorities());
+                                    userPrincipal, null, userPrincipal.getAuthorities());
                     authToken.setDetails(
                             new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
         } catch (JwtException e) {
-            // JWT validation failed (malformed token, expired token, invalid signature, etc.)
-            // Log for security monitoring but continue filter chain without authentication
             log.warn(
                     "JWT authentication failed due to invalid token: {}",
                     e.getClass().getSimpleName());
-        } catch (UsernameNotFoundException e) {
-            // User not found in the system
-            // Log for security monitoring but continue filter chain without authentication
-            log.warn("JWT authentication failed: {}", e.getClass().getSimpleName());
         }
 
         filterChain.doFilter(request, response);
