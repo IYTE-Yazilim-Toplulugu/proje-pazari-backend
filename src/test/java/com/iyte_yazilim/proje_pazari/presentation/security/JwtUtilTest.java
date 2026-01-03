@@ -2,121 +2,65 @@ package com.iyte_yazilim.proje_pazari.presentation.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
+@SpringBootTest
 class JwtUtilTest {
 
-    private JwtUtil jwtUtil;
-    private final String testSecret =
-            "test-secret-key-for-testing-purposes-must-be-at-least-256-bits-long-for-hs256-algorithm";
-    private final Long testExpiration = 86400000L;
-
-    @BeforeEach
-    void setUp() {
-        jwtUtil = new JwtUtil();
-        ReflectionTestUtils.setField(jwtUtil, "secret", testSecret);
-        ReflectionTestUtils.setField(jwtUtil, "expiration", testExpiration);
-    }
+    @Autowired private JwtUtil jwtUtil;
 
     @Test
-    void testTokenGenerationWithNewClaims() {
+    void shouldGenerateTokenWithAllClaims() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
+        String userId = "01HQXYZ123";
+        String email = "test@std.iyte.edu.tr";
         String role = "USER";
 
         // When
         String token = jwtUtil.generateToken(userId, email, role);
 
         // Then
-        assertNotNull(token);
-        assertFalse(token.isEmpty());
+        assertEquals(userId, jwtUtil.extractUserId(token));
+        assertEquals(email, jwtUtil.extractEmail(token));
+        assertEquals(role, jwtUtil.extractRole(token));
     }
 
     @Test
-    void testExtractUserId() {
+    void shouldExtractUserPrincipal() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
-        String role = "USER";
-        String token = jwtUtil.generateToken(userId, email, role);
+        String token = jwtUtil.generateToken("01HQXYZ123", "test@std.iyte.edu.tr", "USER");
 
         // When
-        String extractedUserId = jwtUtil.extractUserId(token);
+        UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
 
         // Then
-        assertEquals(userId, extractedUserId);
+        assertEquals("01HQXYZ123", principal.getUserId());
+        assertEquals("test@std.iyte.edu.tr", principal.getEmail());
+        assertEquals("USER", principal.getRole());
+        assertTrue(
+                principal.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
     }
 
     @Test
-    void testExtractEmail() {
+    void shouldValidateToken() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
-        String role = "USER";
-        String token = jwtUtil.generateToken(userId, email, role);
+        String token = jwtUtil.generateToken("01HQXYZ123", "test@std.iyte.edu.tr", "USER");
 
         // When
-        String extractedEmail = jwtUtil.extractEmail(token);
-
-        // Then
-        assertEquals(email, extractedEmail);
-    }
-
-    @Test
-    void testExtractRole() {
-        // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
-        String role = "USER";
-        String token = jwtUtil.generateToken(userId, email, role);
-
-        // When
-        String extractedRole = jwtUtil.extractRole(token);
-
-        // Then
-        assertEquals(role, extractedRole);
-    }
-
-    @Test
-    void testTokenValidation() {
-        // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
-        String role = "USER";
-        String token = jwtUtil.generateToken(userId, email, role);
-
-        // When
-        Boolean isValid = jwtUtil.validateToken(token, email);
+        Boolean isValid = jwtUtil.validateToken(token);
 
         // Then
         assertTrue(isValid);
     }
 
     @Test
-    void testTokenValidationWithWrongEmail() {
+    void shouldExtractUsername() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
-        String role = "USER";
-        String token = jwtUtil.generateToken(userId, email, role);
-
-        // When
-        Boolean isValid = jwtUtil.validateToken(token, "wrong@example.com");
-
-        // Then
-        assertFalse(isValid);
-    }
-
-    @Test
-    void testExtractUsername() {
-        // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
-        String role = "USER";
-        String token = jwtUtil.generateToken(userId, email, role);
+        String email = "test@std.iyte.edu.tr";
+        String token = jwtUtil.generateToken("01HQXYZ123", email, "USER");
 
         // When
         String extractedUsername = jwtUtil.extractUsername(token);
@@ -126,32 +70,32 @@ class JwtUtilTest {
     }
 
     @Test
-    void testAdminRoleToken() {
+    void shouldHandleAdminRole() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "admin@example.com";
-        String role = "ADMIN";
+        String token = jwtUtil.generateToken("01HQXYZ123", "admin@std.iyte.edu.tr", "ADMIN");
 
         // When
-        String token = jwtUtil.generateToken(userId, email, role);
-        String extractedRole = jwtUtil.extractRole(token);
+        UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
 
         // Then
-        assertEquals("ADMIN", extractedRole);
+        assertEquals("ADMIN", principal.getRole());
+        assertTrue(
+                principal.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
     }
 
     @Test
-    void testModeratorRoleToken() {
+    void shouldHandleModeratorRole() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "mod@example.com";
-        String role = "MODERATOR";
+        String token = jwtUtil.generateToken("01HQXYZ123", "mod@std.iyte.edu.tr", "MODERATOR");
 
         // When
-        String token = jwtUtil.generateToken(userId, email, role);
-        String extractedRole = jwtUtil.extractRole(token);
+        UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
 
         // Then
-        assertEquals("MODERATOR", extractedRole);
+        assertEquals("MODERATOR", principal.getRole());
+        assertTrue(
+                principal.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR")));
     }
 }

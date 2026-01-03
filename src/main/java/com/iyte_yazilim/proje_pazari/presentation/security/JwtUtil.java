@@ -41,7 +41,8 @@ public class JwtUtil {
 
     // Add role claim extraction
     public String extractRole(String token) {
-        return extractClaim(token, claims -> claims.get("role", String.class));
+        String role = extractClaim(token, claims -> claims.get("role", String.class));
+        return role != null ? role : "USER"; // Default to USER if role claim missing
     }
 
     public Date extractExpiration(String token) {

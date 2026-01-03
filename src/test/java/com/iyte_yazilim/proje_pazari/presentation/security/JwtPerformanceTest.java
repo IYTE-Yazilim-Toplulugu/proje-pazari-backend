@@ -2,29 +2,20 @@ package com.iyte_yazilim.proje_pazari.presentation.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
+@SpringBootTest
 class JwtPerformanceTest {
 
-    private JwtUtil jwtUtil;
-    private final String testSecret =
-            "test-secret-key-for-testing-purposes-must-be-at-least-256-bits-long-for-hs256-algorithm";
-    private final Long testExpiration = 86400000L;
-
-    @BeforeEach
-    void setUp() {
-        jwtUtil = new JwtUtil();
-        ReflectionTestUtils.setField(jwtUtil, "secret", testSecret);
-        ReflectionTestUtils.setField(jwtUtil, "expiration", testExpiration);
-    }
+    @Autowired private JwtUtil jwtUtil;
 
     @Test
-    void testTokenGenerationPerformance() {
+    void shouldGenerateTokensQuickly() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
+        String userId = "01HQXYZ123";
+        String email = "test@std.iyte.edu.tr";
         String role = "USER";
         int iterations = 1000;
 
@@ -39,22 +30,20 @@ class JwtPerformanceTest {
         // Then
         System.out.println("Generated " + iterations + " tokens in " + duration + "ms");
         System.out.println("Average time per token: " + (duration / (double) iterations) + "ms");
-        assertTrue(duration < 5000, "Token generation should be fast");
+        assertTrue(
+                duration < 5000, "Token generation should be fast (< 5 seconds for 1000 tokens)");
     }
 
     @Test
-    void testTokenValidationPerformance() {
+    void shouldValidateTokensQuickly() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
-        String role = "USER";
-        String token = jwtUtil.generateToken(userId, email, role);
+        String token = jwtUtil.generateToken("01HQXYZ123", "test@std.iyte.edu.tr", "USER");
         int iterations = 1000;
 
         // When
         long startTime = System.currentTimeMillis();
         for (int i = 0; i < iterations; i++) {
-            jwtUtil.validateToken(token, email);
+            jwtUtil.validateToken(token);
         }
         long endTime = System.currentTimeMillis();
         long duration = endTime - startTime;
@@ -63,16 +52,14 @@ class JwtPerformanceTest {
         System.out.println("Validated " + iterations + " tokens in " + duration + "ms");
         System.out.println(
                 "Average time per validation: " + (duration / (double) iterations) + "ms");
-        assertTrue(duration < 5000, "Token validation should be fast");
+        assertTrue(
+                duration < 5000, "Token validation should be fast (< 5 seconds for 1000 tokens)");
     }
 
     @Test
-    void testClaimsExtractionPerformance() {
+    void shouldExtractClaimsQuickly() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
-        String role = "USER";
-        String token = jwtUtil.generateToken(userId, email, role);
+        String token = jwtUtil.generateToken("01HQXYZ123", "test@std.iyte.edu.tr", "USER");
         int iterations = 1000;
 
         // When
@@ -89,41 +76,32 @@ class JwtPerformanceTest {
         System.out.println("Extracted claims " + iterations + " times in " + duration + "ms");
         System.out.println(
                 "Average time per extraction: " + (duration / (double) iterations) + "ms");
-        assertTrue(duration < 5000, "Claims extraction should be fast");
+        assertTrue(
+                duration < 5000,
+                "Claims extraction should be fast (< 5 seconds for 1000 iterations)");
     }
 
     @Test
-    void testOldVsNewTokenGeneration() {
+    void shouldExtractUserPrincipalQuickly() {
         // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "test@example.com";
-        String role = "USER";
+        String token = jwtUtil.generateToken("01HQXYZ123", "test@std.iyte.edu.tr", "USER");
         int iterations = 1000;
 
-        // Test old method (single parameter)
-        long oldStartTime = System.currentTimeMillis();
+        // When
+        long startTime = System.currentTimeMillis();
         for (int i = 0; i < iterations; i++) {
-            jwtUtil.generateToken(email);
+            jwtUtil.extractUserPrincipal(token);
         }
-        long oldEndTime = System.currentTimeMillis();
-        long oldDuration = oldEndTime - oldStartTime;
-
-        // Test new method (with claims)
-        long newStartTime = System.currentTimeMillis();
-        for (int i = 0; i < iterations; i++) {
-            jwtUtil.generateToken(userId, email, role);
-        }
-        long newEndTime = System.currentTimeMillis();
-        long newDuration = newEndTime - newStartTime;
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
 
         // Then
-        System.out.println("Old method: " + oldDuration + "ms");
-        System.out.println("New method: " + newDuration + "ms");
-        System.out.println("Difference: " + (newDuration - oldDuration) + "ms");
-
-        // The difference should be minimal (claims don't significantly impact performance)
+        System.out.println(
+                "Extracted UserPrincipal " + iterations + " times in " + duration + "ms");
+        System.out.println(
+                "Average time per extraction: " + (duration / (double) iterations) + "ms");
         assertTrue(
-                Math.abs(newDuration - oldDuration) < 1000,
-                "Performance difference should be minimal");
+                duration < 5000,
+                "UserPrincipal extraction should be fast (< 5 seconds for 1000 iterations)");
     }
 }
