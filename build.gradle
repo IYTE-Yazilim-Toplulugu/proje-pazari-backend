@@ -48,6 +48,15 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
+    // Spring Boot Starter Mail (email functionality)
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // Thymeleaf template engine
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // Optional: Thymeleaf Layout Dialect
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
