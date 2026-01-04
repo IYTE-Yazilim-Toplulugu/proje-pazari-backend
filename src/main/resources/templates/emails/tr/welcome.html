@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoş Geldiniz - Proje Pazarı</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #3498db;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        .highlight {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <div class="logo">Proje Pazarı</div>
+        <p>Projelerin ve İşbirliklerin Buluşma Noktası</p>
+    </div>
+
+    <h1>Hoş Geldiniz, <span th:text="${userName}">Kullanıcı</span>!</h1>
+
+    <div class="content">
+        <p>Merhaba <strong th:text="${userName}">Kullanıcı</strong>,</p>
+
+        <p>Proje Pazarı'na hoş geldiniz! Hesabınız başarıyla oluşturuldu. Artık projelerinizi paylaşabilir,
+            ilginç projelere katılabilir ve işbirlikleri kurabilirsiniz.</p>
+
+        <div class="highlight">
+            <strong>Hesap Bilgileriniz:</strong><br>
+            E-posta: <span th:text="${userEmail}">user@example.com</span><br>
+            Kayıt Tarihi: <span th:text="${#temporals.format(registrationDate, 'dd.MM.yyyy')}">01.01.2024</span>
+        </div>
+
+        <p>Hesabınızı aktifleştirmek için aşağıdaki butona tıklayın:</p>
+
+        <p style="text-align: center; margin: 30px 0;">
+            <a th:href="${activationLink}" class="button">Hesabı Aktifleştir</a>
+        </p>
+
+        <p style="font-size: 12px; color: #7f8c8d;">
+            Eğer buton çalışmıyorsa, aşağıdaki bağlantıyı tarayıcınıza kopyalayın:<br>
+            <a th:href="${activationLink}" th:text="${activationLink}">https://proje-pazari.com/activate/xyz</a>
+        </p>
+
+        <p><strong>Neler yapabilirsiniz?</strong></p>
+        <ul>
+            <li>Projelerinizi oluşturun ve yayınlayın</li>
+            <li>İlginç projelere göz atın ve başvurun</li>
+            <li>Ekip arkadaşları bulun</li>
+            <li>Profilınizi özelleştirin</li>
+        </ul>
+
+        <p>Herhangi bir sorunuz varsa, bizimle <a href="mailto:destek@proje-pazari.com">destek@proje-pazari.com</a>
+            adresinden iletişime geçebilirsiniz.</p>
+
+        <p>İyi projeler dileriz!</p>
+
+        <p><strong>Proje Pazarı Ekibi</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>Bu e-posta, Proje Pazarı'na yaptığınız kayıt nedeniyle gönderilmiştir.</p>
+        <p>© 2024 Proje Pazarı. Tüm hakları saklıdır.</p>
+        <p>
+            <a href="https://proje-pazari.com" style="color: #3498db; text-decoration: none;">Web Sitesi</a> |
+            <a href="https://proje-pazari.com/privacy" style="color: #3498db; text-decoration: none;">Gizlilik Politikası</a> |
+            <a href="https://proje-pazari.com/terms" style="color: #3498db; text-decoration: none;">Kullanım Koşulları</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

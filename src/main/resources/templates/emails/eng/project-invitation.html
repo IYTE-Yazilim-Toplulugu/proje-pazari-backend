@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Invitation - Proje Pazarı</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #9b59b6;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .project-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .project-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 22px;
+        }
+        .project-card p {
+            margin: 5px 0;
+            opacity: 0.95;
+        }
+        .project-details {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .project-details p {
+            margin: 8px 0;
+        }
+        .button-group {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 0 10px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .button-primary {
+            background-color: #27ae60;
+            color: #ffffff !important;
+        }
+        .button-primary:hover {
+            background-color: #229954;
+        }
+        .button-secondary {
+            background-color: #95a5a6;
+            color: #ffffff !important;
+        }
+        .button-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .info-box {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            color: #0c5460;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <div class="logo">Proje Pazarı</div>
+        <p>🎉 You Have a New Project Invitation!</p>
+    </div>
+
+    <h1>You've Been Invited to Join a Project</h1>
+
+    <div class="content">
+        <p>Hello <strong th:text="${inviteeName}">User</strong>,</p>
+
+        <p><strong th:text="${inviterName}">Project Owner</strong> has invited you to join their project!</p>
+
+        <div class="project-card">
+            <h2 th:text="${projectName}">Amazing Project</h2>
+            <p th:text="${projectDescription}">This project's description will appear here.</p>
+            <p style="margin-top: 15px; font-size: 14px;">
+                <strong>Project Owner:</strong> <span th:text="${projectOwner}">John Doe</span>
+            </p>
+        </div>
+
+        <div class="project-details">
+            <p><strong>📋 Project Details:</strong></p>
+            <p><strong>Status:</strong> <span th:text="${projectStatus}">Active</span></p>
+            <p th:if="${projectTags != null and !projectTags.isEmpty()}">
+                <strong>Tags:</strong><br>
+                <span th:each="tag : ${projectTags}" class="badge" th:text="${tag}">tag</span>
+            </p>
+            <p th:if="${requiredSkills != null and !requiredSkills.isEmpty()}">
+                <strong>Required Skills:</strong> <span th:text="${requiredSkills}">Java, Spring Boot, React</span>
+            </p>
+            <p th:if="${teamSize != null}">
+                <strong>Team Size:</strong> <span th:text="${teamSize}">5</span> members
+            </p>
+        </div>
+
+        <div class="info-box">
+            <strong>💬 Invitation Message</strong><br>
+            <span th:if="${invitationMessage != null and !invitationMessage.isEmpty()}"
+                  th:text="${invitationMessage}">
+                    Personal invitation message will appear here.
+                </span>
+            <span th:if="${invitationMessage == null or invitationMessage.isEmpty()}">
+                    No invitation message provided.
+                </span>
+        </div>
+
+        <p><strong>If you accept this invitation:</strong></p>
+        <ul>
+            <li>You'll join the project team</li>
+            <li>You'll get full access to project details</li>
+            <li>You can collaborate with other team members</li>
+            <li>You'll receive project updates</li>
+        </ul>
+
+        <p style="text-align: center; margin-top: 30px;">
+            <strong>What would you like to do?</strong>
+        </p>
+
+        <div class="button-group">
+            <a th:href="${acceptLink}" class="button button-primary">✓ Accept Invitation</a>
+            <a th:href="${declineLink}" class="button button-secondary">✗ Decline Invitation</a>
+        </div>
+
+        <p style="text-align: center; margin-top: 30px;">
+            <a th:href="${viewProjectLink}" style="color: #3498db; text-decoration: none;">
+                Or review the project first →
+            </a>
+        </p>
+
+        <p style="font-size: 12px; color: #7f8c8d; margin-top: 30px;">
+            This invitation is valid for <span th:text="${expirationDays}">7</span> days.<br>
+            Expiration date: <span th:text="${#temporals.format(expirationDate, 'MM/dd/yyyy')}">01/08/2024</span>
+        </p>
+
+        <p>If you have questions, you can contact the project owner directly or reach us at
+            <a href="mailto:support@proje-pazari.com">support@proje-pazari.com</a>.</p>
+
+        <p><strong>Proje Pazarı Team</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>This email was sent because you received a project invitation.</p>
+        <p>If you weren't expecting this invitation, you can safely ignore it.</p>
+        <p>© 2024 Proje Pazarı. All rights reserved.</p>
+        <p>
+            <a href="https://proje-pazari.com" style="color: #3498db; text-decoration: none;">Website</a> |
+            <a href="https://proje-pazari.com/privacy" style="color: #3498db; text-decoration: none;">Privacy Policy</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
