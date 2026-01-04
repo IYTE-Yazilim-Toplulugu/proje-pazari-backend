@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Deactivated - Proje Pazarı</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #e74c3c;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #6c757d;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #5a6268;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        ul li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <div class="logo">Proje Pazarı</div>
+    </div>
+
+    <h1>Your Account Has Been Deactivated</h1>
+
+    <div class="content">
+        <p>Hello <strong th:text="${userName}">User</strong>,</p>
+
+        <p>Your account has been deactivated. You will no longer be able to log in to Proje Pazarı
+            or use our platform features.</p>
+
+        <div class="info-box">
+            <strong>Deactivation Details:</strong><br>
+            Date: <span th:text="${#temporals.format(deactivationDate, 'MM/dd/yyyy HH:mm')}">01/01/2024 14:30</span><br>
+            <span th:if="${reason != null and !reason.isEmpty()}">
+                    Reason: <span th:text="${reason}">User request</span>
+                </span>
+        </div>
+
+        <p><strong>Effects of this action:</strong></p>
+        <ul>
+            <li>You will not be able to log in to our platform</li>
+            <li>Your active projects will be unpublished</li>
+            <li>Your pending applications will be cancelled</li>
+            <li>Your profile information will be hidden</li>
+            <li>Notifications and emails will stop</li>
+        </ul>
+
+        <div class="warning">
+            <strong>💾 Data Retention Policy</strong><br>
+            Your account data will be retained in our system for <strong>30 days</strong>.
+            If you wish to reactivate your account during this period, you can contact our
+            support team.
+        </div>
+
+        <p><strong>Would you like to reactivate your account?</strong></p>
+        <p>You can restore your account within 30 days. To do so:</p>
+
+        <p style="text-align: center; margin: 30px 0;">
+            <a th:href="${reactivationLink}" class="button">Reactivate Account</a>
+        </p>
+
+        <p style="font-size: 12px; color: #7f8c8d;">
+            Or copy this link to your browser:<br>
+            <a th:href="${reactivationLink}" th:text="${reactivationLink}">https://proje-pazari.com/reactivate/xyz</a>
+        </p>
+
+        <p><strong>Permanent Deletion</strong></p>
+        <p>After 30 days, if no action is taken, your account and all data will be
+            permanently deleted. This action cannot be undone.</p>
+
+        <p>Thank you for using Proje Pazarı. We hope to see you again in the future.</p>
+
+        <p>Questions? Contact us: <a href="mailto:support@proje-pazari.com">support@proje-pazari.com</a></p>
+
+        <p><strong>Proje Pazarı Team</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>This email was sent because your account was deactivated.</p>
+        <p>© 2024 Proje Pazarı. All rights reserved.</p>
+        <p>
+            <a href="https://proje-pazari.com/privacy" style="color: #3498db; text-decoration: none;">Privacy Policy</a> |
+            <a href="https://proje-pazari.com/terms" style="color: #3498db; text-decoration: none;">Terms of Service</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

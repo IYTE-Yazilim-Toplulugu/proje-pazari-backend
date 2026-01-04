@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hesap Devre Dışı Bırakıldı - Proje Pazarı</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #e74c3c;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #6c757d;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #5a6268;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        ul li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <div class="logo">Proje Pazarı</div>
+    </div>
+
+    <h1>Hesabınız Devre Dışı Bırakıldı</h1>
+
+    <div class="content">
+        <p>Merhaba <strong th:text="${userName}">Kullanıcı</strong>,</p>
+
+        <p>Hesabınız devre dışı bırakılmıştır. Artık Proje Pazarı'na giriş yapamayacak ve platformumuzun
+            özelliklerini kullanamazsınız.</p>
+
+        <div class="info-box">
+            <strong>Devre Dışı Bırakılma Detayları:</strong><br>
+            Tarih: <span th:text="${#temporals.format(deactivationDate, 'dd.MM.yyyy HH:mm')}">01.01.2024 14:30</span><br>
+            <span th:if="${reason != null and !reason.isEmpty()}">
+                    Sebep: <span th:text="${reason}">Kullanıcı talebi</span>
+                </span>
+        </div>
+
+        <p><strong>Bu işlemin etkileri:</strong></p>
+        <ul>
+            <li>Platformumuza giriş yapamayacaksınız</li>
+            <li>Aktif projeleriniz yayından kaldırılacak</li>
+            <li>Devam eden başvurularınız iptal edilecek</li>
+            <li>Profil bilgileriniz gizlenecek</li>
+            <li>Bildirimler ve e-postalar durduruluyor</li>
+        </ul>
+
+        <div class="warning">
+            <strong>💾 Veri Saklama Politikası</strong><br>
+            Hesap verileriniz <strong>30 gün boyunca</strong> sistemimizde saklanacaktır.
+            Bu süre içinde hesabınızı yeniden aktifleştirmek isterseniz, destek ekibimizle
+            iletişime geçebilirsiniz.
+        </div>
+
+        <p><strong>Hesabınızı yeniden aktifleştirmek ister misiniz?</strong></p>
+        <p>30 gün içinde hesabınızı geri yükleyebilirsiniz. Bunun için:</p>
+
+        <p style="text-align: center; margin: 30px 0;">
+            <a th:href="${reactivationLink}" class="button">Hesabı Yeniden Aktifleştir</a>
+        </p>
+
+        <p style="font-size: 12px; color: #7f8c8d;">
+            Veya şu adresi tarayıcınıza kopyalayın:<br>
+            <a th:href="${reactivationLink}" th:text="${reactivationLink}">https://proje-pazari.com/reactivate/xyz</a>
+        </p>
+
+        <p><strong>Kalıcı Silme</strong></p>
+        <p>30 günün sonunda herhangi bir işlem yapılmazsa, hesabınız ve tüm verileriniz
+            kalıcı olarak silinecektir. Bu işlem geri alınamaz.</p>
+
+        <p>Proje Pazarı'nı kullandığınız için teşekkür ederiz. Gelecekte tekrar görüşmek
+            dileğiyle.</p>
+
+        <p>Sorularınız için: <a href="mailto:destek@proje-pazari.com">destek@proje-pazari.com</a></p>
+
+        <p><strong>Proje Pazarı Ekibi</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>Bu e-posta, hesap devre dışı bırakma işleminiz nedeniyle gönderilmiştir.</p>
+        <p>© 2024 Proje Pazarı. Tüm hakları saklıdır.</p>
+        <p>
+            <a href="https://proje-pazari.com/privacy" style="color: #3498db; text-decoration: none;">Gizlilik Politikası</a> |
+            <a href="https://proje-pazari.com/terms" style="color: #3498db; text-decoration: none;">Kullanım Koşulları</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
