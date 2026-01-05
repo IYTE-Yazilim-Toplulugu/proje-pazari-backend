@@ -6,7 +6,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
-import com.iyte_yazilim.proje_pazari.domain.security.TwoFactorAuthService;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.TwoFactorAuthService;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import com.warrenstrange.googleauth.GoogleAuthenticatorConfig;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
@@ -25,19 +25,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class GoogleAuthenticatorTwoFactorService implements TwoFactorAuthService {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(GoogleAuthenticatorTwoFactorService.class);
+    private static final Logger log = LoggerFactory.getLogger(GoogleAuthenticatorTwoFactorService.class);
     private static final String ISSUER = "IZTECH SOFTWARE SOCIETY";
     private static final int QR_CODE_SIZE = 200;
 
     private final GoogleAuthenticator googleAuthenticator;
 
     public GoogleAuthenticatorTwoFactorService() {
-        GoogleAuthenticatorConfig config =
-                new GoogleAuthenticatorConfig.GoogleAuthenticatorConfigBuilder()
-                        .setTimeStepSizeInMillis(30_000)
-                        .setWindowSize(1)
-                        .build();
+        GoogleAuthenticatorConfig config = new GoogleAuthenticatorConfig.GoogleAuthenticatorConfigBuilder()
+                .setTimeStepSizeInMillis(30_000)
+                .setWindowSize(1)
+                .build();
         this.googleAuthenticator = new GoogleAuthenticator(config);
     }
 
@@ -58,9 +56,8 @@ public class GoogleAuthenticatorTwoFactorService implements TwoFactorAuthService
             throw new IllegalArgumentException("Secret cannot be null or empty");
         }
 
-        String url =
-                GoogleAuthenticatorQRGenerator.getOtpAuthTotpURL(
-                        ISSUER, username, new GoogleAuthenticatorKey.Builder(secret).build());
+        String url = GoogleAuthenticatorQRGenerator.getOtpAuthTotpURL(
+                ISSUER, username, new GoogleAuthenticatorKey.Builder(secret).build());
 
         return generateQRBase64(url);
     }
@@ -77,9 +74,8 @@ public class GoogleAuthenticatorTwoFactorService implements TwoFactorAuthService
             Map<EncodeHintType, Object> hintMap = new HashMap<>();
             hintMap.put(EncodeHintType.CHARACTER_SET, "UTF-8");
 
-            BitMatrix bitMatrix =
-                    qrCodeWriter.encode(
-                            qrCodeText, BarcodeFormat.QR_CODE, QR_CODE_SIZE, QR_CODE_SIZE, hintMap);
+            BitMatrix bitMatrix = qrCodeWriter.encode(
+                    qrCodeText, BarcodeFormat.QR_CODE, QR_CODE_SIZE, QR_CODE_SIZE, hintMap);
             BufferedImage bufferedImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
 
             try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {

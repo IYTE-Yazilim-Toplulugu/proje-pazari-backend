@@ -18,7 +18,7 @@ public class Project extends BaseEntity<Ulid> {
     private String title;
     private String description;
     private String summary;
-    private ProjectStatus status = ProjectStatus.DRAFT; // Default state
+    private ProjectStatus status = ProjectStatus.DRAFT.getStatus(); // Default state
     private User owner;
     private List<ProjectApplication> applications;
 

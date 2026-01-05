@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.domain.security;
+package com.iyte_yazilim.proje_pazari.domain.interfaces;
 
 import java.time.Duration;
 

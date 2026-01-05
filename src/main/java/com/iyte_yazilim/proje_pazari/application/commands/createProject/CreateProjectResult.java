@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.domain.models.results;
+package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
 public record CreateProjectCommandResult(
         String projectId,
@@ -6,4 +6,5 @@ public record CreateProjectCommandResult(
         String description,
         String ownerId,
         String[] teamMemberIds,
-        String[] tags) {}
+        String[] tags) {
+}
