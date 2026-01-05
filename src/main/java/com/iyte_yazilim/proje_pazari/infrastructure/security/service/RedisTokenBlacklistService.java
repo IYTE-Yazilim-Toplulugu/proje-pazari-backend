@@ -1,10 +1,11 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.security.service;
 
-import com.iyte_yazilim.proje_pazari.domain.security.TokenBlacklistService;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+
+import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
 
 @Service
 @RequiredArgsConstructor
