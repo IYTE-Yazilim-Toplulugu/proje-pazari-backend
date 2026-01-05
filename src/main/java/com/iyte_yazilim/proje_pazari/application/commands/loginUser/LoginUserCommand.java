@@ -1,8 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
-import com.iyte_yazilim.proje_pazari.application.common.IRequest;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -46,4 +44,4 @@ public record LoginUserCommand(
         @Schema(description = "Password", example = "SecurePassword123!")
                 @NotBlank(message = "Password is required")
                 String password)
-        implements IRequest<ApiResponse<LoginUserResult>> {}
+        implements IRequest {}
