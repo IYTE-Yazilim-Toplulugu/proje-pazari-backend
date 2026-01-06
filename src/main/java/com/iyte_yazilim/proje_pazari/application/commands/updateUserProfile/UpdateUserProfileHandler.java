@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -17,12 +18,13 @@ public class UpdateUserProfileHandler
 
     private final UserRepository userRepository;
     private final UserDtoMapper userDtoMapper;
+    private final IValidator validator;
 
     @Override
     @Transactional
     public ApiResponse<UserDto> handle(UpdateUserProfileCommand command) {
         try {
-            command.validate();
+            validator.validate(command);
         } catch (IllegalArgumentException e) {
             return ApiResponse.validationError(e.getMessage());
         }
