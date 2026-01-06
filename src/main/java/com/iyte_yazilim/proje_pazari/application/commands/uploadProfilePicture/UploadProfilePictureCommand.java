@@ -1,7 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture;
 
-import com.iyte_yazilim.proje_pazari.application.common.ICommand;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,4 +14,4 @@ public record UploadProfilePictureCommand(
         @Schema(description = "Profile picture file", requiredMode = Schema.RequiredMode.REQUIRED)
                 @NotNull(message = "File is required")
                 MultipartFile file)
-        implements ICommand<ApiResponse<String>> {}
+        implements IRequest {}
