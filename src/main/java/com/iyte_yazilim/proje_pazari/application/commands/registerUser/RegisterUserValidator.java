@@ -1,10 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,7 +31,8 @@ public class RegisterUserValidator implements IValidator<RegisterUserCommand> {
 
         List<String> errors = new ArrayList<>();
 
-        if (command.email() == null || command.email().isBlank()
+        if (command.email() == null
+                || command.email().isBlank()
                 || !command.email().matches("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$")) {
             errors.add("Invalid email format");
         }

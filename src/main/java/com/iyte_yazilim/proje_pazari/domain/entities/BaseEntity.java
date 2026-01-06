@@ -7,8 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Base entity class that provides common properties and methods for all
- * entities.
+ * Base entity class that provides common properties and methods for all entities.
  *
  * @param <TId> The type of the entity identifier.
  */
