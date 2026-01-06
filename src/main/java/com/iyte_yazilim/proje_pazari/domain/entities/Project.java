@@ -12,13 +12,12 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@SuppressWarnings("unused")
 public class Project extends BaseEntity<Ulid> {
 
     private String title;
     private String description;
     private String summary;
-    private ProjectStatus status = ProjectStatus.DRAFT.getStatus(); // Default state
+    private ProjectStatus status = ProjectStatus.DRAFT; // Default state
     private User owner;
     private List<ProjectApplication> applications;
 
