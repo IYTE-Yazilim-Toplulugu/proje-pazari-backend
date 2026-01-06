@@ -1,6 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
-public record CreateProjectCommandResult(
+public record CreateProjectResult(
         String projectId,
         String projectName,
         String description,
