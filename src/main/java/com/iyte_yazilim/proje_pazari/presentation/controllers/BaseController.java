@@ -9,6 +9,9 @@ public abstract class BaseController {
 
     // Helper method to get current user from JWT
     protected UserPrincipal getCurrentUser(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalStateException("No authenticated user found");
+        }
         return (UserPrincipal) authentication.getPrincipal();
     }
 
