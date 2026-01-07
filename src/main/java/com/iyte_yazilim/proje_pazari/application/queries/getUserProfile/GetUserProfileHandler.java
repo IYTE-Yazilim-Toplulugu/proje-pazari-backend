@@ -69,6 +69,6 @@ public class GetUserProfileHandler
                         applicationsSubmitted,
                         projects);
 
-        return ApiResponse.success(profile, messageService.getMessage("user.profile.retrieved"));
+        return ApiResponse.success(profile, messageService.getMessage("user.retrieved.success"));
     }
 }
