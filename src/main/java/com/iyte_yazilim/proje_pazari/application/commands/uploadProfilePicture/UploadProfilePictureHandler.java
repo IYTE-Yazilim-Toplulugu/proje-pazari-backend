@@ -57,7 +57,8 @@ public class UploadProfilePictureHandler
             userRepository.save(user);
 
             return ApiResponse.success(
-                    user.getProfilePictureUrl(), messageService.getMessage("file.upload.success"));
+                    user.getProfilePictureUrl(),
+                    messageService.getMessage("user.profile.picture.uploaded"));
         } catch (IllegalArgumentException e) {
             return ApiResponse.validationError(e.getMessage());
         } catch (IOException e) {
