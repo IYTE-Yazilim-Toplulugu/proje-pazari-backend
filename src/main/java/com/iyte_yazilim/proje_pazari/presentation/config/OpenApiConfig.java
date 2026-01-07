@@ -60,9 +60,7 @@ public class OpenApiConfig {
                                                         "Enter JWT token obtained from /api/v1/auth/login")));
     }
 
-    /**
-     * Adds Accept-Language header to all API operations in Swagger UI
-     */
+    /** Adds Accept-Language header to all API operations in Swagger UI */
     @Bean
     public OperationCustomizer customizeAcceptLanguageHeader() {
         return (operation, handlerMethod) -> {
@@ -72,10 +70,7 @@ public class OpenApiConfig {
                             .description(
                                     "Preferred language for API responses (tr, en). Default: tr")
                             .required(false)
-                            .schema(
-                                    new StringSchema()
-                                            ._enum(List.of("tr", "en"))
-                                            ._default("tr"))
+                            .schema(new StringSchema()._enum(List.of("tr", "en"))._default("tr"))
                             .example("en"));
             return operation;
         };

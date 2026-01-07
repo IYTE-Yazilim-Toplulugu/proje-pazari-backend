@@ -57,9 +57,8 @@ public class UserEntity {
     private String githubUrl;
 
     /**
-     * User's preferred language for API responses (e.g., "tr", "en")
-     * Default: "tr" (Turkish)
-     * If set, overrides Accept-Language header
+     * User's preferred language for API responses (e.g., "tr", "en") Default: "tr" (Turkish) If
+     * set, overrides Accept-Language header
      */
     @Column(name = "preferred_language", length = 5)
     private String preferredLanguage = "tr";

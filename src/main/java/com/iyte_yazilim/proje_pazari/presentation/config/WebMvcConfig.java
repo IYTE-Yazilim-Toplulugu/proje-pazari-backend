@@ -16,9 +16,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(userLocaleInterceptor)
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/swagger-ui.html",
-                        "/actuator/**");
+                        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/actuator/**");
     }
 }

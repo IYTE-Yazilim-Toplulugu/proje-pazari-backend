@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Interceptor to set user's preferred language for localized responses.
- * Priority: 1. User's preferred language (from DB) 2. Accept-Language header 3. Default (tr)
+ * Interceptor to set user's preferred language for localized responses. Priority: 1. User's
+ * preferred language (from DB) 2. Accept-Language header 3. Default (tr)
  */
 @Component
 @RequiredArgsConstructor
@@ -46,9 +46,7 @@ public class UserLocaleInterceptor implements HandlerInterceptor {
                     // User has a language preference - use it
                     Locale userLocale = Locale.forLanguageTag(user.getPreferredLanguage());
                     LocaleContextHolder.setLocale(userLocale);
-                    log.debug(
-                            "Set locale to user preference: {}",
-                            user.getPreferredLanguage());
+                    log.debug("Set locale to user preference: {}", user.getPreferredLanguage());
                     return true;
                 }
             } catch (Exception e) {
