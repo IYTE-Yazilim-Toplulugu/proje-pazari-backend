@@ -29,6 +29,22 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
+    // Add userId claim extraction
+    public String extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", String.class));
+    }
+
+    // Add email claim extraction
+    public String extractEmail(String token) {
+        return extractClaim(token, claims -> claims.get("email", String.class));
+    }
+
+    // Add role claim extraction
+    public String extractRole(String token) {
+        String role = extractClaim(token, claims -> claims.get("role", String.class));
+        return role != null ? role : "USER"; // Default to USER if role claim missing
+    }
+
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
@@ -50,6 +66,22 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
+    // Update token generation with userId, email, and role claims
+    public String generateToken(String userId, String email, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("email", email);
+        claims.put("role", role);
+
+        return Jwts.builder()
+                .claims(claims)
+                .subject(email)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, username);
@@ -68,5 +100,21 @@ public class JwtUtil {
     public Boolean validateToken(String token, String username) {
         final String extractedUsername = extractUsername(token);
         return (extractedUsername.equals(username) && !isTokenExpired(token));
+    }
+
+    public Boolean validateToken(String token) {
+        try {
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public UserPrincipal extractUserPrincipal(String token) {
+        Claims claims = extractAllClaims(token);
+        return new UserPrincipal(
+                claims.get("userId", String.class),
+                claims.get("email", String.class),
+                claims.get("role", String.class));
     }
 }

@@ -50,6 +50,7 @@ public class LoginUserHandler
         }
 
         // --- 5. Generate JWT token ---
+        String role = user.getRole() != null ? user.getRole().toString() : "USER";
         String token = jwtUtil.generateToken(user.getEmail());
 
         // --- 6. Create result ---
@@ -59,6 +60,7 @@ public class LoginUserHandler
                         user.getEmail(),
                         user.getFirstName(),
                         user.getLastName(),
+                        role,
                         token);
 
         // --- 7. Response with localized message ---
