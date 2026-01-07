@@ -8,19 +8,19 @@ import jakarta.validation.constraints.Size;
 public record UpdateUserProfileCommand(
         @Schema(description = "User ID", requiredMode = Schema.RequiredMode.REQUIRED) String userId,
         @Schema(description = "First name")
-        @Size(max = 50, message = "First name must not exceed 50 characters")
-        String firstName,
+                @Size(max = 50, message = "First name must not exceed 50 characters")
+                String firstName,
         @Schema(description = "Last name")
-        @Size(max = 50, message = "Last name must not exceed 50 characters")
-        String lastName,
+                @Size(max = 50, message = "Last name must not exceed 50 characters")
+                String lastName,
         @Schema(description = "User description/bio")
-        @Size(max = 1000, message = "Description must not exceed 1000 characters")
-        String description,
+                @Size(max = 1000, message = "Description must not exceed 1000 characters")
+                String description,
         @Schema(description = "LinkedIn profile URL") String linkedinUrl,
         @Schema(description = "GitHub profile URL") String githubUrl,
         @Schema(description = "Preferred language (tr, en)", example = "en")
-        @Pattern(regexp = "^(tr|en)$", message = "Language must be either 'tr' or 'en'")
-        String preferredLanguage) {
+                @Pattern(regexp = "^(tr|en)$", message = "Language must be either 'tr' or 'en'")
+                String preferredLanguage) {
     public void validate() {
         if (linkedinUrl != null
                 && !linkedinUrl.isBlank()

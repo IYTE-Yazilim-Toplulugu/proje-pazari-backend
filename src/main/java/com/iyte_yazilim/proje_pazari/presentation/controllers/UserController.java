@@ -159,7 +159,8 @@ public class UserController extends BaseController {
                         command.lastName(),
                         command.description(),
                         command.linkedinUrl(),
-                        command.githubUrl());
+                        command.githubUrl(),
+                        command.preferredLanguage());
 
         ApiResponse<UserDto> response = updateUserProfileHandler.handle(updatedCommand);
 
