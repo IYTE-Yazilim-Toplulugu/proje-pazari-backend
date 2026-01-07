@@ -17,6 +17,7 @@ public class InternationalizationConfig {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("messages");
         messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setDefaultLocale(Locale.forLanguageTag("tr"));
         messageSource.setFallbackToSystemLocale(false);
         messageSource.setUseCodeAsDefaultMessage(false);
         return messageSource;
