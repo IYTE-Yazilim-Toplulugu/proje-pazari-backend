@@ -29,7 +29,7 @@ public class GetUserProfileHandler
 
         if (user == null) {
             return ApiResponse.notFound(
-                    messageService.getMessage("user.not.found.with.id", new Object[] {query.userId()}));
+                    messageService.getMessage("user.not.found", new Object[] {query.userId()}));
         }
 
         // Get user statistics
