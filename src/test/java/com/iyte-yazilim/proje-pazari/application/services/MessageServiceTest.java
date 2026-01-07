@@ -13,8 +13,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 @SpringBootTest
 class MessageServiceTest {
 
-    @Autowired
-    private MessageService messageService;
+    @Autowired private MessageService messageService;
 
     @BeforeEach
     void setUp() {
