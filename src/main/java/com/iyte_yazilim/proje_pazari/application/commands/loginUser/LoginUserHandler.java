@@ -49,9 +49,9 @@ public class LoginUserHandler
             return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
         }
 
-        // --- 5. Generate JWT token ---
+        // --- 5. Generate JWT token with userId, email, and role ---
         String role = user.getRole() != null ? user.getRole().toString() : "USER";
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
 
         // --- 6. Create result ---
         var result =

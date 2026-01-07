@@ -68,14 +68,11 @@ public class JwtUtil {
 
     // Update token generation with userId, email, and role claims
     public String generateToken(String userId, String email, String role) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
-        claims.put("email", email);
-        claims.put("role", role);
-
         return Jwts.builder()
-                .claims(claims)
                 .subject(email)
+                .claim("userId", userId)
+                .claim("email", email)
+                .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
