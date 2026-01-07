@@ -21,12 +21,18 @@ public class MessageService {
      * @return Current locale or Turkish default
      */
     private Locale getCurrentLocale() {
-        Locale locale = LocaleContextHolder.getLocale();
-        // If locale is null or is the JVM default (not explicitly set), use Turkish
-        if (locale == null || locale.equals(Locale.getDefault())) {
-            return DEFAULT_LOCALE;
+        try {
+            org.springframework.context.i18n.LocaleContext localeContext =
+                    LocaleContextHolder.getLocaleContext();
+            // If a LocaleContext exists and has a locale, use it (explicitly set)
+            if (localeContext != null && localeContext.getLocale() != null) {
+                return localeContext.getLocale();
+            }
+        } catch (Exception e) {
+            // Fall through to default
         }
-        return locale;
+        // No explicit locale context set, use Turkish default
+        return DEFAULT_LOCALE;
     }
 
     /**
