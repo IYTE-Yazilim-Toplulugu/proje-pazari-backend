@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.queries.getUserProfile;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectSummaryDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
@@ -20,13 +21,15 @@ public class GetUserProfileHandler
 
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final MessageService messageService; // EKLENMELI
 
     @Override
     public ApiResponse<UserProfileDTO> handle(GetUserProfileQuery query) {
         UserEntity user = userRepository.findById(query.userId()).orElse(null);
 
         if (user == null) {
-            return ApiResponse.notFound("User with ID " + query.userId() + " not found");
+            return ApiResponse.notFound(
+                    messageService.getMessage("user.not.found.with.id", new Object[] {query.userId()}));
         }
 
         // Get user statistics
@@ -66,6 +69,6 @@ public class GetUserProfileHandler
                         applicationsSubmitted,
                         projects);
 
-        return ApiResponse.success(profile, "User profile retrieved successfully");
+        return ApiResponse.success(profile, messageService.getMessage("user.profile.retrieved"));
     }
 }
