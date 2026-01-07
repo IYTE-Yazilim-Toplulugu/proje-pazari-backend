@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.services;
 
+import java.util.Locale;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -8,9 +9,24 @@ import org.springframework.stereotype.Service;
 public class MessageService {
 
     private final MessageSource messageSource;
+    private static final Locale DEFAULT_LOCALE = Locale.forLanguageTag("tr");
 
     public MessageService(MessageSource messageSource) {
         this.messageSource = messageSource;
+    }
+
+    /**
+     * Get the current locale or default to Turkish if not set
+     *
+     * @return Current locale or Turkish default
+     */
+    private Locale getCurrentLocale() {
+        Locale locale = LocaleContextHolder.getLocale();
+        // If locale is null or is the JVM default (not explicitly set), use Turkish
+        if (locale == null || locale.equals(Locale.getDefault())) {
+            return DEFAULT_LOCALE;
+        }
+        return locale;
     }
 
     /**
@@ -20,7 +36,7 @@ public class MessageService {
      * @return Localized message
      */
     public String getMessage(String code) {
-        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+        return messageSource.getMessage(code, null, getCurrentLocale());
     }
 
     /**
@@ -31,7 +47,7 @@ public class MessageService {
      * @return Localized message with substituted parameters
      */
     public String getMessage(String code, Object[] args) {
-        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
+        return messageSource.getMessage(code, args, getCurrentLocale());
     }
 
     /**
@@ -42,7 +58,7 @@ public class MessageService {
      * @return Localized message or default
      */
     public String getMessage(String code, String defaultMessage) {
-        return messageSource.getMessage(code, null, defaultMessage, LocaleContextHolder.getLocale());
+        return messageSource.getMessage(code, null, defaultMessage, getCurrentLocale());
     }
 
     /**
@@ -54,6 +70,6 @@ public class MessageService {
      * @return Localized message with substituted parameters or default
      */
     public String getMessage(String code, Object[] args, String defaultMessage) {
-        return messageSource.getMessage(code, args, defaultMessage, LocaleContextHolder.getLocale());
+        return messageSource.getMessage(code, args, defaultMessage, getCurrentLocale());
     }
 }
