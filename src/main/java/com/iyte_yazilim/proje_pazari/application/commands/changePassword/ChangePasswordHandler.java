@@ -42,8 +42,7 @@ public class ChangePasswordHandler
 
         // Validate new password strength
         if (!isPasswordStrong(command.newPassword())) {
-            return ApiResponse.validationError(
-                    messageService.getMessage("user.password.weak"));
+            return ApiResponse.validationError(messageService.getMessage("user.password.weak"));
         }
 
         // Hash and save new password

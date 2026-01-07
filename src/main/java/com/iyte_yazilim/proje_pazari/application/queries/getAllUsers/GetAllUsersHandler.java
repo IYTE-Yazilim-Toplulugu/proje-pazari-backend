@@ -36,6 +36,6 @@ public class GetAllUsersHandler
                         .toList();
 
         // --- 3. Response ---
-        return ApiResponse.success(users, messageService.getMessage("user.list.retrieved"));
+        return ApiResponse.success(users, messageService.getMessage("user.list.retrieved.success"));
     }
 }

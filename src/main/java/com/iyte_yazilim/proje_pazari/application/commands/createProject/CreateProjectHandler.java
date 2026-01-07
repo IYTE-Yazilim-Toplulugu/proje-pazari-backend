@@ -45,7 +45,8 @@ public class CreateProjectHandler
         UserEntity ownerEntity = userRepository.findById(command.ownerId()).orElse(null);
         if (ownerEntity == null) {
             return ApiResponse.notFound(
-                    messageService.getMessage("project.owner.not.found", new Object[] {command.ownerId()}));
+                    messageService.getMessage(
+                            "project.owner.not.found", new Object[] {command.ownerId()}));
         }
 
         // --- 3. Mapping (Command -> Domain Entity) ---

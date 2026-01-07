@@ -38,7 +38,8 @@ public class RegisterUserHandler
 
         // --- 2. Check if email already exists ---
         if (userRepository.existsByEmail(command.email())) {
-            return ApiResponse.badRequest(messageService.getMessage("auth.email.already.registered"));
+            return ApiResponse.badRequest(
+                    messageService.getMessage("auth.email.already.registered"));
         }
 
         // --- 3. Mapping (Command -> Domain Entity) ---
