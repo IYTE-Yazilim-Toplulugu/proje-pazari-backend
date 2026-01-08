@@ -8,7 +8,6 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -55,13 +54,14 @@ public class LoginUserHandler
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
 
         // --- 6. Create result ---
-        var result = new LoginUserResult(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                role,
-                token);
+        var result =
+                new LoginUserResult(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        role,
+                        token);
 
         // --- 7. Response with localized message ---
         return ApiResponse.success(result, messageService.getMessage("auth.login.success"));

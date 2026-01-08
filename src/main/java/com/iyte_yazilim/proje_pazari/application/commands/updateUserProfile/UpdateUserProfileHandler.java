@@ -19,11 +19,8 @@ public class UpdateUserProfileHandler
 
     private final UserRepository userRepository;
     private final UserDtoMapper userDtoMapper;
-<<<<<<< HEAD
     private final IValidator validator;
-=======
     private final MessageService messageService; // EKLENMELI
->>>>>>> e2aba177a2d9889c8d50ebfe461fb58577a009a3
 
     @Override
     @Transactional
