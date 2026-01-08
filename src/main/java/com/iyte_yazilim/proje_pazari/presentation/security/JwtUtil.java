@@ -5,7 +5,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -30,6 +29,22 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
+    // Add userId claim extraction
+    public String extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", String.class));
+    }
+
+    // Add email claim extraction
+    public String extractEmail(String token) {
+        return extractClaim(token, claims -> claims.get("email", String.class));
+    }
+
+    // Add role claim extraction
+    public String extractRole(String token) {
+        String role = extractClaim(token, claims -> claims.get("role", String.class));
+        return role != null ? role : "USER"; // Default to USER if role claim missing
+    }
+
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
@@ -51,20 +66,22 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(String username, List<String> roles, String userId) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", roles);
-        claims.put("userId", userId);
-        return createToken(claims, username);
+    // Update token generation with userId, email, and role claims
+    public String generateToken(String userId, String email, String role) {
+        return Jwts.builder()
+                .subject(email)
+                .claim("userId", userId)
+                .claim("email", email)
+                .claim("role", role)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
+                .compact();
     }
 
     @SuppressWarnings("unchecked")
     public List<String> extractRoles(String token) {
         return extractClaim(token, claims -> claims.get("roles", List.class));
-    }
-
-    public String extractUserId(String token) {
-        return extractClaim(token, claims -> claims.get("userId", String.class));
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
@@ -80,5 +97,21 @@ public class JwtUtil {
     public Boolean validateToken(String token, String username) {
         final String extractedUsername = extractUsername(token);
         return (extractedUsername.equals(username) && !isTokenExpired(token));
+    }
+
+    public Boolean validateToken(String token) {
+        try {
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public UserPrincipal extractUserPrincipal(String token) {
+        Claims claims = extractAllClaims(token);
+        return new UserPrincipal(
+                claims.get("userId", String.class),
+                claims.get("email", String.class),
+                claims.get("role", String.class));
     }
 }

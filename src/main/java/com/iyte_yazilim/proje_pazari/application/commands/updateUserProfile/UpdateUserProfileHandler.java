@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -18,7 +19,11 @@ public class UpdateUserProfileHandler
 
     private final UserRepository userRepository;
     private final UserDtoMapper userDtoMapper;
+<<<<<<< HEAD
     private final IValidator validator;
+=======
+    private final MessageService messageService; // EKLENMELI
+>>>>>>> e2aba177a2d9889c8d50ebfe461fb58577a009a3
 
     @Override
     @Transactional
@@ -32,7 +37,9 @@ public class UpdateUserProfileHandler
         UserEntity user = userRepository.findById(command.userId()).orElse(null);
 
         if (user == null) {
-            return ApiResponse.notFound("User with ID " + command.userId() + " not found");
+            return ApiResponse.notFound(
+                    messageService.getMessage(
+                            "user.not.found.with.id", new Object[] {command.userId()}));
         }
 
         // Update fields
@@ -55,6 +62,6 @@ public class UpdateUserProfileHandler
         UserEntity savedUser = userRepository.save(user);
         UserDto userDto = userDtoMapper.toDto(savedUser);
 
-        return ApiResponse.success(userDto, "Profile updated successfully");
+        return ApiResponse.success(userDto, messageService.getMessage("user.profile.updated"));
     }
 }

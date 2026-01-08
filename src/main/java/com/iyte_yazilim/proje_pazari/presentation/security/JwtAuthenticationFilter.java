@@ -1,23 +1,24 @@
 package com.iyte_yazilim.proje_pazari.presentation.security;
 
+import java.io.IOException;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
+
 import io.jsonwebtoken.JwtException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
 @Component
@@ -25,7 +26,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
 
     @Override
@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-        String username = null;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -47,26 +46,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
 
         try {
-            username = jwtUtil.extractUsername(jwt);
+            if (jwtUtil.validateToken(jwt)) {
+                // Extract all user info from JWT - NO database lookup!
+                UserPrincipal userPrincipal = jwtUtil.extractUserPrincipal(jwt);
 
-            if (username != null
-                    && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Check if token is blacklisted
+                // 2. Perform your Blacklist Check (Keep this from HEAD)
                 if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
                     filterChain.doFilter(request, response);
                     return;
                 }
 
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-
-                if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails, null, userDetails.getAuthorities());
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
+                // 3. Create Authentication using Principal (Keep this from Dev/Incoming)
+                // This avoids the database call 'loadUserByUsername'
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userPrincipal, null, userPrincipal.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         } catch (JwtException e) {
             log.warn(
