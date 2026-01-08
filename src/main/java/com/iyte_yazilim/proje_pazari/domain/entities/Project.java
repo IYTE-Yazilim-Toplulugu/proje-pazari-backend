@@ -12,7 +12,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@SuppressWarnings("unused")
 public class Project extends BaseEntity<Ulid> {
 
     private String title;

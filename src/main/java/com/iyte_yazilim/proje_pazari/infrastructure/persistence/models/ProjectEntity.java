@@ -64,9 +64,6 @@ public class ProjectEntity {
         if (id == null || id.isBlank()) {
             id = Ulid.fast().toString();
         }
-        if (status == null) {
-            status = ProjectStatus.DRAFT;
-        }
         createdAt = LocalDateTime.now();
     }
 

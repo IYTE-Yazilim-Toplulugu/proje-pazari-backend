@@ -2,9 +2,9 @@ package com.iyte_yazilim.proje_pazari.application.mappers;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectResult;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
-import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -34,7 +34,7 @@ public interface CreateProjectMapper {
                     "java(project.getOwner() != null ? project.getOwner().getId().toString() : null)")
     @Mapping(target = "teamMemberIds", expression = "java(new String[0])")
     @Mapping(target = "tags", expression = "java(new String[0])")
-    CreateProjectCommandResult domainToResult(Project project);
+    CreateProjectResult domainToResult(Project project);
 
     // Helper method to create User with just ID
     default User createUserWithId(String ownerId) {

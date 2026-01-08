@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -32,4 +33,5 @@ public record CreateProjectCommand(
         @Schema(
                         description = "Array of project tags",
                         example = "[\"machine-learning\", \"python\", \"research\"]")
-                String[] tags) {}
+                String[] tags)
+        implements IRequest {}

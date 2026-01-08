@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectResult;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +11,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/projects")
@@ -19,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Projects", description = "Project management endpoints")
 public class ProjectController {
 
-    private final IRequestHandler<CreateProjectCommand, ApiResponse<CreateProjectCommandResult>>
+    private final IRequestHandler<CreateProjectCommand, ApiResponse<CreateProjectResult>>
             createProjectHandler;
 
     @PostMapping
@@ -38,10 +41,10 @@ public class ProjectController {
                         responseCode = "500",
                         description = "Internal server error")
             })
-    public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
+    public ResponseEntity<ApiResponse<CreateProjectResult>> createProject(
             @Valid @RequestBody CreateProjectCommand command) {
 
-        ApiResponse<CreateProjectCommandResult> response = createProjectHandler.handle(command);
+        ApiResponse<CreateProjectResult> response = createProjectHandler.handle(command);
 
         HttpStatus status =
                 switch (response.getCode()) {
