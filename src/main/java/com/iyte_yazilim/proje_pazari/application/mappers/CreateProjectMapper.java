@@ -2,9 +2,9 @@ package com.iyte_yazilim.proje_pazari.application.mappers;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectResult;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
-import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectResult;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
