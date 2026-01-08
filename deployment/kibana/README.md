@@ -21,14 +21,14 @@ This directory contains pre-configured Kibana dashboards for monitoring and anal
 **Purpose**: Track user engagement and registration patterns
 
 **Visualizations**:
-- User Registration Timeline - Histogram showing new user signups over time
-- User Verification Status - Pie chart of verified vs unverified users
-- Active vs Deactivated Users - Metric showing active user count
-- User Roles Distribution - Pie chart showing student vs admin distribution
+- User Registration Timeline - Histogram showing new user signups over time (based on `joinedAt`)
+- Users by Email Domain - Pie chart showing distribution of users by email domain
+- Total Users - Metric showing total user count
+- Users with Profile Description - Metric showing users who have filled in their description
 
 **Use Cases**:
 - Monitor user growth
-- Track email verification rates
+- Track user profile completion
 - Identify user engagement patterns
 
 ### 3. System Health Monitoring (`system-health-dashboard.ndjson`)
@@ -38,7 +38,7 @@ This directory contains pre-configured Kibana dashboards for monitoring and anal
 - Total Projects - Metric showing total project count
 - Total Users - Metric showing total user count
 - Active Projects - Metric showing open projects
-- Index Document Count Over Time - Area chart showing data growth
+- Projects Created Over Time - Area chart showing project creation trends
 
 **Use Cases**:
 - Monitor system health
