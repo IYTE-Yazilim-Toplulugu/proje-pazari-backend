@@ -5,6 +5,5 @@ public record LoginUserResult(
         String email,
         String firstName,
         String lastName,
-        String token
-) {
-}
+        String role,
+        String token) {}

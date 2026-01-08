@@ -1,11 +1,7 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,6 +14,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
