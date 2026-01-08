@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch.services;
 
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectSearchRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -51,8 +52,10 @@ public class ElasticsearchSyncService {
     }
 
     public void indexProject(String projectId) {
-        ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ProjectNotFoundException(projectId));// TODO: Create exception.
+        ProjectEntity project =
+                projectRepository
+                        .findById(projectId)
+                        .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
         ProjectDocument document = mapper.toDocument(project);
         projectSearchRepository.save(document);
