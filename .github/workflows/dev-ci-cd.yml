@@ -116,6 +116,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
+          load: true
           tags: |
             proje-pazari-backend:dev
             proje-pazari-backend:${{ github.sha }}

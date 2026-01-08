@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
@@ -28,6 +29,7 @@ public class RegisterUserHandler
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final MessageService messageService;
 
     @Override
     public ApiResponse<RegisterUserResult> handle(RegisterUserCommand command) {
@@ -41,7 +43,8 @@ public class RegisterUserHandler
 
         // --- 2. Check if email already exists ---
         if (userRepository.existsByEmail(command.email())) {
-            return ApiResponse.badRequest("Email already registered");
+            return ApiResponse.badRequest(
+                    messageService.getMessage("auth.email.already.registered"));
         }
 
         // --- 3. Mapping (Command -> Domain Entity) ---
@@ -75,6 +78,6 @@ public class RegisterUserHandler
                         LocalDateTime.now()));
 
         // --- 9. Response ---
-        return ApiResponse.created(result, "User registered successfully");
+        return ApiResponse.created(result, messageService.getMessage("user.registered.success"));
     }
 }
