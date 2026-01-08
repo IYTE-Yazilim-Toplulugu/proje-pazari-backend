@@ -19,7 +19,7 @@ public class UpdateUserProfileHandler
 
     private final UserRepository userRepository;
     private final UserDtoMapper userDtoMapper;
-    private final IValidator validator;
+    private final IValidator<UpdateUserProfileCommand> validator;
     private final MessageService messageService; // EKLENMELI
 
     @Override
