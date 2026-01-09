@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.application.queries.getAllProjects;
+package com.iyte_yazilim.proje_pazari.domain.models.results;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.application.queries.getAllProjects;
+package com.iyte_yazilim.proje_pazari.application.queries.SearchProjects;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.ProjectDetailDtoMapper;
@@ -14,13 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class GetAllProjectsQueryHandler
-        implements IRequestHandler<GetAllProjectsQuery, ApiResponse<PagedProjectsResult>> {
+public class SearchProjectsQueryHandler
+        implements IRequestHandler<SearchProjectsQuery, ApiResponse<PagedProjectsResult>> {
 
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
@@ -28,29 +27,19 @@ public class GetAllProjectsQueryHandler
     private final MessageService messageService;
 
     @Override
-    public ApiResponse<PagedProjectsResult> handle(GetAllProjectsQuery query) {
-        // --- 1. Construct Pageable Object ---
-        Sort.Direction direction =
-                Sort.Direction.DESC.name().equalsIgnoreCase(query.sortDirection())
-                        ? Sort.Direction.DESC
-                        : Sort.Direction.ASC;
+    public ApiResponse<PagedProjectsResult> handle(SearchProjectsQuery query) {
+        Pageable pageable = PageRequest.of(query.page(), query.size());
 
-        String sortBy =
-                (query.sortBy() != null && !query.sortBy().isEmpty()) ? query.sortBy() : "id";
+        Page<ProjectEntity> projectEntityPage =
+                projectRepository.searchProjects(
+                        query.keyword(), query.status(), query.ownerId(), pageable);
 
-        Pageable pageable = PageRequest.of(query.page(), query.size(), Sort.by(direction, sortBy));
-
-        // --- 2. Fetch Paged Data from Repository ---
-        Page<ProjectEntity> projectEntityPage = projectRepository.findAll(pageable);
-
-        // --- 3. Map Entity -> Domain -> DTO ---
         List<ProjectDetailDto> projectDtos =
                 projectEntityPage.getContent().stream()
                         .map(projectMapper::entityToDomain)
                         .map(projectDtoMapper::domainToDto)
                         .toList();
 
-        // --- 4. Construct the Paged Result ---
         PagedProjectsResult pagedResult =
                 new PagedProjectsResult(
                         projectDtos,
@@ -58,8 +47,7 @@ public class GetAllProjectsQueryHandler
                         projectEntityPage.getTotalPages(),
                         projectEntityPage.getTotalElements());
 
-        // --- 5. Return Response ---
         return ApiResponse.success(
-                pagedResult, messageService.getMessage("projects.listed.success"));
+                pagedResult, messageService.getMessage("projects.search.success"));
     }
 }
