@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.queries.getAllUsers;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -19,6 +20,7 @@ public class GetAllUsersHandler
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final UserDtoMapper userDtoMapper;
+    private final MessageService messageService; // EKLENMELI
 
     @Override
     public ApiResponse<List<UserDto>> handle(GetAllUsersQuery query) {
@@ -34,6 +36,6 @@ public class GetAllUsersHandler
                         .toList();
 
         // --- 3. Response ---
-        return ApiResponse.success(users, "Users retrieved successfully");
+        return ApiResponse.success(users, messageService.getMessage("user.list.retrieved.success"));
     }
 }

@@ -389,6 +389,149 @@ Clean and rebuild:
 ./gradlew clean build
 ```
 
+# 🌍 Internationalization (i18n)
+
+The API supports **multi-language responses** to provide localized error messages and user feedback.
+
+## Supported Languages
+
+- **Turkish (tr)** - Default
+- **English (en)**
+
+## How to Use
+
+### 1. Using Accept-Language Header
+
+Send the `Accept-Language` header in your HTTP requests:
+
+```bash
+# Request in English
+curl -H "Accept-Language: en" http://localhost:8080/api/v1/auth/login
+
+# Request in Turkish (default)
+curl -H "Accept-Language: tr" http://localhost:8080/api/v1/auth/login
+```
+
+### 2. User Language Preference (Optional)
+
+Authenticated users can set their preferred language in their profile. This preference **overrides** the `Accept-Language` header.
+
+**Update your language preference:**
+
+```bash
+PUT /api/v1/users/me
+{
+  "preferredLanguage": "en"
+}
+```
+
+**Priority:**
+1. User's preferred language (if authenticated and set)
+2. `Accept-Language` header
+3. Default language (Turkish)
+
+## Examples
+
+### Registration Error (Turkish - Default)
+
+```bash
+POST /api/v1/auth/register
+{
+  "email": "existing@example.com",
+  "password": "weak"
+}
+
+# Response:
+{
+  "message": "Bu e-posta adresi zaten kayıtlı",
+  "code": "BAD_REQUEST",
+  "timestamp": "2025-01-02T10:30:00"
+}
+```
+
+### Registration Error (English)
+
+```bash
+POST /api/v1/auth/register
+Accept-Language: en
+{
+  "email": "existing@example.com",
+  "password": "weak"
+}
+
+# Response:
+{
+  "message": "This email address is already registered",
+  "code": "BAD_REQUEST",
+  "timestamp": "2025-01-02T10:30:00"
+}
+```
+
+## Adding New Languages
+
+To add support for a new language:
+
+1. Create a new message file: `src/main/resources/messages_{lang}.properties`
+2. Translate all message keys from `messages_en.properties`
+3. Update `InternationalizationConfig.java` to include the new locale
+4. Update API documentation
+
+Example for Spanish:
+
+```properties
+# src/main/resources/messages_es.properties
+auth.login.success=Inicio de sesión exitoso
+auth.login.failed=Nombre de usuario o contraseña no válidos
+...
+```
+
+## Configuration
+
+Language configuration is in `src/main/java/com/iyte_yazilim/proje_pazari/presentation/config/InternationalizationConfig.java`:
+
+```java
+@Bean
+public LocaleResolver localeResolver() {
+    AcceptHeaderLocaleResolver localeResolver = new AcceptHeaderLocaleResolver();
+    localeResolver.setDefaultLocale(Locale.forLanguageTag("tr"));
+    localeResolver.setSupportedLocales(
+        Arrays.asList(
+            Locale.forLanguageTag("tr"),
+            Locale.forLanguageTag("en")
+        )
+    );
+    return localeResolver;
+}
+```
+
+## Testing i18n
+
+### Manual Testing with curl
+
+```bash
+# Test Turkish response
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -H "Accept-Language: tr" \
+  -d '{"email":"wrong@test.com","password":"wrong"}'
+
+# Test English response
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -H "Accept-Language: en" \
+  -d '{"email":"wrong@test.com","password":"wrong"}'
+```
+
+### Testing with Postman
+
+1. Add `Accept-Language` header to your request
+2. Set value to `en` or `tr`
+3. Send request and verify response messages
+
+### Swagger UI
+
+When using Swagger UI, you can set the `Accept-Language` header for each request in the "Parameters" section.
+
 ## 📖 Additional Resources
 
 - [Spring Boot Documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/)
