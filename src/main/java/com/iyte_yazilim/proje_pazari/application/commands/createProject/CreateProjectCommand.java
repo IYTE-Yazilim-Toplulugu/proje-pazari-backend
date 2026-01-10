@@ -1,8 +1,10 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 /**
  * Command to create a new project in the marketplace.
@@ -67,4 +69,14 @@ public record CreateProjectCommand(
         @Schema(
                         description = "Array of project tags",
                         example = "[\"machine-learning\", \"python\", \"research\"]")
-                String[] tags) {}
+                String[] tags,
+        @Schema(description = "Maximum team size", example = "5")
+                @Min(value = 1, message = "Maximum team size must be at least 1")
+                Integer maxTeamSize,
+        @Schema(
+                        description = "Array of required skills",
+                        example = "[\"Python\", \"Machine Learning\", \"TensorFlow\"]")
+                String[] requiredSkills,
+        @Schema(description = "Project category", example = "Machine Learning") String category,
+        @Schema(description = "Project deadline", example = "2025-12-31T23:59:59")
+                LocalDateTime deadline) {}
