@@ -9,40 +9,39 @@ import java.time.LocalDateTime;
 @Schema(description = "Command to create a new project")
 public record CreateProjectCommand(
         @Schema(description = "Name of the project", example = "Machine Learning Research Platform")
-        @NotBlank(message = "Project name is required")
-        @Size(
-                min = 3,
-                max = 100,
-                message = "Project name must be between 3 and 100 characters")
-        String projectName,
+                @NotBlank(message = "Project name is required")
+                @Size(
+                        min = 3,
+                        max = 100,
+                        message = "Project name must be between 3 and 100 characters")
+                String projectName,
         @Schema(
-                description = "Detailed description of the project",
-                example = "A platform for collaborative ML research")
-        @NotBlank(message = "Description is required")
-        @Size(
-                min = 10,
-                max = 2000,
-                message = "Description must be between 10 and 2000 characters")
-        String description,
+                        description = "Detailed description of the project",
+                        example = "A platform for collaborative ML research")
+                @NotBlank(message = "Description is required")
+                @Size(
+                        min = 10,
+                        max = 2000,
+                        message = "Description must be between 10 and 2000 characters")
+                String description,
         @Schema(description = "ID of the project owner", example = "01HQZX...")
-        @NotBlank(message = "Owner ID is required")
-        String ownerId,
+                @NotBlank(message = "Owner ID is required")
+                String ownerId,
         @Schema(
-                description = "Array of team member IDs",
-                example = "[\"01HQZX...\", \"01HQZY...\"]")
-        String[] teamMemberIds,
+                        description = "Array of team member IDs",
+                        example = "[\"01HQZX...\", \"01HQZY...\"]")
+                String[] teamMemberIds,
         @Schema(
-                description = "Array of project tags",
-                example = "[\"machine-learning\", \"python\", \"research\"]")
-        String[] tags,
+                        description = "Array of project tags",
+                        example = "[\"machine-learning\", \"python\", \"research\"]")
+                String[] tags,
         @Schema(description = "Maximum team size", example = "5")
-        @Min(value = 1, message = "Maximum team size must be at least 1")
-        Integer maxTeamSize,
+                @Min(value = 1, message = "Maximum team size must be at least 1")
+                Integer maxTeamSize,
         @Schema(
-                description = "Array of required skills",
-                example = "[\"Python\", \"Machine Learning\", \"TensorFlow\"]")
-        String[] requiredSkills,
-        @Schema(description = "Project category", example = "Machine Learning")
-        String category,
+                        description = "Array of required skills",
+                        example = "[\"Python\", \"Machine Learning\", \"TensorFlow\"]")
+                String[] requiredSkills,
+        @Schema(description = "Project category", example = "Machine Learning") String category,
         @Schema(description = "Project deadline", example = "2025-12-31T23:59:59")
-        LocalDateTime deadline) {}
+                LocalDateTime deadline) {}
