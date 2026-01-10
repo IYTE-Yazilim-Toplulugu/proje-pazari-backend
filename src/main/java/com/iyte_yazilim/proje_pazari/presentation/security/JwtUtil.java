@@ -71,7 +71,6 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
-    
     // Add userId claim extraction
     public String extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("userId", String.class));
@@ -87,7 +86,7 @@ public class JwtUtil {
         String role = extractClaim(token, claims -> claims.get("role", String.class));
         return role != null ? role : "USER"; // Default to USER if role claim missing
     }
-  
+
     /**
      * Extracts the expiration date from a JWT token.
      *
@@ -135,7 +134,6 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    
     // Update token generation with userId, email, and role claims
     public String generateToken(String userId, String email, String role) {
         return Jwts.builder()
@@ -148,7 +146,7 @@ public class JwtUtil {
                 .signWith(getSigningKey())
                 .compact();
     }
-  
+
     /**
      * Generates a new JWT token for a user.
      *

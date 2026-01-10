@@ -12,23 +12,22 @@ import lombok.Setter;
 /**
  * Represents a project in the Proje Pazarı marketplace.
  *
- * <p>
- * Projects are the central entity in the system where users can:
+ * <p>Projects are the central entity in the system where users can:
  *
  * <ul>
- * <li>Post projects seeking collaborators
- * <li>Receive applications from interested users
- * <li>Manage project status through its lifecycle
+ *   <li>Post projects seeking collaborators
+ *   <li>Receive applications from interested users
+ *   <li>Manage project status through its lifecycle
  * </ul>
  *
  * <h2>Project Lifecycle:</h2>
  *
  * <ol>
- * <li>{@link ProjectStatus#DRAFT} - Initial state when created
- * <li>{@link ProjectStatus#OPEN} - Accepting applications
- * <li>{@link ProjectStatus#IN_PROGRESS} - Actively being worked on
- * <li>{@link ProjectStatus#COMPLETED} - Successfully finished
- * <li>{@link ProjectStatus#CANCELLED} - Abandoned or cancelled
+ *   <li>{@link ProjectStatus#DRAFT} - Initial state when created
+ *   <li>{@link ProjectStatus#OPEN} - Accepting applications
+ *   <li>{@link ProjectStatus#IN_PROGRESS} - Actively being worked on
+ *   <li>{@link ProjectStatus#COMPLETED} - Successfully finished
+ *   <li>{@link ProjectStatus#CANCELLED} - Abandoned or cancelled
  * </ol>
  *
  * <h2>Example Usage:</h2>
@@ -65,8 +64,7 @@ public class Project extends BaseEntity<Ulid> {
     private String summary;
 
     /**
-     * Current status of the project in its lifecycle. Defaults to
-     * {@link ProjectStatus#DRAFT} when
+     * Current status of the project in its lifecycle. Defaults to {@link ProjectStatus#DRAFT} when
      * created.
      *
      * @see ProjectStatus
@@ -74,8 +72,7 @@ public class Project extends BaseEntity<Ulid> {
     private ProjectStatus status = ProjectStatus.DRAFT;
 
     /**
-     * The user who created and owns this project. Only the owner can manage the
-     * project and review
+     * The user who created and owns this project. Only the owner can manage the project and review
      * applications.
      */
     private User owner;
@@ -93,6 +90,7 @@ public class Project extends BaseEntity<Ulid> {
      * @param owner the user to set as project owner
      */
     private Integer maxTeamSize;
+
     private Integer currentTeamSize;
     private List<String> requiredSkills;
     private String category;

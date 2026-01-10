@@ -180,12 +180,26 @@ public class UserController extends BaseController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @PostMapping("/me/profile-picture")
+    @PostMapping(value = "/me/profile-picture", consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Upload profile picture",
-            description = "Uploads a new profile picture for the authenticated user")
+            description = "Uploads a new profile picture for the authenticated user",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            content =
+                                    @io.swagger.v3.oas.annotations.media.Content(
+                                            mediaType = "multipart/form-data",
+                                            schema =
+                                                    @io.swagger.v3.oas.annotations.media.Schema(
+                                                            type = "object",
+                                                            implementation = Object.class),
+                                            encoding =
+                                                    @io.swagger.v3.oas.annotations.media.Encoding(
+                                                            name = "file",
+                                                            contentType =
+                                                                    "image/jpeg, image/png, image/gif, image/webp"))))
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -199,7 +213,15 @@ public class UserController extends BaseController {
                         description = "Unauthorized")
             })
     public ResponseEntity<ApiResponse<String>> uploadProfilePicture(
-            @RequestParam("file") MultipartFile file, Authentication auth) {
+            @io.swagger.v3.oas.annotations.Parameter(
+                            description = "Profile picture file to upload",
+                            required = true,
+                            content =
+                                    @io.swagger.v3.oas.annotations.media.Content(
+                                            mediaType = "multipart/form-data"))
+                    @RequestParam("file")
+                    MultipartFile file,
+            Authentication auth) {
         String userId = getCurrentUserId(auth);
 
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, file);

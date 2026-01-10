@@ -89,7 +89,45 @@ gradle bootRun
 
 The application will start on **http://localhost:8080**
 
-### 5. Access API Documentation
+### 5. File Storage (MinIO)
+
+The application uses MinIO for file storage (profile pictures, project attachments). MinIO is S3-compatible and runs automatically with docker-compose.
+
+**Local Development:**
+- MinIO API: http://localhost:9002
+- MinIO Console: http://localhost:9003
+- Default credentials: `minioadmin` / `minioadmin123`
+
+**Storage Configuration:**
+```properties
+# In application-dev.properties (default)
+storage.provider=minio
+minio.url=http://localhost:9002
+minio.bucket-name=proje-pazari-files
+```
+
+**Production:**
+Set environment variables for your S3-compatible storage:
+```bash
+MINIO_URL=https://your-storage-endpoint
+MINIO_ACCESS_KEY=your-access-key
+MINIO_SECRET_KEY=your-secret-key
+MINIO_BUCKET=your-bucket-name
+SPRING_PROFILES_ACTIVE=prod
+```
+
+**Migrating from Local Storage:**
+If you have existing files in the `./uploads` folder, run the migration script:
+```bash
+# Install MinIO client first
+curl https://dl.min.io/client/mc/release/linux-amd64/mc -o mc
+chmod +x mc && sudo mv mc /usr/local/bin/
+
+# Run migration
+./scripts/migrate-to-minio.sh
+```
+
+### 6. Access API Documentation
 
 Open your browser and navigate to:
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
@@ -115,10 +153,13 @@ src/main/java/com/iyte_yazilim/proje_pazari/
 │   ├── events/            # Domain events
 │   └── enums/             # Domain enumerations
 └── infrastructure/        # Infrastructure layer
-    └── persistence/       # Database implementation
-        ├── entities/      # JPA entities
-        ├── repositories/  # JPA repositories
-        └── mappers/       # Entity <-> Domain mapping
+    ├── persistence/       # Database implementation
+    │   ├── entities/      # JPA entities
+    │   ├── repositories/  # JPA repositories
+    │   └── mappers/       # Entity <-> Domain mapping
+    └── storage/           # Cloud storage adapters
+        ├── MinioStorageAdapter.java   # MinIO/S3 implementation
+        └── LocalStorageAdapter.java   # Local filesystem fallback
 ```
 
 ### Architecture Pattern
