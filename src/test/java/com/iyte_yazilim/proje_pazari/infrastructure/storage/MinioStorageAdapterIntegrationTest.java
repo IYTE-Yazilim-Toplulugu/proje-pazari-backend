@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.mock.web.MockMultipartFile;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -23,6 +26,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * Testcontainers. See: https://java.testcontainers.org/supported_docker_environment/
  */
 @Testcontainers(disabledWithoutDocker = true)
+@DisabledIfEnvironmentVariable(named = "CI", matches = "true")
 class MinioStorageAdapterIntegrationTest {
 
     private static final String ACCESS_KEY = "minioadmin";
@@ -36,6 +40,13 @@ class MinioStorageAdapterIntegrationTest {
                     .withPassword(SECRET_KEY);
 
     private MinioStorageAdapter adapter;
+
+    @BeforeAll
+    static void checkDocker() {
+        assumeTrue(
+                DockerClientFactory.instance().isDockerAvailable(),
+                "Docker is not available, skipping integration tests");
+    }
 
     @BeforeEach
     void setUp() {
