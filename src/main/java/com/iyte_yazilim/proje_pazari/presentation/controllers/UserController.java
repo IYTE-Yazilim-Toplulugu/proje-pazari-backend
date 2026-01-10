@@ -28,7 +28,12 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@Tag(name = "User", description = "User management endpoints")
+@Tag(
+        name = "User",
+        description =
+                "User management endpoints. Includes profile management, password change, "
+                        + "profile picture upload, and account deactivation. "
+                        + "Most endpoints require authentication.")
 public class UserController extends BaseController {
 
     private final IRequestHandler<GetCurrentUserProfileQuery, ApiResponse<UserProfileDTO>>

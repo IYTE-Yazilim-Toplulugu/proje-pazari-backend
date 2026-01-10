@@ -4,6 +4,7 @@ import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -53,6 +54,22 @@ public class ProjectEntity {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectApplicationEntity> applications;
 
+    @Column(name = "max_team_size")
+    private Integer maxTeamSize;
+
+    @Column(name = "current_team_size")
+    private Integer currentTeamSize;
+
+    @ElementCollection
+    @Column(name = "required_skill")
+    private List<String> requiredSkills;
+
+    @Column(name = "category")
+    private String category;
+
+    @Column(name = "deadline")
+    private LocalDateTime deadline;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -66,6 +83,9 @@ public class ProjectEntity {
         }
         if (status == null) {
             status = ProjectStatus.DRAFT;
+        }
+        if (currentTeamSize == null) {
+            currentTeamSize = 1; // Owner is automatically part of the team
         }
         createdAt = LocalDateTime.now();
     }
