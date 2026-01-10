@@ -180,7 +180,7 @@ public class UserController extends BaseController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @PostMapping("/me/profile-picture")
+    @PostMapping(value = "/me/profile-picture", consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
