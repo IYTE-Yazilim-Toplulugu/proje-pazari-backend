@@ -4,6 +4,41 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Command to create a new project in the marketplace.
+ *
+ * <p>This command initiates project creation which includes:
+ *
+ * <ul>
+ *   <li>Validation of project details
+ *   <li>Owner verification
+ *   <li>Project entity creation
+ *   <li>Initial status set to DRAFT
+ * </ul>
+ *
+ * <h2>Example:</h2>
+ *
+ * <pre>{@code
+ * CreateProjectCommand command = new CreateProjectCommand(
+ *                 "Mobile App Development",
+ *                 "Building a Flutter mobile app for campus navigation",
+ *                 "01HQXYZ123",
+ *                 new String[] {},
+ *                 new String[] { "flutter", "mobile", "navigation" });
+ * ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
+ * }</pre>
+ *
+ * @param projectName the title of the project (3-100 chars)
+ * @param description detailed project description (10-2000 chars)
+ * @param ownerId ULID of the project owner
+ * @param teamMemberIds optional array of initial team member ULIDs
+ * @param tags optional array of project tags for categorization
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.0
+ * @since 2024-01-01
+ * @see CreateProjectHandler
+ * @see com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult
+ */
 @Schema(description = "Command to create a new project")
 public record CreateProjectCommand(
         @Schema(description = "Name of the project", example = "Machine Learning Research Platform")

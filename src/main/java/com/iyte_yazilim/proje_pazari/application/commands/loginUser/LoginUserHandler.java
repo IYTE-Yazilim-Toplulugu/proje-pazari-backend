@@ -12,6 +12,40 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Handles the {@link LoginUserCommand} to authenticate users.
+ *
+ * <p>This handler orchestrates the login process:
+ *
+ * <ol>
+ *   <li>Validate command using {@link LoginUserValidator}
+ *   <li>Find user by email address
+ *   <li>Check if account is active
+ *   <li>Verify password using BCrypt
+ *   <li>Generate JWT token
+ *   <li>Return login result with token
+ * </ol>
+ *
+ * <h2>Error Scenarios:</h2>
+ *
+ * <ul>
+ *   <li>{@code BAD_REQUEST} - Validation failed
+ *   <li>{@code BAD_REQUEST} - Invalid email or password
+ *   <li>{@code BAD_REQUEST} - Account deactivated
+ * </ul>
+ *
+ * <h2>Security Notes:</h2>
+ *
+ * <p>Error messages are intentionally vague ("Invalid email or password") to prevent user
+ * enumeration attacks.
+ *
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.0
+ * @since 2024-01-01
+ * @see LoginUserCommand
+ * @see LoginUserResult
+ * @see JwtUtil
+ */
 @Service
 @RequiredArgsConstructor
 public class LoginUserHandler
@@ -23,6 +57,14 @@ public class LoginUserHandler
     private final JwtUtil jwtUtil;
     private final MessageService messageService;
 
+    /**
+     * Handles user login command.
+     *
+     * <p>Authenticates the user and generates a JWT token for subsequent API access.
+     *
+     * @param command the login command containing credentials
+     * @return API response with login result containing JWT token, or error message
+     */
     @Override
     public ApiResponse<LoginUserResult> handle(LoginUserCommand command) {
 

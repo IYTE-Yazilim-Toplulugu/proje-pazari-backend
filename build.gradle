@@ -152,3 +152,36 @@ eclipse {
         downloadJavadoc = true
     }
 }
+
+// Javadoc configuration for API documentation generation
+javadoc {
+    options {
+        encoding = 'UTF-8'
+        charSet = 'UTF-8'
+        author = true
+        version = true
+        use = true
+        windowTitle = 'Proje Pazarı Backend API Documentation'
+        docTitle = 'Proje Pazarı Backend API'
+        header = '<b>Proje Pazarı</b>'
+        bottom = 'Copyright © 2024 IYTE Yazılım Topluluğu'
+
+        links = [
+            'https://docs.oracle.com/en/java/javase/21/docs/api/',
+            'https://docs.spring.io/spring-framework/docs/current/javadoc-api/',
+            'https://docs.spring.io/spring-boot/docs/current/api/'
+        ]
+
+        addStringOption('Xdoclint:none', '-quiet')
+        addBooleanOption('html5', true)
+    }
+
+    source = sourceSets.main.allJava
+    classpath = configurations.compileClasspath
+    destinationDir = file("${buildDir}/docs/javadoc")
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
+}
