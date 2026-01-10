@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture;
 
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -19,6 +20,7 @@ public class UploadProfilePictureHandler
 
     private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
+    private final MessageService messageService; // EKLENMELI
 
     @Override
     @Transactional
@@ -26,7 +28,7 @@ public class UploadProfilePictureHandler
         UserEntity user = userRepository.findById(command.userId()).orElse(null);
 
         if (user == null) {
-            return ApiResponse.notFound("User not found");
+            return ApiResponse.notFound(messageService.getMessage("user.not.found"));
         }
 
         try {
@@ -50,9 +52,15 @@ public class UploadProfilePictureHandler
             user.setProfilePictureUrl(storedUrl);
             userRepository.save(user);
 
-            return ApiResponse.success(storedUrl, "Profile picture uploaded successfully");
-        } catch (FileStorageException e) {
-            return ApiResponse.error("Failed to upload file: " + e.getMessage());
+            return ApiResponse.success(
+                    user.getProfilePictureUrl(),
+                    messageService.getMessage("user.profile.picture.uploaded"));
+          
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.validationError(e.getMessage());
+        } catch (IOException e) {
+            return ApiResponse.error(
+                    messageService.getMessage("file.upload.failed", new Object[] {e.getMessage()}));
         }
     }
 

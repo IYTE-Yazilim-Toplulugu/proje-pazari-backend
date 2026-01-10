@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
 import com.iyte_yazilim.proje_pazari.application.mappers.CreateProjectMapper;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
@@ -16,6 +17,34 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntit
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * Handles the {@link CreateProjectCommand} to create new projects.
+ *
+ * <p>This handler orchestrates project creation:
+ *
+ * <ol>
+ *   <li>Validate command using {@link CreateProjectValidator}
+ *   <li>Verify owner exists in the system
+ *   <li>Map command to domain entity
+ *   <li>Associate owner with project
+ *   <li>Persist project to database
+ *   <li>Return creation result
+ * </ol>
+ *
+ * <h2>Error Scenarios:</h2>
+ *
+ * <ul>
+ *   <li>{@code BAD_REQUEST} - Validation failed
+ *   <li>{@code NOT_FOUND} - Owner ID not found
+ * </ul>
+ *
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.0
+ * @since 2024-01-01
+ * @see CreateProjectCommand
+ * @see CreateProjectCommandResult
+ * @see ProjectRepository
+ */
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -28,7 +57,16 @@ public class CreateProjectHandler
     private final CreateProjectMapper createProjectMapper;
     private final ProjectMapper projectMapper;
     private final UserMapper userMapper;
+    private final MessageService messageService; // EKLENMELI
 
+    /**
+     * Handles project creation command.
+     *
+     * <p>Creates a new project in DRAFT status with the specified owner.
+     *
+     * @param command the project creation command
+     * @return API response with project result or error message
+     */
     @Override
     public ApiResponse<CreateProjectCommandResult> handle(CreateProjectCommand command) {
 
@@ -42,7 +80,9 @@ public class CreateProjectHandler
         // --- 2. Verify Owner Exists ---
         UserEntity ownerEntity = userRepository.findById(command.ownerId()).orElse(null);
         if (ownerEntity == null) {
-            return ApiResponse.notFound("Owner with ID " + command.ownerId() + " not found");
+            return ApiResponse.notFound(
+                    messageService.getMessage(
+                            "project.owner.not.found", new Object[] {command.ownerId()}));
         }
 
         // --- 3. Mapping (Command -> Domain Entity) ---
@@ -65,6 +105,6 @@ public class CreateProjectHandler
         var result = createProjectMapper.domainToResult(savedDomainProject);
 
         // --- 9. Response ---
-        return ApiResponse.created(result, "Project created successfully");
+        return ApiResponse.created(result, messageService.getMessage("project.created.success"));
     }
 }
