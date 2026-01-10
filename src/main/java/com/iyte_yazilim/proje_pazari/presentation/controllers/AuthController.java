@@ -15,6 +15,44 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for authentication operations.
+ *
+ * <p>Provides endpoints for:
+ *
+ * <ul>
+ *   <li>User registration
+ *   <li>User login
+ * </ul>
+ *
+ * <h2>Base Path:</h2>
+ *
+ * {@code /api/v1/auth}
+ *
+ * <h2>Authentication:</h2>
+ *
+ * <p>These endpoints are public and do not require authentication.
+ *
+ * <h2>Example Requests:</h2>
+ *
+ * <pre>{@code
+ * // Registration
+ * POST /api/v1/auth/register
+ * Content-Type: application/json
+ * {"email":"student@iyte.edu.tr","password":"Pass123!","firstName":"John","lastName":"Doe"}
+ *
+ * // Login
+ * POST /api/v1/auth/login
+ * Content-Type: application/json
+ * {"email":"student@iyte.edu.tr","password":"Pass123!"}
+ * }</pre>
+ *
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.0
+ * @since 2024-01-01
+ * @see RegisterUserCommand
+ * @see LoginUserCommand
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor

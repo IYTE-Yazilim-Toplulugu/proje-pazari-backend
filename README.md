@@ -231,6 +231,24 @@ GET    /api/v1/users/me/applications
 
 For detailed API documentation, visit the **Swagger UI** when the app is running.
 
+## 📖 Javadoc Documentation
+
+Generate API documentation:
+
+```bash
+./gradlew javadoc
+```
+
+View documentation at: `build/docs/javadoc/index.html`
+
+### Generate Javadoc JAR
+
+```bash
+./gradlew javadocJar
+```
+
+The JAR file will be created at: `build/libs/proje-pazari-0.0.1-SNAPSHOT-javadoc.jar`
+
 ## 🧪 Testing
 
 ### Run All Tests
