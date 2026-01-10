@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
 import com.iyte_yazilim.proje_pazari.application.mappers.CreateProjectMapper;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
@@ -56,6 +57,7 @@ public class CreateProjectHandler
     private final CreateProjectMapper createProjectMapper;
     private final ProjectMapper projectMapper;
     private final UserMapper userMapper;
+    private final MessageService messageService; // EKLENMELI
 
     /**
      * Handles project creation command.
@@ -78,7 +80,9 @@ public class CreateProjectHandler
         // --- 2. Verify Owner Exists ---
         UserEntity ownerEntity = userRepository.findById(command.ownerId()).orElse(null);
         if (ownerEntity == null) {
-            return ApiResponse.notFound("Owner with ID " + command.ownerId() + " not found");
+            return ApiResponse.notFound(
+                    messageService.getMessage(
+                            "project.owner.not.found", new Object[] {command.ownerId()}));
         }
 
         // --- 3. Mapping (Command -> Domain Entity) ---
@@ -101,6 +105,6 @@ public class CreateProjectHandler
         var result = createProjectMapper.domainToResult(savedDomainProject);
 
         // --- 9. Response ---
-        return ApiResponse.created(result, "Project created successfully");
+        return ApiResponse.created(result, messageService.getMessage("project.created.success"));
     }
 }

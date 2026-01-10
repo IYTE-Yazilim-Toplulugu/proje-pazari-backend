@@ -71,6 +71,23 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
+    
+    // Add userId claim extraction
+    public String extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", String.class));
+    }
+
+    // Add email claim extraction
+    public String extractEmail(String token) {
+        return extractClaim(token, claims -> claims.get("email", String.class));
+    }
+
+    // Add role claim extraction
+    public String extractRole(String token) {
+        String role = extractClaim(token, claims -> claims.get("role", String.class));
+        return role != null ? role : "USER"; // Default to USER if role claim missing
+    }
+  
     /**
      * Extracts the expiration date from a JWT token.
      *
@@ -118,6 +135,20 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
+    
+    // Update token generation with userId, email, and role claims
+    public String generateToken(String userId, String email, String role) {
+        return Jwts.builder()
+                .subject(email)
+                .claim("userId", userId)
+                .claim("email", email)
+                .claim("role", role)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+  
     /**
      * Generates a new JWT token for a user.
      *
@@ -156,5 +187,21 @@ public class JwtUtil {
     public Boolean validateToken(String token, String username) {
         final String extractedUsername = extractUsername(token);
         return (extractedUsername.equals(username) && !isTokenExpired(token));
+    }
+
+    public Boolean validateToken(String token) {
+        try {
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public UserPrincipal extractUserPrincipal(String token) {
+        Claims claims = extractAllClaims(token);
+        return new UserPrincipal(
+                claims.get("userId", String.class),
+                claims.get("email", String.class),
+                claims.get("role", String.class));
     }
 }
