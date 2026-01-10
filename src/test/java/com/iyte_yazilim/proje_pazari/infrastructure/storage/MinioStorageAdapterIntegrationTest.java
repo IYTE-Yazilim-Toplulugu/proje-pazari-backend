@@ -16,8 +16,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * Integration tests for MinioStorageAdapter using Testcontainers. These tests run against a real
  * MinIO instance in a Docker container.
  *
- * <p>These tests require Docker to be available. If Docker is not accessible, tests will be
- * skipped automatically.
+ * <p>These tests require Docker to be available. If Docker is not accessible, tests will be skipped
+ * automatically.
  *
  * <p>Note: On some systems (e.g., Docker Desktop on Linux), you may need to configure
  * Testcontainers. See: https://java.testcontainers.org/supported_docker_environment/
