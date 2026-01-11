@@ -64,10 +64,8 @@ public enum ResponseCode {
     /** Unexpected server error occurred. */
     INTERNAL_SERVER_ERROR(10);
 
-
     /** Numeric status code for this response type. */
-    @JsonValue
-    private final int status;
+    @JsonValue private final int status;
 
     @JsonCreator
     public static ResponseCode fromIntValue(int value) {
@@ -77,6 +75,5 @@ public enum ResponseCode {
             }
         }
         throw new IllegalArgumentException();
-
     }
 }
