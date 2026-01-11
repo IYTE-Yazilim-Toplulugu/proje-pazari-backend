@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.presentation.config;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -65,6 +67,24 @@ public class GlobalExceptionHandler {
         ApiResponse<Void> response =
                 ApiResponse.validationError(
                         messageService.getMessage("validation.file.size.exceeded"));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException ex) {
+        log.error("Missing request parameter: {}", ex.getMessage());
+        ApiResponse<Void> response =
+                ApiResponse.validationError(messageService.getMessage("error.validation"));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(
+            ConstraintViolationException ex) {
+        log.error("Constraint violation: {}", ex.getMessage());
+        ApiResponse<Void> response =
+                ApiResponse.validationError(messageService.getMessage("error.validation"));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
