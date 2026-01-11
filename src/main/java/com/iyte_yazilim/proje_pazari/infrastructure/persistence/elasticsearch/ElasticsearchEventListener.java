@@ -25,21 +25,45 @@ public class ElasticsearchEventListener {
     @EventListener
     @Async
     public void handleProjectCreated(ProjectCreatedEvent event) {
-        log.debug("Indexing newly created project: {}", event.projectId());
-        syncService.indexProject(event.projectId());
+        try {
+            log.debug("Indexing newly created project: {}", event.projectId());
+            syncService.indexProject(event.projectId());
+        } catch (Exception e) {
+            log.error(
+                    "Failed to index newly created project {}: {}",
+                    event.projectId(),
+                    e.getMessage(),
+                    e);
+        }
     }
 
     @EventListener
     @Async
     public void handleProjectUpdated(ProjectUpdatedEvent event) {
-        log.debug("Re-indexing updated project: {}", event.projectId());
-        syncService.indexProject(event.projectId());
+        try {
+            log.debug("Re-indexing updated project: {}", event.projectId());
+            syncService.indexProject(event.projectId());
+        } catch (Exception e) {
+            log.error(
+                    "Failed to re-index updated project {}: {}",
+                    event.projectId(),
+                    e.getMessage(),
+                    e);
+        }
     }
 
     @EventListener
     @Async
     public void handleProjectDeleted(ProjectDeletedEvent event) {
-        log.debug("Removing deleted project from index: {}", event.projectId());
-        syncService.deleteProjectIndex(event.projectId());
+        try {
+            log.debug("Removing deleted project from index: {}", event.projectId());
+            syncService.deleteProjectIndex(event.projectId());
+        } catch (Exception e) {
+            log.error(
+                    "Failed to remove project {} from index: {}",
+                    event.projectId(),
+                    e.getMessage(),
+                    e);
+        }
     }
 }
