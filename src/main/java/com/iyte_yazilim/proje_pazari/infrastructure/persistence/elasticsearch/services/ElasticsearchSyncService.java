@@ -56,7 +56,7 @@ public class ElasticsearchSyncService {
                         .findById(projectId)
                         .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
-        ProjectDocument document = mapper.toDocument(project);
+                                                projectId));
         projectSearchRepository.save(document);
     }
 
