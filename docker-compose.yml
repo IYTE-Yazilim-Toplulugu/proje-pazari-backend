@@ -99,7 +99,8 @@ services:
     container_name: proje_pazari_elasticsearch
     environment:
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      # Default heap size set to 1GB; adjust -Xms / -Xmx based on your data volume and workload.
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
     ports:
