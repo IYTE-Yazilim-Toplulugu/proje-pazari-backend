@@ -51,12 +51,11 @@ public class ElasticsearchSyncService {
     }
 
     public void indexProject(String projectId) {
-        ProjectEntity project =
-                projectRepository
-                        .findById(projectId)
-                        .orElseThrow(() -> new ProjectNotFoundException(projectId));
+        ProjectEntity project = projectRepository
+                .findById(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
-                                                projectId));
+        ProjectDocument document = mapper.toDocument(project);
         projectSearchRepository.save(document);
     }
 
@@ -75,8 +74,8 @@ public class ElasticsearchSyncService {
         do {
             page = projectRepository.findAll(PageRequest.of(pageNumber, batchSize));
 
-            List<ProjectDocument> documents =
-                    page.getContent().stream().map(mapper::toDocument).collect(Collectors.toList());
+            List<ProjectDocument> documents = page.getContent().stream().map(mapper::toDocument)
+                    .collect(Collectors.toList());
 
             projectSearchRepository.saveAll(documents);
             pageNumber++;
@@ -95,10 +94,9 @@ public class ElasticsearchSyncService {
         do {
             page = userRepository.findAll(PageRequest.of(pageNumber, batchSize));
 
-            List<UserDocument> documents =
-                    page.getContent().stream()
-                            .map(this::toUserDocument)
-                            .collect(Collectors.toList());
+            List<UserDocument> documents = page.getContent().stream()
+                    .map(this::toUserDocument)
+                    .collect(Collectors.toList());
 
             userSearchRepository.saveAll(documents);
             pageNumber++;
