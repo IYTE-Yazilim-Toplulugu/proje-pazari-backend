@@ -1,7 +1,7 @@
 # Multi-stage build for smaller image size
 
 # Stage 1: Build
-FROM gradle:8.14-jdk21 AS build
+FROM gradle:9.2.1-jdk21 AS build
 WORKDIR /app
 
 # Copy gradle files first for better layer caching
@@ -23,6 +23,10 @@ WORKDIR /app
 
 # Create non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
+
+# Create uploads directory with proper permissions
+RUN mkdir -p /app/uploads && chown -R spring:spring /app/uploads
+
 USER spring:spring
 
 # Copy the built jar from build stage
