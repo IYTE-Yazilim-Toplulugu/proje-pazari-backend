@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,10 +26,7 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
-@ConditionalOnProperty(
-        name = "spring.data.elasticsearch.enabled",
-        havingValue = "true",
-        matchIfMissing = true)
+@ConditionalOnProperty(name = "spring.data.elasticsearch.enabled", havingValue = "true", matchIfMissing = true)
 public class ElasticsearchSyncService {
 
     private final ProjectRepository projectRepository;
@@ -53,10 +51,9 @@ public class ElasticsearchSyncService {
     }
 
     public void indexProject(String projectId) {
-        ProjectEntity project =
-                projectRepository
-                        .findById(projectId)
-                        .orElseThrow(() -> new ProjectNotFoundException(projectId));
+        ProjectEntity project = projectRepository
+                .findById(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
         ProjectDocument document = mapper.toDocument(project);
         projectSearchRepository.save(document);
@@ -67,6 +64,7 @@ public class ElasticsearchSyncService {
     }
 
     @Transactional(readOnly = true)
+    @Async
     public void reindexAllProjects() {
         projectSearchRepository.deleteAll();
 
@@ -77,8 +75,8 @@ public class ElasticsearchSyncService {
         do {
             page = projectRepository.findAll(PageRequest.of(pageNumber, batchSize));
 
-            List<ProjectDocument> documents =
-                    page.getContent().stream().map(mapper::toDocument).collect(Collectors.toList());
+            List<ProjectDocument> documents = page.getContent().stream().map(mapper::toDocument)
+                    .collect(Collectors.toList());
 
             projectSearchRepository.saveAll(documents);
             pageNumber++;
@@ -87,6 +85,7 @@ public class ElasticsearchSyncService {
     }
 
     @Transactional(readOnly = true)
+    @Async
     public void reindexAllUsers() {
         userSearchRepository.deleteAll();
 
@@ -97,10 +96,9 @@ public class ElasticsearchSyncService {
         do {
             page = userRepository.findAll(PageRequest.of(pageNumber, batchSize));
 
-            List<UserDocument> documents =
-                    page.getContent().stream()
-                            .map(this::toUserDocument)
-                            .collect(Collectors.toList());
+            List<UserDocument> documents = page.getContent().stream()
+                    .map(this::toUserDocument)
+                    .collect(Collectors.toList());
 
             userSearchRepository.saveAll(documents);
             pageNumber++;
@@ -108,6 +106,7 @@ public class ElasticsearchSyncService {
         } while (page.hasNext());
     }
 
+    @Async
     public void deleteAllIndexes() {
         IndexOperations projectIndexOps = elasticsearchOperations.indexOps(ProjectDocument.class);
         if (projectIndexOps.exists()) {
