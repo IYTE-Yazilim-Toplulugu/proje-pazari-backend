@@ -14,6 +14,46 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Handles the {@link RegisterUserCommand} to register new users.
+ *
+ * <p>This handler orchestrates the user registration process:
+ *
+ * <ol>
+ *   <li>Validate command using {@link RegisterUserValidator}
+ *   <li>Check for duplicate email addresses
+ *   <li>Map command to domain entity
+ *   <li>Encrypt password using BCrypt
+ *   <li>Persist user to database
+ *   <li>Return registration result
+ * </ol>
+ *
+ * <h2>Error Scenarios:</h2>
+ *
+ * <ul>
+ *   <li>{@code BAD_REQUEST} - Validation failed
+ *   <li>{@code BAD_REQUEST} - Email already registered
+ * </ul>
+ *
+ * <h2>Example:</h2>
+ *
+ * <pre>{@code
+ * RegisterUserCommand command = new RegisterUserCommand(...);
+ * ApiResponse<RegisterUserResult> response = handler.handle(command);
+ *
+ * if (response.getCode() == ResponseCode.CREATED) {
+ *     String userId = response.getData().userId();
+ *     // User registered successfully
+ * }
+ * }</pre>
+ *
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.0
+ * @since 2024-01-01
+ * @see RegisterUserCommand
+ * @see RegisterUserResult
+ * @see UserRepository
+ */
 @Service
 @RequiredArgsConstructor
 public class RegisterUserHandler
@@ -26,6 +66,15 @@ public class RegisterUserHandler
     private final PasswordEncoder passwordEncoder;
     private final MessageService messageService;
 
+    /**
+     * Handles user registration command.
+     *
+     * <p>Performs validation, duplicate check, password encryption, and persists the new user to
+     * the database.
+     *
+     * @param command the registration command containing user details
+     * @return API response with registration result or error message
+     */
     @Override
     public ApiResponse<RegisterUserResult> handle(RegisterUserCommand command) {
 

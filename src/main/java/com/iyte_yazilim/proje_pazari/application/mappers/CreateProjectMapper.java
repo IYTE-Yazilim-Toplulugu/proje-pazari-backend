@@ -5,13 +5,14 @@ import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreatePr
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
+import java.util.Arrays;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface CreateProjectMapper {
 
-    // Map Command -> Domain Entity
     @Mapping(target = "title", source = "projectName")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -21,9 +22,12 @@ public interface CreateProjectMapper {
     @Mapping(target = "summary", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "applications", ignore = true)
+    @Mapping(target = "currentTeamSize", constant = "1") // Owner başlangıçta takımın parçası
+    @Mapping(
+            target = "requiredSkills",
+            expression = "java(convertArrayToList(command.requiredSkills()))")
     Project commandToDomain(CreateProjectCommand command);
 
-    // Map Domain Entity -> Result DTO
     @Mapping(
             target = "projectId",
             expression = "java(project.getId() != null ? project.getId().toString() : null)")
@@ -34,9 +38,11 @@ public interface CreateProjectMapper {
                     "java(project.getOwner() != null ? project.getOwner().getId().toString() : null)")
     @Mapping(target = "teamMemberIds", expression = "java(new String[0])")
     @Mapping(target = "tags", expression = "java(new String[0])")
+    @Mapping(
+            target = "requiredSkills",
+            expression = "java(convertListToArray(project.getRequiredSkills()))")
     CreateProjectCommandResult domainToResult(Project project);
 
-    // Helper method to create User with just ID
     default User createUserWithId(String ownerId) {
         if (ownerId == null || ownerId.isBlank()) {
             return null;
@@ -44,5 +50,19 @@ public interface CreateProjectMapper {
         User user = new User();
         user.setId(Ulid.from(ownerId));
         return user;
+    }
+
+    default List<String> convertArrayToList(String[] array) {
+        if (array == null) {
+            return null;
+        }
+        return Arrays.asList(array);
+    }
+
+    default String[] convertListToArray(List<String> list) {
+        if (list == null) {
+            return new String[0];
+        }
+        return list.toArray(new String[0]);
     }
 }

@@ -17,6 +17,34 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntit
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * Handles the {@link CreateProjectCommand} to create new projects.
+ *
+ * <p>This handler orchestrates project creation:
+ *
+ * <ol>
+ *   <li>Validate command using {@link CreateProjectValidator}
+ *   <li>Verify owner exists in the system
+ *   <li>Map command to domain entity
+ *   <li>Associate owner with project
+ *   <li>Persist project to database
+ *   <li>Return creation result
+ * </ol>
+ *
+ * <h2>Error Scenarios:</h2>
+ *
+ * <ul>
+ *   <li>{@code BAD_REQUEST} - Validation failed
+ *   <li>{@code NOT_FOUND} - Owner ID not found
+ * </ul>
+ *
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.0
+ * @since 2024-01-01
+ * @see CreateProjectCommand
+ * @see CreateProjectCommandResult
+ * @see ProjectRepository
+ */
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -31,6 +59,14 @@ public class CreateProjectHandler
     private final UserMapper userMapper;
     private final MessageService messageService; // EKLENMELI
 
+    /**
+     * Handles project creation command.
+     *
+     * <p>Creates a new project in DRAFT status with the specified owner.
+     *
+     * @param command the project creation command
+     * @return API response with project result or error message
+     */
     @Override
     public ApiResponse<CreateProjectCommandResult> handle(CreateProjectCommand command) {
 
