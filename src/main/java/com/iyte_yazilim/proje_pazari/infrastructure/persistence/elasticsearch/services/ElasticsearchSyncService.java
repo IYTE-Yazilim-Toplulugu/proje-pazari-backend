@@ -12,8 +12,6 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserDocum
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,8 +24,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Getter
-@Setter
 @AllArgsConstructor
 @ConditionalOnProperty(
         name = "spring.data.elasticsearch.enabled",
