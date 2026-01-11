@@ -6,6 +6,7 @@ import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch.services.ElasticsearchSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,10 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(
+        name = "spring.data.elasticsearch.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 public class ElasticsearchEventListener {
 
     private final ElasticsearchSyncService syncService;
