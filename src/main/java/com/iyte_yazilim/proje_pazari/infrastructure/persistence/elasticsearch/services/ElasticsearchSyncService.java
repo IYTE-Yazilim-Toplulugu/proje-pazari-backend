@@ -61,7 +61,7 @@ public class ElasticsearchSyncService {
                         .findById(projectId)
                         .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
-                                                projectId));
+        ProjectDocument document = mapper.toDocument(project);
         projectSearchRepository.save(document);
     }
 
@@ -138,6 +138,7 @@ public class ElasticsearchSyncService {
     private String buildFullName(String firstName, String lastName) {
         if (firstName == null && lastName == null) {
             return null;
+        }
         StringBuilder fullNameBuilder = new StringBuilder();
 
         if (firstName != null) {
@@ -152,3 +153,5 @@ public class ElasticsearchSyncService {
         }
 
         return fullNameBuilder.length() == 0 ? null : fullNameBuilder.toString();
+    }
+}
