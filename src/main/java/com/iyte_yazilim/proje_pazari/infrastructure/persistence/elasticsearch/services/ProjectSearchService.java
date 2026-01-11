@@ -9,6 +9,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDo
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
@@ -29,6 +30,10 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Getter
 @Setter
+@ConditionalOnProperty(
+        name = "spring.data.elasticsearch.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 public class ProjectSearchService {
 
     private final ElasticsearchOperations elasticsearchOperations;
