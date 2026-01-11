@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -27,6 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Getter
 @Setter
 @AllArgsConstructor
+@ConditionalOnProperty(
+        name = "spring.data.elasticsearch.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 public class ElasticsearchSyncService {
 
     private final ProjectRepository projectRepository;
