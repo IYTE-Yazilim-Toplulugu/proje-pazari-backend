@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -24,6 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/search")
 @Validated
+@ConditionalOnProperty(
+        name = "spring.data.elasticsearch.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 public class SearchController {
 
     private final ProjectSearchService searchService;

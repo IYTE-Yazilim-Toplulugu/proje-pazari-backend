@@ -14,12 +14,13 @@ import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +29,10 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @AllArgsConstructor
+@ConditionalOnProperty(
+        name = "spring.data.elasticsearch.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 public class ElasticsearchSyncService {
 
     private final ProjectRepository projectRepository;
