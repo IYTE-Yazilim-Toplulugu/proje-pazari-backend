@@ -135,13 +135,17 @@ public class ElasticsearchSyncService {
     private String buildFullName(String firstName, String lastName) {
         if (firstName == null && lastName == null) {
             return null;
+        StringBuilder fullNameBuilder = new StringBuilder();
+
+        if (firstName != null) {
+            fullNameBuilder.append(firstName);
         }
-        if (firstName == null) {
-            return lastName;
+
+        if (lastName != null) {
+            if (fullNameBuilder.length() > 0) {
+                fullNameBuilder.append(' ');
+            }
+            fullNameBuilder.append(lastName);
         }
-        if (lastName == null) {
-            return firstName;
-        }
-        return firstName + " " + lastName;
-    }
-}
+
+        return fullNameBuilder.length() == 0 ? null : fullNameBuilder.toString();
