@@ -138,7 +138,9 @@ They should be created automatically when you sync data to Elasticsearch.
 
 3. Sync data from PostgreSQL:
    ```bash
-   curl -X POST http://localhost:8080/api/v1/admin/elasticsearch/sync \
+   curl -X POST http://localhost:8080/api/v1/admin/elasticsearch/reindex/projects \
+     -H "Authorization: Bearer YOUR_TOKEN"
+   curl -X POST http://localhost:8080/api/v1/admin/elasticsearch/reindex/users \
      -H "Authorization: Bearer YOUR_TOKEN"
    ```
 
