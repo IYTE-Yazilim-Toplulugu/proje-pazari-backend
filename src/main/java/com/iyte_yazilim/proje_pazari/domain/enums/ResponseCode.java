@@ -1,5 +1,7 @@
 package com.iyte_yazilim.proje_pazari.domain.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -63,5 +65,15 @@ public enum ResponseCode {
     INTERNAL_SERVER_ERROR(10);
 
     /** Numeric status code for this response type. */
-    private final int status;
+    @JsonValue private final int status;
+
+    @JsonCreator
+    public static ResponseCode fromIntValue(int value) {
+        for (ResponseCode responseCode : ResponseCode.values()) {
+            if (responseCode.getStatus() == value) {
+                return responseCode;
+            }
+        }
+        throw new IllegalArgumentException();
+    }
 }

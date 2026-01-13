@@ -12,9 +12,10 @@ public interface UserMapper {
     @Mapping(
             target = "id",
             expression = "java(user.getId() != null ? user.getId().toString() : null)")
-    @Mapping(target = "isActive", source = "active")
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "preferredLanguage", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     UserEntity domainToEntity(User user);
 
     // Map Persistence Entity -> Domain Entity
