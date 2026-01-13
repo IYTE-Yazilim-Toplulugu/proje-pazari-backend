@@ -1,5 +1,26 @@
 services:
 
+  minio:
+    image: minio/minio:latest
+    container_name: proje-pazari-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]      
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - proje-pazari-network
+    restart: unless-stopped
+
   postgres:
     image: postgres:16-alpine
     container_name: proje-pazari-db
@@ -33,10 +54,18 @@ services:
       SPRING_JPA_SHOW_SQL: "true"
       SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
       JWT_SECRET: "proje-pazari-dev-secret-key-2025-please-change-in-production-this-is-just-for-development"
+      # MinIO Storage Configuration
+      STORAGE_PROVIDER: minio
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_BUCKET_NAME: proje-pazari-files
     ports:
       - "8080:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     networks:
       - proje-pazari-network
@@ -68,6 +97,8 @@ volumes:
   postgres_data:
     driver: local
   pgadmin_data:
+    driver: local
+  minio_data:
     driver: local
 
 networks:
