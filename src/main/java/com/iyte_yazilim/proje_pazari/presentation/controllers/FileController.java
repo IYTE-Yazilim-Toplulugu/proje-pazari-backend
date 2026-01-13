@@ -40,8 +40,22 @@ public class FileController {
             })
     public ResponseEntity<?> downloadFile(@PathVariable String path) {
         try {
-            // Validate path
-            if (path == null || path.isBlank() || path.contains("..")) {
+            // Validate path - check for path traversal attacks including encoded variants
+            if (path == null || path.isBlank()) {
+                return ResponseEntity.badRequest().body("Invalid file path");
+            }
+
+            // Decode URL-encoded characters and normalize path for security validation
+            String decodedPath;
+            try {
+                decodedPath =
+                        java.net.URLDecoder.decode(path, java.nio.charset.StandardCharsets.UTF_8);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body("Invalid file path encoding");
+            }
+
+            // Check for path traversal patterns (both encoded and decoded)
+            if (decodedPath.contains("..") || path.contains("..")) {
                 return ResponseEntity.badRequest().body("Invalid file path");
             }
 

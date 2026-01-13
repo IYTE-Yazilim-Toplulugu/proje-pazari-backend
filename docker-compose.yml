@@ -13,10 +13,10 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]      
+      interval: 30s
+      timeout: 20s
+      retries: 3
     networks:
       - proje-pazari-network
     restart: unless-stopped
@@ -55,12 +55,11 @@ services:
       SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
       JWT_SECRET: "proje-pazari-dev-secret-key-2025-please-change-in-production-this-is-just-for-development"
       # MinIO Storage Configuration
-      STORAGE_TYPE: minio
-      MINIO_ENDPOINT: http://minio:9000
+      STORAGE_PROVIDER: minio
+      MINIO_URL: http://minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin123
-      MINIO_BUCKET: proje-pazari-files
-      MINIO_PUBLIC_ENDPOINT: http://localhost:9002
+      MINIO_BUCKET_NAME: proje-pazari-files
     ports:
       - "8080:8080"
     depends_on:

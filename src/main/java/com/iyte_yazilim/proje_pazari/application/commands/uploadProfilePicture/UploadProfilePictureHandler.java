@@ -74,8 +74,30 @@ public class UploadProfilePictureHandler
             return url.substring(url.indexOf("/api/v1/files/") + "/api/v1/files/".length());
         }
 
-        // Handle presigned URL format: extract path from URL
+        // Handle simple storage path format (e.g., "profiles/filename.jpg")
+        // This is the path returned by the storage adapter's store() method
+        if (!url.startsWith("http") && !url.startsWith("/api")) {
+            return url;
+        }
+
+        // Handle presigned URL format: extract bucket-relative path from URL
         // Example: http://minio:9000/bucket/profiles/filename.jpg?...
+        // Extract everything after the bucket name (third path segment in URL)
+        try {
+            java.net.URI uri = java.net.URI.create(url.split("\\?")[0]);
+            String path = uri.getPath();
+            if (path != null && path.length() > 1) {
+                // Remove leading slash and bucket name (first segment)
+                String[] segments = path.substring(1).split("/", 2);
+                if (segments.length > 1) {
+                    return segments[1]; // Return path after bucket name
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            // Fall back to original behavior if URL parsing fails
+        }
+
+        // Legacy fallback for /profiles/ pattern
         if (url.contains("/profiles/")) {
             int profilesIndex = url.indexOf("/profiles/");
             int queryIndex = url.indexOf("?");

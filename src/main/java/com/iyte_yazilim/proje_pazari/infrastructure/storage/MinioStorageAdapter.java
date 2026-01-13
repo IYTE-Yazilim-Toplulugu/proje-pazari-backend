@@ -14,6 +14,7 @@ import io.minio.StatObjectResponse;
 import io.minio.http.Method;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,7 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
     private final MinioClient minioClient;
     private final String bucketName;
 
+    @Autowired
     public MinioStorageAdapter(
             @Value("${minio.url}") String url,
             @Value("${minio.access-key}") String accessKey,
@@ -133,9 +135,13 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
             minioClient.statObject(
                     StatObjectArgs.builder().bucket(bucketName).object(path).build());
             return true;
+        } catch (io.minio.errors.ErrorResponseException e) {
+            // File does not exist - this is expected, not an error
+            log.debug("File does not exist in MinIO: {}/{}", bucketName, path);
+            return false;
         } catch (Exception e) {
-            log.error("Failed to check if file exists in MinIO: {}", e.getMessage());
-            e.printStackTrace();
+            // Actual error (network, auth, etc.) - log as warning
+            log.warn("Error checking if file exists in MinIO: {}", e.getMessage());
             return false;
         }
     }
