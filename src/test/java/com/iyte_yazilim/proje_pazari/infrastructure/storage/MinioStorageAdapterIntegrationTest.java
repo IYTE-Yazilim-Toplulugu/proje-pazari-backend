@@ -8,7 +8,6 @@ import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
@@ -20,13 +19,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * MinIO instance in a Docker container.
  *
  * <p>These tests require Docker to be available. If Docker is not accessible, tests will be skipped
- * automatically.
+ * automatically via @Testcontainers(disabledWithoutDocker = true).
  *
  * <p>Note: On some systems (e.g., Docker Desktop on Linux), you may need to configure
  * Testcontainers. See: https://java.testcontainers.org/supported_docker_environment/
  */
 @Testcontainers(disabledWithoutDocker = true)
-@DisabledIfEnvironmentVariable(named = "CI", matches = "true")
 class MinioStorageAdapterIntegrationTest {
 
     private static final String ACCESS_KEY = "minioadmin";

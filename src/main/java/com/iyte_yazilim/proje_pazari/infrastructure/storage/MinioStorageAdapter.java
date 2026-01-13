@@ -44,6 +44,17 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
         createBucketIfNotExists();
     }
 
+    /**
+     * Package-private constructor for unit testing with a mock MinioClient.
+     *
+     * @param minioClient the MinIO client (can be mocked)
+     * @param bucketName the bucket name
+     */
+    MinioStorageAdapter(MinioClient minioClient, String bucketName) {
+        this.minioClient = minioClient;
+        this.bucketName = bucketName;
+    }
+
     private void createBucketIfNotExists() {
         try {
             boolean exists =
@@ -80,13 +91,11 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
 
             log.debug("Stored file in MinIO: {}/{}", bucketName, path);
 
-            return minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
-                            .bucket(bucketName)
-                            .object(path)
-                            .expiry(1, TimeUnit.DAYS)
-                            .build());
+            return path;
+
+            // Return the permanent object path; presigned URLs should be generated on-demand
+            // using generatePresignedUrl when temporary access is needed.
+
         } catch (Exception e) {
             throw new FileStorageException("Failed to upload file to MinIO", e);
         }
