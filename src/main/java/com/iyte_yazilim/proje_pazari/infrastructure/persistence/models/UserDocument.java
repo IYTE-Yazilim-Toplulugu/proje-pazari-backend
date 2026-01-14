@@ -1,18 +1,16 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
-
-import java.time.LocalDateTime;
-
 
 @Getter
 @Setter
@@ -22,9 +20,7 @@ import java.time.LocalDateTime;
 @Document(indexName = "#{@environment.getProperty('app.elasticsearch.user-index')}")
 public class UserDocument {
 
-    @Id
-    @EqualsAndHashCode.Include
-    private String id;
+    @Id @EqualsAndHashCode.Include private String id;
 
     @Field(type = FieldType.Text, analyzer = "standard")
     private String firstName;

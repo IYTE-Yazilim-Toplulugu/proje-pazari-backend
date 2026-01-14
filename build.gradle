@@ -36,7 +36,7 @@ dependencies {
 
     // Elasticsearch
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
-    
+
     // For JSON processing with Elasticsearch
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
