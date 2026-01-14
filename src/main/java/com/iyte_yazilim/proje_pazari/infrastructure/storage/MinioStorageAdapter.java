@@ -44,6 +44,12 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
         createBucketIfNotExists();
     }
 
+    /** Package-private constructor for unit testing with a mock MinioClient. */
+    MinioStorageAdapter(MinioClient minioClient, String bucketName) {
+        this.minioClient = minioClient;
+        this.bucketName = bucketName;
+    }
+
     private void createBucketIfNotExists() {
         try {
             boolean exists =

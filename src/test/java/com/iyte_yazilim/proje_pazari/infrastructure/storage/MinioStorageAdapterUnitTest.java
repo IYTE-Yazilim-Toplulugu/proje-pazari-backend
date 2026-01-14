@@ -36,10 +36,8 @@ class MinioStorageAdapterUnitTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Create adapter using the package-private constructor for testing
-        adapter =
-                new MinioStorageAdapter(
-                        "http://localhost:9000", "minioadmin", "minioadmin", "test-bucket");
+        // Create adapter using the package-private constructor for testing with mock client
+        adapter = new MinioStorageAdapter(mockMinioClient, "test-bucket");
     }
 
     @Nested
