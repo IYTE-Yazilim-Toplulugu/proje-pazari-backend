@@ -14,7 +14,6 @@ import io.minio.StatObjectResponse;
 import io.minio.http.Method;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -32,7 +31,6 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
     private final MinioClient minioClient;
     private final String bucketName;
 
-    @Autowired
     public MinioStorageAdapter(
             @Value("${minio.url}") String url,
             @Value("${minio.access-key}") String accessKey,
@@ -44,17 +42,6 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                 MinioClient.builder().endpoint(url).credentials(accessKey, secretKey).build();
 
         createBucketIfNotExists();
-    }
-
-    /**
-     * Package-private constructor for unit testing with a mock MinioClient.
-     *
-     * @param minioClient the MinIO client (can be mocked)
-     * @param bucketName the bucket name
-     */
-    MinioStorageAdapter(MinioClient minioClient, String bucketName) {
-        this.minioClient = minioClient;
-        this.bucketName = bucketName;
     }
 
     private void createBucketIfNotExists() {

@@ -16,6 +16,9 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEn
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Handles the {@link CreateProjectCommand} to create new projects.
@@ -68,6 +71,11 @@ public class CreateProjectHandler
      * @return API response with project result or error message
      */
     @Override
+    @Transactional(
+            timeoutString = "${spring.transaction.timeout:30}",
+            rollbackFor = Exception.class,
+            isolation = Isolation.READ_COMMITTED,
+            propagation = Propagation.REQUIRED)
     public ApiResponse<CreateProjectCommandResult> handle(CreateProjectCommand command) {
 
         // --- 1. Validation ---

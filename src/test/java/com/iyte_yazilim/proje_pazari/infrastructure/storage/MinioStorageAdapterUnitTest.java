@@ -31,15 +31,15 @@ import org.springframework.web.multipart.MultipartFile;
 class MinioStorageAdapterUnitTest {
 
     @Mock private MinioClient mockMinioClient;
-
     @Mock private MultipartFile mockFile;
-
     private MinioStorageAdapter adapter;
 
     @BeforeEach
     void setUp() throws Exception {
         // Create adapter using the package-private constructor for testing
-        adapter = new MinioStorageAdapter(mockMinioClient, "test-bucket");
+        adapter =
+                new MinioStorageAdapter(
+                        "http://localhost:9000", "minioadmin", "minioadmin", "test-bucket");
     }
 
     @Nested
