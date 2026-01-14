@@ -6,25 +6,23 @@ import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectSearchRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
-import org.springframework.data.elasticsearch.client.elc.NativeQuery;
-import org.springframework.data.elasticsearch.core.*;
-import org.springframework.data.elasticsearch.core.query.Criteria;
-import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
-import org.springframework.data.elasticsearch.core.query.Query;
-import org.springframework.stereotype.Service;
-import org.springframework.data.elasticsearch.core.SearchHitSupport;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.core.*;
+import org.springframework.data.elasticsearch.core.SearchHitSupport;
+import org.springframework.data.elasticsearch.core.query.Criteria;
+import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
+import org.springframework.data.elasticsearch.core.query.Query;
+import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
@@ -41,16 +39,23 @@ public class ProjectSearchService {
 
     public List<ProjectDocument> searchProjects(String keyword) {
         // Multi-field search
-        Query query = NativeQuery.builder()
-                .withQuery(q -> q
-                        .multiMatch(m -> m
-                                .query(keyword)
-                                .fields("title^3", "description^2", "summary") // Boosting
-                                .fuzziness("AUTO")
-                                .operator(Operator.Or)))
-                .build();
+        Query query =
+                NativeQuery.builder()
+                        .withQuery(
+                                q ->
+                                        q.multiMatch(
+                                                m ->
+                                                        m.query(keyword)
+                                                                .fields(
+                                                                        "title^3",
+                                                                        "description^2",
+                                                                        "summary") // Boosting
+                                                                .fuzziness("AUTO")
+                                                                .operator(Operator.Or)))
+                        .build();
 
-        SearchHits<ProjectDocument> searchHits = elasticsearchOperations.search(query, ProjectDocument.class);
+        SearchHits<ProjectDocument> searchHits =
+                elasticsearchOperations.search(query, ProjectDocument.class);
 
         return searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
@@ -59,16 +64,12 @@ public class ProjectSearchService {
 
     // Changed from Page to SearchPage
     public SearchPage<ProjectDocument> advancedSearch(
-            String keyword,
-            String status,
-            List<String> tags,
-            Pageable pageable) {
+            String keyword, String status, List<String> tags, Pageable pageable) {
         CriteriaQuery query = new CriteriaQuery(new Criteria());
 
         if (keyword != null && !keyword.isBlank()) {
             query.addCriteria(
-                    new Criteria("title").contains(keyword)
-                            .or("description").contains(keyword));
+                    new Criteria("title").contains(keyword).or("description").contains(keyword));
         }
 
         if (status != null) {
@@ -81,7 +82,8 @@ public class ProjectSearchService {
 
         query.setPageable(pageable);
 
-        SearchHits<ProjectDocument> searchHits = elasticsearchOperations.search(query, ProjectDocument.class);
+        SearchHits<ProjectDocument> searchHits =
+                elasticsearchOperations.search(query, ProjectDocument.class);
 
         return SearchHitSupport.searchPageFor(searchHits, pageable); // Returns SearchPage
     }
@@ -123,13 +125,15 @@ public class ProjectSearchService {
 
     public Map<String, Long> getProjectStatistics() {
         // Aggregation example
-        Query query = NativeQuery.builder()
-                .withAggregation("status_count",
-                        Aggregation.of(a -> a
-                                .terms(t -> t.field("status"))))
-                .build();
+        Query query =
+                NativeQuery.builder()
+                        .withAggregation(
+                                "status_count",
+                                Aggregation.of(a -> a.terms(t -> t.field("status"))))
+                        .build();
 
-        SearchHits<ProjectDocument> searchHits = elasticsearchOperations.search(query, ProjectDocument.class);
+        SearchHits<ProjectDocument> searchHits =
+                elasticsearchOperations.search(query, ProjectDocument.class);
 
         // Process aggregations
         return extractAggregationResults(searchHits);

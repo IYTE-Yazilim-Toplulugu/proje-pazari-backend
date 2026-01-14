@@ -11,6 +11,8 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEn
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserDocument;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
@@ -20,9 +22,6 @@ import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
