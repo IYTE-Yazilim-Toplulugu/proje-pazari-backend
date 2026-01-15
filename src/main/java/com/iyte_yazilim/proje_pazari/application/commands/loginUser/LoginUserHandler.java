@@ -11,6 +11,9 @@ import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Handles the {@link LoginUserCommand} to authenticate users.
@@ -66,6 +69,11 @@ public class LoginUserHandler
      * @return API response with login result containing JWT token, or error message
      */
     @Override
+    @Transactional(
+            timeoutString = "${spring.transaction.timeout:30}",
+            rollbackFor = Exception.class,
+            isolation = Isolation.READ_COMMITTED,
+            propagation = Propagation.REQUIRED)
     public ApiResponse<LoginUserResult> handle(LoginUserCommand command) {
 
         // --- 1. Validation ---

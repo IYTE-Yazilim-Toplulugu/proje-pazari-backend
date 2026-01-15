@@ -13,6 +13,9 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntit
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Handles the {@link RegisterUserCommand} to register new users.
@@ -76,6 +79,11 @@ public class RegisterUserHandler
      * @return API response with registration result or error message
      */
     @Override
+    @Transactional(
+            timeoutString = "${spring.transaction.timeout:30}",
+            rollbackFor = Exception.class,
+            isolation = Isolation.READ_COMMITTED,
+            propagation = Propagation.REQUIRED)
     public ApiResponse<RegisterUserResult> handle(RegisterUserCommand command) {
 
         // --- 1. Validation ---
