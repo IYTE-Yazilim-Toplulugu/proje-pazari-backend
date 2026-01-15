@@ -60,12 +60,16 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin123
       MINIO_BUCKET_NAME: proje-pazari-files
+      # Elasticsearch Configuration
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
     networks:
       - proje-pazari-network
@@ -95,7 +99,7 @@ services:
 
   # Elasticsearch stack for logging and monitoring
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
     container_name: proje_pazari_elasticsearch
     environment:
       - discovery.type=single-node
@@ -117,7 +121,7 @@ services:
       retries: 5
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.0
+    image: docker.elastic.co/kibana/kibana:9.0.0
     container_name: proje_pazari_kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
@@ -131,7 +135,7 @@ services:
       - proje-pazari-network
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.0
+    image: docker.elastic.co/logstash/logstash:9.0.0
     container_name: proje_pazari_logstash
     volumes:
       - ./logstash/pipeline:/usr/share/logstash/pipeline
