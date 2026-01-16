@@ -93,6 +93,10 @@ public class ProjectSearchService {
     }
 
     public List<String> getSuggestions(String prefix) {
+        if (prefix == null || prefix.isBlank()) {
+            return List.of();
+        }
+
         Query query =
                 NativeQuery.builder()
                         .withQuery(
