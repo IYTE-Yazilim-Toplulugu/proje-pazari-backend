@@ -10,6 +10,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDo
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserDocument;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.utils.NameUtils;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -128,30 +129,10 @@ public class ElasticsearchSyncService {
         document.setId(entity.getId());
         document.setFirstName(entity.getFirstName());
         document.setLastName(entity.getLastName());
-        document.setFullName(buildFullName(entity.getFirstName(), entity.getLastName()));
+        document.setFullName(NameUtils.buildFullName(entity.getFirstName(), entity.getLastName()));
         document.setEmail(entity.getEmail());
         document.setDescription(entity.getDescription());
         document.setJoinedAt(entity.getCreatedAt());
         return document;
-    }
-
-    private String buildFullName(String firstName, String lastName) {
-        if (firstName == null && lastName == null) {
-            return null;
-        }
-        StringBuilder fullNameBuilder = new StringBuilder();
-
-        if (firstName != null) {
-            fullNameBuilder.append(firstName);
-        }
-
-        if (lastName != null) {
-            if (fullNameBuilder.length() > 0) {
-                fullNameBuilder.append(' ');
-            }
-            fullNameBuilder.append(lastName);
-        }
-
-        return fullNameBuilder.length() == 0 ? null : fullNameBuilder.toString();
     }
 }

@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDo
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument.OwnerInfo;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.utils.NameUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -30,20 +31,7 @@ public interface ProjectDocumentMapper {
         OwnerInfo ownerInfo = new OwnerInfo();
         ownerInfo.setId(user.getId());
         ownerInfo.setEmail(user.getEmail());
-        ownerInfo.setName(buildFullName(user.getFirstName(), user.getLastName()));
+        ownerInfo.setName(NameUtils.buildFullName(user.getFirstName(), user.getLastName()));
         return ownerInfo;
-    }
-
-    default String buildFullName(String firstName, String lastName) {
-        if (firstName == null && lastName == null) {
-            return null;
-        }
-        if (firstName == null) {
-            return lastName;
-        }
-        if (lastName == null) {
-            return firstName;
-        }
-        return firstName + " " + lastName;
     }
 }
