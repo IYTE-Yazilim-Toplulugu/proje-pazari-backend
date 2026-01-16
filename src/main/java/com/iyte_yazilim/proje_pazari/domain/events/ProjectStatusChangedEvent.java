@@ -13,5 +13,5 @@ public record ProjectStatusChangedEvent(
         ProjectStatus oldStatus,
         ProjectStatus newStatus,
         List<String> teamMemberEmails,
-        LocalDateTime occurredOn
-) implements IDomainEvent {}
+        LocalDateTime occurredOn)
+        implements IDomainEvent {}
