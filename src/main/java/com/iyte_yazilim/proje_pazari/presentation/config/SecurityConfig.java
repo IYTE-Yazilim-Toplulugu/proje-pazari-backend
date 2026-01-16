@@ -4,7 +4,6 @@ import com.iyte_yazilim.proje_pazari.presentation.security.JwtAuthenticationFilt
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -36,32 +35,38 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        // Swagger/OpenAPI endpoints
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/swagger-resources/**",
-                                "/webjars/**"
-                        ).permitAll()
-                        // Actuator health endpoints
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        // Public authentication endpoints
-                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
-                        // Health check endpoints
-                        .requestMatchers("/api/v1/health").permitAll()
-                        // All other API endpoints require authentication
-                        .requestMatchers("/api/**").authenticated()
-                        // All other requests require authentication
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(
+                        auth ->
+                                auth
+                                        // Swagger/OpenAPI endpoints
+                                        .requestMatchers(
+                                                "/swagger-ui/**",
+                                                "/v3/api-docs/**",
+                                                "/swagger-ui.html",
+                                                "/swagger-resources/**",
+                                                "/webjars/**")
+                                        .permitAll()
+                                        // Actuator health endpoints
+                                        .requestMatchers("/actuator/health", "/actuator/info")
+                                        .permitAll()
+                                        // Public authentication endpoints
+                                        .requestMatchers(
+                                                "/api/v1/auth/register", "/api/v1/auth/login")
+                                        .permitAll()
+                                        // Health check endpoints
+                                        .requestMatchers("/api/v1/health")
+                                        .permitAll()
+                                        // All other API endpoints require authentication
+                                        .requestMatchers("/api/**")
+                                        .authenticated()
+                                        // All other requests require authentication
+                                        .anyRequest()
+                                        .authenticated())
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(
+                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
