@@ -38,6 +38,10 @@ public class ProjectSearchService {
     private final ProjectSearchRepository projectSearchRepository;
 
     public List<ProjectDocument> searchProjects(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return List.of();
+        }
+
         // Multi-field search
         Query query =
                 NativeQuery.builder()
