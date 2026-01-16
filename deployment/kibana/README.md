@@ -96,8 +96,11 @@ These dashboards work with the existing Elasticsearch indices:
 Before using dashboards, sync your PostgreSQL data to Elasticsearch:
 
 ```bash
-# Using the admin API endpoint
-curl -X POST http://localhost:8080/api/v1/admin/elasticsearch/sync \
+# Reindex projects into Elasticsearch
+curl -X POST http://localhost:8080/api/v1/admin/elasticsearch/reindex/projects \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+# Reindex users into Elasticsearch
+curl -X POST http://localhost:8080/api/v1/admin/elasticsearch/reindex/users \
   -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
 ```
 
