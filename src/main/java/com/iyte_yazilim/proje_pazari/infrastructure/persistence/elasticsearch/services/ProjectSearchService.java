@@ -26,8 +26,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-@Getter
-@Setter
 @ConditionalOnProperty(
         name = "spring.data.elasticsearch.enabled",
         havingValue = "true",
