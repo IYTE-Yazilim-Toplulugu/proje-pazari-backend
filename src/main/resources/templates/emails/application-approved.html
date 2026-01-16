@@ -10,6 +10,6 @@
     <p>Your application for <strong th:text="${projectTitle}"></strong> has been <strong>APPROVED</strong>.</p>
     <p>You can now collaborate with the team.</p>
     
-    <a th:href="'https://projepazari.com/projects/' + ${projectId}">Go to Project Workspace</a>
+    <a th:href="${baseUrl + '/projects/' + projectId}">Go to Project Workspace</a>
 </body>
 </html>
