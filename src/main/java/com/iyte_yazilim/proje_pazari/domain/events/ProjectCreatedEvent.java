@@ -8,5 +8,5 @@ public record ProjectCreatedEvent(
         String ownerId,
         String ownerEmail,
         String ownerName,
-        LocalDateTime occurredOn
-) implements IDomainEvent {}
+        LocalDateTime occurredOn)
+        implements IDomainEvent {}

@@ -1,7 +1,14 @@
 package com.iyte_yazilim.proje_pazari.application.events;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,36 +19,24 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserRegisteredEventHandler Tests")
 class UserRegisteredEventHandlerTest {
 
-    @Mock
-    private EmailService emailService;
+    @Mock private EmailService emailService;
 
-    @InjectMocks
-    private UserRegisteredEventHandler eventHandler;
+    @InjectMocks private UserRegisteredEventHandler eventHandler;
 
-    @Captor
-    private ArgumentCaptor<String> emailCaptor;
+    @Captor private ArgumentCaptor<String> emailCaptor;
 
-    @Captor
-    private ArgumentCaptor<String> templateCaptor;
+    @Captor private ArgumentCaptor<String> templateCaptor;
 
-    @Captor
-    private ArgumentCaptor<Map<String, Object>> variablesCaptor;
+    @Captor private ArgumentCaptor<Map<String, Object>> variablesCaptor;
 
     @BeforeEach
     void setUp() {
-        lenient().when(emailService.sendTemplateEmailAsync(any(), any(), any()))
+        lenient()
+                .when(emailService.sendTemplateEmailAsync(any(), any(), any()))
                 .thenReturn(CompletableFuture.completedFuture(null));
     }
 
@@ -55,23 +50,16 @@ class UserRegisteredEventHandlerTest {
         String verificationToken = "abc123xyz";
         LocalDateTime occurredOn = LocalDateTime.now();
 
-        UserRegisteredEvent event = new UserRegisteredEvent(
-                userId,
-                email,
-                firstName,
-                verificationToken,
-                occurredOn
-        );
+        UserRegisteredEvent event =
+                new UserRegisteredEvent(userId, email, firstName, verificationToken, occurredOn);
 
         // When
         eventHandler.handle(event);
 
         // Then
-        verify(emailService, times(1)).sendTemplateEmailAsync(
-                emailCaptor.capture(),
-                templateCaptor.capture(),
-                variablesCaptor.capture()
-        );
+        verify(emailService, times(1))
+                .sendTemplateEmailAsync(
+                        emailCaptor.capture(), templateCaptor.capture(), variablesCaptor.capture());
 
         assertEquals(email, emailCaptor.getValue());
         assertEquals("welcome.html", templateCaptor.getValue());
@@ -87,15 +75,13 @@ class UserRegisteredEventHandlerTest {
     void shouldHandleEmailServiceExceptionGracefully() {
         // Given
         when(emailService.sendTemplateEmailAsync(any(), any(), any()))
-                .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Email service unavailable")));
+                .thenReturn(
+                        CompletableFuture.failedFuture(
+                                new RuntimeException("Email service unavailable")));
 
-        UserRegisteredEvent event = new UserRegisteredEvent(
-                "user-123",
-                "test@example.com",
-                "Test",
-                "token-123",
-                LocalDateTime.now()
-        );
+        UserRegisteredEvent event =
+                new UserRegisteredEvent(
+                        "user-123", "test@example.com", "Test", "token-123", LocalDateTime.now());
 
         // When & Then
         assertDoesNotThrow(() -> eventHandler.handle(event));
@@ -107,23 +93,19 @@ class UserRegisteredEventHandlerTest {
     void shouldIncludeCorrectVerificationLinkFormat() {
         // Given
         String verificationToken = "test-token-12345";
-        UserRegisteredEvent event = new UserRegisteredEvent(
-                "user-123",
-                "test@example.com",
-                "Test User",
-                verificationToken,
-                LocalDateTime.now()
-        );
+        UserRegisteredEvent event =
+                new UserRegisteredEvent(
+                        "user-123",
+                        "test@example.com",
+                        "Test User",
+                        verificationToken,
+                        LocalDateTime.now());
 
         // When
         eventHandler.handle(event);
 
         // Then
-        verify(emailService).sendTemplateEmailAsync(
-                any(),
-                any(),
-                variablesCaptor.capture()
-        );
+        verify(emailService).sendTemplateEmailAsync(any(), any(), variablesCaptor.capture());
 
         String verificationLink = (String) variablesCaptor.getValue().get("verificationLink");
         assertTrue(verificationLink.startsWith("http://localhost:3000/verify?token="));

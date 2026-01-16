@@ -1,5 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
@@ -12,14 +14,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @SpringBootTest
 class EmailServiceTest {
 
     @RegisterExtension
-    static GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP)
-            .withConfiguration(GreenMailConfiguration.aConfig().withUser("test", "test"));
+    static GreenMailExtension greenMail =
+            new GreenMailExtension(ServerSetupTest.SMTP)
+                    .withConfiguration(GreenMailConfiguration.aConfig().withUser("test", "test"));
 
     @DynamicPropertySource
     static void configureMailProperties(DynamicPropertyRegistry registry) {
@@ -29,8 +30,7 @@ class EmailServiceTest {
         registry.add("spring.mail.password", () -> "test");
     }
 
-    @Autowired
-    private EmailService emailService;
+    @Autowired private EmailService emailService;
 
     @Test
     void shouldSendWelcomeEmail() {

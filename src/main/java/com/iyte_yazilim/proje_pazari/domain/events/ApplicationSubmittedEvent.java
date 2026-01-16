@@ -8,5 +8,5 @@ public record ApplicationSubmittedEvent(
         String applicantEmail,
         String applicantFirstName,
         String ownerEmail,
-        String ownerFirstName
-) implements IDomainEvent {}
+        String ownerFirstName)
+        implements IDomainEvent {}

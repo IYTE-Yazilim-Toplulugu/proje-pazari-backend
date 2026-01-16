@@ -7,5 +7,5 @@ public record UserRegisteredEvent(
         String email,
         String firstName,
         String verificationToken,
-        LocalDateTime occurredOn
-) implements IDomainEvent {}
+        LocalDateTime occurredOn)
+        implements IDomainEvent {}

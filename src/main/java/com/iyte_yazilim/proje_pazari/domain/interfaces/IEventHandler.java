@@ -3,8 +3,8 @@ package com.iyte_yazilim.proje_pazari.domain.interfaces;
 /**
  * Interface for handling domain events.
  *
- * <p>Event handlers process domain events in a loosely coupled manner,
- * following the event-driven architecture pattern.
+ * <p>Event handlers process domain events in a loosely coupled manner, following the event-driven
+ * architecture pattern.
  *
  * @param <TEvent> the type of domain event to handle
  * @author IYTE Yazılım Topluluğu

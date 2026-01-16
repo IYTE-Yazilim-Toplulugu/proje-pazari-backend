@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.config;
 
+import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
@@ -7,8 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import java.util.concurrent.Executor;
 
 @Slf4j
 @Configuration
@@ -36,7 +35,11 @@ public class AsyncConfig implements AsyncConfigurer {
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return (throwable, method, params) -> {
-            log.error("Async method {} threw exception: {}", method.getName(), throwable.getMessage(), throwable);
+            log.error(
+                    "Async method {} threw exception: {}",
+                    method.getName(),
+                    throwable.getMessage(),
+                    throwable);
         };
     }
 }
