@@ -1,10 +1,10 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequest;
+import com.iyte_yazilim.proje_pazari.domain.validators.ValidPassword;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "Command to register a new user")
@@ -15,12 +15,7 @@ public record RegisterUserCommand(
                 String email,
         @Schema(description = "Password", example = "SecurePassword123!")
                 @NotBlank(message = "Password is required")
-                @Size(min = 8, message = "Password must be at least 8 characters")
-                @Pattern(
-                        regexp =
-                                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
-                        message =
-                                "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
+                @ValidPassword
                 String password,
         @Schema(description = "First name", example = "John")
                 @NotBlank(message = "First name is required")

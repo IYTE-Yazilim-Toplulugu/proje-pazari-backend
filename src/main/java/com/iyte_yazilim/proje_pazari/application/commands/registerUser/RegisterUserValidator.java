@@ -8,8 +8,11 @@ import org.springframework.stereotype.Component;
 /**
  * Validator for {@link RegisterUserCommand} registration requests.
  *
- * <p>Performs custom business rule validation beyond Jakarta Bean Validation annotations. Currently
- * relies on annotation-based validation.
+ * <p>Performs custom business rule validation beyond Jakarta Bean Validation annotations.
+ *
+ * <p>Note: Field-level validation (email format, password strength) is handled by Jakarta Bean
+ * Validation annotations like @Email and @ValidPassword. This validator is for additional business
+ * logic validation.
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
@@ -23,22 +26,19 @@ public class RegisterUserValidator implements IValidator<RegisterUserCommand> {
     /**
      * Validates the registration command for business rule compliance.
      *
+     * <p>Currently delegates to Jakarta Bean Validation annotations. Additional business rules can
+     * be added here if needed (e.g., checking if email domain is allowed, password not containing
+     * username, etc.).
+     *
      * @param command the registration command to validate
      * @return array of error messages, empty if validation passes
      */
     @Override
     public String[] validate(RegisterUserCommand command) {
-
         List<String> errors = new ArrayList<>();
 
-        if (command.email() == null
-                || command.email().isBlank()
-                || !command.email().matches("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$")) {
-            errors.add("Invalid email format");
-        }
-        if (command.password() == null || command.password().length() < 8) {
-            errors.add("Password must be at least 8 characters long");
-        }
+        // Add custom business logic validation here if needed
+        // Bean Validation annotations (@Email, @ValidPassword) are checked automatically by Spring
 
         return errors.toArray(new String[0]);
     }
