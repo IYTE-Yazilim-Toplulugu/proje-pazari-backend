@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.domain.interfaces;
 
 public interface IRequestHandler<TRequest, TResponse> {
+
     /**
      * Handles a request and returns a response.
      *

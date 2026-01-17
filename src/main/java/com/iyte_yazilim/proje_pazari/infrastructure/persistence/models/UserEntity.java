@@ -28,6 +28,11 @@ public class UserEntity {
     @Column(length = 26)
     private String id;
 
+    @Column(nullable = false)
+    private boolean isTwoFactorEnabled = false;
+
+    @Column private String twoFactorSecret;
+
     @Column(nullable = false, unique = true)
     private String email;
 

@@ -7,12 +7,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Base entity class that provides common fields for all entities.
+ * Base entity class that provides common properties and methods for all entities.
  *
- * <p>Responsibilities: - Provides auto-generated primary key (id) - Tracks creation timestamp
- * (createdAt) - Tracks last modification timestamp (updatedAt)
- *
- * <p>All entities should extend this class to inherit these common fields.
+ * @param <TId> The type of the entity identifier.
  */
 @Getter
 @Setter

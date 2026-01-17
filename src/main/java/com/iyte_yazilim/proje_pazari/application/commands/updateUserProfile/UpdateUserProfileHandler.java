@@ -4,13 +4,12 @@ import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -20,20 +19,14 @@ public class UpdateUserProfileHandler
 
     private final UserRepository userRepository;
     private final UserDtoMapper userDtoMapper;
+    private final IValidator<UpdateUserProfileCommand> validator;
     private final MessageService messageService; // EKLENMELI
 
     @Override
-    @Transactional(
-            timeoutString = "${spring.transaction.timeout:30}",
-            rollbackFor = Exception.class,
-            isolation = Isolation.READ_COMMITTED,
-            propagation = Propagation.REQUIRED)
+    @Transactional
     public ApiResponse<UserDto> handle(UpdateUserProfileCommand command) {
-        try {
-            command.validate();
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.validationError(e.getMessage());
-        }
+
+        validator.validate(command);
 
         UserEntity user = userRepository.findById(command.userId()).orElse(null);
 
