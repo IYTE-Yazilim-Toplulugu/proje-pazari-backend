@@ -5,16 +5,25 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.google.common.cache.CacheBuilder;
 
 @Configuration
 public class RateLimitConfig {
 
-    private final ConcurrentHashMap<String, Bucket> ipBuckets = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Bucket> ipBuckets = CacheBuilder.newBuilder()
+            // Evict buckets that have not been accessed for 15 minutes
+            .expireAfterAccess(15, TimeUnit.MINUTES)
+            .build()
+            .asMap();
 
     @Bean
-    public ConcurrentHashMap<String, Bucket> rateLimitBuckets() {
+    public ConcurrentMap<String, Bucket> rateLimitBuckets() {
         return ipBuckets;
     }
 
@@ -23,7 +32,7 @@ public class RateLimitConfig {
     }
 
     private Bucket createNewBucket(String ip) {
-        Bandwidth limit = Bandwidth.classic(5, Refill.intervally(5, Duration.ofMinutes(1)));
+        Bandwidth limit = Bandwidth.builder().capacity(5).refillIntervally(5, Duration.ofMinutes(1)).build();
         return Bucket.builder().addLimit(limit).build();
     }
 }
