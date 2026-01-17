@@ -1,7 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.security;
 
 import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
-import io.jsonwebtoken.JwtException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -61,10 +60,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
-        } catch (JwtException e) {
-            log.warn(
-                    "JWT authentication failed due to invalid token: {}",
-                    e.getClass().getSimpleName());
         } catch (UsernameNotFoundException e) {
             log.warn("JWT authentication failed: {}", e.getClass().getSimpleName());
         }
