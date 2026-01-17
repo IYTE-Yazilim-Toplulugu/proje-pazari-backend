@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.security.config;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
@@ -12,12 +13,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RateLimitConfig {
 
-    private final ConcurrentMap<String, Bucket> ipBuckets =
+    private final Cache<String, Bucket> cache =
             CacheBuilder.newBuilder()
                     // Evict buckets that have not been accessed for 15 minutes
                     .expireAfterAccess(15, TimeUnit.MINUTES)
-                    .build()
-                    .asMap();
+                    .build();
+
+    private final ConcurrentMap<String, Bucket> ipBuckets = cache.asMap();
 
     @Bean
     public ConcurrentMap<String, Bucket> rateLimitBuckets() {
