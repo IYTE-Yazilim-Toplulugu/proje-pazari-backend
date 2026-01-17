@@ -14,6 +14,7 @@ import io.minio.StatObjectResponse;
 import io.minio.http.Method;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -28,14 +29,11 @@ import org.springframework.web.multipart.MultipartFile;
 @ConditionalOnProperty(name = "storage.provider", havingValue = "minio", matchIfMissing = true)
 public class MinioStorageAdapter implements IFileStorageAdapter {
 
-    private final MinioClient miniosClient;
+    private final MinioClient minioClient;
     private final String bucketName;
 
-<<<<<<< HEAD
-=======
-
+    
     @Autowired
->>>>>>> f4629d8 (Resolved minioStorage dependency problem)
     public MinioStorageAdapter(
             @Value("${minio.url}") String url,
             @Value("${minio.access-key}") String accessKey,
@@ -49,7 +47,12 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
         createBucketIfNotExists();
     }
 
-    /** Package-private constructor for unit testing with a mock MinioClient. */
+    /**
+     * Package-private constructor for unit testing with a mock MinioClient.
+     *
+     * @param minioClient the MinIO client (can be mocked)
+     * @param bucketName the bucket name
+     */
     MinioStorageAdapter(MinioClient minioClient, String bucketName) {
         this.minioClient = minioClient;
         this.bucketName = bucketName;
