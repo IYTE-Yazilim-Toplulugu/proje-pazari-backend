@@ -9,8 +9,10 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -28,6 +30,10 @@ public class LoginUserHandler
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final MessageService messageService;
+    private final RefreshTokenService refreshTokenService;
+
+    @Value("${jwt.expiration}")
+    private Long jwtExpiration;
 
     /**
      * Handles user login command.
@@ -78,8 +84,10 @@ public class LoginUserHandler
 
         // --- 6. Generate JWT token with userId, email, and role ---
         String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
-        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
+        String accessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
 
+        // --- 7. Generate refresh token ---
+        String refreshToken = refreshTokenService.createRefreshToken(user.getId());
         // --- 7. Create result ---
         var result =
                 new LoginUserResult(
@@ -88,7 +96,9 @@ public class LoginUserHandler
                         user.getFirstName(),
                         user.getLastName(),
                         role,
-                        token);
+                        accessToken,
+                        refreshToken,
+                        jwtExpiration);
 
         // --- 8. Response with localized message ---
         return ApiResponse.success(result, messageService.getMessage("auth.login.success"));
