@@ -25,18 +25,15 @@ public class UpdateUserProfileHandler
     @Override
     @Transactional
     public ApiResponse<UserDto> handle(UpdateUserProfileCommand command) {
-        try {
-            validator.validate(command);
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.validationError(e.getMessage());
-        }
+
+        validator.validate(command);
 
         UserEntity user = userRepository.findById(command.userId()).orElse(null);
 
         if (user == null) {
             return ApiResponse.notFound(
                     messageService.getMessage(
-                            "user.not.found.with.id", new Object[] {command.userId()}));
+                            "user.not.found.with.id", new Object[] { command.userId() }));
         }
 
         // Update fields
