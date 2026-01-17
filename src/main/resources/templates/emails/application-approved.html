@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Application Approved</title>
+</head>
+<body>
+    <h1>Congratulations!</h1>
+    <p>Great news, <span th:text="${firstName}"></span>.</p>
+    <p>Your application for <strong th:text="${projectTitle}"></strong> has been <strong>APPROVED</strong>.</p>
+    <p>You can now collaborate with the team.</p>
+    
+    <a th:href="${baseUrl + '/projects/' + projectId}">Go to Project Workspace</a>
+</body>
+</html>

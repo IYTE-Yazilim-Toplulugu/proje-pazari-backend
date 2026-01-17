@@ -1,8 +1,10 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
+import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -10,7 +12,9 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -68,6 +72,7 @@ public class RegisterUserHandler
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final MessageService messageService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * Handles user registration command.
@@ -117,6 +122,17 @@ public class RegisterUserHandler
 
         // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
         var result = registerUserMapper.domainToResult(savedDomainUser);
+
+        String verificationToken = Ulid.fast().toString();
+
+        // Publish event for side effects (email sending handled by EmailEventListener)
+        applicationEventPublisher.publishEvent(
+                new UserRegisteredEvent(
+                        savedDomainUser.getId().toString(),
+                        savedDomainUser.getEmail(),
+                        savedDomainUser.getFirstName(),
+                        verificationToken,
+                        LocalDateTime.now()));
 
         // --- 9. Response with localized message ---
         return ApiResponse.created(result, messageService.getMessage("user.registered.success"));
