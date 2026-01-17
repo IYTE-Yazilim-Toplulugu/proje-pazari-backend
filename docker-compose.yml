@@ -59,13 +59,17 @@ services:
       MINIO_URL: http://minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin123
-      MINIO_BUCKET_NAME: proje-pazari-files
+      MINIO_BUCKET: proje-pazari-files
+      # Elasticsearch Configuration
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
     networks:
       - proje-pazari-network
@@ -93,12 +97,68 @@ services:
     profiles:
       - tools
 
+  # Elasticsearch stack for logging and monitoring
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    container_name: proje_pazari_elasticsearch
+    environment:
+      - discovery.type=single-node
+      # Default heap size set to 1GB; adjust -Xms / -Xmx based on your data volume and workload.
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - proje-pazari-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.0.0
+    container_name: proje_pazari_kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - proje-pazari-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.0.0
+    container_name: proje_pazari_logstash
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+    networks:
+      - proje-pazari-network
+
 volumes:
   postgres_data:
     driver: local
   pgadmin_data:
     driver: local
   minio_data:
+    driver: local
+  elasticsearch_data:
     driver: local
 
 networks:
