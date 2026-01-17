@@ -325,7 +325,8 @@ public class AuthController {
             @RequestBody @Valid RefreshTokenRequest request) {
 
         // Validate refresh token
-        Optional<String> userIdOpt = refreshTokenService.validateRefreshToken(request.refreshToken());
+        Optional<String> userIdOpt =
+                refreshTokenService.validateRefreshToken(request.refreshToken());
 
         if (userIdOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -370,5 +371,6 @@ public class AuthController {
     }
 
     // Inner DTO for refresh request
-    public record RefreshTokenRequest(@Valid @jakarta.validation.constraints.NotBlank String refreshToken) {}
+    public record RefreshTokenRequest(
+            @Valid @jakarta.validation.constraints.NotBlank String refreshToken) {}
 }

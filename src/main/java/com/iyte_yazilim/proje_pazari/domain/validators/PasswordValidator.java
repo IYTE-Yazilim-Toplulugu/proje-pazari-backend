@@ -56,8 +56,7 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
         }
 
         if (!containsDigit(password)) {
-            context.buildConstraintViolationWithTemplate(
-                            "Password must contain at least one digit")
+            context.buildConstraintViolationWithTemplate("Password must contain at least one digit")
                     .addConstraintViolation();
             valid = false;
         }
