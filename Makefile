@@ -181,5 +181,5 @@ coverage-verify: ## Verify code coverage meets minimum threshold
 	@echo "$(GREEN)Verifying code coverage...$(NC)"
 	./gradlew jacocoTestCoverageVerification
 
-quality: format-check test coverage ## Run all quality checks (format, test, coverage)
+quality: format format-check test coverage ## Run all quality checks (format, test, coverage)
 

@@ -32,7 +32,6 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
     private final MinioClient minioClient;
     private final String bucketName;
 
-    
     @Autowired
     public MinioStorageAdapter(
             @Value("${minio.url}") String url,
