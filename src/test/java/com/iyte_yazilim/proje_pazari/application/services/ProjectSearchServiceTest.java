@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch.services;
+package com.iyte_yazilim.proje_pazari.application.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

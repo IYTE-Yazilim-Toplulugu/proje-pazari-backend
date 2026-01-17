@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch.services;
+package com.iyte_yazilim.proje_pazari.application.services;
 
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
