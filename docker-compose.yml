@@ -59,7 +59,7 @@ services:
       MINIO_URL: http://minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin123
-      MINIO_BUCKET_NAME: proje-pazari-files
+      MINIO_BUCKET: proje-pazari-files
       # Elasticsearch Configuration
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
     ports:
