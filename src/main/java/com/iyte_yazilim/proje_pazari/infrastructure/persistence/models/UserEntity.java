@@ -58,6 +58,19 @@ public class UserEntity {
     @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
     private Boolean isActive = true;
 
+    // Email verification fields
+    @Column(name = "email_verified", nullable = false, columnDefinition = "boolean default false")
+    private Boolean emailVerified = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "verification_token_expires_at")
+    private LocalDateTime verificationTokenExpiresAt;
+
+    @Column(name = "email_verified_at")
+    private LocalDateTime emailVerifiedAt;
+
     @PrePersist
     protected void onCreate() {
         if (id == null || id.isBlank()) {
