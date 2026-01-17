@@ -33,7 +33,7 @@ public class UpdateUserProfileHandler
         if (user == null) {
             return ApiResponse.notFound(
                     messageService.getMessage(
-                            "user.not.found.with.id", new Object[] { command.userId() }));
+                            "user.not.found.with.id", new Object[] {command.userId()}));
         }
 
         // Update fields
