@@ -28,9 +28,14 @@ import org.springframework.web.multipart.MultipartFile;
 @ConditionalOnProperty(name = "storage.provider", havingValue = "minio", matchIfMissing = true)
 public class MinioStorageAdapter implements IFileStorageAdapter {
 
-    private final MinioClient minioClient;
+    private final MinioClient miniosClient;
     private final String bucketName;
 
+<<<<<<< HEAD
+=======
+
+    @Autowired
+>>>>>>> f4629d8 (Resolved minioStorage dependency problem)
     public MinioStorageAdapter(
             @Value("${minio.url}") String url,
             @Value("${minio.access-key}") String accessKey,
