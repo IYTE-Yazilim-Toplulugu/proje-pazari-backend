@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch.services;
+package com.iyte_yazilim.proje_pazari.application.services;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;

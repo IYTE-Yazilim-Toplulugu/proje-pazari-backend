@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch;
 
+import com.iyte_yazilim.proje_pazari.application.services.ElasticsearchSyncService;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.elasticsearch.services.ElasticsearchSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
