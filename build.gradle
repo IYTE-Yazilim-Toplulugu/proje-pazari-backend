@@ -1,9 +1,11 @@
 plugins {
-	  id 'java'
-	  id 'org.springframework.boot' version '4.0.0'
-	  id 'io.spring.dependency-management' version '1.1.7'
-	  id 'eclipse'
-	  id 'idea'
+    id 'java'
+    id 'org.springframework.boot' version '4.0.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'eclipse'
+    id 'idea'
+    id 'jacoco'
+    id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = 'com.example'
@@ -39,11 +41,14 @@ dependencies {
     // ULID
     implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
 
+    // MinIO - Cloud blob storage
+    implementation 'io.minio:minio:8.5.7'
+
     // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // JWT
@@ -62,15 +67,77 @@ dependencies {
     testRuntimeOnly 'com.h2database:h2'
 
     // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Testcontainers for integration tests
+    testImplementation 'org.testcontainers:testcontainers:1.19.3'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+    testImplementation 'org.testcontainers:minio:1.19.3'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+// Jacoco configuration for code coverage
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/config/**',
+                '**/dto/**',
+                '**/dtos/**',
+                '**/models/**',
+                '**/*Application.class',
+                '**/infrastructure/persistence/models/**'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.70
+            }
+        }
+    }
+}
+
+// Spotless configuration - Google Java Format with 4-space indentation (AOSP style)
+spotless {
+    java {
+        target 'src/**/*.java'
+        googleJavaFormat('1.19.1').aosp()  // AOSP style uses 4-space indentation
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    format 'misc', {
+        target '*.gradle', '*.md', '.gitignore'
+        trimTrailingWhitespace()
+        indentWithSpaces(4)  // Changed to 4 spaces
+        endWithNewline()
+    }
 }
 
 // Configure annotation processing for IDEs
@@ -92,4 +159,37 @@ eclipse {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+// Javadoc configuration for API documentation generation
+javadoc {
+    options {
+        encoding = 'UTF-8'
+        charSet = 'UTF-8'
+        author = true
+        version = true
+        use = true
+        windowTitle = 'Proje Pazarı Backend API Documentation'
+        docTitle = 'Proje Pazarı Backend API'
+        header = '<b>Proje Pazarı</b>'
+        bottom = 'Copyright © 2024 IYTE Yazılım Topluluğu'
+
+        links = [
+            'https://docs.oracle.com/en/java/javase/21/docs/api/',
+            'https://docs.spring.io/spring-framework/docs/current/javadoc-api/',
+            'https://docs.spring.io/spring-boot/docs/current/api/'
+        ]
+
+        addStringOption('Xdoclint:none', '-quiet')
+        addBooleanOption('html5', true)
+    }
+
+    source = sourceSets.main.allJava
+    classpath = configurations.compileClasspath
+    destinationDir = file("${buildDir}/docs/javadoc")
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
 }

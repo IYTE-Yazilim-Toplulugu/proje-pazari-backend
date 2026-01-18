@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
@@ -11,7 +12,52 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapp
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Handles the {@link RegisterUserCommand} to register new users.
+ *
+ * <p>This handler orchestrates the user registration process:
+ *
+ * <ol>
+ *   <li>Validate command using {@link RegisterUserValidator}
+ *   <li>Check for duplicate email addresses
+ *   <li>Map command to domain entity
+ *   <li>Encrypt password using BCrypt
+ *   <li>Persist user to database
+ *   <li>Return registration result
+ * </ol>
+ *
+ * <h2>Error Scenarios:</h2>
+ *
+ * <ul>
+ *   <li>{@code BAD_REQUEST} - Validation failed
+ *   <li>{@code BAD_REQUEST} - Email already registered
+ * </ul>
+ *
+ * <h2>Example:</h2>
+ *
+ * <pre>{@code
+ * RegisterUserCommand command = new RegisterUserCommand(...);
+ * ApiResponse<RegisterUserResult> response = handler.handle(command);
+ *
+ * if (response.getCode() == ResponseCode.CREATED) {
+ *     String userId = response.getData().userId();
+ *     // User registered successfully
+ * }
+ * }</pre>
+ *
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.0
+ * @since 2024-01-01
+ * @see RegisterUserCommand
+ * @see RegisterUserResult
+ * @see UserRepository
+ */
+@Service
 @RequiredArgsConstructor
 public class RegisterUserHandler
         implements IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>> {
@@ -21,8 +67,23 @@ public class RegisterUserHandler
     private final RegisterUserMapper registerUserMapper;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final MessageService messageService;
 
+    /**
+     * Handles user registration command.
+     *
+     * <p>Performs validation, duplicate check, password encryption, and persists the new user to
+     * the database.
+     *
+     * @param command the registration command containing user details
+     * @return API response with registration result or error message
+     */
     @Override
+    @Transactional(
+            timeoutString = "${spring.transaction.timeout:30}",
+            rollbackFor = Exception.class,
+            isolation = Isolation.READ_COMMITTED,
+            propagation = Propagation.REQUIRED)
     public ApiResponse<RegisterUserResult> handle(RegisterUserCommand command) {
 
         // --- 1. Validation ---
@@ -34,7 +95,8 @@ public class RegisterUserHandler
 
         // --- 2. Check if email already exists ---
         if (userRepository.existsByEmail(command.email())) {
-            return ApiResponse.badRequest("Email already registered");
+            return ApiResponse.badRequest(
+                    messageService.getMessage("auth.email.already.registered"));
         }
 
         // --- 3. Mapping (Command -> Domain Entity) ---
@@ -56,7 +118,7 @@ public class RegisterUserHandler
         // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
         var result = registerUserMapper.domainToResult(savedDomainUser);
 
-        // --- 9. Response ---
-        return ApiResponse.created(result, "User registered successfully");
+        // --- 9. Response with localized message ---
+        return ApiResponse.created(result, messageService.getMessage("user.registered.success"));
     }
 }
