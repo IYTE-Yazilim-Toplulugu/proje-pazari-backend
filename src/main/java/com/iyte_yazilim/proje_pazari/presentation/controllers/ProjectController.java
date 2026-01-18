@@ -33,9 +33,8 @@ public class ProjectController {
             createProjectHandler;
 
 
-    @PreAuthorize("hasRole('PROJECT_OWNER')")
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Create a new project",

@@ -4,9 +4,6 @@ import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
