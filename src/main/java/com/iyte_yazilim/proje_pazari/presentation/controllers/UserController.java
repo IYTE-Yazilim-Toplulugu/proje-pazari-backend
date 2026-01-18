@@ -78,7 +78,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
+    @PutMapping
     @Operation(
             summary = "Update user profile",
             description = "Updates the authenticated user's profile information")
