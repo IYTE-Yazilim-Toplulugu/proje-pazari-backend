@@ -7,12 +7,13 @@ import org.springframework.stereotype.Component;
 
 @Component("projectSecurityChecker")
 @RequiredArgsConstructor
-public class ProjectSecurityCehcker {
+public class ProjectSecurityChecker {
 
     private final ProjectRepository projectRepository;
 
     // Assuming ApplicationRepository and entity structure are not (yet) available
-    // If it becomes available, inject it here and implement canApproveApplication accordingly
+    // If it becomes available, inject it here and implement canApproveApplication
+    // accordingly
 
     public boolean isOwner(String projectId, UserDetails userDetails) {
         if (userDetails == null) {

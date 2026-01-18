@@ -57,7 +57,8 @@ public class UserEntity {
     private String githubUrl;
 
     /**
-     * User's preferred language for API responses (e.g., "tr", "en") Default: "tr" (Turkish) If
+     * User's preferred language for API responses (e.g., "tr", "en") Default: "tr"
+     * (Turkish) If
      * set, overrides Accept-Language header
      */
     @Column(name = "preferred_language", length = 5)
@@ -81,7 +82,7 @@ public class UserEntity {
             isActive = true;
         }
         if (role == null) {
-            role = UserRole.USER;
+            role = UserRole.APPLICANT;
         }
         if (preferredLanguage == null || preferredLanguage.isBlank()) {
             preferredLanguage = "tr";

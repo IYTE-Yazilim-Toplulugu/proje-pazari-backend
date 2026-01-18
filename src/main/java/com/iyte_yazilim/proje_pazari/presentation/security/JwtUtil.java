@@ -15,26 +15,29 @@ import org.springframework.stereotype.Component;
 /**
  * Utility class for JWT token operations.
  *
- * <p>Provides methods for:
+ * <p>
+ * Provides methods for:
  *
  * <ul>
- *   <li>Token generation
- *   <li>Token validation
- *   <li>Claim extraction
+ * <li>Token generation
+ * <li>Token validation
+ * <li>Claim extraction
  * </ul>
  *
  * <h2>Configuration:</h2>
  *
- * <p>Requires the following properties in application.properties:
+ * <p>
+ * Requires the following properties in application.properties:
  *
  * <ul>
- *   <li>{@code jwt.secret} - Secret key for signing (min 256 bits)
- *   <li>{@code jwt.expiration} - Token expiration time in milliseconds
+ * <li>{@code jwt.secret} - Secret key for signing (min 256 bits)
+ * <li>{@code jwt.expiration} - Token expiration time in milliseconds
  * </ul>
  *
  * <h2>Security Notes:</h2>
  *
- * <p>Tokens are signed using HMAC-SHA256 algorithm.
+ * <p>
+ * Tokens are signed using HMAC-SHA256 algorithm.
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
@@ -84,7 +87,7 @@ public class JwtUtil {
     // Add role claim extraction
     public String extractRole(String token) {
         String role = extractClaim(token, claims -> claims.get("role", String.class));
-        return role != null ? role : "USER"; // Default to USER if role claim missing
+        return role != null ? role : "APPLICANT"; // Default to APPLICANT if role claim missing
     }
 
     /**
@@ -100,8 +103,8 @@ public class JwtUtil {
     /**
      * Extracts a specific claim from a JWT token.
      *
-     * @param <T> the type of the claim value
-     * @param token the JWT token
+     * @param <T>            the type of the claim value
+     * @param token          the JWT token
      * @param claimsResolver function to extract the desired claim
      * @return the extracted claim value
      */
@@ -161,7 +164,7 @@ public class JwtUtil {
     /**
      * Creates a signed JWT token with claims and subject.
      *
-     * @param claims additional claims to include
+     * @param claims  additional claims to include
      * @param subject the token subject (username)
      * @return signed JWT token string
      */
@@ -178,7 +181,7 @@ public class JwtUtil {
     /**
      * Validates a JWT token against a username.
      *
-     * @param token the JWT token
+     * @param token    the JWT token
      * @param username the expected username
      * @return true if token is valid and not expired, false otherwise
      */

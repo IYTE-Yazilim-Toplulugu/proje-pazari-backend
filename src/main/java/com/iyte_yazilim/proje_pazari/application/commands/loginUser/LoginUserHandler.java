@@ -18,28 +18,31 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Handles the {@link LoginUserCommand} to authenticate users.
  *
- * <p>This handler orchestrates the login process:
+ * <p>
+ * This handler orchestrates the login process:
  *
  * <ol>
- *   <li>Validate command using {@link LoginUserValidator}
- *   <li>Find user by email address
- *   <li>Check if account is active
- *   <li>Verify password using BCrypt
- *   <li>Generate JWT token
- *   <li>Return login result with token
+ * <li>Validate command using {@link LoginUserValidator}
+ * <li>Find user by email address
+ * <li>Check if account is active
+ * <li>Verify password using BCrypt
+ * <li>Generate JWT token
+ * <li>Return login result with token
  * </ol>
  *
  * <h2>Error Scenarios:</h2>
  *
  * <ul>
- *   <li>{@code BAD_REQUEST} - Validation failed
- *   <li>{@code BAD_REQUEST} - Invalid email or password
- *   <li>{@code BAD_REQUEST} - Account deactivated
+ * <li>{@code BAD_REQUEST} - Validation failed
+ * <li>{@code BAD_REQUEST} - Invalid email or password
+ * <li>{@code BAD_REQUEST} - Account deactivated
  * </ul>
  *
  * <h2>Security Notes:</h2>
  *
- * <p>Error messages are intentionally vague ("Invalid email or password") to prevent user
+ * <p>
+ * Error messages are intentionally vague ("Invalid email or password") to
+ * prevent user
  * enumeration attacks.
  *
  * @author IYTE Yazılım Topluluğu
@@ -63,17 +66,14 @@ public class LoginUserHandler
     /**
      * Handles user login command.
      *
-     * <p>Authenticates the user and generates a JWT token for subsequent API access.
+     * <p>
+     * Authenticates the user and generates a JWT token for subsequent API access.
      *
      * @param command the login command containing credentials
      * @return API response with login result containing JWT token, or error message
      */
     @Override
-    @Transactional(
-            timeoutString = "${spring.transaction.timeout:30}",
-            rollbackFor = Exception.class,
-            isolation = Isolation.READ_COMMITTED,
-            propagation = Propagation.REQUIRED)
+    @Transactional(timeoutString = "${spring.transaction.timeout:30}", rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
     public ApiResponse<LoginUserResult> handle(LoginUserCommand command) {
 
         // --- 1. Validation ---
@@ -100,18 +100,17 @@ public class LoginUserHandler
         }
 
         // --- 5. Generate JWT token with userId, email, and role ---
-        String role = user.getRole() != null ? user.getRole().toString() : "USER";
+        String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
 
         // --- 6. Create result ---
-        var result =
-                new LoginUserResult(
-                        user.getId(),
-                        user.getEmail(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        role,
-                        token);
+        var result = new LoginUserResult(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                role,
+                token);
 
         // --- 7. Response with localized message ---
         return ApiResponse.success(result, messageService.getMessage("auth.login.success"));

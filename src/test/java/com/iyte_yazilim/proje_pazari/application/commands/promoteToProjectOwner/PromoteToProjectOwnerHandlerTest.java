@@ -23,8 +23,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PromoteToProjectOwnerHandlerTest {
 
-    @Mock private UserRepository userRepository;
-    @Mock private MessageService messageService;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private MessageService messageService;
 
     private PromoteToProjectOwnerHandler handler;
 
@@ -45,7 +47,7 @@ class PromoteToProjectOwnerHandlerTest {
             UserEntity user = new UserEntity();
             user.setId(userId);
             user.setEmail("user@std.iyte.edu.tr");
-            user.setRole(UserRole.USER);
+            user.setRole(UserRole.APPLICANT);
 
             when(userRepository.findById(userId)).thenReturn(Optional.of(user));
             when(userRepository.save(any(UserEntity.class))).thenReturn(user);
