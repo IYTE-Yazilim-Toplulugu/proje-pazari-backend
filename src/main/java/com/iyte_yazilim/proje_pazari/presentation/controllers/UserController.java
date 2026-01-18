@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
 @RestController
@@ -24,6 +24,7 @@ public class UserController {
     private final IRequestHandler<GetUserQuery, ApiResponse<UserDto>> getUserHandler;
     private final IRequestHandler<GetAllUsersQuery, ApiResponse<List<UserDto>>> getAllUsersHandler;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{userId}")
     @Operation(
             summary = "Get user by ID",
@@ -51,7 +52,7 @@ public class UserController {
 
         return ResponseEntity.status(status).body(response);
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     @Operation(
             summary = "Get all users",
