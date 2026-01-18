@@ -158,7 +158,7 @@ public class AuthController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @PreAuthorize("hasRole('APPLICANT")
+    @PreAuthorize("hasRole('APPLICANT')")
     @PostMapping("/login")
     @Operation(
             summary = "Login user",
