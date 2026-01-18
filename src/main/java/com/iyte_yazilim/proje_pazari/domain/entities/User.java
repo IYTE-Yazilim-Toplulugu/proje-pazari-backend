@@ -1,18 +1,18 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.github.f4b6a3.ulid.Ulid;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.FetchType;
-import java.util.Set;
-import java.util.HashSet;/**
+
+/**
  * Represents a user in the Proje Pazarı system.
  *
  * <p>Users are the primary actors in the system who can:
@@ -81,12 +81,10 @@ public class User extends BaseEntity<Ulid> {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-        name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
-
 
     /**
      * Returns the user's full name by combining first and last name.

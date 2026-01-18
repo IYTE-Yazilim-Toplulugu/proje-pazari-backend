@@ -24,8 +24,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.security.access.prepost.PreAuthorize;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -78,6 +76,7 @@ public class UserController extends BaseController {
 
         return ResponseEntity.status(status).body(response);
     }
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     @Operation(

@@ -32,7 +32,6 @@ public class ProjectController {
     private final IRequestHandler<CreateProjectCommand, ApiResponse<CreateProjectCommandResult>>
             createProjectHandler;
 
-
     @PostMapping
     @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
     @SecurityRequirement(name = "Bearer Authentication")

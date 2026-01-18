@@ -226,7 +226,6 @@ public class AuthController {
                             "password": "SecurePass123!"
                         }
                         """)))
-                        
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
             @Valid @RequestBody LoginUserCommand command) {
 

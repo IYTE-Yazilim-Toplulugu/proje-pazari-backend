@@ -48,6 +48,7 @@ public class PromoteToProjectOwnerHandler
         user.setRole(UserRole.PROJECT_OWNER);
         userRepository.save(user);
 
-        return ApiResponse.success(null, messageService.getMessage("user.promoted.to.project.owner"));
+        return ApiResponse.success(
+                null, messageService.getMessage("user.promoted.to.project.owner"));
     }
 }

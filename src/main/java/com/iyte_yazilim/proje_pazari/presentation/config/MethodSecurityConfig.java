@@ -7,18 +7,19 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 
 @Configuration
 @EnableMethodSecurity(
-    prePostEnabled = true, // Enables @PreAuthorize and @PostAuthorize
-    securedEnabled = true, // Enables @Secured
-    jsr250Enabled = true   // Enables @RolesAllowed
-)
+        prePostEnabled = true, // Enables @PreAuthorize and @PostAuthorize
+        securedEnabled = true, // Enables @Secured
+        jsr250Enabled = true // Enables @RolesAllowed
+        )
 public class MethodSecurityConfig {
 
     /**
-     * Optional: Define a custom expression handler if you plan to implement 
-     * custom permission evaluators (e.g., @PreAuthorize("hasPermission(...)"))
+     * Optional: Define a custom expression handler if you plan to implement custom permission
+     * evaluators (e.g., @PreAuthorize("hasPermission(...)"))
      */
     protected MethodSecurityExpressionHandler createExpressionHandler() {
-        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+        DefaultMethodSecurityExpressionHandler expressionHandler =
+                new DefaultMethodSecurityExpressionHandler();
         // You can set a custom PermissionEvaluator here if needed
         return expressionHandler;
     }

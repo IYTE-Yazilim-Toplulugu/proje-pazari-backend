@@ -18,13 +18,16 @@ public class ProjectSecurityCehcker {
         if (userDetails == null) {
             return false;
         }
-        return projectRepository.findById(projectId)
-                .map(project -> {
-                    if (project.getOwner() == null || project.getOwner().getEmail() == null) {
-                        return false;
-                    }
-                    return project.getOwner().getEmail().equals(userDetails.getUsername());
-                })
+        return projectRepository
+                .findById(projectId)
+                .map(
+                        project -> {
+                            if (project.getOwner() == null
+                                    || project.getOwner().getEmail() == null) {
+                                return false;
+                            }
+                            return project.getOwner().getEmail().equals(userDetails.getUsername());
+                        })
                 .orElse(false);
     }
 
