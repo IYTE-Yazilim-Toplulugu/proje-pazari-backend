@@ -73,6 +73,14 @@ public class User extends BaseEntity<Ulid> {
     /** Indicates whether the user account is active. Inactive accounts cannot login. */
     private boolean isActive;
 
+
+    @ManyToMany(fetch = FetchType.EAGER)
+@JoinTable(
+    name = "user_roles",
+    joinColumns = @JoinColumn(name = "user_id"),
+    inverseJoinColumns = @JoinColumn(name = "role_id")
+)
+private Set<Role> roles = new HashSet<>();
     /**
      * Returns the user's full name by combining first and last name.
      *
