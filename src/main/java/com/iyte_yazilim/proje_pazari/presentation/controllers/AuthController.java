@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -71,6 +72,7 @@ public class AuthController {
             registerUserHandler;
     private final IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> loginUserHandler;
 
+    @PreAuthorize("hasRole('APPLICANT')")
     @PostMapping("/register")
     @Operation(
             summary = "Register a new user",
@@ -156,6 +158,7 @@ public class AuthController {
         return ResponseEntity.status(status).body(response);
     }
 
+    @PreAuthorize("hasRole('APPLICANT")
     @PostMapping("/login")
     @Operation(
             summary = "Login user",
@@ -184,8 +187,8 @@ public class AuthController {
                                                 "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                                                 "tokenType": "Bearer",
                                                 "expiresIn": 86400000
-                                            }
-                                        }
+                                                }
+                                                }
                                         """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
@@ -223,6 +226,7 @@ public class AuthController {
                             "password": "SecurePass123!"
                         }
                         """)))
+                        
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
             @Valid @RequestBody LoginUserCommand command) {
 
