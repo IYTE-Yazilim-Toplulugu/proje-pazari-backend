@@ -184,8 +184,8 @@ public class AuthController {
                                                 "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                                                 "tokenType": "Bearer",
                                                 "expiresIn": 86400000
-                                            }
-                                        }
+                                                }
+                                                }
                                         """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
