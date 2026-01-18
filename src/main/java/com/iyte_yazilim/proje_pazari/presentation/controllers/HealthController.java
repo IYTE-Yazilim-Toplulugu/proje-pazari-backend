@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Health", description = "Health check endpoints")
 public class HealthController {
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     @Operation(
             summary = "Application health check",

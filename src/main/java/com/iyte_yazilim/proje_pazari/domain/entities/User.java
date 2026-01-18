@@ -1,10 +1,7 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.github.f4b6a3.ulid.Ulid;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import com.iyte_yazilim.proje_pazari.domain.enums.UserRole;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -79,12 +76,7 @@ public class User extends BaseEntity<Ulid> {
     /** Indicates whether the user account is active. Inactive accounts cannot login. */
     private boolean isActive;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles = new HashSet<>();
+    private Set<UserRole> roles = new HashSet<>();
 
     /**
      * Returns the user's full name by combining first and last name.

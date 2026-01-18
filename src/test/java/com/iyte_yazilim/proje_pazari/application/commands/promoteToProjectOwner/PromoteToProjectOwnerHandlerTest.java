@@ -23,10 +23,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PromoteToProjectOwnerHandlerTest {
 
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private MessageService messageService;
+    @Mock private UserRepository userRepository;
+    @Mock private MessageService messageService;
 
     private PromoteToProjectOwnerHandler handler;
 

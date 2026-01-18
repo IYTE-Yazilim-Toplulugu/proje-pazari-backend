@@ -9,8 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class JwtUtilTest {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    @Autowired private JwtUtil jwtUtil;
 
     @Test
     void shouldGenerateTokenWithAllClaims() {
@@ -103,7 +102,8 @@ class JwtUtilTest {
     @Test
     void shouldHandleProjectOwnerRole() {
         // Given
-        String token = jwtUtil.generateToken("01HQXYZ123", "owner@std.iyte.edu.tr", "PROJECT_OWNER");
+        String token =
+                jwtUtil.generateToken("01HQXYZ123", "owner@std.iyte.edu.tr", "PROJECT_OWNER");
 
         // When
         UserPrincipal principal = jwtUtil.extractUserPrincipal(token);

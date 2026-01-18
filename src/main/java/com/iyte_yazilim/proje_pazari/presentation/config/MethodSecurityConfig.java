@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
@@ -17,6 +18,7 @@ public class MethodSecurityConfig {
      * Optional: Define a custom expression handler if you plan to implement custom permission
      * evaluators (e.g., @PreAuthorize("hasPermission(...)"))
      */
+    @Bean
     protected MethodSecurityExpressionHandler createExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler =
                 new DefaultMethodSecurityExpressionHandler();
