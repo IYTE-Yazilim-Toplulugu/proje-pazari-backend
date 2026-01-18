@@ -98,4 +98,32 @@ class JwtUtilTest {
                 principal.getAuthorities().stream()
                         .anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR")));
     }
+
+    @Test
+    void shouldHandleProjectOwnerRole() {
+        // Given
+        String token =
+                jwtUtil.generateToken("01HQXYZ123", "owner@std.iyte.edu.tr", "PROJECT_OWNER");
+
+        // When
+        UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
+
+        // Then
+        assertEquals("PROJECT_OWNER", principal.getRole());
+        assertTrue(
+                principal.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_PROJECT_OWNER")));
+    }
+
+    @Test
+    void shouldDefaultToUserRoleWhenRoleClaimMissing() {
+        // Given - generate token with old method that doesn't include role
+        String token = jwtUtil.generateToken("test@std.iyte.edu.tr");
+
+        // When
+        String role = jwtUtil.extractRole(token);
+
+        // Then
+        assertEquals("USER", role);
+    }
 }

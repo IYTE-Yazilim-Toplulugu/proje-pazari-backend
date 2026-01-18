@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import com.iyte_yazilim.proje_pazari.domain.enums.UserRole;
 
 @Entity
 @Table(name = "roles")
@@ -21,7 +22,7 @@ public class Role extends BaseEntity<String> {
     
     @Column(unique = true, nullable = false)
     @Enumerated(EnumType.STRING)
-    private RoleType name;
+    private UserRole name;
     
     private String description;
 }
