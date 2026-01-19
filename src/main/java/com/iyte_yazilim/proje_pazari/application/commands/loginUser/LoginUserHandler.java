@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
-import com.iyte_yazilim.proje_pazari.application.common.Handler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;

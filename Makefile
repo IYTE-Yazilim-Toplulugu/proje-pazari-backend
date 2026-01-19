@@ -22,6 +22,9 @@ help: ## Display this help message
 dev: ## Start development environment (app + database)
 	@echo "$(GREEN)Starting development environment...$(NC)"
 	docker compose up -d
+	@echo "$(GREEN)Starting backend service"
+	./gradlew bootRun
+
 
 dev-build: ## Build and start development environment
 	@echo "$(GREEN)Building and starting development environment...$(NC)"
@@ -45,8 +48,17 @@ down-volumes: ## Stop and remove all containers and volumes (⚠️  deletes dat
 restart: ## Restart all services
 	@echo "$(YELLOW)Restarting all services...$(NC)"
 	docker compose restart
-
-##@ Build & Deploy
+kill:
+	@PORT=$(port); \
+	PID=$$(sudo lsof -t -i:$$PORT); \
+	if [ -z "$$PID" ]; then \
+		echo "No process found on port $$PORT"; \
+	else \
+		NAME=$$(ps -p $$PID -o comm=); \
+		echo "Terminating process: $$NAME (PID: $$PID) on port $$PORT"; \
+		sudo kill -9 $$PID; \
+		echo "Process killed."; \
+	fi
 
 build: ## Build Docker images
 	@echo "$(GREEN)Building Docker images...$(NC)"

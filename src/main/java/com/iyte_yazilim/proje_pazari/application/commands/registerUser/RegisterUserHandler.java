@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
-import com.iyte_yazilim.proje_pazari.application.common.Handler;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
