@@ -1,13 +1,14 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getCurrentUserProfile;
 
-import com.iyte_yazilim.proje_pazari.application.common.Handler;
+import org.springframework.stereotype.Component;
+
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import lombok.RequiredArgsConstructor;
 
-@Handler
+@Component
 @RequiredArgsConstructor
 public class GetCurrentUserProfileHandler
         implements IRequestHandler<GetCurrentUserProfileQuery, ApiResponse<UserProfileDTO>> {

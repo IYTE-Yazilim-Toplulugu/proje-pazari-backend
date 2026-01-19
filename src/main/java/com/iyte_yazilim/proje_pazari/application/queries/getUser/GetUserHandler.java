@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getUser;
 
-import com.iyte_yazilim.proje_pazari.application.common.Handler;
+import org.springframework.stereotype.Component;
+
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
@@ -11,7 +12,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapp
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
 
-@Handler
+@Component
 @RequiredArgsConstructor
 public class GetUserHandler implements IRequestHandler<GetUserQuery, ApiResponse<UserDto>> {
 

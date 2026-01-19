@@ -10,8 +10,9 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntit
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
-@Handler
+@Component
 @RequiredArgsConstructor
 public class LoginUserHandler
         implements IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> {

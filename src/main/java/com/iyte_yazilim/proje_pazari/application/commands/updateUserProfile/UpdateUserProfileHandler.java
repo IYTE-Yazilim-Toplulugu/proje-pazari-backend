@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile;
 
-import com.iyte_yazilim.proje_pazari.application.common.Handler;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
@@ -8,9 +7,11 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Handler
+@Component
 @RequiredArgsConstructor
 public class UpdateUserProfileHandler
         implements IRequestHandler<UpdateUserProfileCommand, ApiResponse<UserDto>> {
