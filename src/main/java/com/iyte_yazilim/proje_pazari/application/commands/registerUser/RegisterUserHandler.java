@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
 import com.iyte_yazilim.proje_pazari.application.common.Handler;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
@@ -25,8 +26,23 @@ public class RegisterUserHandler
     private final RegisterUserMapper registerUserMapper;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final MessageService messageService;
 
+    /**
+     * Handles user registration command.
+     *
+     * <p>Performs validation, duplicate check, password encryption, and persists the new user to
+     * the database.
+     *
+     * @param command the registration command containing user details
+     * @return API response with registration result or error message
+     */
     @Override
+    @Transactional(
+            timeoutString = "${spring.transaction.timeout:30}",
+            rollbackFor = Exception.class,
+            isolation = Isolation.READ_COMMITTED,
+            propagation = Propagation.REQUIRED)
     public ApiResponse<RegisterUserResult> handle(RegisterUserCommand command) {
 
         // --- 1. Validation ---
@@ -38,7 +54,8 @@ public class RegisterUserHandler
 
         // --- 2. Check if email already exists ---
         if (userRepository.existsByEmail(command.email())) {
-            return ApiResponse.badRequest("Email already registered");
+            return ApiResponse.badRequest(
+                    messageService.getMessage("auth.email.already.registered"));
         }
 
         // --- 3. Mapping (Command -> Domain Entity) ---
@@ -60,7 +77,7 @@ public class RegisterUserHandler
         // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
         var result = registerUserMapper.domainToResult(savedDomainUser);
 
-        // --- 9. Response ---
-        return ApiResponse.created(result, "User registered successfully");
+        // --- 9. Response with localized message ---
+        return ApiResponse.created(result, messageService.getMessage("user.registered.success"));
     }
 }

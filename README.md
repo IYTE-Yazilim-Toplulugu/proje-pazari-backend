@@ -89,7 +89,45 @@ gradle bootRun
 
 The application will start on **http://localhost:8080**
 
-### 5. Access API Documentation
+### 5. File Storage (MinIO)
+
+The application uses MinIO for file storage (profile pictures, project attachments). MinIO is S3-compatible and runs automatically with docker-compose.
+
+**Local Development:**
+- MinIO API: http://localhost:9002
+- MinIO Console: http://localhost:9003
+- Default credentials: `minioadmin` / `minioadmin123`
+
+**Storage Configuration:**
+```properties
+# In application-dev.properties (default)
+storage.provider=minio
+minio.url=http://localhost:9002
+minio.bucket-name=proje-pazari-files
+```
+
+**Production:**
+Set environment variables for your S3-compatible storage:
+```bash
+MINIO_URL=https://your-storage-endpoint
+MINIO_ACCESS_KEY=your-access-key
+MINIO_SECRET_KEY=your-secret-key
+MINIO_BUCKET=your-bucket-name
+SPRING_PROFILES_ACTIVE=prod
+```
+
+**Migrating from Local Storage:**
+If you have existing files in the `./uploads` folder, run the migration script:
+```bash
+# Install MinIO client first
+curl https://dl.min.io/client/mc/release/linux-amd64/mc -o mc
+chmod +x mc && sudo mv mc /usr/local/bin/
+
+# Run migration
+./scripts/migrate-to-minio.sh
+```
+
+### 6. Access API Documentation
 
 Open your browser and navigate to:
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
@@ -115,10 +153,13 @@ src/main/java/com/iyte_yazilim/proje_pazari/
 │   ├── events/            # Domain events
 │   └── enums/             # Domain enumerations
 └── infrastructure/        # Infrastructure layer
-    └── persistence/       # Database implementation
-        ├── entities/      # JPA entities
-        ├── repositories/  # JPA repositories
-        └── mappers/       # Entity <-> Domain mapping
+    ├── persistence/       # Database implementation
+    │   ├── entities/      # JPA entities
+    │   ├── repositories/  # JPA repositories
+    │   └── mappers/       # Entity <-> Domain mapping
+    └── storage/           # Cloud storage adapters
+        ├── MinioStorageAdapter.java   # MinIO/S3 implementation
+        └── LocalStorageAdapter.java   # Local filesystem fallback
 ```
 
 ### Architecture Pattern
@@ -230,6 +271,24 @@ GET    /api/v1/users/me/applications
 ```
 
 For detailed API documentation, visit the **Swagger UI** when the app is running.
+
+## 📖 Javadoc Documentation
+
+Generate API documentation:
+
+```bash
+./gradlew javadoc
+```
+
+View documentation at: `build/docs/javadoc/index.html`
+
+### Generate Javadoc JAR
+
+```bash
+./gradlew javadocJar
+```
+
+The JAR file will be created at: `build/libs/proje-pazari-0.0.1-SNAPSHOT-javadoc.jar`
 
 ## 🧪 Testing
 
@@ -388,6 +447,149 @@ Clean and rebuild:
 ```bash
 ./gradlew clean build
 ```
+
+# 🌍 Internationalization (i18n)
+
+The API supports **multi-language responses** to provide localized error messages and user feedback.
+
+## Supported Languages
+
+- **Turkish (tr)** - Default
+- **English (en)**
+
+## How to Use
+
+### 1. Using Accept-Language Header
+
+Send the `Accept-Language` header in your HTTP requests:
+
+```bash
+# Request in English
+curl -H "Accept-Language: en" http://localhost:8080/api/v1/auth/login
+
+# Request in Turkish (default)
+curl -H "Accept-Language: tr" http://localhost:8080/api/v1/auth/login
+```
+
+### 2. User Language Preference (Optional)
+
+Authenticated users can set their preferred language in their profile. This preference **overrides** the `Accept-Language` header.
+
+**Update your language preference:**
+
+```bash
+PUT /api/v1/users/me
+{
+  "preferredLanguage": "en"
+}
+```
+
+**Priority:**
+1. User's preferred language (if authenticated and set)
+2. `Accept-Language` header
+3. Default language (Turkish)
+
+## Examples
+
+### Registration Error (Turkish - Default)
+
+```bash
+POST /api/v1/auth/register
+{
+  "email": "existing@example.com",
+  "password": "weak"
+}
+
+# Response:
+{
+  "message": "Bu e-posta adresi zaten kayıtlı",
+  "code": "BAD_REQUEST",
+  "timestamp": "2025-01-02T10:30:00"
+}
+```
+
+### Registration Error (English)
+
+```bash
+POST /api/v1/auth/register
+Accept-Language: en
+{
+  "email": "existing@example.com",
+  "password": "weak"
+}
+
+# Response:
+{
+  "message": "This email address is already registered",
+  "code": "BAD_REQUEST",
+  "timestamp": "2025-01-02T10:30:00"
+}
+```
+
+## Adding New Languages
+
+To add support for a new language:
+
+1. Create a new message file: `src/main/resources/messages_{lang}.properties`
+2. Translate all message keys from `messages_en.properties`
+3. Update `InternationalizationConfig.java` to include the new locale
+4. Update API documentation
+
+Example for Spanish:
+
+```properties
+# src/main/resources/messages_es.properties
+auth.login.success=Inicio de sesión exitoso
+auth.login.failed=Nombre de usuario o contraseña no válidos
+...
+```
+
+## Configuration
+
+Language configuration is in `src/main/java/com/iyte_yazilim/proje_pazari/presentation/config/InternationalizationConfig.java`:
+
+```java
+@Bean
+public LocaleResolver localeResolver() {
+    AcceptHeaderLocaleResolver localeResolver = new AcceptHeaderLocaleResolver();
+    localeResolver.setDefaultLocale(Locale.forLanguageTag("tr"));
+    localeResolver.setSupportedLocales(
+        Arrays.asList(
+            Locale.forLanguageTag("tr"),
+            Locale.forLanguageTag("en")
+        )
+    );
+    return localeResolver;
+}
+```
+
+## Testing i18n
+
+### Manual Testing with curl
+
+```bash
+# Test Turkish response
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -H "Accept-Language: tr" \
+  -d '{"email":"wrong@test.com","password":"wrong"}'
+
+# Test English response
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -H "Accept-Language: en" \
+  -d '{"email":"wrong@test.com","password":"wrong"}'
+```
+
+### Testing with Postman
+
+1. Add `Accept-Language` header to your request
+2. Set value to `en` or `tr`
+3. Send request and verify response messages
+
+### Swagger UI
+
+When using Swagger UI, you can set the `Accept-Language` header for each request in the "Parameters" section.
 
 ## 📖 Additional Resources
 

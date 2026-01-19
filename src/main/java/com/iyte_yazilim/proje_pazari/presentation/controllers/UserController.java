@@ -11,7 +11,6 @@ import com.iyte_yazilim.proje_pazari.application.queries.getAllUsers.GetAllUsers
 import com.iyte_yazilim.proje_pazari.application.queries.getCurrentUserProfile.GetCurrentUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -28,19 +27,16 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@Tag(name = "User", description = "User management endpoints")
-public class UserController {
+@Tag(
+        name = "User",
+        description =
+                "User management endpoints. Includes profile management, password change, "
+                        + "profile picture upload, and account deactivation. "
+                        + "Most endpoints require authentication.")
+public class UserController extends BaseController {
 
     private final IMediator mediator;
     private final UserRepository userRepository;
-
-    /**
-     * Resolves email from JWT token to user ID. The JWT token contains email as the subject, not
-     * the user ID.
-     */
-    private String resolveUserIdFromEmail(String email) {
-        return userRepository.findByEmail(email).map(user -> user.getId()).orElse(null);
-    }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -183,12 +179,26 @@ public class UserController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @PostMapping("/me/profile-picture")
+    @PostMapping(value = "/me/profile-picture", consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Upload profile picture",
-            description = "Uploads a new profile picture for the authenticated user")
+            description = "Uploads a new profile picture for the authenticated user",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            content =
+                                    @io.swagger.v3.oas.annotations.media.Content(
+                                            mediaType = "multipart/form-data",
+                                            schema =
+                                                    @io.swagger.v3.oas.annotations.media.Schema(
+                                                            type = "object",
+                                                            implementation = Object.class),
+                                            encoding =
+                                                    @io.swagger.v3.oas.annotations.media.Encoding(
+                                                            name = "file",
+                                                            contentType =
+                                                                    "image/jpeg, image/png, image/gif, image/webp"))))
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

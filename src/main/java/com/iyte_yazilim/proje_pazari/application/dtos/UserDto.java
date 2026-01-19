@@ -11,4 +11,6 @@ public record UserDto(
         @Schema(description = "User description/bio") String description,
         @Schema(description = "Profile picture URL") String profilePictureUrl,
         @Schema(description = "LinkedIn profile URL") String linkedinUrl,
-        @Schema(description = "GitHub profile URL") String githubUrl) {}
+        @Schema(description = "GitHub profile URL") String githubUrl,
+        @Schema(description = "Preferred language (tr, en)", example = "en")
+                String preferredLanguage) {}
