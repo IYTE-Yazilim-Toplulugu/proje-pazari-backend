@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
+import com.iyte_yazilim.proje_pazari.application.common.Handler;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
@@ -11,9 +12,8 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapp
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-@Service
+@Handler
 @RequiredArgsConstructor
 public class RegisterUserHandler
         implements IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>> {

@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getAllUsers;
 
+import com.iyte_yazilim.proje_pazari.application.common.Handler;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
@@ -9,9 +10,8 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapp
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-@Service
+@Handler
 @RequiredArgsConstructor
 public class GetAllUsersHandler
         implements IRequestHandler<GetAllUsersQuery, ApiResponse<List<UserDto>>> {

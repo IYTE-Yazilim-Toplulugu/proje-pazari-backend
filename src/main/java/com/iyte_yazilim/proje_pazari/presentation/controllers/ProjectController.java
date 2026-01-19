@@ -1,13 +1,12 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Projects", description = "Project management endpoints")
 public class ProjectController {
 
-    private final IRequestHandler<CreateProjectCommand, ApiResponse<CreateProjectCommandResult>>
-            createProjectHandler;
+    private final IMediator mediator;
 
     @PostMapping
     @Operation(
@@ -39,9 +37,9 @@ public class ProjectController {
                         description = "Internal server error")
             })
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
-            @Valid @RequestBody CreateProjectCommand command) {
+            @RequestBody CreateProjectCommand command) {
 
-        ApiResponse<CreateProjectCommandResult> response = createProjectHandler.handle(command);
+        ApiResponse<CreateProjectCommandResult> response = mediator.send(command);
 
         HttpStatus status =
                 switch (response.getCode()) {

@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
+import com.iyte_yazilim.proje_pazari.application.common.Handler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -9,9 +10,8 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntit
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-@Service
+@Handler
 @RequiredArgsConstructor
 public class LoginUserHandler
         implements IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> {

@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture;
 
+import com.iyte_yazilim.proje_pazari.application.common.Handler;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -7,10 +8,9 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Handler
 @RequiredArgsConstructor
 public class UploadProfilePictureHandler
         implements IRequestHandler<UploadProfilePictureCommand, ApiResponse<String>> {

@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getUserProfile;
 
+import com.iyte_yazilim.proje_pazari.application.common.Handler;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectSummaryDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
@@ -11,9 +12,8 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntit
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-@Service
+@Handler
 @RequiredArgsConstructor
 public class GetUserProfileHandler
         implements IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>> {
