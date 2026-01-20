@@ -1,12 +1,7 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,23 +21,19 @@ import lombok.Setter;
 @MappedSuperclass
 public abstract class BaseEntity<TId> {
 
-    @Id protected TId id;
+    protected TId id;
 
-    @Column(name = "created_at", updatable = false)
     protected LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
     protected LocalDateTime updatedAt;
 
-    @Transient protected List<DomainEvent> domainEvents = new ArrayList<>();
+    protected List<DomainEvent> domainEvents = new ArrayList<>();
 
-    @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
-    @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }

@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.presentation.security;
+package com.iyte_yazilim.proje_pazari.application.services;
 
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +10,6 @@ import org.springframework.stereotype.Component;
 public class ProjectSecurityChecker {
 
     private final ProjectRepository projectRepository;
-
-    // Assuming ApplicationRepository and entity structure are not (yet) available
-    // If it becomes available, inject it here and implement canApproveApplication
-    // accordingly
 
     public boolean isOwner(String projectId, UserDetails userDetails) {
         if (userDetails == null) {
@@ -32,7 +28,6 @@ public class ProjectSecurityChecker {
                 .orElse(false);
     }
 
-    // Placeholder for future implementation
     public boolean canApproveApplication(String applicationId, UserDetails userDetails) {
         // Not implemented due to missing ApplicationRepository & model/context.
         return false;
