@@ -49,6 +49,34 @@ public class UserController extends BaseController {
             deactivateAccountHandler;
     private final IRequestHandler<GetAllUsersQuery, ApiResponse<List<UserDto>>> getAllUsersHandler;
 
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Get all users", description = "Retrieves a list of all users")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Users retrieved successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "Unauthorized")
+            })
+    public ResponseEntity<ApiResponse<List<UserDto>>> getAllUsers() {
+
+        ApiResponse<List<UserDto>> response = getAllUsersHandler.handle(new GetAllUsersQuery());
+
+        HttpStatus status =
+                switch (response.getCode()) {
+                    case SUCCESS -> HttpStatus.OK;
+                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
+                    default -> HttpStatus.OK;
+                };
+
+        return ResponseEntity.status(status).body(response);
+    }
+
+
     @GetMapping("/{userId}")
     @Operation(
             summary = "Get user profile by ID",
@@ -76,7 +104,6 @@ public class UserController extends BaseController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @GetMapping
     @Operation(
             summary = "Update user profile",
             description = "Updates the authenticated user's profile information")

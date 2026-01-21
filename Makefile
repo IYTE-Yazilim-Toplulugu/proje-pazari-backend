@@ -22,6 +22,9 @@ help: ## Display this help message
 dev: ## Start development environment (app + database)
 	@echo "$(GREEN)Starting development environment...$(NC)"
 	docker compose up -d
+	
+
+dev-gradle: 
 	@echo "$(GREEN)Starting backend service"
 	./gradlew bootRun
 
