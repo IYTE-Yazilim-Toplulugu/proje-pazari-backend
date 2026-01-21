@@ -76,7 +76,6 @@ public class UserController extends BaseController {
         return ResponseEntity.status(status).body(response);
     }
 
-
     @GetMapping("/{userId}")
     @Operation(
             summary = "Get user profile by ID",
