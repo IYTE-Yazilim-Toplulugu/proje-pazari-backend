@@ -1,4 +1,6 @@
-package com.iyte_yazilim.proje_pazari.application.common;
+package com.iyte_yazilim.proje_pazari.domain.interfaces;
+
+import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 
 /**
  * Handler that processes a request and returns a response.
