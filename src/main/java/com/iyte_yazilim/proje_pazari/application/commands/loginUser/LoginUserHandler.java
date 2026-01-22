@@ -10,46 +10,12 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntit
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Handles the {@link LoginUserCommand} to authenticate users.
- *
- * <p>This handler orchestrates the login process:
- *
- * <ol>
- *   <li>Validate command using {@link LoginUserValidator}
- *   <li>Find user by email address
- *   <li>Check if account is active
- *   <li>Verify password using BCrypt
- *   <li>Generate JWT token
- *   <li>Return login result with token
- * </ol>
- *
- * <h2>Error Scenarios:</h2>
- *
- * <ul>
- *   <li>{@code BAD_REQUEST} - Validation failed
- *   <li>{@code BAD_REQUEST} - Invalid email or password
- *   <li>{@code BAD_REQUEST} - Account deactivated
- * </ul>
- *
- * <h2>Security Notes:</h2>
- *
- * <p>Error messages are intentionally vague ("Invalid email or password") to prevent user
- * enumeration attacks.
- *
- * @author IYTE Yazılım Topluluğu
- * @version 1.0
- * @since 2024-01-01
- * @see LoginUserCommand
- * @see LoginUserResult
- * @see JwtUtil
- */
-@Service
+@Component
 @RequiredArgsConstructor
 public class LoginUserHandler
         implements IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> {

@@ -1,5 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequest;
+import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -70,13 +73,11 @@ public record CreateProjectCommand(
                         description = "Array of project tags",
                         example = "[\"machine-learning\", \"python\", \"research\"]")
                 String[] tags,
-        @Schema(description = "Maximum team size", example = "5")
+        @Schema(description = "Maximum team size for the project", example = "5")
                 @Min(value = 1, message = "Maximum team size must be at least 1")
                 Integer maxTeamSize,
-        @Schema(
-                        description = "Array of required skills",
-                        example = "[\"Python\", \"Machine Learning\", \"TensorFlow\"]")
+        @Schema(description = "Array of required skills", example = "[\"Java\", \"Spring Boot\"]")
                 String[] requiredSkills,
-        @Schema(description = "Project category", example = "Machine Learning") String category,
-        @Schema(description = "Project deadline", example = "2025-12-31T23:59:59")
-                LocalDateTime deadline) {}
+        @Schema(description = "Project category", example = "Software Development") String category,
+        @Schema(description = "Project deadline") LocalDateTime deadline)
+        implements IRequest<ApiResponse<CreateProjectCommandResult>> {}
