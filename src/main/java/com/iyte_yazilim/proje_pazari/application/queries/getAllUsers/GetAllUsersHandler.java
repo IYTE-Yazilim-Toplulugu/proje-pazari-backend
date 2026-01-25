@@ -10,9 +10,9 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapp
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class GetAllUsersHandler
         implements IRequestHandler<GetAllUsersQuery, ApiResponse<List<UserDto>>> {

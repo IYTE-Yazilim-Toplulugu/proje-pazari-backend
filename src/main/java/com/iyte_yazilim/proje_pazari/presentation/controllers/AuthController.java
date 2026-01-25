@@ -2,7 +2,7 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -67,9 +66,7 @@ import org.springframework.web.bind.annotation.*;
                         + "These endpoints are public and do not require authentication.")
 public class AuthController {
 
-    private final IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>>
-            registerUserHandler;
-    private final IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> loginUserHandler;
+    private final IMediator mediator;
 
     @PostMapping("/register")
     @Operation(
@@ -142,9 +139,9 @@ public class AuthController {
                         }
                         """)))
     public ResponseEntity<ApiResponse<RegisterUserResult>> register(
-            @Valid @RequestBody RegisterUserCommand command) {
+            @RequestBody RegisterUserCommand command) {
 
-        ApiResponse<RegisterUserResult> response = registerUserHandler.handle(command);
+        ApiResponse<RegisterUserResult> response = mediator.send(command);
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -224,9 +221,9 @@ public class AuthController {
                         }
                         """)))
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
-            @Valid @RequestBody LoginUserCommand command) {
+            @RequestBody LoginUserCommand command) {
 
-        ApiResponse<LoginUserResult> response = loginUserHandler.handle(command);
+        ApiResponse<LoginUserResult> response = mediator.send(command);
 
         HttpStatus status =
                 switch (response.getCode()) {

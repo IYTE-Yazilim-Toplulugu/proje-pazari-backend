@@ -4,12 +4,11 @@ import com.iyte_yazilim.proje_pazari.application.commands.changePassword.ChangeP
 import com.iyte_yazilim.proje_pazari.application.commands.deactivateAccount.DeactivateAccountCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile.UpdateUserProfileCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture.UploadProfilePictureCommand;
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllUsers.GetAllUsersQuery;
-import com.iyte_yazilim.proje_pazari.application.queries.getCurrentUserProfile.GetCurrentUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -36,18 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
                         + "Most endpoints require authentication.")
 public class UserController extends BaseController {
 
-    private final IRequestHandler<GetCurrentUserProfileQuery, ApiResponse<UserProfileDTO>>
-            getCurrentUserProfileHandler;
-    private final IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>>
-            getUserProfileHandler;
-    private final IRequestHandler<UpdateUserProfileCommand, ApiResponse<UserDto>>
-            updateUserProfileHandler;
-    private final IRequestHandler<UploadProfilePictureCommand, ApiResponse<String>>
-            uploadProfilePictureHandler;
-    private final IRequestHandler<ChangePasswordCommand, ApiResponse<Void>> changePasswordHandler;
-    private final IRequestHandler<DeactivateAccountCommand, ApiResponse<Void>>
-            deactivateAccountHandler;
-    private final IRequestHandler<GetAllUsersQuery, ApiResponse<List<UserDto>>> getAllUsersHandler;
+    private final IMediator mediator;
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -64,39 +52,7 @@ public class UserController extends BaseController {
             })
     public ResponseEntity<ApiResponse<List<UserDto>>> getAllUsers() {
 
-        ApiResponse<List<UserDto>> response = getAllUsersHandler.handle(new GetAllUsersQuery());
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
-    }
-
-    @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(
-            summary = "Get current user profile",
-            description = "Retrieves the authenticated user's complete profile with statistics")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "Profile retrieved successfully"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "401",
-                        description = "Unauthorized")
-            })
-    public ResponseEntity<ApiResponse<UserProfileDTO>> getCurrentUserProfile(Authentication auth) {
-        // No database lookup needed for user ID!
-        String userId = getCurrentUserId(auth);
-
-        ApiResponse<UserProfileDTO> response =
-                getCurrentUserProfileHandler.handle(new GetCurrentUserProfileQuery(userId));
+        ApiResponse<List<UserDto>> response = mediator.send(new GetAllUsersQuery());
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -122,8 +78,7 @@ public class UserController extends BaseController {
                         description = "User not found")
             })
     public ResponseEntity<ApiResponse<UserProfileDTO>> getUserProfile(@PathVariable String userId) {
-        ApiResponse<UserProfileDTO> response =
-                getUserProfileHandler.handle(new GetUserProfileQuery(userId));
+        ApiResponse<UserProfileDTO> response = mediator.send(new GetUserProfileQuery(userId));
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -167,7 +122,7 @@ public class UserController extends BaseController {
                         command.githubUrl(),
                         command.preferredLanguage());
 
-        ApiResponse<UserDto> response = updateUserProfileHandler.handle(updatedCommand);
+        ApiResponse<UserDto> response = mediator.send(updatedCommand);
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -226,7 +181,7 @@ public class UserController extends BaseController {
 
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, file);
 
-        ApiResponse<String> response = uploadProfilePictureHandler.handle(command);
+        ApiResponse<String> response = mediator.send(command);
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -268,7 +223,7 @@ public class UserController extends BaseController {
                         command.newPassword(),
                         command.confirmPassword());
 
-        ApiResponse<Void> response = changePasswordHandler.handle(updatedCommand);
+        ApiResponse<Void> response = mediator.send(updatedCommand);
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -302,7 +257,7 @@ public class UserController extends BaseController {
 
         DeactivateAccountCommand command = new DeactivateAccountCommand(userId, reason);
 
-        ApiResponse<Void> response = deactivateAccountHandler.handle(command);
+        ApiResponse<Void> response = mediator.send(command);
 
         HttpStatus status =
                 switch (response.getCode()) {
