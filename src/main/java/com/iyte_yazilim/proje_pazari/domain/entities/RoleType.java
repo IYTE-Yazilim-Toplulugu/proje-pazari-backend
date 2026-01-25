@@ -7,7 +7,7 @@ public enum RoleType {
     APPLICANT("Can apply to projects"),
     PROJECT_OWNER("Can create and manage projects"),
     ADMIN("Full system access");
-    
+
     private final String description;
 
     // Constructor is required for enums with fields

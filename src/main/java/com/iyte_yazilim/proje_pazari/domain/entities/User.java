@@ -75,8 +75,8 @@ public class User extends BaseEntity<Ulid> {
     /** Indicates whether the user account is active. Inactive accounts cannot login. */
     private boolean isActive;
 
+    private Set<RoleType> roles = new HashSet<>();
 
-    private Set<Role> roles = new HashSet<>();
     /**
      * Returns the user's full name by combining first and last name.
      *
