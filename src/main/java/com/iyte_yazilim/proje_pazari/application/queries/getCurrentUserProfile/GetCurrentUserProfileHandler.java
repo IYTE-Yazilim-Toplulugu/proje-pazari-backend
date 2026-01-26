@@ -5,9 +5,9 @@ import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserP
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class GetCurrentUserProfileHandler
         implements IRequestHandler<GetCurrentUserProfileQuery, ApiResponse<UserProfileDTO>> {
