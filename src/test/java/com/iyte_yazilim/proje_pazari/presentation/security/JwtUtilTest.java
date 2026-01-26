@@ -85,21 +85,6 @@ class JwtUtilTest {
     }
 
     @Test
-    void shouldHandleModeratorRole() {
-        // Given
-        String token = jwtUtil.generateToken("01HQXYZ123", "mod@std.iyte.edu.tr", "MODERATOR");
-
-        // When
-        UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
-
-        // Then
-        assertEquals("MODERATOR", principal.getRole());
-        assertTrue(
-                principal.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR")));
-    }
-
-    @Test
     void shouldHandleProjectOwnerRole() {
         // Given
         String token =

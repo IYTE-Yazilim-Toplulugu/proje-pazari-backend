@@ -1,7 +1,6 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
-import jakarta.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +17,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@MappedSuperclass
 public abstract class BaseEntity<TId> {
 
     protected TId id;

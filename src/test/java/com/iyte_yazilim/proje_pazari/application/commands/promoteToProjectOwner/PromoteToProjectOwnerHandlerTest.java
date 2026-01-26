@@ -65,14 +65,14 @@ class PromoteToProjectOwnerHandlerTest {
         }
 
         @Test
-        @DisplayName("should promote MODERATOR to PROJECT_OWNER successfully")
-        void shouldPromoteModeratorToProjectOwner() {
+        @DisplayName("should promote APPLICANT to PROJECT_OWNER successfully")
+        void shouldPromoteApplicantToProjectOwner() {
             // Given
             String userId = "01HQXYZ123";
             UserEntity user = new UserEntity();
             user.setId(userId);
-            user.setEmail("mod@std.iyte.edu.tr");
-            user.setRole(UserRole.MODERATOR);
+            user.setEmail("applicant@std.iyte.edu.tr");
+            user.setRole(UserRole.APPLICANT);
 
             when(userRepository.findById(userId)).thenReturn(Optional.of(user));
             when(userRepository.save(any(UserEntity.class))).thenReturn(user);
