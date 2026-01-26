@@ -5,8 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,15 +22,13 @@ import org.springframework.http.ResponseEntity;
 @ExtendWith(MockitoExtension.class)
 class AdminControllerTest {
 
-    @Mock
-    private IRequestHandler<PromoteToProjectOwnerCommand, ApiResponse<Void>>
-            promoteToProjectOwnerHandler;
+    @Mock private IMediator mediator;
 
     private AdminController adminController;
 
     @BeforeEach
     void setUp() {
-        adminController = new AdminController(promoteToProjectOwnerHandler);
+        adminController = new AdminController(mediator);
     }
 
     @Nested
@@ -42,7 +40,7 @@ class AdminControllerTest {
         void shouldReturn200WhenPromotionSucceeds() {
             // Given
             String userId = "target-user-id";
-            when(promoteToProjectOwnerHandler.handle(any(PromoteToProjectOwnerCommand.class)))
+            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
                     .thenReturn(
                             ApiResponse.success(
                                     null, "User promoted to PROJECT_OWNER successfully"));
@@ -63,7 +61,7 @@ class AdminControllerTest {
         void shouldPassCorrectUserIdToHandler() {
             // Given
             String userId = "specific-user-id";
-            when(promoteToProjectOwnerHandler.handle(any(PromoteToProjectOwnerCommand.class)))
+            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
                     .thenReturn(ApiResponse.success(null, "Success"));
 
             ArgumentCaptor<PromoteToProjectOwnerCommand> captor =
@@ -73,7 +71,7 @@ class AdminControllerTest {
             adminController.promoteToProjectOwner(userId);
 
             // Then
-            verify(promoteToProjectOwnerHandler).handle(captor.capture());
+            verify(mediator).send(captor.capture());
             assertEquals(userId, captor.getValue().userId());
         }
 
@@ -82,7 +80,7 @@ class AdminControllerTest {
         void shouldReturn404WhenUserNotFound() {
             // Given
             String userId = "nonexistent-user";
-            when(promoteToProjectOwnerHandler.handle(any(PromoteToProjectOwnerCommand.class)))
+            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
                     .thenReturn(ApiResponse.notFound("User not found with id: nonexistent-user"));
 
             // When
@@ -101,7 +99,7 @@ class AdminControllerTest {
         void shouldReturn400WhenAlreadyProjectOwner() {
             // Given
             String userId = "project-owner-id";
-            when(promoteToProjectOwnerHandler.handle(any(PromoteToProjectOwnerCommand.class)))
+            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
                     .thenReturn(ApiResponse.validationError("User is already a PROJECT_OWNER"));
 
             // When
@@ -119,7 +117,7 @@ class AdminControllerTest {
         void shouldReturn400WhenTryingToDemoteAdmin() {
             // Given
             String userId = "admin-user-id";
-            when(promoteToProjectOwnerHandler.handle(any(PromoteToProjectOwnerCommand.class)))
+            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
                     .thenReturn(ApiResponse.validationError("ADMIN users cannot be demoted"));
 
             // When

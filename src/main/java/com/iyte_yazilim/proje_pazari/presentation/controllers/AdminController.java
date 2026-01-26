@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,8 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
-    private final IRequestHandler<PromoteToProjectOwnerCommand, ApiResponse<Void>>
-            promoteToProjectOwnerHandler;
+    private final IMediator mediator;
 
     @PostMapping("/users/{userId}/promote-to-project-owner")
     @Operation(
@@ -105,7 +104,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> promoteToProjectOwner(@PathVariable String userId) {
 
         PromoteToProjectOwnerCommand command = new PromoteToProjectOwnerCommand(userId);
-        ApiResponse<Void> response = promoteToProjectOwnerHandler.handle(command);
+        ApiResponse<Void> response = mediator.send(command);
 
         HttpStatus status =
                 switch (response.getCode()) {

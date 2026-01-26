@@ -1,5 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequest;
+import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
@@ -7,4 +9,5 @@ import jakarta.validation.constraints.NotBlank;
 public record PromoteToProjectOwnerCommand(
         @Schema(description = "User ID to promote", requiredMode = Schema.RequiredMode.REQUIRED)
                 @NotBlank(message = "User ID is required")
-                String userId) {}
+                String userId)
+        implements IRequest<ApiResponse<Void>> {}

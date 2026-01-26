@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.enums.UserRole;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -35,17 +35,17 @@ public class PromoteToProjectOwnerHandler
                             "user.not.found.with.id", new Object[] {command.userId()}));
         }
 
-        if (user.getRole() == UserRole.PROJECT_OWNER) {
+        if (user.getRole() == RoleType.PROJECT_OWNER) {
             return ApiResponse.validationError(
                     messageService.getMessage("user.already.project.owner"));
         }
 
-        if (user.getRole() == UserRole.ADMIN) {
+        if (user.getRole() == RoleType.ADMIN) {
             return ApiResponse.validationError(
                     messageService.getMessage("admin.cannot.be.demoted"));
         }
 
-        user.setRole(UserRole.PROJECT_OWNER);
+        user.setRole(RoleType.PROJECT_OWNER);
         userRepository.save(user);
 
         return ApiResponse.success(

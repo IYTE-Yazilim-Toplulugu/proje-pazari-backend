@@ -1,10 +1,7 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.github.f4b6a3.ulid.Ulid;
-<<<<<<< HEAD
-import com.iyte_yazilim.proje_pazari.domain.enums.UserRole;
-=======
->>>>>>> 0a3437d12a51a6dc4460c8969945990cf110ca73
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -79,11 +76,7 @@ public class User extends BaseEntity<Ulid> {
     /** Indicates whether the user account is active. Inactive accounts cannot login. */
     private boolean isActive;
 
-<<<<<<< HEAD
-    private Set<UserRole> roles = new HashSet<>();
-=======
     private Set<RoleType> roles = new HashSet<>();
->>>>>>> 0a3437d12a51a6dc4460c8969945990cf110ca73
 
     /**
      * Returns the user's full name by combining first and last name.

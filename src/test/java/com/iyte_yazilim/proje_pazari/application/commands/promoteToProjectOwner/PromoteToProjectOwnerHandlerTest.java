@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.enums.UserRole;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -45,7 +45,7 @@ class PromoteToProjectOwnerHandlerTest {
             UserEntity user = new UserEntity();
             user.setId(userId);
             user.setEmail("user@std.iyte.edu.tr");
-            user.setRole(UserRole.APPLICANT);
+            user.setRole(RoleType.APPLICANT);
 
             when(userRepository.findById(userId)).thenReturn(Optional.of(user));
             when(userRepository.save(any(UserEntity.class))).thenReturn(user);
@@ -60,7 +60,7 @@ class PromoteToProjectOwnerHandlerTest {
             // Then
             assertEquals(ResponseCode.SUCCESS, response.getCode());
             assertEquals("User promoted to PROJECT_OWNER successfully", response.getMessage());
-            assertEquals(UserRole.PROJECT_OWNER, user.getRole());
+            assertEquals(RoleType.PROJECT_OWNER, user.getRole());
             verify(userRepository).save(user);
         }
 
@@ -72,7 +72,7 @@ class PromoteToProjectOwnerHandlerTest {
             UserEntity user = new UserEntity();
             user.setId(userId);
             user.setEmail("applicant@std.iyte.edu.tr");
-            user.setRole(UserRole.APPLICANT);
+            user.setRole(RoleType.APPLICANT);
 
             when(userRepository.findById(userId)).thenReturn(Optional.of(user));
             when(userRepository.save(any(UserEntity.class))).thenReturn(user);
@@ -86,7 +86,7 @@ class PromoteToProjectOwnerHandlerTest {
 
             // Then
             assertEquals(ResponseCode.SUCCESS, response.getCode());
-            assertEquals(UserRole.PROJECT_OWNER, user.getRole());
+            assertEquals(RoleType.PROJECT_OWNER, user.getRole());
         }
 
         @Test
@@ -117,7 +117,7 @@ class PromoteToProjectOwnerHandlerTest {
             UserEntity user = new UserEntity();
             user.setId(userId);
             user.setEmail("owner@std.iyte.edu.tr");
-            user.setRole(UserRole.PROJECT_OWNER);
+            user.setRole(RoleType.PROJECT_OWNER);
 
             when(userRepository.findById(userId)).thenReturn(Optional.of(user));
             when(messageService.getMessage("user.already.project.owner"))
@@ -142,7 +142,7 @@ class PromoteToProjectOwnerHandlerTest {
             UserEntity user = new UserEntity();
             user.setId(userId);
             user.setEmail("admin@std.iyte.edu.tr");
-            user.setRole(UserRole.ADMIN);
+            user.setRole(RoleType.ADMIN);
 
             when(userRepository.findById(userId)).thenReturn(Optional.of(user));
             when(messageService.getMessage("admin.cannot.be.demoted"))
