@@ -154,6 +154,11 @@ class SearchControllerTest {
                     .andExpect(jsonPath("$.data").isArray())
                     .andExpect(jsonPath("$.data").isEmpty());
         }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/search/projects - Advanced Filters")
+    class AdvancedSearchProjectsTests {
 
         @Test
         @WithMockUser
@@ -217,6 +222,11 @@ class SearchControllerTest {
                                             pageable.getPageNumber() == 2
                                                     && pageable.getPageSize() == 20));
         }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/search/projects - Validation Tests")
+    class ValidationTests {
 
         @Test
         @WithMockUser
