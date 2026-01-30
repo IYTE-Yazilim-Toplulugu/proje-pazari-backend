@@ -17,8 +17,6 @@ import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregatio
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.*;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
-import org.springframework.data.elasticsearch.core.query.Criteria;
-import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 
@@ -65,27 +63,81 @@ public class ProjectSearchService {
     // Changed from Page to SearchPage
     public SearchPage<ProjectDocument> advancedSearch(
             String keyword, String status, List<String> tags, Pageable pageable) {
-        CriteriaQuery query = new CriteriaQuery(new Criteria());
 
-        if (keyword != null && !keyword.isBlank()) {
-            query.addCriteria(
-                    new Criteria("title").contains(keyword).or("description").contains(keyword));
-        }
+        // Build bool query with multiple conditions
+        Query query =
+                NativeQuery.builder()
+                        .withQuery(
+                                q ->
+                                        q.bool(
+                                                b -> {
+                                                    // Add keyword search if provided
+                                                    if (keyword != null && !keyword.isBlank()) {
+                                                        b.must(
+                                                                m ->
+                                                                        m.multiMatch(
+                                                                                mm ->
+                                                                                        mm.query(
+                                                                                                        keyword)
+                                                                                                .fields(
+                                                                                                        "title^3",
+                                                                                                        "description^2",
+                                                                                                        "summary")
+                                                                                                .fuzziness(
+                                                                                                        "AUTO")
+                                                                                                .operator(
+                                                                                                        Operator
+                                                                                                                .Or)));
+                                                    }
 
-        if (status != null) {
-            query.addCriteria(new Criteria("status").is(status));
-        }
+                                                    // Add status filter if provided
+                                                    if (status != null && !status.isBlank()) {
+                                                        b.filter(
+                                                                f ->
+                                                                        f.term(
+                                                                                t ->
+                                                                                        t.field(
+                                                                                                        "status")
+                                                                                                .value(
+                                                                                                        status)));
+                                                    }
 
-        if (tags != null && !tags.isEmpty()) {
-            query.addCriteria(new Criteria("tags").in(tags));
-        }
+                                                    // Add tags filter if provided
+                                                    if (tags != null && !tags.isEmpty()) {
+                                                        b.filter(
+                                                                f ->
+                                                                        f.terms(
+                                                                                t ->
+                                                                                        t.field(
+                                                                                                        "tags")
+                                                                                                .terms(
+                                                                                                        ts ->
+                                                                                                                ts
+                                                                                                                        .value(
+                                                                                                                                tags
+                                                                                                                                        .stream()
+                                                                                                                                        .map(
+                                                                                                                                                tag ->
+                                                                                                                                                        co
+                                                                                                                                                                .elastic
+                                                                                                                                                                .clients
+                                                                                                                                                                .elasticsearch
+                                                                                                                                                                ._types
+                                                                                                                                                                .FieldValue
+                                                                                                                                                                .of(
+                                                                                                                                                                        tag))
+                                                                                                                                        .toList()))));
+                                                    }
 
-        query.setPageable(pageable);
+                                                    return b;
+                                                }))
+                        .withPageable(pageable)
+                        .build();
 
         SearchHits<ProjectDocument> searchHits =
                 elasticsearchOperations.search(query, ProjectDocument.class);
 
-        return SearchHitSupport.searchPageFor(searchHits, pageable); // Returns SearchPage
+        return SearchHitSupport.searchPageFor(searchHits, pageable);
     }
 
     public List<String> getSuggestions(String prefix) {
