@@ -28,7 +28,7 @@ public class ProjectStatusChangedEventHandler implements IEventHandler<ProjectSt
 
     private final EmailService emailService;
 
-    @Value("${app.mail.base-url}")
+    @Value("${app.mail.base-url:http://localhost:3000}")
     private String baseUrl;
 
     @Override
