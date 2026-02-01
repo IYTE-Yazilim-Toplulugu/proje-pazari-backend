@@ -88,6 +88,7 @@ public class ReviewApplicationHandler
                         savedApplication.getStatus().toString());
 
         // --- 7. Response ---
-        return ApiResponse.ok(result, messageService.getMessage("application.reviewed.success"));
+        return ApiResponse.success(
+                result, messageService.getMessage("application.reviewed.success"));
     }
 }

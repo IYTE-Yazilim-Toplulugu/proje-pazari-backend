@@ -109,6 +109,7 @@ public class UpdateProjectStatusHandler
                         savedProject.getStatus().toString());
 
         // --- 10. Response ---
-        return ApiResponse.ok(result, messageService.getMessage("project.status.updated.success"));
+        return ApiResponse.success(
+                result, messageService.getMessage("project.status.updated.success"));
     }
 }
