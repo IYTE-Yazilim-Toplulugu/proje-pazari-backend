@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 
 public record ApplicationReviewedEvent(
         String applicationId,
+        String projectId,
         String applicantEmail,
         String projectTitle,
         String applicantFirstName,
