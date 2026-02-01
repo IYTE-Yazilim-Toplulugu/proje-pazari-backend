@@ -13,6 +13,6 @@
         New Status: <strong th:text="${newStatus}"></strong>
     </p>
 
-    <a th:href="'https://projepazari.com/projects/' + ${projectId}">View Project Details</a>
+    <a th:href="${baseUrl + '/projects/' + projectId}">View Project Details</a>
 </body>
 </html>
