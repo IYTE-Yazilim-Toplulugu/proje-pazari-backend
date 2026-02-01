@@ -7,6 +7,7 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IEventHandler;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,9 @@ public class ApplicationReviewedEventHandler implements IEventHandler<Applicatio
 
     private final EmailService emailService;
 
+    @Value("${app.mail.base-url}")
+    private String baseUrl;
+
     @Override
     @EventListener
     public void handle(ApplicationReviewedEvent event) {
@@ -25,18 +29,31 @@ public class ApplicationReviewedEventHandler implements IEventHandler<Applicatio
                 event.applicationId(),
                 event.status());
 
-        String template =
-                event.status() == ApplicationStatus.APPROVED
-                        ? "application-approved.html"
-                        : "application-rejected.html";
+        if (event.status() == ApplicationStatus.APPROVED) {
+            Map<String, Object> variables =
+                    Map.of(
+                            "subject", "Application Approved - Congratulations!",
+                            "firstName", event.applicantFirstName(),
+                            "projectTitle", event.projectTitle(),
+                            "projectId", event.projectId(),
+                            "baseUrl", baseUrl);
 
-        Map<String, Object> variables =
-                Map.of(
-                        "subject", "Application " + event.status(),
-                        "firstName", event.applicantFirstName(),
-                        "projectTitle", event.projectTitle(),
-                        "reviewMessage", event.reviewMessage());
+            emailService.sendTemplateEmailAsync(
+                    event.applicantEmail(), "application-approved.html", variables);
+        } else {
+            Map<String, Object> variables =
+                    Map.of(
+                            "subject",
+                            "Application Status Update",
+                            "firstName",
+                            event.applicantFirstName(),
+                            "projectTitle",
+                            event.projectTitle(),
+                            "baseUrl",
+                            baseUrl);
 
-        emailService.sendTemplateEmail(event.applicantEmail(), template, variables);
+            emailService.sendTemplateEmailAsync(
+                    event.applicantEmail(), "application-rejected.html", variables);
+        }
     }
 }
