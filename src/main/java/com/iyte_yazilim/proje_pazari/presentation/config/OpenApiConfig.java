@@ -57,7 +57,10 @@ public class OpenApiConfig {
                                                 .scheme("bearer")
                                                 .bearerFormat("JWT")
                                                 .description(
-                                                        "Enter JWT token obtained from /api/v1/auth/login")));
+                                                        "Enter JWT token obtained from /api/v1/auth/login")))
+                .addSecurityItem(
+                        new io.swagger.v3.oas.models.security.SecurityRequirement()
+                                .addList("Bearer Authentication"));
     }
 
     /** Adds Accept-Language header to all API operations in Swagger UI */
