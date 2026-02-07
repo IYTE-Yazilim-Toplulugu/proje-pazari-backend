@@ -5,8 +5,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
+@TestPropertySource(
+        properties = {
+            "spring.data.elasticsearch.enabled=false",
+            "spring.data.elasticsearch.repositories.enabled=false",
+            "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration,org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration,org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration"
+        })
 class JwtUtilTest {
 
     @Autowired private JwtUtil jwtUtil;
@@ -85,17 +92,30 @@ class JwtUtilTest {
     }
 
     @Test
-    void shouldHandleModeratorRole() {
+    void shouldHandleProjectOwnerRole() {
         // Given
-        String token = jwtUtil.generateToken("01HQXYZ123", "mod@std.iyte.edu.tr", "MODERATOR");
+        String token =
+                jwtUtil.generateToken("01HQXYZ123", "owner@std.iyte.edu.tr", "PROJECT_OWNER");
 
         // When
         UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
 
         // Then
-        assertEquals("MODERATOR", principal.getRole());
+        assertEquals("PROJECT_OWNER", principal.getRole());
         assertTrue(
                 principal.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR")));
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_PROJECT_OWNER")));
+    }
+
+    @Test
+    void shouldDefaultToUserRoleWhenRoleClaimMissing() {
+        // Given - generate token with old method that doesn't include role
+        String token = jwtUtil.generateToken("test@std.iyte.edu.tr");
+
+        // When
+        String role = jwtUtil.extractRole(token);
+
+        // Then
+        assertEquals("APPLICANT", role);
     }
 }

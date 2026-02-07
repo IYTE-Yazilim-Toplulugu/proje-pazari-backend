@@ -29,10 +29,26 @@ repositories {
 }
 
 dependencies {
+    // GreenMail for email testing
+    testImplementation 'com.icegreen:greenmail-junit5:2.0.0'
+    testImplementation 'com.icegreen:greenmail-spring:2.0.0'
+
+    // Spring Boot Thymeleaf Starter
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // Spring Boot Mail Starter
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
     // MapStruct
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    // Elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
+    // For JSON processing with Elasticsearch
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
@@ -40,6 +56,9 @@ dependencies {
 
     // ULID
     implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
+
+    // MinIO - Cloud blob storage
+    implementation 'io.minio:minio:8.5.7'
 
     // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -70,7 +89,15 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.testcontainers:elasticsearch:1.20.4'
+    testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Testcontainers for integration tests
+    testImplementation 'org.testcontainers:testcontainers:1.19.3'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+    testImplementation 'org.testcontainers:minio:1.19.3'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.named('test') {

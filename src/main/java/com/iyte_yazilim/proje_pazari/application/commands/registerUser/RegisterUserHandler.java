@@ -1,8 +1,10 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
+import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -10,51 +12,16 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Handles the {@link RegisterUserCommand} to register new users.
- *
- * <p>This handler orchestrates the user registration process:
- *
- * <ol>
- *   <li>Validate command using {@link RegisterUserValidator}
- *   <li>Check for duplicate email addresses
- *   <li>Map command to domain entity
- *   <li>Encrypt password using BCrypt
- *   <li>Persist user to database
- *   <li>Return registration result
- * </ol>
- *
- * <h2>Error Scenarios:</h2>
- *
- * <ul>
- *   <li>{@code BAD_REQUEST} - Validation failed
- *   <li>{@code BAD_REQUEST} - Email already registered
- * </ul>
- *
- * <h2>Example:</h2>
- *
- * <pre>{@code
- * RegisterUserCommand command = new RegisterUserCommand(...);
- * ApiResponse<RegisterUserResult> response = handler.handle(command);
- *
- * if (response.getCode() == ResponseCode.CREATED) {
- *     String userId = response.getData().userId();
- *     // User registered successfully
- * }
- * }</pre>
- *
- * @author IYTE Yazılım Topluluğu
- * @version 1.0
- * @since 2024-01-01
- * @see RegisterUserCommand
- * @see RegisterUserResult
- * @see UserRepository
- */
-@Service
+@Component
 @RequiredArgsConstructor
 public class RegisterUserHandler
         implements IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>> {
@@ -65,6 +32,7 @@ public class RegisterUserHandler
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final MessageService messageService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * Handles user registration command.
@@ -76,6 +44,11 @@ public class RegisterUserHandler
      * @return API response with registration result or error message
      */
     @Override
+    @Transactional(
+            timeoutString = "${spring.transaction.timeout:30}",
+            rollbackFor = Exception.class,
+            isolation = Isolation.READ_COMMITTED,
+            propagation = Propagation.REQUIRED)
     public ApiResponse<RegisterUserResult> handle(RegisterUserCommand command) {
 
         // --- 1. Validation ---
@@ -109,6 +82,17 @@ public class RegisterUserHandler
 
         // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
         var result = registerUserMapper.domainToResult(savedDomainUser);
+
+        String verificationToken = Ulid.fast().toString();
+
+        // Publish event for side effects (email sending handled by EmailEventListener)
+        applicationEventPublisher.publishEvent(
+                new UserRegisteredEvent(
+                        savedDomainUser.getId().toString(),
+                        savedDomainUser.getEmail(),
+                        savedDomainUser.getFirstName(),
+                        verificationToken,
+                        LocalDateTime.now()));
 
         // --- 9. Response with localized message ---
         return ApiResponse.created(result, messageService.getMessage("user.registered.success"));

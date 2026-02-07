@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,11 +28,10 @@ import org.springframework.web.bind.annotation.*;
                         + "Allows users to create, read, update, and delete projects.")
 public class ProjectController {
 
-    private final IRequestHandler<CreateProjectCommand, ApiResponse<CreateProjectCommandResult>>
-            createProjectHandler;
+    private final IMediator mediator;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Create a new project",
@@ -127,9 +125,9 @@ public class ProjectController {
                         }
                         """)))
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
-            @Valid @RequestBody CreateProjectCommand command) {
+            @RequestBody CreateProjectCommand command) {
 
-        ApiResponse<CreateProjectCommandResult> response = createProjectHandler.handle(command);
+        ApiResponse<CreateProjectCommandResult> response = mediator.send(command);
 
         HttpStatus status =
                 switch (response.getCode()) {

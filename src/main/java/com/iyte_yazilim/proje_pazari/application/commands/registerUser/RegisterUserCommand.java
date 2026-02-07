@@ -1,5 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
+import com.iyte_yazilim.proje_pazari.application.common.ICommand;
+import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -86,4 +89,5 @@ public record RegisterUserCommand(
         @Schema(description = "Last name", example = "Doe")
                 @NotBlank(message = "Last name is required")
                 @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
-                String lastName) {}
+                String lastName)
+        implements ICommand<ApiResponse<RegisterUserResult>> {}
