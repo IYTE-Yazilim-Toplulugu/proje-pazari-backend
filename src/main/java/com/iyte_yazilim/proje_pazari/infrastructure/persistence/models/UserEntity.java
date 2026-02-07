@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 
 import com.github.f4b6a3.ulid.Ulid;
-import com.iyte_yazilim.proje_pazari.domain.entities.RoleType;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -8,11 +8,11 @@ import org.springframework.security.core.GrantedAuthority;
 class UserPrincipalTest {
 
     @Test
-    void testUserPrincipalCreation() {
+    void testApplicantPrincipalCreation() {
         // Given
         String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
         String email = "test@example.com";
-        String role = "USER";
+        String role = "APPLICANT";
 
         // When
         UserPrincipal userPrincipal = new UserPrincipal(userId, email, role);
@@ -25,11 +25,11 @@ class UserPrincipalTest {
     }
 
     @Test
-    void testUserAuthorities() {
+    void testApplicantAuthorities() {
         // Given
         String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
         String email = "test@example.com";
-        String role = "USER";
+        String role = "APPLICANT";
         UserPrincipal userPrincipal = new UserPrincipal(userId, email, role);
 
         // When
@@ -38,7 +38,7 @@ class UserPrincipalTest {
         // Then
         assertEquals(1, authorities.size());
         GrantedAuthority authority = authorities.iterator().next();
-        assertEquals("ROLE_USER", authority.getAuthority());
+        assertEquals("ROLE_APPLICANT", authority.getAuthority());
     }
 
     @Test
@@ -58,12 +58,11 @@ class UserPrincipalTest {
         assertEquals("ROLE_ADMIN", authority.getAuthority());
     }
 
-    @Test
-    void testModeratorAuthorities() {
+    void testProjectOwnerAuthorities() {
         // Given
         String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "mod@example.com";
-        String role = "MODERATOR";
+        String email = "projectowner@example.com";
+        String role = "PROJECT_OWNER";
         UserPrincipal userPrincipal = new UserPrincipal(userId, email, role);
 
         // When
@@ -72,7 +71,7 @@ class UserPrincipalTest {
         // Then
         assertEquals(1, authorities.size());
         GrantedAuthority authority = authorities.iterator().next();
-        assertEquals("ROLE_MODERATOR", authority.getAuthority());
+        assertEquals("ROLE_PROJECT_OWNER", authority.getAuthority());
     }
 
     @Test

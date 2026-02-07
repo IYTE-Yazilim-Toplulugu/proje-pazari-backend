@@ -37,8 +37,7 @@ public class UserController extends BaseController {
 
     private final IMediator mediator;
 
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and hasRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get all users", description = "Retrieves a list of all users")
     @ApiResponses(
@@ -90,9 +89,8 @@ public class UserController extends BaseController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @PutMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @SecurityRequirement(name = "Bearer Authentication")
+    @PutMapping
     @Operation(
             summary = "Update user profile",
             description = "Updates the authenticated user's profile information")

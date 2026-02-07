@@ -31,7 +31,7 @@ public class ProjectController {
     private final IMediator mediator;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Create a new project",

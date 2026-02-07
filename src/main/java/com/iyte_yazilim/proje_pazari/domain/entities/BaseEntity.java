@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.domain.entities;
 import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,31 +18,32 @@ import lombok.Setter;
 @Getter
 @Setter
 public abstract class BaseEntity<TId> {
+
     protected TId id;
 
     protected LocalDateTime createdAt;
+
     protected LocalDateTime updatedAt;
 
-    protected ArrayList<DomainEvent> domainEvents = new ArrayList<>();
+    protected List<DomainEvent> domainEvents = new ArrayList<>();
+
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     protected DomainEvent addDomainEvent(DomainEvent domainEvent) {
         domainEvents.add(domainEvent);
         return domainEvent;
     }
 
-    @Deprecated
-    protected DomainEvent addomainEvent(DomainEvent domainEvent) {
-        return addDomainEvent(domainEvent);
-    }
-
     protected DomainEvent removeDomainEvent(DomainEvent domainEvent) {
         domainEvents.remove(domainEvent);
         return domainEvent;
-    }
-
-    @Deprecated
-    protected DomainEvent removedomainEvent(DomainEvent domainEvent) {
-        return removeDomainEvent(domainEvent);
     }
 
     protected DomainEvent updateDomainEvent(DomainEvent domainEvent) {
@@ -52,8 +54,7 @@ public abstract class BaseEntity<TId> {
         return domainEvent;
     }
 
-    @Deprecated
-    protected DomainEvent updatedomainEvent(DomainEvent domainEvent) {
-        return updateDomainEvent(domainEvent);
+    public void clearDomainEvents() {
+        domainEvents.clear();
     }
 }

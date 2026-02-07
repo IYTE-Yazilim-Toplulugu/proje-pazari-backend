@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.domain.entities;
+package com.iyte_yazilim.proje_pazari.domain.enums;
 
 import lombok.Getter;
 

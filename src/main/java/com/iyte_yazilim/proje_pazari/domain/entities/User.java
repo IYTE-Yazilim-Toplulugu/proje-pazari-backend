@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
