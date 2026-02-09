@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,14 +44,13 @@ class UserRegisteredEventHandlerTest {
     @DisplayName("Should send welcome email when user registered event is received")
     void shouldSendWelcomeEmailOnUserRegistered() {
         // Given
-        String userId = "01HQXYZ123";
+        Ulid userId = Ulid.fast();
         String email = "newuser@example.com";
         String firstName = "John";
         String verificationToken = "abc123xyz";
-        LocalDateTime occurredOn = LocalDateTime.now();
 
         UserRegisteredEvent event =
-                new UserRegisteredEvent(userId, email, firstName, verificationToken, occurredOn);
+                new UserRegisteredEvent(userId, email, firstName, verificationToken);
 
         // When
         eventHandler.handle(event);
@@ -80,8 +79,7 @@ class UserRegisteredEventHandlerTest {
                                 new RuntimeException("Email service unavailable")));
 
         UserRegisteredEvent event =
-                new UserRegisteredEvent(
-                        "user-123", "test@example.com", "Test", "token-123", LocalDateTime.now());
+                new UserRegisteredEvent(Ulid.fast(), "test@example.com", "Test", "token-123");
 
         // When & Then
         assertDoesNotThrow(() -> eventHandler.handle(event));
@@ -95,11 +93,7 @@ class UserRegisteredEventHandlerTest {
         String verificationToken = "test-token-12345";
         UserRegisteredEvent event =
                 new UserRegisteredEvent(
-                        "user-123",
-                        "test@example.com",
-                        "Test User",
-                        verificationToken,
-                        LocalDateTime.now());
+                        Ulid.fast(), "test@example.com", "Test User", verificationToken);
 
         // When
         eventHandler.handle(event);
