@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.github.f4b6a3.ulid.Ulid;
-import java.time.LocalDateTime;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -78,7 +78,6 @@ public class User extends BaseEntity<Ulid> {
     private String verificationToken;
     private LocalDateTime verificationTokenExpiresAt;
     private LocalDateTime emailVerifiedAt;
-
 
     /** Indicates whether the user account is active. Inactive accounts cannot login. */
     private boolean isActive;
