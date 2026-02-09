@@ -4,14 +4,12 @@ import com.iyte_yazilim.proje_pazari.application.commands.changePassword.ChangeP
 import com.iyte_yazilim.proje_pazari.application.commands.deactivateAccount.DeactivateAccountCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile.UpdateUserProfileCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture.UploadProfilePictureCommand;
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllUsers.GetAllUsersQuery;
-import com.iyte_yazilim.proje_pazari.application.queries.getCurrentUserProfile.GetCurrentUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,33 +27,17 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@Tag(name = "User", description = "User management endpoints")
-public class UserController {
+@Tag(
+        name = "User",
+        description =
+                "User management endpoints. Includes profile management, password change, "
+                        + "profile picture upload, and account deactivation. "
+                        + "Most endpoints require authentication.")
+public class UserController extends BaseController {
 
-    private final IRequestHandler<GetCurrentUserProfileQuery, ApiResponse<UserProfileDTO>>
-            getCurrentUserProfileHandler;
-    private final IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>>
-            getUserProfileHandler;
-    private final IRequestHandler<UpdateUserProfileCommand, ApiResponse<UserDto>>
-            updateUserProfileHandler;
-    private final IRequestHandler<UploadProfilePictureCommand, ApiResponse<String>>
-            uploadProfilePictureHandler;
-    private final IRequestHandler<ChangePasswordCommand, ApiResponse<Void>> changePasswordHandler;
-    private final IRequestHandler<DeactivateAccountCommand, ApiResponse<Void>>
-            deactivateAccountHandler;
-    private final UserRepository userRepository;
-    private final IRequestHandler<GetAllUsersQuery, ApiResponse<List<UserDto>>> getAllUsersHandler;
+    private final IMediator mediator;
 
-    /**
-     * Resolves email from JWT token to user ID. The JWT token contains email as the subject, not
-     * the user ID.
-     */
-    private String resolveUserIdFromEmail(String email) {
-        return userRepository.findByEmail(email).map(user -> user.getId()).orElse(null);
-    }
-
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and hasRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get all users", description = "Retrieves a list of all users")
     @ApiResponses(
@@ -69,45 +51,7 @@ public class UserController {
             })
     public ResponseEntity<ApiResponse<List<UserDto>>> getAllUsers() {
 
-        ApiResponse<List<UserDto>> response = getAllUsersHandler.handle(new GetAllUsersQuery());
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
-    }
-
-    @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(
-            summary = "Get current user profile",
-            description = "Retrieves the authenticated user's complete profile with statistics")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "Profile retrieved successfully"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "401",
-                        description = "Unauthorized")
-            })
-    public ResponseEntity<ApiResponse<UserProfileDTO>> getCurrentUserProfile(Authentication auth) {
-        // JWT principal contains the email, not user ID - resolve to user ID first
-        String email = auth.getName();
-        String userId = resolveUserIdFromEmail(email);
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.notFound("User not found"));
-        }
-
-        ApiResponse<UserProfileDTO> response =
-                getCurrentUserProfileHandler.handle(new GetCurrentUserProfileQuery(userId));
+        ApiResponse<List<UserDto>> response = mediator.send(new GetAllUsersQuery());
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -133,8 +77,7 @@ public class UserController {
                         description = "User not found")
             })
     public ResponseEntity<ApiResponse<UserProfileDTO>> getUserProfile(@PathVariable String userId) {
-        ApiResponse<UserProfileDTO> response =
-                getUserProfileHandler.handle(new GetUserProfileQuery(userId));
+        ApiResponse<UserProfileDTO> response = mediator.send(new GetUserProfileQuery(userId));
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -146,9 +89,8 @@ public class UserController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @PutMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @SecurityRequirement(name = "Bearer Authentication")
+    @PutMapping
     @Operation(
             summary = "Update user profile",
             description = "Updates the authenticated user's profile information")
@@ -166,14 +108,7 @@ public class UserController {
             })
     public ResponseEntity<ApiResponse<UserDto>> updateProfile(
             @RequestBody @Valid UpdateUserProfileCommand command, Authentication auth) {
-        // JWT principal contains the email, not user ID - resolve to user ID first
-        String email = auth.getName();
-        String userId = resolveUserIdFromEmail(email);
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.notFound("User not found"));
-        }
+        String userId = getCurrentUserId(auth);
 
         UpdateUserProfileCommand updatedCommand =
                 new UpdateUserProfileCommand(
@@ -182,9 +117,10 @@ public class UserController {
                         command.lastName(),
                         command.description(),
                         command.linkedinUrl(),
-                        command.githubUrl());
+                        command.githubUrl(),
+                        command.preferredLanguage());
 
-        ApiResponse<UserDto> response = updateUserProfileHandler.handle(updatedCommand);
+        ApiResponse<UserDto> response = mediator.send(updatedCommand);
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -197,12 +133,26 @@ public class UserController {
         return ResponseEntity.status(status).body(response);
     }
 
-    @PostMapping("/me/profile-picture")
+    @PostMapping(value = "/me/profile-picture", consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Upload profile picture",
-            description = "Uploads a new profile picture for the authenticated user")
+            description = "Uploads a new profile picture for the authenticated user",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            content =
+                                    @io.swagger.v3.oas.annotations.media.Content(
+                                            mediaType = "multipart/form-data",
+                                            schema =
+                                                    @io.swagger.v3.oas.annotations.media.Schema(
+                                                            type = "object",
+                                                            implementation = Object.class),
+                                            encoding =
+                                                    @io.swagger.v3.oas.annotations.media.Encoding(
+                                                            name = "file",
+                                                            contentType =
+                                                                    "image/jpeg, image/png, image/gif, image/webp"))))
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -216,19 +166,20 @@ public class UserController {
                         description = "Unauthorized")
             })
     public ResponseEntity<ApiResponse<String>> uploadProfilePicture(
-            @RequestParam("file") MultipartFile file, Authentication auth) {
-        // JWT principal contains the email, not user ID - resolve to user ID first
-        String email = auth.getName();
-        String userId = resolveUserIdFromEmail(email);
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.notFound("User not found"));
-        }
+            @io.swagger.v3.oas.annotations.Parameter(
+                            description = "Profile picture file to upload",
+                            required = true,
+                            content =
+                                    @io.swagger.v3.oas.annotations.media.Content(
+                                            mediaType = "multipart/form-data"))
+                    @RequestParam("file")
+                    MultipartFile file,
+            Authentication auth) {
+        String userId = getCurrentUserId(auth);
 
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, file);
 
-        ApiResponse<String> response = uploadProfilePictureHandler.handle(command);
+        ApiResponse<String> response = mediator.send(command);
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -261,14 +212,7 @@ public class UserController {
             })
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @RequestBody @Valid ChangePasswordCommand command, Authentication auth) {
-        // JWT principal contains the email, not user ID - resolve to user ID first
-        String email = auth.getName();
-        String userId = resolveUserIdFromEmail(email);
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.notFound("User not found"));
-        }
+        String userId = getCurrentUserId(auth);
 
         ChangePasswordCommand updatedCommand =
                 new ChangePasswordCommand(
@@ -277,7 +221,7 @@ public class UserController {
                         command.newPassword(),
                         command.confirmPassword());
 
-        ApiResponse<Void> response = changePasswordHandler.handle(updatedCommand);
+        ApiResponse<Void> response = mediator.send(updatedCommand);
 
         HttpStatus status =
                 switch (response.getCode()) {
@@ -307,18 +251,11 @@ public class UserController {
             })
     public ResponseEntity<ApiResponse<Void>> deactivateAccount(
             @RequestParam(required = false) String reason, Authentication auth) {
-        // JWT principal contains the email, not user ID - resolve to user ID first
-        String email = auth.getName();
-        String userId = resolveUserIdFromEmail(email);
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.notFound("User not found"));
-        }
+        String userId = getCurrentUserId(auth);
 
         DeactivateAccountCommand command = new DeactivateAccountCommand(userId, reason);
 
-        ApiResponse<Void> response = deactivateAccountHandler.handle(command);
+        ApiResponse<Void> response = mediator.send(command);
 
         HttpStatus status =
                 switch (response.getCode()) {

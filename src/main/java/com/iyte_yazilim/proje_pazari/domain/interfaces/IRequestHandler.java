@@ -1,11 +1,13 @@
 package com.iyte_yazilim.proje_pazari.domain.interfaces;
 
-public interface IRequestHandler<TRequest, TResponse> {
-    /**
-     * Handles a request and returns a response.
-     *
-     * @param request the request to handle
-     * @return the response after handling the request
-     */
+import com.iyte_yazilim.proje_pazari.application.common.IRequest;
+
+/**
+ * Handler that processes a request and returns a response.
+ *
+ * @param <TRequest> request type
+ * @param <TResponse> response type
+ */
+public interface IRequestHandler<TRequest extends IRequest<TResponse>, TResponse> {
     TResponse handle(TRequest request);
 }
