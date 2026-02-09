@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
-import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -75,7 +75,7 @@ public class LoginUserHandler
             throw new EmailNotVerifiedException(
                     "Please verify your email before logging in. Check your inbox.");
         }
-      
+
         // --- 6. Generate JWT token with userId, email, and role ---
         String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), role);

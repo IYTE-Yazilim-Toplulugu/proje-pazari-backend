@@ -29,17 +29,17 @@ public class UserRegisteredEventHandler implements IEventHandler<UserRegisteredE
     @Override
     @EventListener
     public void handle(UserRegisteredEvent event) {
-        log.info("Handling UserRegisteredEvent for user: {}", event.email());
+        log.info("Handling UserRegisteredEvent for user: {}", event.getEmail());
 
         Map<String, Object> variables =
                 Map.of(
                         "subject",
                         "Welcome to Proje Pazarı!",
                         "userName",
-                        event.firstName(),
+                        event.getFirstName(),
                         "verificationLink",
-                        "http://localhost:3000/verify?token=" + event.verificationToken());
+                        "http://localhost:3000/verify?token=" + event.getVerificationToken());
 
-        emailService.sendTemplateEmailAsync(event.email(), "welcome.html", variables);
+        emailService.sendTemplateEmailAsync(event.getEmail(), "welcome.html", variables);
     }
 }
