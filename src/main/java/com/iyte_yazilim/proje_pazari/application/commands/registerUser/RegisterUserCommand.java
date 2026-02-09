@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
-import com.iyte_yazilim.proje_pazari.domain.validators.ValidIyteEmail;
 import com.iyte_yazilim.proje_pazari.application.common.ICommand;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
+import com.iyte_yazilim.proje_pazari.domain.validators.ValidIyteEmail;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

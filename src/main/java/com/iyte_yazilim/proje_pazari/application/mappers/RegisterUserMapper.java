@@ -43,6 +43,10 @@ public interface RegisterUserMapper {
     @Mapping(target = "githubUrl", ignore = true)
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "emailVerified", ignore = true)
+    @Mapping(target = "verificationToken", ignore = true)
+    @Mapping(target = "verificationTokenExpiresAt", ignore = true)
+    @Mapping(target = "emailVerifiedAt", ignore = true)
     User commandToDomain(RegisterUserCommand command);
 
     /**
