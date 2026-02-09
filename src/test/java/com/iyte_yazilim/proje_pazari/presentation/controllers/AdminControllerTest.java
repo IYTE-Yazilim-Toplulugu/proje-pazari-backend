@@ -8,12 +8,13 @@ import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import org.junit.jupiter.api.BeforeEach;
+import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -24,12 +25,9 @@ class AdminControllerTest {
 
     @Mock private IMediator mediator;
 
-    private AdminController adminController;
+    @Mock private IRequestMapper requestMapper;
 
-    @BeforeEach
-    void setUp() {
-        adminController = new AdminController(mediator);
-    }
+    @InjectMocks private AdminController adminController;
 
     @Nested
     @DisplayName("promoteToProjectOwner() method")

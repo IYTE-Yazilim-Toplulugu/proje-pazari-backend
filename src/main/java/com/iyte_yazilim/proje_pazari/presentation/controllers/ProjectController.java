@@ -1,7 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
-import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,24 +10,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/projects")
-@RequiredArgsConstructor
 @Tag(
         name = "Projects",
         description =
                 "Project management endpoints. "
                         + "Allows users to create, read, update, and delete projects.")
-public class ProjectController {
-
-    private final IMediator mediator;
+public class ProjectController extends BaseController {
 
     @PostMapping
     @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
@@ -125,19 +120,7 @@ public class ProjectController {
                         }
                         """)))
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
-            @RequestBody CreateProjectCommand command) {
-
-        ApiResponse<CreateProjectCommandResult> response = mediator.send(command);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case CREATED -> HttpStatus.CREATED;
-                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    case INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+            @RequestBody CreateProjectCommand command, Authentication auth) {
+        return send(CreateProjectCommand.class, null, null, command, auth);
     }
 }

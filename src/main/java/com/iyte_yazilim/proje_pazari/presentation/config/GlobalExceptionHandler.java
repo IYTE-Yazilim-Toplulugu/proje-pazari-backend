@@ -1,6 +1,8 @@
 package com.iyte_yazilim.proje_pazari.presentation.config;
 
+import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
@@ -95,6 +97,20 @@ public class GlobalExceptionHandler {
         ApiResponse<Void> response =
                 ApiResponse.validationError(messageService.getMessage("error.validation"));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(ValidationException ex) {
+        log.error("Validation error: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.validationError(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFileStorageException(FileStorageException ex) {
+        log.debug("File storage error: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
