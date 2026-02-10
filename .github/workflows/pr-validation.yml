@@ -45,6 +45,20 @@ jobs:
       - name: Generate coverage
         run: ./gradlew jacocoTestReport
 
+      - name: Verify coverage threshold (70%)
+        id: coverage
+        run: |
+          ./gradlew jacocoTestCoverageVerification
+          echo "status=✅ Coverage threshold met" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/reports/jacoco/
+
       - name: Build application
         id: build
         run: |
@@ -60,6 +74,7 @@ jobs:
           script: |
             const formatStatus = '${{ steps.format-check.outcome }}' === 'success' ? '✅' : '❌';
             const testStatus = '${{ steps.tests.outcome }}' === 'success' ? '✅' : '❌';
+            const coverageStatus = '${{ steps.coverage.outcome }}' === 'success' ? '✅' : '❌';
             const buildStatus = '${{ steps.build.outcome }}' === 'success' ? '✅' : '❌';
 
             const body = `## PR Validation Results
@@ -68,10 +83,12 @@ jobs:
             |-------|--------|
             | Code Formatting | ${formatStatus} |
             | Tests | ${testStatus} |
+            | Coverage (≥70%) | ${coverageStatus} |
             | Build | ${buildStatus} |
 
             ${formatStatus === '❌' ? '⚠️ Please run `make format` to fix formatting issues\n' : ''}
             ${testStatus === '❌' ? '⚠️ Some tests are failing. Please fix them before merging\n' : ''}
+            ${coverageStatus === '❌' ? '⚠️ Code coverage is below 70%. Please add more tests\n' : ''}
             ${buildStatus === '❌' ? '⚠️ Build failed. Please check the logs\n' : ''}
 
             **Commit**: ${context.sha.substring(0, 7)}

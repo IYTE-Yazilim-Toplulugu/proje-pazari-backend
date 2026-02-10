@@ -71,7 +71,6 @@ jobs:
 
       - name: Verify coverage threshold
         run: ./gradlew jacocoTestCoverageVerification
-        continue-on-error: true
 
       - name: Upload test results
         if: always()
