@@ -4,7 +4,6 @@ import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCom
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.verifyEmail.VerifyEmailCommand;
-import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
@@ -17,7 +16,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -68,16 +66,20 @@ import org.springframework.web.bind.annotation.*;
         description =
                 "Authentication endpoints for user registration and login. "
                         + "These endpoints are public and do not require authentication.")
-public class AuthController {
+public class AuthController extends BaseController {
 
-    private final IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>>
-            registerUserHandler;
-    private final IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> loginUserHandler;
     private final IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>>
             verifyEmailHandler;
     private final IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
             resendVerificationEmailHandler;
-    private final IMediator mediator;
+
+    public AuthController(
+            IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler,
+            IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
+                    resendVerificationEmailHandler) {
+        this.verifyEmailHandler = verifyEmailHandler;
+        this.resendVerificationEmailHandler = resendVerificationEmailHandler;
+    }
 
     @PostMapping("/register")
     @Operation(
