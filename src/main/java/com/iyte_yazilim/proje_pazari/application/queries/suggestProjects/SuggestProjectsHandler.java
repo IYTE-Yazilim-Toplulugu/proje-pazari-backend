@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.queries.suggestProjects;
 
-
 import com.iyte_yazilim.proje_pazari.application.services.ProjectSearchService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;

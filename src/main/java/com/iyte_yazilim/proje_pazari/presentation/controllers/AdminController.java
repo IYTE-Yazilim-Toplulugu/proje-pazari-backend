@@ -95,8 +95,7 @@ public class AdminController extends BaseController {
                         responseCode = "403",
                         description = "Forbidden - ADMIN role required")
             })
-    public ResponseEntity<ApiResponse<Void>> promoteToProjectOwner(
-            @PathVariable String userId) {
+    public ResponseEntity<ApiResponse<Void>> promoteToProjectOwner(@PathVariable String userId) {
         return send(new PromoteToProjectOwnerCommand(userId));
     }
 }

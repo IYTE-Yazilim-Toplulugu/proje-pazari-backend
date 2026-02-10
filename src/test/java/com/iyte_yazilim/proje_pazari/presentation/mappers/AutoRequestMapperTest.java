@@ -105,8 +105,7 @@ class AutoRequestMapperTest {
             RequesterCommand body = new RequesterCommand("ignored", "doSomething");
             Authentication auth = mockAuth("requester-789");
 
-            RequesterCommand result =
-                    mapper.map(RequesterCommand.class, null, null, body, auth);
+            RequesterCommand result = mapper.map(RequesterCommand.class, null, null, body, auth);
 
             assertEquals("requester-789", result.requesterId());
             assertEquals("doSomething", result.action());
@@ -152,8 +151,7 @@ class AutoRequestMapperTest {
         void shouldMapPathVariables() {
             Map<String, String> pathVars = Map.of("name", "Bob");
 
-            SimpleCommand result =
-                    mapper.map(SimpleCommand.class, pathVars, null, null, null);
+            SimpleCommand result = mapper.map(SimpleCommand.class, pathVars, null, null, null);
 
             assertEquals("Bob", result.name());
         }
@@ -164,8 +162,7 @@ class AutoRequestMapperTest {
             SimpleCommand body = new SimpleCommand("BodyName", 20);
             Map<String, String> pathVars = Map.of("name", "PathName");
 
-            SimpleCommand result =
-                    mapper.map(SimpleCommand.class, pathVars, null, body, null);
+            SimpleCommand result = mapper.map(SimpleCommand.class, pathVars, null, body, null);
 
             assertEquals("PathName", result.name());
             assertEquals(20, result.age());
@@ -198,12 +195,7 @@ class AutoRequestMapperTest {
 
             FileUploadCommand result =
                     mapper.map(
-                            FileUploadCommand.class,
-                            null,
-                            null,
-                            null,
-                            auth,
-                            Map.of("file", file));
+                            FileUploadCommand.class, null, null, null, auth, Map.of("file", file));
 
             assertEquals("user-123", result.userId());
             assertNotNull(result.file());
@@ -256,7 +248,8 @@ class AutoRequestMapperTest {
     class MergePriority {
 
         @Test
-        @DisplayName("should follow merge priority: body < queryParams < pathVars < auth < extraFields")
+        @DisplayName(
+                "should follow merge priority: body < queryParams < pathVars < auth < extraFields")
         void shouldFollowMergePriority() {
             UserIdCommand body = new UserIdCommand("body-user", "body-name");
             Map<String, String> queryParams = new HashMap<>();
@@ -279,8 +272,7 @@ class AutoRequestMapperTest {
             Map<String, Object> extraFields = Map.of("userId", "extra-user");
 
             UserIdCommand result =
-                    mapper.map(
-                            UserIdCommand.class, null, null, body, auth, extraFields);
+                    mapper.map(UserIdCommand.class, null, null, body, auth, extraFields);
 
             assertEquals("extra-user", result.userId());
         }

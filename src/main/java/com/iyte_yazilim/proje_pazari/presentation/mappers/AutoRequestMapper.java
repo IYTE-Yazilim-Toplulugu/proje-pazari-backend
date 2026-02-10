@@ -139,7 +139,9 @@ public class AutoRequestMapper implements IRequestMapper {
             return ctor.newInstance(args);
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Failed to construct " + requestClass.getSimpleName() + " via canonical constructor",
+                    "Failed to construct "
+                            + requestClass.getSimpleName()
+                            + " via canonical constructor",
                     e);
         }
     }

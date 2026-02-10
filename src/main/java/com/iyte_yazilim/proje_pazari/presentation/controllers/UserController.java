@@ -61,8 +61,7 @@ public class UserController extends BaseController {
                         responseCode = "404",
                         description = "User not found")
             })
-    public ResponseEntity<ApiResponse<UserProfileDTO>> getUserProfile(
-            @PathVariable String userId) {
+    public ResponseEntity<ApiResponse<UserProfileDTO>> getUserProfile(@PathVariable String userId) {
         return send(new GetUserProfileQuery(userId));
     }
 
@@ -131,12 +130,7 @@ public class UserController extends BaseController {
                     MultipartFile file,
             Authentication auth) {
         return send(
-                UploadProfilePictureCommand.class,
-                null,
-                null,
-                null,
-                auth,
-                Map.of("file", file));
+                UploadProfilePictureCommand.class, null, null, null, auth, Map.of("file", file));
     }
 
     @PutMapping("/me/password")

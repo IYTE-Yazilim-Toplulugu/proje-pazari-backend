@@ -14,11 +14,9 @@ import org.springframework.security.core.Authentication;
 
 public abstract class BaseController {
 
-    @Autowired
-    protected IMediator mediator;
+    @Autowired protected IMediator mediator;
 
-    @Autowired
-    protected IRequestMapper requestMapper;
+    @Autowired protected IRequestMapper requestMapper;
 
     protected <T> ResponseEntity<ApiResponse<T>> send(IRequest<ApiResponse<T>> request) {
         ApiResponse<T> response = mediator.send(request);

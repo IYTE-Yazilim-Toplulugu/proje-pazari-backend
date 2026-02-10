@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
-import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectStatistics.GetProjectStatisticsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.searchProjects.SearchProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.suggestProjects.SuggestProjectsQuery;
@@ -18,6 +17,7 @@ import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
+import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -263,9 +263,7 @@ class SearchControllerTest {
         @DisplayName("Should return bad request when size exceeds maximum")
         void shouldReturnBadRequestWhenSizeExceedsMaximum() throws Exception {
             when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenThrow(
-                            new ValidationException(
-                                    "size: must be less than or equal to 100"));
+                    .thenThrow(new ValidationException("size: must be less than or equal to 100"));
 
             mockMvc.perform(get("/api/v1/search/projects").param("q", "java").param("size", "101"))
                     .andExpect(status().isBadRequest());
@@ -311,8 +309,7 @@ class SearchControllerTest {
             when(mediator.send(any(SuggestProjectsQuery.class)))
                     .thenReturn(
                             ApiResponse.success(
-                                    Collections.emptyList(),
-                                    "Suggestions retrieved successfully"));
+                                    Collections.emptyList(), "Suggestions retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "xyz"))
                     .andExpect(status().isOk())
@@ -327,8 +324,7 @@ class SearchControllerTest {
             when(mediator.send(any(SuggestProjectsQuery.class)))
                     .thenReturn(
                             ApiResponse.success(
-                                    List.of("Java Project"),
-                                    "Suggestions retrieved successfully"));
+                                    List.of("Java Project"), "Suggestions retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "j"))
                     .andExpect(status().isOk())
@@ -384,8 +380,7 @@ class SearchControllerTest {
         void shouldReturnStatisticsSuccessfully() throws Exception {
             Map<String, Long> stats = Map.of("ACTIVE", 10L, "COMPLETED", 5L, "DRAFT", 3L);
             when(mediator.send(any(GetProjectStatisticsQuery.class)))
-                    .thenReturn(
-                            ApiResponse.success(stats, "Statistics retrieved successfully"));
+                    .thenReturn(ApiResponse.success(stats, "Statistics retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/statistics"))
                     .andExpect(status().isOk())
@@ -405,8 +400,7 @@ class SearchControllerTest {
             when(mediator.send(any(GetProjectStatisticsQuery.class)))
                     .thenReturn(
                             ApiResponse.success(
-                                    Collections.emptyMap(),
-                                    "Statistics retrieved successfully"));
+                                    Collections.emptyMap(), "Statistics retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/statistics"))
                     .andExpect(status().isOk())
