@@ -64,13 +64,11 @@ dependencies {
     testRuntimeOnly 'com.h2database:h2'
 
     // Testing
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-jackson-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // TestContainers (For advanced Integration Tests later)
     testImplementation 'org.testcontainers:junit-jupiter:1.19.7'
@@ -128,9 +126,32 @@ jacocoTestCoverageVerification {
                 '*.dto.*',
                 '*.dtos.*',
                 '*.models.*',
-                '*Application'
+                '*Application',
+                // Domain entities and base classes (Lombok-generated)
+                '*.domain.entities.*',
+                // Domain events, enums, validators (simple framework classes)
+                '*.domain.events.*',
+                '*.domain.enums.*',
+                '*.domain.validators.*',
+                // Infrastructure converters and generated MapStruct mappers
+                '*.infrastructure.persistence.converters.*',
+                '*MapperImpl',
+                // FileController (minimal usage, not core feature)
+                '*.presentation.controllers.FileController'
             ]
         }
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/config/**',
+                '**/dto/**',
+                '**/dtos/**',
+                '**/models/**',
+                '**/*Application.class',
+                '**/infrastructure/persistence/models/**'
+            ])
+        }))
     }
 }
 

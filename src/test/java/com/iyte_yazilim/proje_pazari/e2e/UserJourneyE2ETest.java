@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.e2e;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,151 +13,128 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.*;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
+@AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserJourneyE2ETest {
 
-    @Autowired
-    private TestRestTemplate restTemplate;
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private MockMvc mockMvc;
+        private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static String jwtToken;
-    private static String userId;
+        private static String jwtToken;
+        private static String userId;
 
-    @Test
-    @Order(1)
-    @DisplayName("E2E: User registers successfully")
-    void step1_register() throws Exception {
-        Map<String, String> request = Map.of(
-                "email", "e2e-journey@std.iyte.edu.tr",
-                "password", "SecureE2EPassword123!",
-                "firstName", "E2E",
-                "lastName", "Tester");
+        @Test
+        @Order(1)
+        @DisplayName("E2E: User registers successfully")
+        void step1_register() throws Exception {
+                Map<String, String> request = Map.of(
+                                "email", "e2e-journey@std.iyte.edu.tr",
+                                "password", "SecureE2EPassword123!",
+                                "firstName", "E2E",
+                                "lastName", "Tester");
 
-        ResponseEntity<String> response = restTemplate.postForEntity("/api/v1/auth/register", request, String.class);
+                mockMvc.perform(
+                                post("/api/v1/auth/register")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.data").exists());
+        }
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertNotNull(response.getBody());
+        @Test
+        @Order(2)
+        @DisplayName("E2E: User logs in and receives JWT token")
+        void step2_login() throws Exception {
+                Map<String, String> request = Map.of(
+                                "email", "e2e-journey@std.iyte.edu.tr",
+                                "password", "SecureE2EPassword123!");
 
-        JsonNode body = objectMapper.readTree(response.getBody());
-        assertNotNull(body.get("data"));
-    }
+                MvcResult result = mockMvc.perform(
+                                post("/api/v1/auth/login")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data.token").exists())
+                                .andReturn();
 
-    @Test
-    @Order(2)
-    @DisplayName("E2E: User logs in and receives JWT token")
-    void step2_login() throws Exception {
-        Map<String, String> request = Map.of(
-                "email", "e2e-journey@std.iyte.edu.tr",
-                "password", "SecureE2EPassword123!");
+                String responseBody = result.getResponse().getContentAsString();
+                JsonNode body = objectMapper.readTree(responseBody);
+                jwtToken = body.get("data").get("token").asText();
+                userId = body.get("data").get("userId").asText();
+        }
 
-        ResponseEntity<String> response = restTemplate.postForEntity("/api/v1/auth/login", request, String.class);
+        @Test
+        @Order(3)
+        @DisplayName("E2E: User views own profile")
+        void step3_viewProfile() throws Exception {
+                mockMvc.perform(
+                                get("/api/v1/users/me")
+                                                .header("Authorization", "Bearer " + jwtToken))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data.id").value(userId))
+                                .andExpect(jsonPath("$.data.firstName").value("E2E"))
+                                .andExpect(jsonPath("$.data.lastName").value("Tester"));
+        }
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        @Test
+        @Order(4)
+        @DisplayName("E2E: User updates profile")
+        void step4_updateProfile() throws Exception {
+                Map<String, String> updateRequest = Map.of(
+                                "firstName", "Updated",
+                                "lastName", "E2ETester",
+                                "description", "An end-to-end test user profile");
 
-        JsonNode body = objectMapper.readTree(response.getBody());
-        jwtToken = body.get("data").get("token").asText();
-        userId = body.get("data").get("userId").asText();
+                mockMvc.perform(
+                                put("/api/v1/users/me")
+                                                .header("Authorization", "Bearer " + jwtToken)
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(updateRequest)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data.firstName").value("Updated"))
+                                .andExpect(jsonPath("$.data.lastName").value("E2ETester"));
+        }
 
-        assertNotNull(jwtToken);
-        assertFalse(jwtToken.isEmpty());
-        assertNotNull(userId);
-    }
+        @Test
+        @Order(5)
+        @DisplayName("E2E: User views public profile by ID")
+        void step5_viewPublicProfile() throws Exception {
+                mockMvc.perform(get("/api/v1/users/{userId}", userId))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data.id").value(userId))
+                                .andExpect(jsonPath("$.data.firstName").value("Updated"));
+        }
 
-    @Test
-    @Order(3)
-    @DisplayName("E2E: User views own profile")
-    void step3_viewProfile() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(jwtToken);
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        @Test
+        @Order(6)
+        @DisplayName("E2E: User creates a project")
+        void step6_createProject() throws Exception {
+                Map<String, Object> projectRequest = Map.of(
+                                "projectName", "E2E Test Project",
+                                "description",
+                                "A project created during the E2E user journey test to verify full flow",
+                                "ownerId", userId);
 
-        ResponseEntity<String> response = restTemplate.exchange("/api/v1/users/me", HttpMethod.GET, entity,
-                String.class);
+                mockMvc.perform(
+                                post("/api/v1/projects")
+                                                .header("Authorization", "Bearer " + jwtToken)
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(projectRequest)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.data.projectName").value("E2E Test Project"));
+        }
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        JsonNode body = objectMapper.readTree(response.getBody());
-        assertEquals(userId, body.get("data").get("id").asText());
-        assertEquals("E2E", body.get("data").get("firstName").asText());
-        assertEquals("Tester", body.get("data").get("lastName").asText());
-    }
-
-    @Test
-    @Order(4)
-    @DisplayName("E2E: User updates profile")
-    void step4_updateProfile() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(jwtToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, String> updateRequest = Map.of(
-                "firstName", "Updated",
-                "lastName", "E2ETester",
-                "description", "An end-to-end test user profile");
-
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(updateRequest, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange("/api/v1/users/me", HttpMethod.PUT, entity,
-                String.class);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        JsonNode body = objectMapper.readTree(response.getBody());
-        assertEquals("Updated", body.get("data").get("firstName").asText());
-        assertEquals("E2ETester", body.get("data").get("lastName").asText());
-    }
-
-    @Test
-    @Order(5)
-    @DisplayName("E2E: User views public profile by ID")
-    void step5_viewPublicProfile() throws Exception {
-        ResponseEntity<String> response = restTemplate.getForEntity("/api/v1/users/{userId}", String.class, userId);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        JsonNode body = objectMapper.readTree(response.getBody());
-        assertEquals(userId, body.get("data").get("id").asText());
-        // Should see updated name from step 4
-        assertEquals("Updated", body.get("data").get("firstName").asText());
-    }
-
-    @Test
-    @Order(6)
-    @DisplayName("E2E: User creates a project")
-    void step6_createProject() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(jwtToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, Object> projectRequest = Map.of(
-                "projectName", "E2E Test Project",
-                "description",
-                "A project created during the E2E user journey test to verify full flow",
-                "ownerId", userId);
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(projectRequest, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange("/api/v1/projects", HttpMethod.POST, entity,
-                String.class);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-
-        JsonNode body = objectMapper.readTree(response.getBody());
-        assertNotNull(body.get("data"));
-        assertEquals("E2E Test Project", body.get("data").get("title").asText());
-    }
-
-    @Test
-    @Order(7)
-    @DisplayName("E2E: Health check endpoint is accessible")
-    void step7_healthCheck() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/api/v1/health", String.class);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
+        @Test
+        @Order(7)
+        @DisplayName("E2E: Health check endpoint is accessible")
+        void step7_healthCheck() throws Exception {
+                mockMvc.perform(get("/api/v1/health")).andExpect(status().isOk());
+        }
 }
