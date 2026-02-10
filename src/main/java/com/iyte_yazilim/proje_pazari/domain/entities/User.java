@@ -2,7 +2,6 @@ package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
@@ -71,10 +70,7 @@ public class User extends BaseEntity<Ulid> {
 
     private Set<RoleType> roles = new HashSet<>();
 
-    /**
-     * Default constructor.
-     * Initializes default values for emailVerified, isActive, and roles.
-     */
+    /** Default constructor. Initializes default values for emailVerified, isActive, and roles. */
     public User() {
         this.isActive = true;
         this.roles = new HashSet<>();
