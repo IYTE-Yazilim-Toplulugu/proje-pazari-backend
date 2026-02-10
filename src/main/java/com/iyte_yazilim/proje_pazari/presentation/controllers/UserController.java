@@ -32,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
                         + "Most endpoints require authentication.")
 public class UserController extends BaseController {
 
+    @GetMapping
     @PreAuthorize("isAuthenticated() and hasRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get all users", description = "Retrieves a list of all users")
