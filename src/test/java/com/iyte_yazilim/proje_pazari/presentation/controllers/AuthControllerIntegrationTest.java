@@ -1,0 +1,135 @@
+package com.iyte_yazilim.proje_pazari.presentation.controllers;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class AuthControllerIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Test
+    @DisplayName("POST /api/v1/auth/register - should register user successfully")
+    void shouldRegisterUser() throws Exception {
+        Map<String, String> request = Map.of(
+                "email", "newuser@std.iyte.edu.tr",
+                "password", "SecurePassword123!",
+                "firstName", "John",
+                "lastName", "Doe");
+
+        mockMvc.perform(
+                post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/register - should fail for duplicate email")
+    void shouldFailForDuplicateEmail() throws Exception {
+        Map<String, String> request = Map.of(
+                "email", "duplicate@std.iyte.edu.tr",
+                "password", "SecurePassword123!",
+                "firstName", "Jane",
+                "lastName", "Smith");
+
+        // First registration
+        mockMvc.perform(
+                post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
+
+        // Second registration with same email
+        mockMvc.perform(
+                post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/login - should login successfully after registration")
+    void shouldLoginSuccessfully() throws Exception {
+        Map<String, String> registerRequest = Map.of(
+                "email", "logintest@std.iyte.edu.tr",
+                "password", "SecurePassword123!",
+                "firstName", "Login",
+                "lastName", "User");
+
+        mockMvc.perform(
+                post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isCreated());
+
+        Map<String, String> loginRequest = Map.of(
+                "email", "logintest@std.iyte.edu.tr",
+                "password", "SecurePassword123!");
+
+        mockMvc.perform(
+                post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.token").exists())
+                .andExpect(jsonPath("$.data.email").value("logintest@std.iyte.edu.tr"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/login - should fail with wrong password")
+    void shouldFailWithWrongPassword() throws Exception {
+        Map<String, String> registerRequest = Map.of(
+                "email", "wrongpw@std.iyte.edu.tr",
+                "password", "SecurePassword123!",
+                "firstName", "Wrong",
+                "lastName", "Password");
+
+        mockMvc.perform(
+                post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isCreated());
+
+        Map<String, String> loginRequest = Map.of(
+                "email", "wrongpw@std.iyte.edu.tr",
+                "password", "WrongPassword!");
+
+        mockMvc.perform(
+                post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/register - should fail with invalid data")
+    void shouldFailWithInvalidData() throws Exception {
+        Map<String, String> request = Map.of(
+                "email", "not-an-email",
+                "password", "short",
+                "firstName", "",
+                "lastName", "");
+
+        mockMvc.perform(
+                post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+}
