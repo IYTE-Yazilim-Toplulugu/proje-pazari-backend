@@ -2,7 +2,6 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
-import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
@@ -12,8 +11,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -58,15 +55,12 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/auth")
-@RequiredArgsConstructor
 @Tag(
         name = "Authentication",
         description =
                 "Authentication endpoints for user registration and login. "
                         + "These endpoints are public and do not require authentication.")
-public class AuthController {
-
-    private final IMediator mediator;
+public class AuthController extends BaseController {
 
     @PostMapping("/register")
     @Operation(
@@ -140,17 +134,7 @@ public class AuthController {
                         """)))
     public ResponseEntity<ApiResponse<RegisterUserResult>> register(
             @RequestBody RegisterUserCommand command) {
-
-        ApiResponse<RegisterUserResult> response = mediator.send(command);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case CREATED -> HttpStatus.CREATED;
-                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        return send(command);
     }
 
     @PostMapping("/login")
@@ -222,16 +206,6 @@ public class AuthController {
                         """)))
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
             @RequestBody LoginUserCommand command) {
-
-        ApiResponse<LoginUserResult> response = mediator.send(command);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        return send(command);
     }
 }

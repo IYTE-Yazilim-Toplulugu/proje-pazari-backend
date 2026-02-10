@@ -1,7 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
-import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,8 +9,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,15 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/admin")
-@RequiredArgsConstructor
 @Tag(
         name = "Admin",
         description = "Admin-only endpoints for user and system management. Requires ADMIN role.")
 @SecurityRequirement(name = "Bearer Authentication")
 @PreAuthorize("hasRole('ADMIN')")
-public class AdminController {
-
-    private final IMediator mediator;
+public class AdminController extends BaseController {
 
     @PostMapping("/users/{userId}/promote-to-project-owner")
     @Operation(
@@ -102,18 +96,6 @@ public class AdminController {
                         description = "Forbidden - ADMIN role required")
             })
     public ResponseEntity<ApiResponse<Void>> promoteToProjectOwner(@PathVariable String userId) {
-
-        PromoteToProjectOwnerCommand command = new PromoteToProjectOwnerCommand(userId);
-        ApiResponse<Void> response = mediator.send(command);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case VALIDATION_ERROR -> HttpStatus.BAD_REQUEST;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        return send(new PromoteToProjectOwnerCommand(userId));
     }
 }
