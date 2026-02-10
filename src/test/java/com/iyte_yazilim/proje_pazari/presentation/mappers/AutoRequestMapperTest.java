@@ -3,8 +3,6 @@ package com.iyte_yazilim.proje_pazari.presentation.mappers;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.presentation.security.UserPrincipal;
 import java.util.HashMap;
@@ -38,9 +36,7 @@ class AutoRequestMapperTest {
 
     @BeforeEach
     void setUp() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        mapper = new AutoRequestMapper(objectMapper);
+        mapper = new AutoRequestMapper();
     }
 
     private Authentication mockAuth(String userId) {

@@ -21,10 +21,9 @@ public class AutoRequestMapper implements IRequestMapper {
 
     private final ObjectMapper objectMapper;
 
-    public AutoRequestMapper(ObjectMapper objectMapper) {
+    public AutoRequestMapper() {
         this.objectMapper =
-                objectMapper
-                        .copy()
+                new ObjectMapper()
                         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
