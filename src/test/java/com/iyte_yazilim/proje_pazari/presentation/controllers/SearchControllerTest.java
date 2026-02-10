@@ -2,19 +2,22 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
+import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
+import com.iyte_yazilim.proje_pazari.application.queries.getProjectStatistics.GetProjectStatisticsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.searchProjects.SearchProjectsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.suggestProjects.SuggestProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.application.services.ProjectSearchService;
+import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
+import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -24,15 +27,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.elasticsearch.core.SearchHit;
-import org.springframework.data.elasticsearch.core.SearchHitSupport;
-import org.springframework.data.elasticsearch.core.SearchHits;
-import org.springframework.data.elasticsearch.core.SearchHitsImpl;
-import org.springframework.data.elasticsearch.core.SearchPage;
-import org.springframework.data.elasticsearch.core.TotalHitsRelation;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -46,27 +43,24 @@ class SearchControllerTest {
 
     @Autowired private MockMvc mockMvc;
 
-    @MockitoBean private ProjectSearchService searchService;
+    @MockitoBean private IMediator mediator;
 
-    private ProjectDocument sampleProject;
+    @MockitoBean private IRequestMapper requestMapper;
 
     @MockitoBean private JwtUtil jwtUtil;
 
-    // 2. Mock the standard UserDetailsService
     @MockitoBean private UserDetailsService userDetailsService;
 
-    // 3. Mock the AuthenticationProvider (if your SecurityConfig uses it)
     @MockitoBean private AuthenticationProvider authenticationProvider;
 
-    // 4. Mock MessageService required by GlobalExceptionHandler
     @MockitoBean private MessageService messageService;
 
-    // 5. Mock UserRepository required by UserLocaleInterceptor
     @MockitoBean private UserRepository userRepository;
+
+    private ProjectDocument sampleProject;
 
     @BeforeEach
     void setUp() {
-        // Setup MessageService mock to return validation error message
         when(messageService.getMessage(anyString())).thenReturn("Validation error");
 
         sampleProject =
@@ -83,41 +77,6 @@ class SearchControllerTest {
                         .build();
     }
 
-    private SearchPage<ProjectDocument> createSearchPage(List<ProjectDocument> documents) {
-        List<SearchHit<ProjectDocument>> searchHits =
-                documents.stream()
-                        .map(
-                                doc ->
-                                        new SearchHit<>(
-                                                null,
-                                                doc.getId(),
-                                                null,
-                                                1.0f,
-                                                null,
-                                                null,
-                                                null,
-                                                null,
-                                                null,
-                                                null,
-                                                doc))
-                        .toList();
-
-        SearchHits<ProjectDocument> hits =
-                new SearchHitsImpl<>(
-                        documents.size(),
-                        TotalHitsRelation.EQUAL_TO,
-                        1.0f,
-                        null,
-                        null,
-                        null,
-                        searchHits,
-                        null,
-                        null,
-                        null);
-
-        return SearchHitSupport.searchPageFor(hits, PageRequest.of(0, 10));
-    }
-
     @Nested
     @DisplayName("GET /api/v1/search/projects")
     class SearchProjectsTests {
@@ -126,9 +85,10 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return projects when search is successful")
         void shouldReturnProjectsWhenSearchIsSuccessful() throws Exception {
-            SearchPage<ProjectDocument> searchPage = createSearchPage(List.of(sampleProject));
-            when(searchService.advancedSearch(eq("java"), isNull(), isNull(), any()))
-                    .thenReturn(searchPage);
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    List.of(sampleProject), "Projects retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects").param("q", "java"))
                     .andExpect(status().isOk())
@@ -137,16 +97,17 @@ class SearchControllerTest {
                     .andExpect(jsonPath("$.data").isArray())
                     .andExpect(jsonPath("$.data[0].title").value("Java Spring Boot Project"));
 
-            verify(searchService).advancedSearch(eq("java"), isNull(), isNull(), any());
+            verify(mediator).send(any(SearchProjectsQuery.class));
         }
 
         @Test
         @WithMockUser
         @DisplayName("Should return empty list when no projects match")
         void shouldReturnEmptyListWhenNoProjectsMatch() throws Exception {
-            SearchPage<ProjectDocument> emptyPage = createSearchPage(Collections.emptyList());
-            when(searchService.advancedSearch(eq("nonexistent"), isNull(), isNull(), any()))
-                    .thenReturn(emptyPage);
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    Collections.emptyList(), "Projects retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects").param("q", "nonexistent"))
                     .andExpect(status().isOk())
@@ -162,11 +123,12 @@ class SearchControllerTest {
 
         @Test
         @WithMockUser
-        @DisplayName("Should filter by status when provided")
-        void shouldFilterByStatusWhenProvided() throws Exception {
-            SearchPage<ProjectDocument> searchPage = createSearchPage(List.of(sampleProject));
-            when(searchService.advancedSearch(eq("java"), eq("ACTIVE"), isNull(), any()))
-                    .thenReturn(searchPage);
+        @DisplayName("Should pass correct parameters to mediator")
+        void shouldPassCorrectParametersToMediator() throws Exception {
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    List.of(sampleProject), "Projects retrieved successfully"));
 
             mockMvc.perform(
                             get("/api/v1/search/projects")
@@ -175,16 +137,22 @@ class SearchControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data[0].status").value("ACTIVE"));
 
-            verify(searchService).advancedSearch(eq("java"), eq("ACTIVE"), isNull(), any());
+            ArgumentCaptor<SearchProjectsQuery> captor =
+                    ArgumentCaptor.forClass(SearchProjectsQuery.class);
+            verify(mediator).send(captor.capture());
+            SearchProjectsQuery captured = captor.getValue();
+            assert captured.q().equals("java");
+            assert captured.status().equals("ACTIVE");
         }
 
         @Test
         @WithMockUser
         @DisplayName("Should filter by tags when provided")
         void shouldFilterByTagsWhenProvided() throws Exception {
-            SearchPage<ProjectDocument> searchPage = createSearchPage(List.of(sampleProject));
-            when(searchService.advancedSearch(eq("java"), isNull(), eq(List.of("spring")), any()))
-                    .thenReturn(searchPage);
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    List.of(sampleProject), "Projects retrieved successfully"));
 
             mockMvc.perform(
                             get("/api/v1/search/projects")
@@ -193,17 +161,20 @@ class SearchControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data").isArray());
 
-            verify(searchService)
-                    .advancedSearch(eq("java"), isNull(), eq(List.of("spring")), any());
+            ArgumentCaptor<SearchProjectsQuery> captor =
+                    ArgumentCaptor.forClass(SearchProjectsQuery.class);
+            verify(mediator).send(captor.capture());
+            assert captor.getValue().tags().contains("spring");
         }
 
         @Test
         @WithMockUser
         @DisplayName("Should use pagination parameters")
         void shouldUsePaginationParameters() throws Exception {
-            SearchPage<ProjectDocument> searchPage = createSearchPage(List.of(sampleProject));
-            when(searchService.advancedSearch(anyString(), any(), any(), any()))
-                    .thenReturn(searchPage);
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    List.of(sampleProject), "Projects retrieved successfully"));
 
             mockMvc.perform(
                             get("/api/v1/search/projects")
@@ -212,15 +183,11 @@ class SearchControllerTest {
                                     .param("size", "20"))
                     .andExpect(status().isOk());
 
-            verify(searchService)
-                    .advancedSearch(
-                            eq("java"),
-                            isNull(),
-                            isNull(),
-                            argThat(
-                                    pageable ->
-                                            pageable.getPageNumber() == 2
-                                                    && pageable.getPageSize() == 20));
+            ArgumentCaptor<SearchProjectsQuery> captor =
+                    ArgumentCaptor.forClass(SearchProjectsQuery.class);
+            verify(mediator).send(captor.capture());
+            assert captor.getValue().page() == 2;
+            assert captor.getValue().size() == 20;
         }
     }
 
@@ -232,6 +199,9 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when query is blank")
         void shouldReturnBadRequestWhenQueryIsBlank() throws Exception {
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenThrow(new ValidationException("q: must not be blank"));
+
             mockMvc.perform(get("/api/v1/search/projects").param("q", ""))
                     .andExpect(status().isBadRequest());
         }
@@ -247,7 +217,9 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when query is too short")
         void shouldReturnBadRequestWhenQueryIsTooShort() throws Exception {
-            // @Size(min = 2) for projects search
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenThrow(new ValidationException("q: size must be between 2 and 100"));
+
             mockMvc.perform(get("/api/v1/search/projects").param("q", "a"))
                     .andExpect(status().isBadRequest());
         }
@@ -257,6 +229,9 @@ class SearchControllerTest {
         @DisplayName("Should return bad request when query exceeds max length")
         void shouldReturnBadRequestWhenQueryExceedsMaxLength() throws Exception {
             String longQuery = "a".repeat(101);
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenThrow(new ValidationException("q: size must be between 2 and 100"));
+
             mockMvc.perform(get("/api/v1/search/projects").param("q", longQuery))
                     .andExpect(status().isBadRequest());
         }
@@ -265,6 +240,9 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when page is negative")
         void shouldReturnBadRequestWhenPageIsNegative() throws Exception {
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenThrow(new ValidationException("page: must be greater than or equal to 0"));
+
             mockMvc.perform(get("/api/v1/search/projects").param("q", "java").param("page", "-1"))
                     .andExpect(status().isBadRequest());
         }
@@ -273,6 +251,9 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when size is zero")
         void shouldReturnBadRequestWhenSizeIsZero() throws Exception {
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenThrow(new ValidationException("size: must be greater than or equal to 1"));
+
             mockMvc.perform(get("/api/v1/search/projects").param("q", "java").param("size", "0"))
                     .andExpect(status().isBadRequest());
         }
@@ -281,12 +262,14 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when size exceeds maximum")
         void shouldReturnBadRequestWhenSizeExceedsMaximum() throws Exception {
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenThrow(new ValidationException("size: must be less than or equal to 100"));
+
             mockMvc.perform(get("/api/v1/search/projects").param("q", "java").param("size", "101"))
                     .andExpect(status().isBadRequest());
         }
 
         @Test
-        // REMOVED @WithMockUser to ensure true unauthorized response
         @DisplayName("Should return unauthorized when user is not authenticated")
         void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() throws Exception {
             mockMvc.perform(get("/api/v1/search/projects").param("q", "java"))
@@ -304,7 +287,9 @@ class SearchControllerTest {
         void shouldReturnSuggestionsWhenQueryIsValid() throws Exception {
             List<String> suggestions =
                     List.of("Java Spring Boot Project", "Java Backend Application");
-            when(searchService.getSuggestions("java")).thenReturn(suggestions);
+            when(mediator.send(any(SuggestProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(suggestions, "Suggestions retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "java"))
                     .andExpect(status().isOk())
@@ -314,14 +299,17 @@ class SearchControllerTest {
                     .andExpect(jsonPath("$.data[0]").value("Java Spring Boot Project"))
                     .andExpect(jsonPath("$.data[1]").value("Java Backend Application"));
 
-            verify(searchService).getSuggestions("java");
+            verify(mediator).send(any(SuggestProjectsQuery.class));
         }
 
         @Test
         @WithMockUser
         @DisplayName("Should return empty list when no suggestions found")
         void shouldReturnEmptyListWhenNoSuggestionsFound() throws Exception {
-            when(searchService.getSuggestions("xyz")).thenReturn(Collections.emptyList());
+            when(mediator.send(any(SuggestProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    Collections.emptyList(), "Suggestions retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "xyz"))
                     .andExpect(status().isOk())
@@ -333,8 +321,10 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should accept single character query")
         void shouldAcceptSingleCharacterQuery() throws Exception {
-            // @Size(min = 1) for suggestions
-            when(searchService.getSuggestions("j")).thenReturn(List.of("Java Project"));
+            when(mediator.send(any(SuggestProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    List.of("Java Project"), "Suggestions retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "j"))
                     .andExpect(status().isOk())
@@ -345,6 +335,9 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when query is blank")
         void shouldReturnBadRequestWhenQueryIsBlank() throws Exception {
+            when(mediator.send(any(SuggestProjectsQuery.class)))
+                    .thenThrow(new ValidationException("q: must not be blank"));
+
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", ""))
                     .andExpect(status().isBadRequest());
         }
@@ -362,12 +355,14 @@ class SearchControllerTest {
         @DisplayName("Should return bad request when query exceeds max length")
         void shouldReturnBadRequestWhenQueryExceedsMaxLength() throws Exception {
             String longQuery = "a".repeat(101);
+            when(mediator.send(any(SuggestProjectsQuery.class)))
+                    .thenThrow(new ValidationException("q: size must be between 1 and 100"));
+
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", longQuery))
                     .andExpect(status().isBadRequest());
         }
 
         @Test
-        // REMOVED @WithMockUser to ensure true unauthorized response
         @DisplayName("Should return unauthorized when user is not authenticated")
         void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() throws Exception {
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "java"))
@@ -384,7 +379,8 @@ class SearchControllerTest {
         @DisplayName("Should return statistics successfully")
         void shouldReturnStatisticsSuccessfully() throws Exception {
             Map<String, Long> stats = Map.of("ACTIVE", 10L, "COMPLETED", 5L, "DRAFT", 3L);
-            when(searchService.getProjectStatistics()).thenReturn(stats);
+            when(mediator.send(any(GetProjectStatisticsQuery.class)))
+                    .thenReturn(ApiResponse.success(stats, "Statistics retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/statistics"))
                     .andExpect(status().isOk())
@@ -394,14 +390,17 @@ class SearchControllerTest {
                     .andExpect(jsonPath("$.data.COMPLETED").value(5))
                     .andExpect(jsonPath("$.data.DRAFT").value(3));
 
-            verify(searchService).getProjectStatistics();
+            verify(mediator).send(any(GetProjectStatisticsQuery.class));
         }
 
         @Test
         @WithMockUser
         @DisplayName("Should return empty statistics when no data")
         void shouldReturnEmptyStatisticsWhenNoData() throws Exception {
-            when(searchService.getProjectStatistics()).thenReturn(Collections.emptyMap());
+            when(mediator.send(any(GetProjectStatisticsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    Collections.emptyMap(), "Statistics retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/statistics"))
                     .andExpect(status().isOk())
@@ -410,7 +409,6 @@ class SearchControllerTest {
         }
 
         @Test
-        // REMOVED @WithMockUser to ensure true unauthorized response
         @DisplayName("Should return unauthorized when user is not authenticated")
         void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() throws Exception {
             mockMvc.perform(get("/api/v1/search/projects/statistics"))

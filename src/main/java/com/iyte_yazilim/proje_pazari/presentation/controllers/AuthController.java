@@ -63,7 +63,6 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/auth")
-@RequiredArgsConstructor
 @Tag(
         name = "Authentication",
         description =
@@ -152,17 +151,7 @@ public class AuthController {
                         """)))
     public ResponseEntity<ApiResponse<RegisterUserResult>> register(
             @RequestBody RegisterUserCommand command) {
-
-        ApiResponse<RegisterUserResult> response = mediator.send(command);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case CREATED -> HttpStatus.CREATED;
-                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        return send(command);
     }
 
     @PostMapping("/login")
@@ -234,17 +223,7 @@ public class AuthController {
                         """)))
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
             @RequestBody LoginUserCommand command) {
-
-        ApiResponse<LoginUserResult> response = mediator.send(command);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        return send(command);
     }
 
     @GetMapping("/verify-email")
