@@ -1,10 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
@@ -21,6 +23,7 @@ public class LoginUserHandler
         implements IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> {
 
     private final UserRepository userRepository;
+    private final EmailVerificationRepository emailVerificationRepository;
     private final IValidator<LoginUserCommand> validator;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -65,11 +68,19 @@ public class LoginUserHandler
             return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
         }
 
-        // --- 5. Generate JWT token with userId, email, and role ---
+        // --- 5. Check email verification ---
+        boolean isVerified =
+                emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(user.getId());
+        if (!isVerified) {
+            throw new EmailNotVerifiedException(
+                    "Please verify your email before logging in. Check your inbox.");
+        }
+
+        // --- 6. Generate JWT token with userId, email, and role ---
         String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
 
-        // --- 6. Create result ---
+        // --- 7. Create result ---
         var result =
                 new LoginUserResult(
                         user.getId(),
@@ -79,7 +90,7 @@ public class LoginUserHandler
                         role,
                         token);
 
-        // --- 7. Response with localized message ---
+        // --- 8. Response with localized message ---
         return ApiResponse.success(result, messageService.getMessage("auth.login.success"));
     }
 }

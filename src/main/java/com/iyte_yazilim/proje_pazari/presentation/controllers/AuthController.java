@@ -2,15 +2,21 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.verifyEmail.VerifyEmailCommand;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
+import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -61,6 +67,19 @@ import org.springframework.web.bind.annotation.*;
                 "Authentication endpoints for user registration and login. "
                         + "These endpoints are public and do not require authentication.")
 public class AuthController extends BaseController {
+
+    private final IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>>
+            verifyEmailHandler;
+    private final IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
+            resendVerificationEmailHandler;
+
+    public AuthController(
+            IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler,
+            IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
+                    resendVerificationEmailHandler) {
+        this.verifyEmailHandler = verifyEmailHandler;
+        this.resendVerificationEmailHandler = resendVerificationEmailHandler;
+    }
 
     @PostMapping("/register")
     @Operation(
@@ -207,5 +226,59 @@ public class AuthController extends BaseController {
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
             @RequestBody LoginUserCommand command) {
         return send(command);
+    }
+
+    @GetMapping("/verify-email")
+    @Operation(
+            summary = "Verify email address",
+            description = "Verifies user's email using the verification token sent to their inbox")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Email verified successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid or expired token")
+            })
+    public ResponseEntity<ApiResponse<VerifyEmailResult>> verifyEmail(@RequestParam String token) {
+        VerifyEmailCommand command = new VerifyEmailCommand(token);
+        ApiResponse<VerifyEmailResult> response = verifyEmailHandler.handle(command);
+
+        HttpStatus status =
+                switch (response.getCode()) {
+                    case SUCCESS -> HttpStatus.OK;
+                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
+                    default -> HttpStatus.OK;
+                };
+
+        return ResponseEntity.status(status).body(response);
+    }
+
+    @PostMapping("/resend-verification")
+    @Operation(
+            summary = "Resend verification email",
+            description = "Sends a new verification email to the user")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Verification email sent"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "User not found or email already verified")
+            })
+    public ResponseEntity<ApiResponse<Void>> resendVerification(
+            @Valid @RequestBody ResendVerificationEmailCommand command) {
+        ApiResponse<Void> response = resendVerificationEmailHandler.handle(command);
+
+        HttpStatus status =
+                switch (response.getCode()) {
+                    case SUCCESS -> HttpStatus.OK;
+                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
+                    default -> HttpStatus.OK;
+                };
+
+        return ResponseEntity.status(status).body(response);
     }
 }

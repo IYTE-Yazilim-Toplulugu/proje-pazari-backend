@@ -74,7 +74,7 @@ import jakarta.validation.constraints.Size;
  */
 @Schema(description = "Command to register a new user")
 public record RegisterUserCommand(
-        @Schema(description = "Email address", example = "user@example.com")
+        @Schema(description = "Email address", example = "user@std.iyte.edu.tr")
                 @NotBlank(message = "Email is required")
                 @Email(message = "Email must be valid")
                 String email,

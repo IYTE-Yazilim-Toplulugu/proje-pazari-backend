@@ -22,7 +22,6 @@ import lombok.Setter;
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
  * @since 2024-01-01
- * @see com.iyte_yazilim.proje_pazari.domain.entities.BaseEntity#addDomainEvent(DomainEvent)
  */
 @Getter
 @Setter

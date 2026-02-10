@@ -1,18 +1,20 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
-import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.IyteEmail;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,10 +29,13 @@ public class RegisterUserHandler
         implements IRequestHandler<RegisterUserCommand, ApiResponse<RegisterUserResult>> {
 
     private final UserRepository userRepository;
+    private final EmailVerificationRepository emailVerificationRepository;
     private final IValidator<RegisterUserCommand> validator;
     private final RegisterUserMapper registerUserMapper;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final VerificationTokenService verificationTokenService;
+    private final ApplicationEventPublisher eventPublisher;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -58,8 +63,16 @@ public class RegisterUserHandler
             return ApiResponse.badRequest(errorMessage);
         }
 
+        // --- 1.5. IYTE Email Validation (Value Object ile) ---
+        IyteEmail iyteEmail;
+        try {
+            iyteEmail = IyteEmail.of(command.email());
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.badRequest(e.getMessage());
+        }
+
         // --- 2. Check if email already exists ---
-        if (userRepository.existsByEmail(command.email())) {
+        if (userRepository.existsByEmail(iyteEmail.getValue())) {
             return ApiResponse.badRequest(
                     messageService.getMessage("auth.email.already.registered"));
         }
@@ -77,24 +90,30 @@ public class RegisterUserHandler
         // --- 6. Persistence ---
         UserEntity savedUser = userRepository.save(persistenceUser);
 
-        // --- 7. Mapping (Persistence -> Domain) ---
+        // --- 7. Create email verification record ---
+        String verificationToken = verificationTokenService.generateToken();
+        EmailVerificationEntity emailVerification = new EmailVerificationEntity();
+        emailVerification.setUserId(savedUser.getId());
+        emailVerification.setEmail(savedUser.getEmail());
+        emailVerification.setToken(verificationToken);
+        emailVerification.setExpiresAt(verificationTokenService.calculateExpirationDate());
+        emailVerificationRepository.save(emailVerification);
+
+        // --- 8. Mapping (Persistence -> Domain) ---
         User savedDomainUser = userMapper.entityToDomain(savedUser);
 
-        // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
-        var result = registerUserMapper.domainToResult(savedDomainUser);
-
-        String verificationToken = Ulid.fast().toString();
-
-        // Publish event for side effects (email sending handled by EmailEventListener)
-        applicationEventPublisher.publishEvent(
+        // --- 9. Publish verification event ---
+        eventPublisher.publishEvent(
                 new UserRegisteredEvent(
-                        savedDomainUser.getId().toString(),
+                        savedDomainUser.getId(),
                         savedDomainUser.getEmail(),
                         savedDomainUser.getFirstName(),
-                        verificationToken,
-                        LocalDateTime.now()));
+                        verificationToken));
 
-        // --- 9. Response with localized message ---
+        // --- 10. Result Mapping (Domain Entity -> Result DTO) ---
+        var result = registerUserMapper.domainToResult(savedDomainUser);
+
+        // --- 11. Response with localized message ---
         return ApiResponse.created(result, messageService.getMessage("user.registered.success"));
     }
 }
