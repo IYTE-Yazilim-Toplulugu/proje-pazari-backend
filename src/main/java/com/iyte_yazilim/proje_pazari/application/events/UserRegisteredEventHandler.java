@@ -7,13 +7,15 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
- * Handles UserRegisteredEvent by sending a welcome email.
+ * Application event handler for user registration.
  *
- * <p>This handler is part of the application layer and coordinates the email sending process when a
- * new user registers.
+ * <p>Handles the email verification flow when a new user registers.
+ * This is an application-level concern that coordinates domain events
+ * with infrastructure services (email).
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
@@ -27,19 +29,27 @@ public class UserRegisteredEventHandler implements IEventHandler<UserRegisteredE
     private final EmailService emailService;
 
     @Override
+    @Async  // ← Email gönderme async olmalı
     @EventListener
     public void handle(UserRegisteredEvent event) {
         log.info("Handling UserRegisteredEvent for user: {}", event.getEmail());
 
-        Map<String, Object> variables =
-                Map.of(
-                        "subject",
-                        "Welcome to Proje Pazarı!",
-                        "userName",
-                        event.getFirstName(),
-                        "verificationLink",
-                        "http://localhost:3000/verify?token=" + event.getVerificationToken());
+        try {
+            Map<String, Object> variables =
+                    Map.of(
+                            "subject",
+                            "Welcome to Proje Pazarı!",
+                            "userName",
+                            event.getFirstName(),
+                            "verificationLink",
+                            "http://localhost:3000/verify?token=" + event.getVerificationToken());
 
-        emailService.sendTemplateEmailAsync(event.getEmail(), "welcome.html", variables);
+            emailService.sendTemplateEmailAsync(event.getEmail(), "welcome.html", variables);
+
+            log.info("Verification email sent successfully to: {}", event.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send verification email to: {}", event.getEmail(), e);
+            // TODO: Consider implementing retry mechanism or dead letter queue
+        }
     }
 }

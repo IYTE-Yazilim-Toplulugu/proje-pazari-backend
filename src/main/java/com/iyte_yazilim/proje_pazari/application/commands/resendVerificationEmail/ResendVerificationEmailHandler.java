@@ -34,7 +34,7 @@ public class ResendVerificationEmailHandler
 
         // Check if already verified
         boolean isVerified =
-                emailVerificationRepository.existsByEmailAndVerifiedAtIsNotNull(command.email());
+                emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(userEntity.getId());
         if (isVerified) {
             throw new EmailAlreadyVerifiedException("Email is already verified");
         }

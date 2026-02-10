@@ -70,7 +70,7 @@ public class LoginUserHandler
 
         // --- 5. Check email verification ---
         boolean isVerified =
-                emailVerificationRepository.existsByEmailAndVerifiedAtIsNotNull(user.getEmail());
+                emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(user.getId());
         if (!isVerified) {
             throw new EmailNotVerifiedException(
                     "Please verify your email before logging in. Check your inbox.");

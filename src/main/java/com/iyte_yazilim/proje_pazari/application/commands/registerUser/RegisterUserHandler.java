@@ -8,6 +8,7 @@ import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.IyteEmail;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -62,8 +63,16 @@ public class RegisterUserHandler
             return ApiResponse.badRequest(errorMessage);
         }
 
+        // --- 1.5. IYTE Email Validation (Value Object ile) ---
+        IyteEmail iyteEmail;
+        try {
+            iyteEmail = IyteEmail.of(command.email());
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.badRequest(e.getMessage());
+        }
+
         // --- 2. Check if email already exists ---
-        if (userRepository.existsByEmail(command.email())) {
+        if (userRepository.existsByEmail(iyteEmail.getValue())) {
             return ApiResponse.badRequest(
                     messageService.getMessage("auth.email.already.registered"));
         }

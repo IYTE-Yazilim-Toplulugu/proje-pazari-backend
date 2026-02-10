@@ -38,6 +38,10 @@ public final class IyteEmail {
 
         String normalizedEmail = email.trim().toLowerCase();
 
+        if (!normalizedEmail.contains("@")) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+
         boolean isValid =
                 ALLOWED_DOMAINS.stream()
                         .anyMatch(domain -> normalizedEmail.endsWith(domain.toLowerCase()));

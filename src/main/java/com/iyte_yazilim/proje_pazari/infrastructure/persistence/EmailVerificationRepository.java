@@ -15,4 +15,6 @@ public interface EmailVerificationRepository
     Optional<EmailVerificationEntity> findTopByUserIdOrderByCreatedAtDesc(String userId);
 
     boolean existsByEmailAndVerifiedAtIsNotNull(String email);
+
+    boolean existsByUserIdAndVerifiedAtIsNotNull(String userId);
 }

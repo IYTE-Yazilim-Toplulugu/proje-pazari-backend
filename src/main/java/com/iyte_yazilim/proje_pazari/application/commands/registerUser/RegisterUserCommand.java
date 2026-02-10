@@ -3,7 +3,6 @@ package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 import com.iyte_yazilim.proje_pazari.application.common.ICommand;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
-import com.iyte_yazilim.proje_pazari.domain.validators.ValidIyteEmail;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -78,7 +77,6 @@ public record RegisterUserCommand(
         @Schema(description = "Email address", example = "user@std.iyte.edu.tr")
                 @NotBlank(message = "Email is required")
                 @Email(message = "Email must be valid")
-                @ValidIyteEmail
                 String email,
         @Schema(description = "Password", example = "SecurePassword123!")
                 @NotBlank(message = "Password is required")

@@ -5,9 +5,7 @@ import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -27,10 +25,7 @@ import lombok.Setter;
  * <h2>Example Usage:</h2>
  *
  * <pre>{@code
- * User user = new User();
- * user.setEmail("student@std.iyte.edu.tr");
- * user.setFirstName("John");
- * user.setLastName("Doe");
+ * User user = new User("student@std.iyte.edu.tr", "hashedPassword", "John", "Doe");
  * }</pre>
  *
  * @author IYTE Yazılım Topluluğu
@@ -41,8 +36,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class User extends BaseEntity<Ulid> {
 
     /** User's email address used for authentication. Must be unique across the system. */
@@ -73,16 +66,35 @@ public class User extends BaseEntity<Ulid> {
     /** User's GitHub profile URL. Optional social link. */
     private String githubUrl;
 
-    // Email verification fields
-    private boolean emailVerified = false;
-    private String verificationToken;
-    private LocalDateTime verificationTokenExpiresAt;
-    private LocalDateTime emailVerifiedAt;
-
-    /** Indicates whether the user account is active. Inactive accounts cannot login. */
+    /** Indicates whether the user account is active. Inactive accounts cannot log in. */
     private boolean isActive;
 
     private Set<RoleType> roles = new HashSet<>();
+
+    /**
+     * Default constructor.
+     * Initializes default values for emailVerified, isActive, and roles.
+     */
+    public User() {
+        this.isActive = true;
+        this.roles = new HashSet<>();
+    }
+
+    /**
+     * Constructor for creating a new user.
+     *
+     * @param email user's email address
+     * @param password user's encrypted password
+     * @param firstName user's first name
+     * @param lastName user's last name
+     */
+    public User(String email, String password, String firstName, String lastName) {
+        this();
+        this.email = email;
+        this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
 
     /**
      * Returns the user's full name by combining first and last name.

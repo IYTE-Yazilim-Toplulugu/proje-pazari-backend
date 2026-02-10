@@ -1,6 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.verifyEmail;
 
-import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailAlreadyVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
@@ -8,13 +8,10 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,19 +19,16 @@ public class VerifyEmailHandler
         implements IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> {
 
     private final EmailVerificationRepository emailVerificationRepository;
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
 
     @Override
+    @Transactional
     public ApiResponse<VerifyEmailResult> handle(VerifyEmailCommand command) {
+
         // Find verification record by token
-        EmailVerificationEntity verification =
-                emailVerificationRepository
-                        .findByToken(command.token())
-                        .orElseThrow(
-                                () ->
-                                        new InvalidVerificationTokenException(
-                                                "Invalid verification token"));
+        var verification = emailVerificationRepository
+                .findByToken(command.token())
+                .orElseThrow(
+                        () -> new InvalidVerificationTokenException("Invalid verification token"));
 
         // Check if already verified
         if (verification.isVerified()) {
@@ -50,17 +44,12 @@ public class VerifyEmailHandler
         verification.setVerifiedAt(LocalDateTime.now());
         emailVerificationRepository.save(verification);
 
-        // Get user
-        UserEntity userEntity =
-                userRepository
-                        .findById(verification.getUserId())
-                        .orElseThrow(() -> new RuntimeException("User not found"));
-
-        User savedUser = userMapper.entityToDomain(userEntity);
-
-        VerifyEmailResult result =
-                new VerifyEmailResult(
-                        savedUser.getId(), savedUser.getEmail(), "Email verified successfully");
+        // Create result with Ulid
+        VerifyEmailResult result = new VerifyEmailResult(
+                Ulid.from(verification.getUserId()), // String -> Ulid conversion
+                verification.getEmail(),
+                "Email verified successfully"
+        );
 
         return ApiResponse.success(result, "Email verified successfully");
     }
