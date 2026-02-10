@@ -13,9 +13,8 @@ import org.springframework.stereotype.Component;
 /**
  * Application event handler for user registration.
  *
- * <p>Handles the email verification flow when a new user registers.
- * This is an application-level concern that coordinates domain events
- * with infrastructure services (email).
+ * <p>Handles the email verification flow when a new user registers. This is an application-level
+ * concern that coordinates domain events with infrastructure services (email).
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
@@ -29,7 +28,7 @@ public class UserRegisteredEventHandler implements IEventHandler<UserRegisteredE
     private final EmailService emailService;
 
     @Override
-    @Async  // ← Email gönderme async olmalı
+    @Async // ← Email gönderme async olmalı
     @EventListener
     public void handle(UserRegisteredEvent event) {
         log.info("Handling UserRegisteredEvent for user: {}", event.getEmail());

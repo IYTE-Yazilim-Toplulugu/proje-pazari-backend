@@ -25,10 +25,13 @@ public class VerifyEmailHandler
     public ApiResponse<VerifyEmailResult> handle(VerifyEmailCommand command) {
 
         // Find verification record by token
-        var verification = emailVerificationRepository
-                .findByToken(command.token())
-                .orElseThrow(
-                        () -> new InvalidVerificationTokenException("Invalid verification token"));
+        var verification =
+                emailVerificationRepository
+                        .findByToken(command.token())
+                        .orElseThrow(
+                                () ->
+                                        new InvalidVerificationTokenException(
+                                                "Invalid verification token"));
 
         // Check if already verified
         if (verification.isVerified()) {
@@ -45,11 +48,11 @@ public class VerifyEmailHandler
         emailVerificationRepository.save(verification);
 
         // Create result with Ulid
-        VerifyEmailResult result = new VerifyEmailResult(
-                Ulid.from(verification.getUserId()), // String -> Ulid conversion
-                verification.getEmail(),
-                "Email verified successfully"
-        );
+        VerifyEmailResult result =
+                new VerifyEmailResult(
+                        Ulid.from(verification.getUserId()), // String -> Ulid conversion
+                        verification.getEmail(),
+                        "Email verified successfully");
 
         return ApiResponse.success(result, "Email verified successfully");
     }
