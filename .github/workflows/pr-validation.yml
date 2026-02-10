@@ -50,7 +50,7 @@ jobs:
         run: |
           ./gradlew jacocoTestCoverageVerification
           echo "status=✅ Coverage threshold met" >> $GITHUB_OUTPUT
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Upload coverage report
         if: always()
@@ -103,7 +103,7 @@ jobs:
             });
 
       - name: Check if validation passed
-        if: steps.format-check.outcome != 'success' || steps.tests.outcome != 'success' || steps.build.outcome != 'success'
+        if: steps.format-check.outcome != 'success' || steps.tests.outcome != 'success' || steps.coverage.outcome != 'success' || steps.build.outcome != 'success'
         run: |
           echo "❌ PR validation failed. Please fix the issues above."
           exit 1
