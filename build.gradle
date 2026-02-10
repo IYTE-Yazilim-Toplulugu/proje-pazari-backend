@@ -115,8 +115,26 @@ jacocoTestCoverageVerification {
                 minimum = 0.70
             }
         }
+
+        rule {
+            element = 'CLASS'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.60
+            }
+            excludes = [
+                '*.config.*',
+                '*.dto.*',
+                '*.dtos.*',
+                '*.models.*',
+                '*Application'
+            ]
+        }
     }
 }
+
+check.dependsOn jacocoTestCoverageVerification
 
 // Spotless configuration - Google Java Format with 4-space indentation (AOSP style)
 spotless {
