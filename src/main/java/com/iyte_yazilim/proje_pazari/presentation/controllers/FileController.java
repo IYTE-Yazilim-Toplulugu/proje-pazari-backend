@@ -17,9 +17,8 @@ public class FileController extends BaseController {
 
     @GetMapping("/{*path}")
     @Operation(
-            "Redirects to presigned URL for file access. "
             summary = "Download file",
-            description =
+            description = "Redirects to presigned URL for file access. "
                             + "Supports images, PDFs, and documents.")
     @ApiResponses(
             value = {
