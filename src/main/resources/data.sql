@@ -15,11 +15,22 @@
 INSERT INTO users (id, email, password, first_name, last_name, role, description, profile_picture_url, linkedin_url, github_url, preferred_language, created_at, updated_at, is_active)
 VALUES
     ('01HQXV5KXBW9FYMN8CJZSP2R4H', 'admin@proje-pazari.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'Admin', 'User', 'ADMIN', 'System administrator account', NULL, NULL, NULL, 'tr', NOW(), NOW(), true),
-    ('01HQXV5KXBW9FYMN8CJZSP2R4I', 'john.doe@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'John', 'Doe', 'USER', 'Full-stack developer with 5 years of experience in web and mobile development. Passionate about AI and machine learning.', NULL, 'https://linkedin.com/in/johndoe', 'https://github.com/johndoe', 'en', NOW(), NOW(), true),
-    ('01HQXV5KXBW9FYMN8CJZSP2R4J', 'jane.smith@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'Jane', 'Smith', 'USER', 'UI/UX designer and frontend developer. Love creating beautiful and intuitive user interfaces.', NULL, 'https://linkedin.com/in/janesmith', 'https://github.com/janesmith', 'en', NOW(), NOW(), true),
-    ('01HQXV5KXBW9FYMN8CJZSP2R4K', 'ahmet.yilmaz@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'Ahmet', 'Yılmaz', 'USER', 'Backend developer ve sistem mimarı. Java, Spring Boot ve microservices konusunda uzmanım.', NULL, 'https://linkedin.com/in/ahmetyilmaz', 'https://github.com/ahmetyilmaz', 'tr', NOW(), NOW(), true),
-    ('01HQXV5KXBW9FYMN8CJZSP2R4L', 'ayse.kaya@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'Ayşe', 'Kaya', 'USER', 'Data scientist ve makine öğrenmesi uzmanı. Python ve TensorFlow ile çalışıyorum.', NULL, 'https://linkedin.com/in/aysekaya', 'https://github.com/aysekaya', 'tr', NOW(), NOW(), true),
-    ('01HQXV5KXBW9FYMN8CJZSP2R4M', 'mehmet.demir@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'Mehmet', 'Demir', 'USER', 'Mobile developer. React Native ve Flutter ile iOS ve Android uygulamaları geliştiriyorum.', NULL, 'https://linkedin.com/in/mehmetdemir', 'https://github.com/mehmetdemir', 'tr', NOW(), NOW(), true)
+    ('01HQXV5KXBW9FYMN8CJZSP2R4I', 'john.doe@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'John', 'Doe', 'APPLICANT', 'Full-stack developer with 5 years of experience in web and mobile development. Passionate about AI and machine learning.', NULL, 'https://linkedin.com/in/johndoe', 'https://github.com/johndoe', 'en', NOW(), NOW(), true),
+    ('01HQXV5KXBW9FYMN8CJZSP2R4J', 'jane.smith@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'Jane', 'Smith', 'APPLICANT', 'UI/UX designer and frontend developer. Love creating beautiful and intuitive user interfaces.', NULL, 'https://linkedin.com/in/janesmith', 'https://github.com/janesmith', 'en', NOW(), NOW(), true),
+    ('01HQXV5KXBW9FYMN8CJZSP2R4K', 'ahmet.yilmaz@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'Ahmet', 'Yılmaz', 'APPLICANT', 'Backend developer ve sistem mimarı. Java, Spring Boot ve microservices konusunda uzmanım.', NULL, 'https://linkedin.com/in/ahmetyilmaz', 'https://github.com/ahmetyilmaz', 'tr', NOW(), NOW(), true),
+    ('01HQXV5KXBW9FYMN8CJZSP2R4L', 'ayse.kaya@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'Ayşe', 'Kaya', 'APPLICANT', 'Data scientist ve makine öğrenmesi uzmanı. Python ve TensorFlow ile çalışıyorum.', NULL, 'https://linkedin.com/in/aysekaya', 'https://github.com/aysekaya', 'tr', NOW(), NOW(), true),
+    ('01HQXV5KXBW9FYMN8CJZSP2R4M', 'mehmet.demir@example.com', '$2a$10$8FGbvDXskL.pZ5yb91rYzuTstTTYBusvpeedS8BGCStzOsuaU64hS', 'Mehmet', 'Demir', 'APPLICANT', 'Mobile developer. React Native ve Flutter ile iOS ve Android uygulamaları geliştiriyorum.', NULL, 'https://linkedin.com/in/mehmetdemir', 'https://github.com/mehmetdemir', 'tr', NOW(), NOW(), true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Insert email verification records for sample users (mark them as verified)
+INSERT INTO email_verifications (id, user_id, email, token, expires_at, verified_at, created_at)
+VALUES
+    ('01HQXV5VERIFY00000000001', '01HQXV5KXBW9FYMN8CJZSP2R4H', 'admin@proje-pazari.com', 'token-admin-verified', NOW() + INTERVAL '24 hours', NOW(), NOW()),
+    ('01HQXV5VERIFY00000000002', '01HQXV5KXBW9FYMN8CJZSP2R4I', 'john.doe@example.com', 'token-john-verified', NOW() + INTERVAL '24 hours', NOW(), NOW()),
+    ('01HQXV5VERIFY00000000003', '01HQXV5KXBW9FYMN8CJZSP2R4J', 'jane.smith@example.com', 'token-jane-verified', NOW() + INTERVAL '24 hours', NOW(), NOW()),
+    ('01HQXV5VERIFY00000000004', '01HQXV5KXBW9FYMN8CJZSP2R4K', 'ahmet.yilmaz@example.com', 'token-ahmet-verified', NOW() + INTERVAL '24 hours', NOW(), NOW()),
+    ('01HQXV5VERIFY00000000005', '01HQXV5KXBW9FYMN8CJZSP2R4L', 'ayse.kaya@example.com', 'token-ayse-verified', NOW() + INTERVAL '24 hours', NOW(), NOW()),
+    ('01HQXV5VERIFY00000000006', '01HQXV5KXBW9FYMN8CJZSP2R4M', 'mehmet.demir@example.com', 'token-mehmet-verified', NOW() + INTERVAL '24 hours', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert sample projects

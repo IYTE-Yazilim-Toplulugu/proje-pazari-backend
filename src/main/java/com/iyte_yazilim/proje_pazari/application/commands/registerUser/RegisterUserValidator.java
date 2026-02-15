@@ -38,6 +38,9 @@ public class RegisterUserValidator implements IValidator<RegisterUserCommand> {
             errors.add(e.getMessage());
         }
 
+        // Additional business logic validation can be added here if needed
+        // Bean Validation annotations (@Email, @ValidPassword) are checked automatically by Spring
+
         return errors.toArray(String[]::new);
     }
 }

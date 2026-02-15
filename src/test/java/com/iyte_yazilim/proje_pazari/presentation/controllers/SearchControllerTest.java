@@ -57,6 +57,14 @@ class SearchControllerTest {
 
     @MockitoBean private UserRepository userRepository;
 
+    @MockitoBean
+    private com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService
+            tokenBlacklistService;
+
+    @MockitoBean
+    private com.iyte_yazilim.proje_pazari.infrastructure.security.config.RateLimitConfig
+            rateLimitConfig;
+
     private ProjectDocument sampleProject;
 
     @BeforeEach
