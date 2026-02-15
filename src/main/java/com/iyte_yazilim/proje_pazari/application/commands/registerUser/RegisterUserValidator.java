@@ -2,7 +2,6 @@ package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.IyteEmail;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
