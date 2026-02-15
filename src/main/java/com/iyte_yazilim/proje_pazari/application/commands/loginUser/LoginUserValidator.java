@@ -1,8 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
-import java.util.ArrayList;
-import java.util.List;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,9 +26,7 @@ public class LoginUserValidator implements IValidator<LoginUserCommand> {
      */
     @Override
     public String[] validate(LoginUserCommand command) {
-
-        List<String> errors = new ArrayList<>();
-
+        java.util.List<String> errors = new java.util.ArrayList<>();
         if (command.email() == null
                 || command.email().isBlank()
                 || !command.email().matches("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$")) {
@@ -39,7 +35,6 @@ public class LoginUserValidator implements IValidator<LoginUserCommand> {
         if (command.password() == null || command.password().isBlank()) {
             errors.add("Password cannot be empty");
         }
-
         return errors.toArray(new String[0]);
     }
 }

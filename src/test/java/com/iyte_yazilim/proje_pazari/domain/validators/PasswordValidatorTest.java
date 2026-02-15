@@ -27,7 +27,8 @@ class PasswordValidatorTest {
         validator.initialize(null);
 
         // Setup mocks (use lenient to avoid unnecessary stubbing errors)
-        lenient().when(context.buildConstraintViolationWithTemplate(anyString()))
+        lenient()
+                .when(context.buildConstraintViolationWithTemplate(anyString()))
                 .thenReturn(violationBuilder);
         lenient().when(violationBuilder.addConstraintViolation()).thenReturn(context);
     }
@@ -50,8 +51,13 @@ class PasswordValidatorTest {
     void shouldAcceptPasswordWithAllSpecialChars() {
         // Given - Test each special character
         String[] validPasswords = {
-            "Password1@", "Password1$", "Password1!", "Password1%",
-            "Password1*", "Password1?", "Password1&"
+            "Password1@",
+            "Password1$",
+            "Password1!",
+            "Password1%",
+            "Password1*",
+            "Password1?",
+            "Password1&"
         };
 
         // When & Then

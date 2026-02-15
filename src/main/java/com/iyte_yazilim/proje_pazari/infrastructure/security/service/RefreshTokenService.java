@@ -55,8 +55,7 @@ public class RefreshTokenService {
         RefreshTokenEntity refreshToken = new RefreshTokenEntity();
         refreshToken.setToken(token);
         refreshToken.setUserId(userId);
-        refreshToken.setExpiresAt(
-                Instant.now().plus(Duration.ofMillis(refreshTokenExpiration)));
+        refreshToken.setExpiresAt(Instant.now().plus(Duration.ofMillis(refreshTokenExpiration)));
         refreshToken.setRevoked(false);
 
         refreshTokenRepository.save(refreshToken);
@@ -84,7 +83,8 @@ public class RefreshTokenService {
 
         // Check if token is revoked
         if (tokenEntity.getRevoked()) {
-            log.warn("Attempted use of revoked refresh token for user: {}", tokenEntity.getUserId());
+            log.warn(
+                    "Attempted use of revoked refresh token for user: {}", tokenEntity.getUserId());
             return Optional.empty();
         }
 
@@ -111,8 +111,7 @@ public class RefreshTokenService {
                             refreshToken.setRevoked(true);
                             refreshTokenRepository.save(refreshToken);
                             log.debug(
-                                    "Revoked refresh token for user: {}",
-                                    refreshToken.getUserId());
+                                    "Revoked refresh token for user: {}", refreshToken.getUserId());
                         });
     }
 
@@ -127,9 +126,7 @@ public class RefreshTokenService {
         log.debug("Revoked all refresh tokens for user: {}", userId);
     }
 
-    /**
-     * Deletes expired tokens from the database. Runs daily at 2 AM.
-     */
+    /** Deletes expired tokens from the database. Runs daily at 2 AM. */
     @Scheduled(cron = "0 0 2 * * ?")
     @Transactional
     public void cleanupExpiredTokens() {

@@ -5,6 +5,7 @@ import com.iyte_yazilim.proje_pazari.presentation.security.JwtAuthenticationFilt
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -44,26 +45,29 @@ public class SecurityConfig {
                                         // Swagger/OpenAPI endpoints
                                         .requestMatchers(
                                                 "/swagger-ui/**",
+                                                "/swagger-ui",
                                                 "/v3/api-docs/**",
                                                 "/swagger-ui.html",
                                                 "/swagger-resources/**",
                                                 "/webjars/**")
                                         .permitAll()
                                         // Actuator health endpoints
-                                        .requestMatchers("/actuator/health", "/actuator/info")
+                                        .requestMatchers("/actuator/**")
                                         .permitAll()
-                                        // Public authentication endpoints
-                                        .requestMatchers(
-                                                "/api/v1/auth/register",
-                                                "/api/v1/auth/login",
-                                                "/api/v1/auth/refresh")
-                                        .permitAll()
-                                        // Health check endpoints
                                         .requestMatchers("/api/v1/health")
                                         .permitAll()
-                                        // All other API endpoints require authentication
-                                        .requestMatchers("/api/**")
-                                        .authenticated()
+                                        // Public authentication endpoints
+                                        .requestMatchers("/api/v1/auth/**")
+                                        .permitAll()
+                                        // File serving endpoints (profile pictures are public)
+                                        .requestMatchers("/api/v1/files/**")
+                                        .permitAll()
+                                        // Public read-only endpoints - anyone can view user
+                                        // profiles and projects
+                                        .requestMatchers(HttpMethod.GET, "/api/v1/users/**")
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/**")
+                                        .permitAll()
                                         // All other requests require authentication
                                         .anyRequest()
                                         .authenticated())

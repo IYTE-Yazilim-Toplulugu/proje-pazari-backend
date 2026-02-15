@@ -1,5 +1,21 @@
 services:
 
+  redis:
+    image: redis:7-alpine
+    container_name: proje-pazari-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - proje-pazari-network
+    restart: unless-stopped
+
   minio:
     image: minio/minio:latest
     container_name: proje-pazari-minio
@@ -62,6 +78,9 @@ services:
       MINIO_BUCKET: proje-pazari-files
       # Elasticsearch Configuration
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "8080:8080"
     depends_on:
@@ -70,6 +89,8 @@ services:
       minio:
         condition: service_healthy
       elasticsearch:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - proje-pazari-network
@@ -159,6 +180,8 @@ volumes:
   minio_data:
     driver: local
   elasticsearch_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:

@@ -28,11 +28,6 @@ public class UserEntity {
     @Column(length = 26)
     private String id;
 
-    @Column(nullable = false)
-    private boolean isTwoFactorEnabled = false;
-
-    @Column private String twoFactorSecret;
-
     @Column(nullable = false, unique = true)
     private String email;
 
@@ -76,6 +71,15 @@ public class UserEntity {
 
     @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
     private Boolean isActive = true;
+
+    @Column(
+            name = "two_factor_enabled",
+            nullable = false,
+            columnDefinition = "boolean default false")
+    private boolean isTwoFactorEnabled = false;
+
+    @Column(name = "two_factor_secret")
+    private String twoFactorSecret;
 
     @PrePersist
     protected void onCreate() {

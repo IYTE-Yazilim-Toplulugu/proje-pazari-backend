@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.changePassword;
 
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequest;
+import com.iyte_yazilim.proje_pazari.application.common.ICommand;
+import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -20,8 +21,7 @@ public record ChangePasswordCommand(
         @Schema(description = "Confirm new password", requiredMode = Schema.RequiredMode.REQUIRED)
                 @NotBlank(message = "Password confirmation is required")
                 String confirmPassword)
-        implements IRequest {
-
+        implements ICommand<ApiResponse<Void>> {
     public void validate() {
         if (!newPassword.equals(confirmPassword)) {
             throw new IllegalArgumentException("New password and confirmation do not match");

@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.deactivateAccount;
 
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequest;
+import com.iyte_yazilim.proje_pazari.application.common.ICommand;
+import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
@@ -10,4 +11,4 @@ public record DeactivateAccountCommand(
                 @NotBlank(message = "User ID is required")
                 String userId,
         @Schema(description = "Reason for deactivation") String reason)
-        implements IRequest {}
+        implements ICommand<ApiResponse<Void>> {}

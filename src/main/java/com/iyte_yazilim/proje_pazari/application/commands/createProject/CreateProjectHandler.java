@@ -8,6 +8,7 @@ import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
@@ -26,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class CreateProjectHandler
-        implements IRequestHandler<CreateProjectCommand, ApiResponse<CreateProjectResult>> {
+        implements IRequestHandler<CreateProjectCommand, ApiResponse<CreateProjectCommandResult>> {
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
@@ -51,7 +52,7 @@ public class CreateProjectHandler
             rollbackFor = Exception.class,
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
-    public ApiResponse<CreateProjectResult> handle(CreateProjectCommand command) {
+    public ApiResponse<CreateProjectCommandResult> handle(CreateProjectCommand command) {
 
         // --- 1. Validation ---
         var errors = validator.validate(command);

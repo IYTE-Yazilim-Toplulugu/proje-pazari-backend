@@ -36,13 +36,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
             ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
 
             if (probe.isConsumed()) {
-                response.addHeader("X-Rate-Limit-Remaining", String.valueOf(probe.getRemainingTokens()));
+                response.addHeader(
+                        "X-Rate-Limit-Remaining", String.valueOf(probe.getRemainingTokens()));
                 filterChain.doFilter(request, response);
             } else {
                 long waitForRefill = probe.getNanosToWaitForRefill() / 1_000_000_000;
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
+                response.addHeader(
+                        "X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
 
                 String jsonResponse =
                         String.format(
