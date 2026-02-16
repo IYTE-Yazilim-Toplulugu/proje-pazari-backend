@@ -535,4 +535,60 @@ public class AdminController extends BaseController {
                         .listBannedIps
                         .ListBannedIpsQuery());
     }
+
+    // ==================== DATA IMPORT ====================
+
+    @PostMapping(value = "/import/users", consumes = "multipart/form-data")
+    @Operation(
+            summary = "Import users from CSV",
+            description =
+                    "Import users from a CSV file. Expected columns: email,firstName,lastName,role,password")
+    @Audited(action = "IMPORT_USERS_CSV", entityType = "USER")
+    public ResponseEntity<
+                    ApiResponse<com.iyte_yazilim.proje_pazari.application.dtos.ImportResultDTO>>
+            importUsers(
+                    @org.springframework.web.bind.annotation.RequestPart("file")
+                            org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String csvContent =
+                    new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            return send(
+                    new com.iyte_yazilim
+                            .proje_pazari
+                            .application
+                            .commands
+                            .importUsersFromCsv
+                            .ImportUsersFromCsvCommand(csvContent));
+        } catch (java.io.IOException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.validationError("Failed to read file: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping(value = "/import/projects", consumes = "multipart/form-data")
+    @Operation(
+            summary = "Import projects from CSV",
+            description =
+                    "Import projects from a CSV file. Expected columns: title,description,ownerEmail,status,maxTeamSize,category,requiredSkills")
+    @Audited(action = "IMPORT_PROJECTS_CSV", entityType = "PROJECT")
+    public ResponseEntity<
+                    ApiResponse<com.iyte_yazilim.proje_pazari.application.dtos.ImportResultDTO>>
+            importProjects(
+                    @org.springframework.web.bind.annotation.RequestPart("file")
+                            org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String csvContent =
+                    new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            return send(
+                    new com.iyte_yazilim
+                            .proje_pazari
+                            .application
+                            .commands
+                            .importProjectsFromCsv
+                            .ImportProjectsFromCsvCommand(csvContent));
+        } catch (java.io.IOException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.validationError("Failed to read file: " + e.getMessage()));
+        }
+    }
 }
