@@ -13,12 +13,14 @@ import com.iyte_yazilim.proje_pazari.application.commands.flagContent.FlagConten
 import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent.ReviewFlaggedContentCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.sendTargetedEmail.SendTargetedEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.updateFeatureFlag.UpdateFeatureFlagCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
 import com.iyte_yazilim.proje_pazari.application.common.Audited;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationStatsDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.AuditLogDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
+import com.iyte_yazilim.proje_pazari.application.dtos.FeatureFlagDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.FlaggedContentDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectAdminDTO;
@@ -37,6 +39,7 @@ import com.iyte_yazilim.proje_pazari.application.queries.exportProjects.ExportPr
 import com.iyte_yazilim.proje_pazari.application.queries.exportUsers.ExportUsersQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getApplicationStats.GetApplicationStatsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getAuditLogs.GetAuditLogsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getFeatureFlags.GetFeatureFlagsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getFlaggedContent.GetFlaggedContentQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectStats.GetProjectStatsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSystemConfigQuery;
@@ -404,5 +407,27 @@ public class AdminController extends BaseController {
     public ResponseEntity<ApiResponse<Void>> updateSystemConfig(
             @RequestBody Map<String, String> configs) {
         return send(new UpdateSystemConfigCommand(configs));
+    }
+
+    // ==================== FEATURE FLAGS ====================
+
+    @GetMapping("/feature-flags")
+    @Operation(
+            summary = "List feature flags",
+            description = "Get all feature flags and their current status")
+    public ResponseEntity<ApiResponse<List<FeatureFlagDTO>>> getFeatureFlags() {
+        return send(new GetFeatureFlagsQuery());
+    }
+
+    @PutMapping("/feature-flags/{key}")
+    @Operation(
+            summary = "Update feature flag",
+            description = "Create or update a feature flag by key")
+    @Audited(action = "UPDATE_FEATURE_FLAG", entityType = "FEATURE_FLAG")
+    public ResponseEntity<ApiResponse<Void>> updateFeatureFlag(
+            @PathVariable String key, @RequestBody Map<String, Object> request) {
+        boolean enabled = request.containsKey("enabled") ? (Boolean) request.get("enabled") : false;
+        String description = (String) request.get("description");
+        return send(new UpdateFeatureFlagCommand(key, enabled, description));
     }
 }
