@@ -29,6 +29,9 @@ import com.iyte_yazilim.proje_pazari.application.queries.adminGetUser.AdminGetUs
 import com.iyte_yazilim.proje_pazari.application.queries.adminListApplications.AdminListApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.adminListProjects.AdminListProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.adminListUsers.AdminListUsersQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.exportApplications.ExportApplicationsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.exportProjects.ExportProjectsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.exportUsers.ExportUsersQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getApplicationStats.GetApplicationStatsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getAuditLogs.GetAuditLogsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getFlaggedContent.GetFlaggedContentQuery;
@@ -329,5 +332,42 @@ public class AdminController extends BaseController {
         @SuppressWarnings("unchecked")
         List<String> userIds = (List<String>) request.get("userIds");
         return send(new SendTargetedEmailCommand(userIds, subject, body));
+    }
+
+    // ==================== DATA EXPORT ====================
+
+    @GetMapping("/export/users")
+    @Operation(summary = "Export users to CSV", description = "Export all users as CSV file")
+    @Audited(action = "EXPORT_USERS", entityType = "USER")
+    public ResponseEntity<byte[]> exportUsers() {
+        ApiResponse<String> result = mediator.send(new ExportUsersQuery());
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=users.csv")
+                .header("Content-Type", "text/csv; charset=UTF-8")
+                .body(result.getData().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    @GetMapping("/export/projects")
+    @Operation(summary = "Export projects to CSV", description = "Export all projects as CSV file")
+    @Audited(action = "EXPORT_PROJECTS", entityType = "PROJECT")
+    public ResponseEntity<byte[]> exportProjects() {
+        ApiResponse<String> result = mediator.send(new ExportProjectsQuery());
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=projects.csv")
+                .header("Content-Type", "text/csv; charset=UTF-8")
+                .body(result.getData().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    @GetMapping("/export/applications")
+    @Operation(
+            summary = "Export applications to CSV",
+            description = "Export all applications as CSV file")
+    @Audited(action = "EXPORT_APPLICATIONS", entityType = "APPLICATION")
+    public ResponseEntity<byte[]> exportApplications() {
+        ApiResponse<String> result = mediator.send(new ExportApplicationsQuery());
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=applications.csv")
+                .header("Content-Type", "text/csv; charset=UTF-8")
+                .body(result.getData().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 }
