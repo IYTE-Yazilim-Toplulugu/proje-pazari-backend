@@ -35,7 +35,7 @@ public class AdminActivityNotifier {
             event.put("details", auditLog.getDetails());
             event.put("timestamp", auditLog.getTimestamp() != null ? auditLog.getTimestamp().toString() : null);
 
-            messagingTemplate.convertAndSend("/topic/admin/activity", event);
+            messagingTemplate.convertAndSend("/topic/admin/activity", (Object) event);
             log.debug("Pushed audit event to WebSocket: {}", auditLog.getAction());
         } catch (Exception e) {
             log.warn("Failed to push audit event via WebSocket", e);
