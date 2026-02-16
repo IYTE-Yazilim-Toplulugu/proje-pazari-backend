@@ -21,6 +21,7 @@ import com.iyte_yazilim.proje_pazari.application.dtos.ActiveSessionDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationStatsDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.AuditLogDTO;
+import com.iyte_yazilim.proje_pazari.application.dtos.BannedIpDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.application.dtos.FeatureFlagDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.FlaggedContentDTO;
@@ -494,5 +495,44 @@ public class AdminController extends BaseController {
                         .commands
                         .invalidateAllSessions
                         .InvalidateAllSessionsCommand());
+    }
+
+    // ==================== IP BAN MANAGEMENT ====================
+
+    @PostMapping("/ip-bans")
+    @Operation(
+            summary = "Ban IP address",
+            description = "Ban a specific IP address from accessing the platform")
+    @Audited(action = "BAN_IP", entityType = "IP_BAN")
+    public ResponseEntity<ApiResponse<Void>> banIp(@RequestBody Map<String, Object> request) {
+        String ipAddress = (String) request.get("ipAddress");
+        String reason = (String) request.get("reason");
+        java.time.LocalDateTime expiresAt = null;
+        if (request.containsKey("expiresAt") && request.get("expiresAt") != null) {
+            expiresAt = java.time.LocalDateTime.parse((String) request.get("expiresAt"));
+        }
+        return send(
+                new com.iyte_yazilim.proje_pazari.application.commands.banIp.BanIpCommand(
+                        ipAddress, reason, expiresAt));
+    }
+
+    @DeleteMapping("/ip-bans/{ip}")
+    @Operation(summary = "Unban IP address", description = "Remove an IP address from the ban list")
+    @Audited(action = "UNBAN_IP", entityType = "IP_BAN")
+    public ResponseEntity<ApiResponse<Void>> unbanIp(@PathVariable String ip) {
+        return send(
+                new com.iyte_yazilim.proje_pazari.application.commands.unbanIp.UnbanIpCommand(ip));
+    }
+
+    @GetMapping("/ip-bans")
+    @Operation(summary = "List banned IPs", description = "Get all currently banned IP addresses")
+    public ResponseEntity<ApiResponse<List<BannedIpDTO>>> listBannedIps() {
+        return send(
+                new com.iyte_yazilim
+                        .proje_pazari
+                        .application
+                        .queries
+                        .listBannedIps
+                        .ListBannedIpsQuery());
     }
 }
