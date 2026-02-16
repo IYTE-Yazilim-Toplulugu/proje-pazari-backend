@@ -17,6 +17,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.toggleMaintenanceMode.
 import com.iyte_yazilim.proje_pazari.application.commands.updateFeatureFlag.UpdateFeatureFlagCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
 import com.iyte_yazilim.proje_pazari.application.common.Audited;
+import com.iyte_yazilim.proje_pazari.application.dtos.ActiveSessionDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationStatsDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.AuditLogDTO;
@@ -38,6 +39,7 @@ import com.iyte_yazilim.proje_pazari.application.queries.adminListUsers.AdminLis
 import com.iyte_yazilim.proje_pazari.application.queries.exportApplications.ExportApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.exportProjects.ExportProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.exportUsers.ExportUsersQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getActiveSessions.GetActiveSessionsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getApplicationStats.GetApplicationStatsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getAuditLogs.GetAuditLogsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getFeatureFlags.GetFeatureFlagsQuery;
@@ -452,5 +454,45 @@ public class AdminController extends BaseController {
             @RequestBody Map<String, Boolean> request) {
         boolean enabled = request.getOrDefault("enabled", false);
         return send(new ToggleMaintenanceModeCommand(enabled));
+    }
+
+    // ==================== SESSION MANAGEMENT ====================
+
+    @GetMapping("/sessions")
+    @Operation(
+            summary = "List active sessions",
+            description = "Get all active user sessions grouped by user")
+    public ResponseEntity<ApiResponse<List<ActiveSessionDTO>>> getActiveSessions() {
+        return send(new GetActiveSessionsQuery());
+    }
+
+    @DeleteMapping("/sessions/{userId}")
+    @Operation(
+            summary = "Invalidate user sessions",
+            description = "Revoke all sessions for a specific user")
+    @Audited(action = "INVALIDATE_USER_SESSIONS", entityType = "SESSION")
+    public ResponseEntity<ApiResponse<Void>> invalidateUserSessions(@PathVariable String userId) {
+        return send(
+                new com.iyte_yazilim
+                        .proje_pazari
+                        .application
+                        .commands
+                        .invalidateUserSessions
+                        .InvalidateUserSessionsCommand(userId));
+    }
+
+    @DeleteMapping("/sessions")
+    @Operation(
+            summary = "Invalidate all sessions",
+            description = "Revoke all active sessions globally")
+    @Audited(action = "INVALIDATE_ALL_SESSIONS", entityType = "SESSION")
+    public ResponseEntity<ApiResponse<Void>> invalidateAllSessions() {
+        return send(
+                new com.iyte_yazilim
+                        .proje_pazari
+                        .application
+                        .commands
+                        .invalidateAllSessions
+                        .InvalidateAllSessionsCommand());
     }
 }
