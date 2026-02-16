@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -17,15 +17,15 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(
-        properties = {
-            "spring.data.elasticsearch.enabled=false",
-            "spring.data.elasticsearch.repositories.enabled=false",
-            "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration,org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration,org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration"
-        })
+@TestPropertySource(properties = {
+        "spring.data.elasticsearch.enabled=false",
+        "spring.data.elasticsearch.repositories.enabled=false",
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration,org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration,org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration"
+})
 class AdminControllerIntegrationTest {
 
-    @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
     @Test
     @DisplayName("Should return 200 OK for list users endpoint when authenticated as ADMIN")
@@ -49,8 +49,8 @@ class AdminControllerIntegrationTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldReturn200ForSystemHealth() throws Exception {
         mockMvc.perform(
-                        get("/api/v1/admin/health/services")
-                                .contentType(MediaType.APPLICATION_JSON))
+                get("/api/v1/admin/health/services")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").exists());
     }
