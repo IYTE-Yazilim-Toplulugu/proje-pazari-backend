@@ -13,6 +13,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.flagContent.FlagConten
 import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent.ReviewFlaggedContentCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.sendTargetedEmail.SendTargetedEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
 import com.iyte_yazilim.proje_pazari.application.common.Audited;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationStatsDTO;
@@ -22,6 +23,8 @@ import com.iyte_yazilim.proje_pazari.application.dtos.FlaggedContentDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectStatsDTO;
+import com.iyte_yazilim.proje_pazari.application.dtos.SystemConfigDTO;
+import com.iyte_yazilim.proje_pazari.application.dtos.SystemHealthDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemOverviewDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserStatsDTO;
@@ -36,6 +39,8 @@ import com.iyte_yazilim.proje_pazari.application.queries.getApplicationStats.Get
 import com.iyte_yazilim.proje_pazari.application.queries.getAuditLogs.GetAuditLogsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getFlaggedContent.GetFlaggedContentQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectStats.GetProjectStatsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSystemConfigQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSystemHealthQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserStats.GetUserStatsQuery;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
@@ -369,5 +374,35 @@ public class AdminController extends BaseController {
                 .header("Content-Disposition", "attachment; filename=applications.csv")
                 .header("Content-Type", "text/csv; charset=UTF-8")
                 .body(result.getData().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    // ==================== SYSTEM HEALTH ====================
+
+    @GetMapping("/health/services")
+    @Operation(
+            summary = "System health check",
+            description = "Check health status of all services (database, JVM memory, uptime)")
+    public ResponseEntity<ApiResponse<SystemHealthDTO>> getSystemHealth() {
+        return send(new GetSystemHealthQuery());
+    }
+
+    // ==================== CONFIGURATION MANAGEMENT ====================
+
+    @GetMapping("/config")
+    @Operation(
+            summary = "Get system configuration",
+            description = "Get all system configuration entries")
+    public ResponseEntity<ApiResponse<SystemConfigDTO>> getSystemConfig() {
+        return send(new GetSystemConfigQuery());
+    }
+
+    @PutMapping("/config")
+    @Operation(
+            summary = "Update system configuration",
+            description = "Update system configuration entries (key-value pairs)")
+    @Audited(action = "UPDATE_SYSTEM_CONFIG", entityType = "SYSTEM")
+    public ResponseEntity<ApiResponse<Void>> updateSystemConfig(
+            @RequestBody Map<String, String> configs) {
+        return send(new UpdateSystemConfigCommand(configs));
     }
 }
