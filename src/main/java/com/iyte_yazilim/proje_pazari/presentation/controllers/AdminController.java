@@ -5,12 +5,14 @@ import com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser.AdminD
 import com.iyte_yazilim.proje_pazari.application.commands.adminFeatureProject.AdminFeatureProjectCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.adminReviewApplication.AdminReviewApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.adminUpdateUser.AdminUpdateUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.broadcastEmail.BroadcastEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.bulkApplicationAction.BulkApplicationActionCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.bulkProjectAction.BulkProjectActionCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction.BulkUserActionCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.flagContent.FlagContentCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent.ReviewFlaggedContentCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.sendTargetedEmail.SendTargetedEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.common.Audited;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationStatsDTO;
@@ -300,5 +302,32 @@ public class AdminController extends BaseController {
         String reviewAction = request.getOrDefault("action", "APPROVE");
         String reviewNote = request.get("reviewNote");
         return send(new ReviewFlaggedContentCommand(flagId, reviewAction, reviewNote));
+    }
+
+    // ==================== EMAIL & NOTIFICATIONS ====================
+
+    @PostMapping("/email/broadcast")
+    @Operation(
+            summary = "Broadcast email",
+            description = "Send email to all users or users with a specific role")
+    @Audited(action = "BROADCAST_EMAIL", entityType = "EMAIL")
+    public ResponseEntity<ApiResponse<Void>> broadcastEmail(
+            @RequestBody Map<String, String> request) {
+        String subject = request.get("subject");
+        String body = request.get("body");
+        String targetRole = request.getOrDefault("targetRole", "ALL");
+        return send(new BroadcastEmailCommand(subject, body, targetRole));
+    }
+
+    @PostMapping("/email/targeted")
+    @Operation(summary = "Send targeted email", description = "Send email to specific users by ID")
+    @Audited(action = "TARGETED_EMAIL", entityType = "EMAIL")
+    public ResponseEntity<ApiResponse<Void>> sendTargetedEmail(
+            @RequestBody Map<String, Object> request) {
+        String subject = (String) request.get("subject");
+        String body = (String) request.get("body");
+        @SuppressWarnings("unchecked")
+        List<String> userIds = (List<String>) request.get("userIds");
+        return send(new SendTargetedEmailCommand(userIds, subject, body));
     }
 }
