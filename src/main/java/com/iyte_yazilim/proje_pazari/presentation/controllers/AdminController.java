@@ -13,6 +13,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.flagContent.FlagConten
 import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent.ReviewFlaggedContentCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.sendTargetedEmail.SendTargetedEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.toggleMaintenanceMode.ToggleMaintenanceModeCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateFeatureFlag.UpdateFeatureFlagCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
 import com.iyte_yazilim.proje_pazari.application.common.Audited;
@@ -41,6 +42,7 @@ import com.iyte_yazilim.proje_pazari.application.queries.getApplicationStats.Get
 import com.iyte_yazilim.proje_pazari.application.queries.getAuditLogs.GetAuditLogsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getFeatureFlags.GetFeatureFlagsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getFlaggedContent.GetFlaggedContentQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getMaintenanceStatus.GetMaintenanceStatusQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectStats.GetProjectStatsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSystemConfigQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSystemHealthQuery;
@@ -429,5 +431,26 @@ public class AdminController extends BaseController {
         boolean enabled = request.containsKey("enabled") ? (Boolean) request.get("enabled") : false;
         String description = (String) request.get("description");
         return send(new UpdateFeatureFlagCommand(key, enabled, description));
+    }
+
+    // ==================== MAINTENANCE MODE ====================
+
+    @GetMapping("/maintenance")
+    @Operation(
+            summary = "Get maintenance status",
+            description = "Get current maintenance mode status")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMaintenanceStatus() {
+        return send(new GetMaintenanceStatusQuery());
+    }
+
+    @PostMapping("/maintenance")
+    @Operation(
+            summary = "Toggle maintenance mode",
+            description = "Enable or disable maintenance mode")
+    @Audited(action = "TOGGLE_MAINTENANCE_MODE", entityType = "SYSTEM")
+    public ResponseEntity<ApiResponse<Void>> toggleMaintenanceMode(
+            @RequestBody Map<String, Boolean> request) {
+        boolean enabled = request.getOrDefault("enabled", false);
+        return send(new ToggleMaintenanceModeCommand(enabled));
     }
 }
