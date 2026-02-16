@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.common;
 
+import com.iyte_yazilim.proje_pazari.application.service.AdminActivityNotifier;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.AuditLogRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.AuditLogEntity;
 import java.time.LocalDateTime;
@@ -12,7 +13,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-/** AOP aspect that intercepts @Audited methods and persists audit log entries. */
+/**
+ * AOP aspect that intercepts @Audited methods and persists audit log entries.
+ */
 @Aspect
 @Component
 @RequiredArgsConstructor
@@ -20,18 +23,18 @@ import org.springframework.stereotype.Component;
 public class AuditAspect {
 
     private final AuditLogRepository auditLogRepository;
+    private final AdminActivityNotifier adminActivityNotifier;
 
     @Around("@annotation(audited)")
     public Object audit(ProceedingJoinPoint joinPoint, Audited audited) throws Throwable {
         String userId = getCurrentUserId();
 
-        AuditLogEntity auditLog =
-                AuditLogEntity.builder()
-                        .action(audited.action())
-                        .entityType(audited.entityType())
-                        .performedBy(userId)
-                        .timestamp(LocalDateTime.now())
-                        .build();
+        AuditLogEntity auditLog = AuditLogEntity.builder()
+                .action(audited.action())
+                .entityType(audited.entityType())
+                .performedBy(userId)
+                .timestamp(LocalDateTime.now())
+                .build();
 
         try {
             Object result = joinPoint.proceed();
@@ -45,6 +48,8 @@ public class AuditAspect {
         } finally {
             try {
                 auditLogRepository.save(auditLog);
+                // Push real-time event to admin WebSocket clients
+                adminActivityNotifier.notifyAdmins(auditLog);
             } catch (Exception e) {
                 log.error("Failed to save audit log", e);
             }

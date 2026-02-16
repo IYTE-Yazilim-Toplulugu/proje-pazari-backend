@@ -75,6 +75,9 @@ dependencies {
     // Redis for token blacklisting
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // WebSocket for real-time admin activity dashboard
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
     // Rate limiting
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
