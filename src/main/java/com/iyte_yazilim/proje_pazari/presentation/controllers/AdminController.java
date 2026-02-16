@@ -591,4 +591,61 @@ public class AdminController extends BaseController {
                     .body(ApiResponse.validationError("Failed to read file: " + e.getMessage()));
         }
     }
+
+    // ==================== SCHEDULED EMAIL BROADCASTS ====================
+
+    @PostMapping("/email/schedule")
+    @Operation(
+            summary = "Schedule email broadcast",
+            description = "Schedule an email to be sent at a future date/time")
+    @Audited(action = "SCHEDULE_EMAIL", entityType = "EMAIL")
+    public ResponseEntity<ApiResponse<Void>> scheduleEmail(
+            @RequestBody Map<String, String> request) {
+        String subject = request.get("subject");
+        String body = request.get("body");
+        String targetRole = request.getOrDefault("targetRole", "ALL");
+        java.time.LocalDateTime scheduledAt = null;
+        if (request.containsKey("scheduledAt")) {
+            scheduledAt = java.time.LocalDateTime.parse(request.get("scheduledAt"));
+        }
+        return send(
+                new com.iyte_yazilim
+                        .proje_pazari
+                        .application
+                        .commands
+                        .scheduleEmail
+                        .ScheduleEmailCommand(subject, body, targetRole, scheduledAt));
+    }
+
+    @GetMapping("/email/scheduled")
+    @Operation(
+            summary = "List scheduled emails",
+            description = "Get all scheduled email broadcasts")
+    public ResponseEntity<
+                    ApiResponse<
+                            List<com.iyte_yazilim.proje_pazari.application.dtos.ScheduledEmailDTO>>>
+            getScheduledEmails() {
+        return send(
+                new com.iyte_yazilim
+                        .proje_pazari
+                        .application
+                        .queries
+                        .getScheduledEmails
+                        .GetScheduledEmailsQuery());
+    }
+
+    @DeleteMapping("/email/scheduled/{id}")
+    @Operation(
+            summary = "Cancel scheduled email",
+            description = "Cancel a pending scheduled email broadcast")
+    @Audited(action = "CANCEL_SCHEDULED_EMAIL", entityType = "EMAIL")
+    public ResponseEntity<ApiResponse<Void>> cancelScheduledEmail(@PathVariable String id) {
+        return send(
+                new com.iyte_yazilim
+                        .proje_pazari
+                        .application
+                        .commands
+                        .cancelScheduledEmail
+                        .CancelScheduledEmailCommand(id));
+    }
 }
