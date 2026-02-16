@@ -70,6 +70,9 @@ public class ProjectEntity {
     @Column(name = "deadline")
     private LocalDateTime deadline;
 
+    @Column(name = "featured", nullable = false, columnDefinition = "boolean default false")
+    private boolean featured = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
