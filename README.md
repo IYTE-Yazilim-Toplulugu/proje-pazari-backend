@@ -71,7 +71,11 @@ docker-compose up -d
 
 This will start:
 - PostgreSQL on port 5432
-- PgAdmin on port 5050 (http://localhost:5050)
+- MinIO API on port 9002 and Console on port 9003
+- Redis on port 6379
+- Elasticsearch on port 9200
+- Application API on port 8080
+- PgAdmin on port 5050 (profile: `tools`)
 
 ### 4. Run the Application
 
@@ -97,22 +101,55 @@ The application uses MinIO for file storage (profile pictures, project attachmen
 - MinIO API: http://localhost:9002
 - MinIO Console: http://localhost:9003
 - Default credentials: `minioadmin` / `minioadmin123`
+- Credentials can be overridden with:
+  - `MINIO_ADMIN_USER`
+  - `MINIO_ADMIN_PASSWORD`
+
+**Auto-created Buckets (via `minio-setup`):**
+- `proje-pazari-files`
+- `proje-pazari-avatars`
+- `proje-pazari-documents`
+- `proje-pazari-backups`
+
+**Default Bucket Policies:**
+- `proje-pazari-avatars`: public read (anonymous download enabled)
+- `proje-pazari-documents`: private
+- `proje-pazari-files`: private
+- `proje-pazari-backups`: private
 
 **Storage Configuration:**
 ```properties
-# In application-dev.properties (default)
+# In application.properties
 storage.provider=minio
 minio.url=http://localhost:9002
 minio.bucket-name=proje-pazari-files
+minio.avatars-bucket=proje-pazari-avatars
+minio.documents-bucket=proje-pazari-documents
+minio.backups-bucket=proje-pazari-backups
+```
+
+**Object Organization:**
+```text
+proje-pazari-avatars/users/{userId}/avatar.{ext}
+proje-pazari-documents/projects/{projectId}/{documentId}.{ext}
+proje-pazari-files/users/{userId}/profile/*
+proje-pazari-files/projects/{projectId}/attachments/*
+proje-pazari-files/temp/uploads/*
 ```
 
 **Production:**
 Set environment variables for your S3-compatible storage:
 ```bash
 MINIO_URL=https://your-storage-endpoint
-MINIO_ACCESS_KEY=your-access-key
-MINIO_SECRET_KEY=your-secret-key
-MINIO_BUCKET=your-bucket-name
+MINIO_ADMIN_USER=your-admin-user
+MINIO_ADMIN_PASSWORD=your-admin-password
+MINIO_APP_ACCESS_KEY=your-app-access-key
+MINIO_APP_SECRET_KEY=your-app-secret-key
+MINIO_CREATE_BACKEND_USER=true
+MINIO_BUCKET=proje-pazari-files
+MINIO_AVATARS_BUCKET=proje-pazari-avatars
+MINIO_DOCUMENTS_BUCKET=proje-pazari-documents
+MINIO_BACKUPS_BUCKET=proje-pazari-backups
 SPRING_PROFILES_ACTIVE=prod
 ```
 
@@ -126,6 +163,43 @@ chmod +x mc && sudo mv mc /usr/local/bin/
 # Run migration
 ./scripts/migrate-to-minio.sh
 ```
+
+**Common MinIO `mc` Operations:**
+```bash
+# List buckets
+mc ls myminio
+
+# List files in files bucket
+mc ls myminio/proje-pazari-files
+
+# Upload a file
+mc cp ./myfile.pdf myminio/proje-pazari-files/projects/proj-123/
+
+# Download a file
+mc cp myminio/proje-pazari-files/projects/proj-123/myfile.pdf ./
+
+# Bucket usage
+mc du myminio/proje-pazari-files
+```
+
+For full storage architecture, policies, backup, retention, and troubleshooting, see `STORAGE.md`.
+
+**Monitoring Profile (Prometheus + Grafana):**
+```bash
+docker compose --profile monitoring up -d prometheus alertmanager grafana
+```
+
+- Prometheus UI: http://localhost:9090
+- Alertmanager UI: http://localhost:9093
+- Grafana UI: http://localhost:3001 (default `admin` / `admin`)
+
+**Automated MinIO Backups (Daily by default):**
+```bash
+docker compose --profile maintenance up -d minio-backup-scheduler
+```
+
+- Uses `BACKUP_INTERVAL_SECONDS` (default `86400`)
+- Writes timestamped backups under `./backups/minio/`
 
 ### 6. Access API Documentation
 
