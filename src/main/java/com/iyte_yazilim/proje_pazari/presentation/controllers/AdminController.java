@@ -40,6 +40,7 @@ import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectStatsDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ScheduledEmailDTO;
+import com.iyte_yazilim.proje_pazari.application.dtos.StorageHealthDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemConfigDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemHealthDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemOverviewDTO;
@@ -66,6 +67,7 @@ import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSyst
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserStats.GetUserStatsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.listBannedIps.ListBannedIpsQuery;
+import com.iyte_yazilim.proje_pazari.application.services.StorageHealthService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
@@ -76,6 +78,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -97,6 +100,9 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "Bearer Authentication")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController extends BaseController {
+
+    @Autowired
+    private StorageHealthService storageHealthService;
 
     // ==================== USER MANAGEMENT ====================
 
@@ -397,6 +403,17 @@ public class AdminController extends BaseController {
             description = "Check health status of all services (database, JVM memory, uptime)")
     public ResponseEntity<ApiResponse<SystemHealthDTO>> getSystemHealth() {
         return send(new GetSystemHealthQuery());
+    }
+
+    // ==================== CONFIGURATION MANAGEMENT ====================
+
+    @GetMapping("/storage/health")
+    @Operation(
+            summary = "Storage health check",
+            description = "Check file storage status, usage, and bucket visibility")
+    public ResponseEntity<ApiResponse<StorageHealthDTO>> getStorageHealth() {
+        StorageHealthDTO health = storageHealthService.getStorageHealth();
+        return ResponseEntity.ok(ApiResponse.success(health, "Storage health retrieved successfully"));
     }
 
     // ==================== CONFIGURATION MANAGEMENT ====================

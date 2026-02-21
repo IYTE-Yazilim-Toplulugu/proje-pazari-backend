@@ -12,6 +12,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.Upd
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
+import com.iyte_yazilim.proje_pazari.application.dtos.StorageHealthDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemConfigDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemHealthDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemOverviewDTO;
@@ -20,6 +21,7 @@ import com.iyte_yazilim.proje_pazari.application.queries.adminListUsers.AdminLis
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSystemConfigQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSystemHealthQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
+import com.iyte_yazilim.proje_pazari.application.services.StorageHealthService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
@@ -42,6 +44,8 @@ class AdminControllerTest {
     @Mock private IMediator mediator;
 
     @Mock private IRequestMapper requestMapper;
+
+    @Mock private StorageHealthService storageHealthService;
 
     @InjectMocks private AdminController adminController;
 
@@ -281,6 +285,31 @@ class AdminControllerTest {
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertEquals("false", response.getBody().getData().configs().get("maintenanceMode"));
+        }
+    }
+
+    @Nested
+    @DisplayName("getStorageHealth() method")
+    class GetStorageHealthTests {
+
+        @Test
+        @DisplayName("should return storage health response")
+        void shouldReturnStorageHealthResponse() {
+            StorageHealthDTO health =
+                    new StorageHealthDTO(
+                            "MinioStorageAdapter",
+                            true,
+                            null,
+                            1024L,
+                            List.of("proje-pazari-files", "proje-pazari-avatars"),
+                            java.time.LocalDateTime.now());
+            when(storageHealthService.getStorageHealth()).thenReturn(health);
+
+            ResponseEntity<ApiResponse<StorageHealthDTO>> response = adminController.getStorageHealth();
+
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertTrue(response.getBody().getData().available());
+            assertEquals(1024L, response.getBody().getData().usedSpaceBytes());
         }
     }
 

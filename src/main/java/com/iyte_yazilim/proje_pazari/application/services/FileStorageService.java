@@ -25,6 +25,12 @@ public class FileStorageService {
             "${storage.allowed-content-types:image/jpeg,image/png,image/gif,image/webp,application/pdf}")
     private String allowedContentTypesString;
 
+    @Value("${minio.avatars-bucket:proje-pazari-avatars}")
+    private String avatarsBucket;
+
+    @Value("${minio.documents-bucket:proje-pazari-documents}")
+    private String documentsBucket;
+
     /**
      * Stores a file in cloud storage.
      *
@@ -40,6 +46,35 @@ public class FileStorageService {
         String path = directory + "/" + fileName;
 
         return storageAdapter.store(file, path);
+    }
+
+    /**
+     * Stores a user avatar using organized bucket structure.
+     *
+     * <p>Storage path format: {avatarsBucket}/users/{userId}/avatar.{ext}
+     */
+    public String storeUserAvatar(String userId, MultipartFile file) {
+        validateFile(file);
+        validateStorageKeyPart(userId, "userId");
+
+        String extension = getFileExtension(file.getOriginalFilename());
+        String objectName = "users/" + userId + "/avatar" + extension;
+        return storageAdapter.store(file, avatarsBucket + "/" + objectName);
+    }
+
+    /**
+     * Stores a project document using organized bucket structure.
+     *
+     * <p>Storage path format: {documentsBucket}/projects/{projectId}/{documentId}.{ext}
+     */
+    public String storeProjectDocument(String projectId, String documentId, MultipartFile file) {
+        validateFile(file);
+        validateStorageKeyPart(projectId, "projectId");
+        validateStorageKeyPart(documentId, "documentId");
+
+        String extension = getFileExtension(file.getOriginalFilename());
+        String objectName = "projects/" + projectId + "/" + documentId + extension;
+        return storageAdapter.store(file, documentsBucket + "/" + objectName);
     }
 
     public String getFileUrl(String filePath, int expirationMinutes) {
@@ -95,10 +130,20 @@ public class FileStorageService {
     }
 
     private String getFileExtension(String filename) {
-        if (filename.contains(".")) {
+        if (filename != null && filename.contains(".")) {
             return filename.substring(filename.lastIndexOf("."));
         }
         return "";
+    }
+
+    private void validateStorageKeyPart(String value, String fieldName) {
+        if (value == null
+                || value.isBlank()
+                || value.contains("/")
+                || value.contains("\\")
+                || value.contains("..")) {
+            throw new FileStorageException("Invalid " + fieldName);
+        }
     }
 
     private void validatePath(String path) {
