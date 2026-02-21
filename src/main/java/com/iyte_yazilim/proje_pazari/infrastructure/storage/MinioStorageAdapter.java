@@ -16,6 +16,11 @@ import io.minio.StatObjectResponse;
 import io.minio.http.Method;
 import io.minio.messages.Bucket;
 import io.minio.messages.Item;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,10 +44,17 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
     private static final String DEFAULT_AVATARS_BUCKET = "proje-pazari-avatars";
     private static final String DEFAULT_DOCUMENTS_BUCKET = "proje-pazari-documents";
     private static final String DEFAULT_BACKUPS_BUCKET = "proje-pazari-backups";
+    private static final String METRIC_TOTAL_USABLE_BYTES =
+            "minio_cluster_capacity_usable_total_bytes";
+    private static final String METRIC_FREE_USABLE_BYTES =
+            "minio_cluster_capacity_usable_free_bytes";
+    private static final HttpClient HTTP_CLIENT =
+            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
 
     private final MinioClient minioClient;
     private final String bucketName;
     private final Set<String> configuredBuckets;
+    private final String metricsEndpoint;
 
     @Autowired
     public MinioStorageAdapter(
@@ -62,7 +74,8 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                 avatarsBucketName,
                 documentsBucketName,
                 backupsBucketName,
-                true);
+                true,
+                resolveMetricsEndpoint(url));
     }
 
     public MinioStorageAdapter(String url, String accessKey, String secretKey, String bucketName) {
@@ -72,7 +85,8 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                 DEFAULT_AVATARS_BUCKET,
                 DEFAULT_DOCUMENTS_BUCKET,
                 DEFAULT_BACKUPS_BUCKET,
-                true);
+                true,
+                resolveMetricsEndpoint(url));
     }
 
     /**
@@ -88,7 +102,8 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                 DEFAULT_AVATARS_BUCKET,
                 DEFAULT_DOCUMENTS_BUCKET,
                 DEFAULT_BACKUPS_BUCKET,
-                false);
+                false,
+                null);
     }
 
     MinioStorageAdapter(
@@ -103,7 +118,8 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                 avatarsBucketName,
                 documentsBucketName,
                 backupsBucketName,
-                false);
+                false,
+                null);
     }
 
     private MinioStorageAdapter(
@@ -112,9 +128,11 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
             String avatarsBucketName,
             String documentsBucketName,
             String backupsBucketName,
-            boolean initializeBuckets) {
+            boolean initializeBuckets,
+            String metricsEndpoint) {
         this.minioClient = minioClient;
         this.bucketName = bucketName;
+        this.metricsEndpoint = metricsEndpoint;
 
         LinkedHashSet<String> buckets = new LinkedHashSet<>();
         buckets.add(bucketName);
@@ -264,11 +282,21 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
 
     @Override
     public Long getTotalSpaceBytes() {
+        Long total = readClusterMetric(METRIC_TOTAL_USABLE_BYTES);
+        if (total != null) {
+            return total;
+        }
         return null;
     }
 
     @Override
     public Long getUsedSpaceBytes() {
+        Long total = readClusterMetric(METRIC_TOTAL_USABLE_BYTES);
+        Long free = readClusterMetric(METRIC_FREE_USABLE_BYTES);
+        if (total != null && free != null) {
+            return Math.max(total - free, 0L);
+        }
+
         long usedBytes = 0L;
         try {
             for (String bucket : configuredBuckets) {
@@ -304,6 +332,88 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
         } catch (Exception e) {
             log.warn("Failed to list MinIO buckets: {}", e.getMessage());
             return List.of();
+        }
+    }
+
+    private Long readClusterMetric(String metricName) {
+        if (metricsEndpoint == null) {
+            return null;
+        }
+
+        try {
+            HttpRequest request =
+                    HttpRequest.newBuilder(URI.create(metricsEndpoint))
+                            .timeout(Duration.ofSeconds(3))
+                            .GET()
+                            .build();
+            HttpResponse<String> response =
+                    HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 400) {
+                log.debug(
+                        "MinIO metrics endpoint returned status {} for {}",
+                        response.statusCode(),
+                        metricsEndpoint);
+                return null;
+            }
+            return extractMetricSum(response.body(), metricName);
+        } catch (Exception e) {
+            log.debug("Failed to read MinIO metrics endpoint {}: {}", metricsEndpoint, e.getMessage());
+            return null;
+        }
+    }
+
+    private Long extractMetricSum(String metricsBody, String metricName) {
+        double sum = 0D;
+        boolean found = false;
+
+        for (String line : metricsBody.split("\\R")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                continue;
+            }
+
+            if (!(trimmed.startsWith(metricName + " ") || trimmed.startsWith(metricName + "{"))) {
+                continue;
+            }
+
+            int lastSpaceIndex = trimmed.lastIndexOf(' ');
+            if (lastSpaceIndex < 0 || lastSpaceIndex + 1 >= trimmed.length()) {
+                continue;
+            }
+
+            String valueToken = trimmed.substring(lastSpaceIndex + 1).trim();
+            try {
+                double parsed = Double.parseDouble(valueToken);
+                if (Double.isFinite(parsed)) {
+                    sum += parsed;
+                    found = true;
+                }
+            } catch (NumberFormatException ignored) {
+                // Ignore malformed metrics line and continue parsing the remaining lines.
+            }
+        }
+
+        if (!found) {
+            return null;
+        }
+        return (long) sum;
+    }
+
+    private static String resolveMetricsEndpoint(String endpointUrl) {
+        if (endpointUrl == null || endpointUrl.isBlank()) {
+            return null;
+        }
+
+        try {
+            URI endpoint = URI.create(endpointUrl);
+            String scheme = endpoint.getScheme();
+            String authority = endpoint.getRawAuthority();
+            if (scheme == null || authority == null) {
+                return null;
+            }
+            return scheme + "://" + authority + "/minio/v2/metrics/cluster";
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 
