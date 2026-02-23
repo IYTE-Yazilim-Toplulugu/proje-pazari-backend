@@ -7,6 +7,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.RefreshTokenRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -18,8 +23,27 @@ public abstract class IntegrationTestBase {
     @Autowired
     protected ObjectMapper objectMapper;
 
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private EmailVerificationRepository emailVerificationRepository;
+
+    @Autowired
+    private ProjectApplicationRepository projectApplicationRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
     @BeforeEach
     void setUp() {
-        // Clean database before each test
+        refreshTokenRepository.deleteAll();
+        emailVerificationRepository.deleteAll();
+        projectApplicationRepository.deleteAll();
+        projectRepository.deleteAll();
+        userRepository.deleteAll();
     }
 }
