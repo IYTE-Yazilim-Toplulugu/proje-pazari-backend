@@ -29,10 +29,26 @@ repositories {
 }
 
 dependencies {
+    // GreenMail for email testing
+    testImplementation 'com.icegreen:greenmail-junit5:2.0.0'
+    testImplementation 'com.icegreen:greenmail-spring:2.0.0'
+
+    // Spring Boot Thymeleaf Starter
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // Spring Boot Mail Starter
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
     // MapStruct
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    // Elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
+    // For JSON processing with Elasticsearch
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
@@ -40,6 +56,9 @@ dependencies {
 
     // ULID
     implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
+
+    // MinIO - Cloud blob storage
+    implementation 'io.minio:minio:8.5.7'
 
     // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -53,8 +72,23 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
+    // Redis for token blacklisting
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Rate limiting
+    implementation 'com.bucket4j:bucket4j-core:8.10.1'
+
+    // 2FA - Google Authenticator
+    implementation 'com.warrenstrange:googleauth:1.5.0'
+    implementation 'com.google.zxing:core:3.5.3'
+    implementation 'com.google.zxing:javase:3.5.3'
+
     // OpenAPI/Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+
+    // Email
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
     // Development
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -70,7 +104,15 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.testcontainers:elasticsearch:1.20.4'
+    testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Testcontainers for integration tests
+    testImplementation 'org.testcontainers:testcontainers:1.19.3'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+    testImplementation 'org.testcontainers:minio:1.19.3'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.named('test') {
@@ -151,4 +193,37 @@ eclipse {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+// Javadoc configuration for API documentation generation
+javadoc {
+    options {
+        encoding = 'UTF-8'
+        charSet = 'UTF-8'
+        author = true
+        version = true
+        use = true
+        windowTitle = 'Proje Pazarı Backend API Documentation'
+        docTitle = 'Proje Pazarı Backend API'
+        header = '<b>Proje Pazarı</b>'
+        bottom = 'Copyright © 2024 IYTE Yazılım Topluluğu'
+
+        links = [
+            'https://docs.oracle.com/en/java/javase/21/docs/api/',
+            'https://docs.spring.io/spring-framework/docs/current/javadoc-api/',
+            'https://docs.spring.io/spring-boot/docs/current/api/'
+        ]
+
+        addStringOption('Xdoclint:none', '-quiet')
+        addBooleanOption('html5', true)
+    }
+
+    source = sourceSets.main.allJava
+    classpath = configurations.compileClasspath
+    destinationDir = file("${buildDir}/docs/javadoc")
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
 }

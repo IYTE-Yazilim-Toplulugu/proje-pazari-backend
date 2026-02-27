@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 
 import com.github.f4b6a3.ulid.Ulid;
-import com.iyte_yazilim.proje_pazari.domain.enums.UserRole;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -42,7 +42,7 @@ public class UserEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private UserRole role;
+    private RoleType role;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -72,6 +72,15 @@ public class UserEntity {
     @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
     private Boolean isActive = true;
 
+    @Column(
+            name = "two_factor_enabled",
+            nullable = false,
+            columnDefinition = "boolean default false")
+    private boolean isTwoFactorEnabled = false;
+
+    @Column(name = "two_factor_secret")
+    private String twoFactorSecret;
+
     @PrePersist
     protected void onCreate() {
         if (id == null || id.isBlank()) {
@@ -81,7 +90,7 @@ public class UserEntity {
             isActive = true;
         }
         if (role == null) {
-            role = UserRole.USER;
+            role = RoleType.APPLICANT;
         }
         if (preferredLanguage == null || preferredLanguage.isBlank()) {
             preferredLanguage = "tr";

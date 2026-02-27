@@ -7,9 +7,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture.U
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllUsers.GetAllUsersQuery;
-import com.iyte_yazilim.proje_pazari.application.queries.getCurrentUserProfile.GetCurrentUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -17,8 +15,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -27,25 +24,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/users")
-@RequiredArgsConstructor
-@Tag(name = "User", description = "User management endpoints")
+@Tag(
+        name = "User",
+        description =
+                "User management endpoints. Includes profile management, password change, "
+                        + "profile picture upload, and account deactivation. "
+                        + "Most endpoints require authentication.")
 public class UserController extends BaseController {
 
-    private final IRequestHandler<GetCurrentUserProfileQuery, ApiResponse<UserProfileDTO>>
-            getCurrentUserProfileHandler;
-    private final IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>>
-            getUserProfileHandler;
-    private final IRequestHandler<UpdateUserProfileCommand, ApiResponse<UserDto>>
-            updateUserProfileHandler;
-    private final IRequestHandler<UploadProfilePictureCommand, ApiResponse<String>>
-            uploadProfilePictureHandler;
-    private final IRequestHandler<ChangePasswordCommand, ApiResponse<Void>> changePasswordHandler;
-    private final IRequestHandler<DeactivateAccountCommand, ApiResponse<Void>>
-            deactivateAccountHandler;
-    private final IRequestHandler<GetAllUsersQuery, ApiResponse<List<UserDto>>> getAllUsersHandler;
-
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and hasRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get all users", description = "Retrieves a list of all users")
     @ApiResponses(
@@ -58,49 +46,7 @@ public class UserController extends BaseController {
                         description = "Unauthorized")
             })
     public ResponseEntity<ApiResponse<List<UserDto>>> getAllUsers() {
-
-        ApiResponse<List<UserDto>> response = getAllUsersHandler.handle(new GetAllUsersQuery());
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
-    }
-
-    @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(
-            summary = "Get current user profile",
-            description = "Retrieves the authenticated user's complete profile with statistics")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "Profile retrieved successfully"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "401",
-                        description = "Unauthorized")
-            })
-    public ResponseEntity<ApiResponse<UserProfileDTO>> getCurrentUserProfile(Authentication auth) {
-        // No database lookup needed for user ID!
-        String userId = getCurrentUserId(auth);
-
-        ApiResponse<UserProfileDTO> response =
-                getCurrentUserProfileHandler.handle(new GetCurrentUserProfileQuery(userId));
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        return send(new GetAllUsersQuery());
     }
 
     @GetMapping("/{userId}")
@@ -117,22 +63,11 @@ public class UserController extends BaseController {
                         description = "User not found")
             })
     public ResponseEntity<ApiResponse<UserProfileDTO>> getUserProfile(@PathVariable String userId) {
-        ApiResponse<UserProfileDTO> response =
-                getUserProfileHandler.handle(new GetUserProfileQuery(userId));
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        return send(new GetUserProfileQuery(userId));
     }
 
-    @PutMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @SecurityRequirement(name = "Bearer Authentication")
+    @PutMapping
     @Operation(
             summary = "Update user profile",
             description = "Updates the authenticated user's profile information")
@@ -150,37 +85,29 @@ public class UserController extends BaseController {
             })
     public ResponseEntity<ApiResponse<UserDto>> updateProfile(
             @RequestBody @Valid UpdateUserProfileCommand command, Authentication auth) {
-        String userId = getCurrentUserId(auth);
-
-        UpdateUserProfileCommand updatedCommand =
-                new UpdateUserProfileCommand(
-                        userId,
-                        command.firstName(),
-                        command.lastName(),
-                        command.description(),
-                        command.linkedinUrl(),
-                        command.githubUrl(),
-                        command.preferredLanguage());
-
-        ApiResponse<UserDto> response = updateUserProfileHandler.handle(updatedCommand);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case VALIDATION_ERROR -> HttpStatus.BAD_REQUEST;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        return send(UpdateUserProfileCommand.class, null, null, command, auth);
     }
 
-    @PostMapping("/me/profile-picture")
+    @PostMapping(value = "/me/profile-picture", consumes = "multipart/form-data")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Upload profile picture",
-            description = "Uploads a new profile picture for the authenticated user")
+            description = "Uploads a new profile picture for the authenticated user",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            content =
+                                    @io.swagger.v3.oas.annotations.media.Content(
+                                            mediaType = "multipart/form-data",
+                                            schema =
+                                                    @io.swagger.v3.oas.annotations.media.Schema(
+                                                            type = "object",
+                                                            implementation = Object.class),
+                                            encoding =
+                                                    @io.swagger.v3.oas.annotations.media.Encoding(
+                                                            name = "file",
+                                                            contentType =
+                                                                    "image/jpeg, image/png, image/gif, image/webp"))))
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -194,22 +121,17 @@ public class UserController extends BaseController {
                         description = "Unauthorized")
             })
     public ResponseEntity<ApiResponse<String>> uploadProfilePicture(
-            @RequestParam("file") MultipartFile file, Authentication auth) {
-        String userId = getCurrentUserId(auth);
-
-        UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, file);
-
-        ApiResponse<String> response = uploadProfilePictureHandler.handle(command);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case VALIDATION_ERROR -> HttpStatus.BAD_REQUEST;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.INTERNAL_SERVER_ERROR;
-                };
-
-        return ResponseEntity.status(status).body(response);
+            @io.swagger.v3.oas.annotations.Parameter(
+                            description = "Profile picture file to upload",
+                            required = true,
+                            content =
+                                    @io.swagger.v3.oas.annotations.media.Content(
+                                            mediaType = "multipart/form-data"))
+                    @RequestParam("file")
+                    MultipartFile file,
+            Authentication auth) {
+        return send(
+                UploadProfilePictureCommand.class, null, null, null, auth, Map.of("file", file));
     }
 
     @PutMapping("/me/password")
@@ -232,26 +154,7 @@ public class UserController extends BaseController {
             })
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @RequestBody @Valid ChangePasswordCommand command, Authentication auth) {
-        String userId = getCurrentUserId(auth);
-
-        ChangePasswordCommand updatedCommand =
-                new ChangePasswordCommand(
-                        userId,
-                        command.currentPassword(),
-                        command.newPassword(),
-                        command.confirmPassword());
-
-        ApiResponse<Void> response = changePasswordHandler.handle(updatedCommand);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case VALIDATION_ERROR -> HttpStatus.BAD_REQUEST;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        return send(ChangePasswordCommand.class, null, null, command, auth);
     }
 
     @DeleteMapping("/me")
@@ -271,19 +174,8 @@ public class UserController extends BaseController {
             })
     public ResponseEntity<ApiResponse<Void>> deactivateAccount(
             @RequestParam(required = false) String reason, Authentication auth) {
-        String userId = getCurrentUserId(auth);
-
-        DeactivateAccountCommand command = new DeactivateAccountCommand(userId, reason);
-
-        ApiResponse<Void> response = deactivateAccountHandler.handle(command);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case SUCCESS -> HttpStatus.OK;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+        Map<String, String> queryParams = new java.util.HashMap<>();
+        queryParams.put("reason", reason);
+        return send(DeactivateAccountCommand.class, null, queryParams, null, auth);
     }
 }

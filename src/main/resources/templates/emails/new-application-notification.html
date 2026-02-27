@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">New Application Received</title>
+</head>
+<body>
+    <h1>New Application Received</h1>
+    <p>Hello <span th:text="${firstName}"></span>,</p>
+    <p>Good news! <strong th:text="${applicantName}"></strong> has applied to your project: <strong th:text="${projectTitle}"></strong>.</p>
+    <p>Please review their application and respond at your earliest convenience.</p>
+
+    <a th:href="'https://projepazari.com/projects/' + ${projectId} + '/applications'">View Applications</a>
+</body>
+</html>

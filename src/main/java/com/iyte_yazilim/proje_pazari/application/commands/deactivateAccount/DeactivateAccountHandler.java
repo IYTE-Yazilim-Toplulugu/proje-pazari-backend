@@ -7,10 +7,12 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class DeactivateAccountHandler
@@ -20,7 +22,11 @@ public class DeactivateAccountHandler
     private final MessageService messageService; // EKLENMELI
 
     @Override
-    @Transactional
+    @Transactional(
+            timeoutString = "${spring.transaction.timeout:30}",
+            rollbackFor = Exception.class,
+            isolation = Isolation.READ_COMMITTED,
+            propagation = Propagation.REQUIRED)
     public ApiResponse<Void> handle(DeactivateAccountCommand command) {
         UserEntity user = userRepository.findById(command.userId()).orElse(null);
 

@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.application.mappers.CreateProjectMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -14,10 +15,15 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectM
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class CreateProjectHandler
@@ -29,9 +35,23 @@ public class CreateProjectHandler
     private final CreateProjectMapper createProjectMapper;
     private final ProjectMapper projectMapper;
     private final UserMapper userMapper;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
+    /**
+     * Handles project creation command.
+     *
+     * <p>Creates a new project in DRAFT status with the specified owner.
+     *
+     * @param command the project creation command
+     * @return API response with project result or error message
+     */
     @Override
+    @Transactional(
+            timeoutString = "${spring.transaction.timeout:30}",
+            rollbackFor = Exception.class,
+            isolation = Isolation.READ_COMMITTED,
+            propagation = Propagation.REQUIRED)
     public ApiResponse<CreateProjectCommandResult> handle(CreateProjectCommand command) {
 
         // --- 1. Validation ---
@@ -68,7 +88,17 @@ public class CreateProjectHandler
         // --- 8. Result Mapping (Domain Entity -> Result DTO) ---
         var result = createProjectMapper.domainToResult(savedDomainProject);
 
-        // --- 9. Response ---
+        // --- 9. Publish event for side effects (email sending handled by event listener) ---
+        applicationEventPublisher.publishEvent(
+                new ProjectCreatedEvent(
+                        savedDomainProject.getId().toString(),
+                        savedDomainProject.getTitle(),
+                        savedDomainProject.getOwner().getId().toString(),
+                        savedDomainProject.getOwner().getEmail(),
+                        savedDomainProject.getOwner().getFirstName(),
+                        LocalDateTime.now()));
+
+        // --- 10. Response ---
         return ApiResponse.created(result, messageService.getMessage("project.created.success"));
     }
 }

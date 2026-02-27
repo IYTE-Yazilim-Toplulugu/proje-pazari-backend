@@ -12,9 +12,9 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntit
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class GetUserProfileHandler
         implements IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>> {
