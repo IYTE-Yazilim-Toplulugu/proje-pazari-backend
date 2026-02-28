@@ -694,7 +694,7 @@ rate(auth_login_total{status="failure"}[5m])
 
 #### Grafana Dashboards
 
-Log in to Grafana at http://localhost:3030 with `admin` / `admin123`.  
+Log in to Grafana at http://localhost:3030 with `admin` / `admin123`.
 Three dashboards are provisioned automatically on first start:
 
 | Dashboard | UID | Direct URL | Description |
@@ -778,7 +778,7 @@ Auto-instrumented metrics (no code needed):
 
 ### Alert Rules
 
-Prometheus evaluates `docker/prometheus/rules.yml` every 15 s.  
+Prometheus evaluates `docker/prometheus/rules.yml` every 15 s.
 Alerts fire to Grafana's unified alerting engine which routes notifications based on severity.
 
 | Alert | Condition | Severity | Notification |

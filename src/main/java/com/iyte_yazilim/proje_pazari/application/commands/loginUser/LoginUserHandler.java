@@ -1,12 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;

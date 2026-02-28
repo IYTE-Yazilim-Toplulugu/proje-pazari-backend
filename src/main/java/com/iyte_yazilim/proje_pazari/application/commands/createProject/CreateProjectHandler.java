@@ -2,7 +2,6 @@ package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
 import com.iyte_yazilim.proje_pazari.application.mappers.CreateProjectMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
@@ -10,6 +9,7 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;

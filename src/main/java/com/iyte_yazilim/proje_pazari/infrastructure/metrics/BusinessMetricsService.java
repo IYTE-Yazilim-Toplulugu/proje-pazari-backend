@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * Centralized service for custom business metrics. Exposes counters and timers for key business
- * operations: user registration, project creation, application submissions, authentication
- * events, and MinIO storage operations. Database connection pool metrics are provided
- * automatically by HikariCP via Micrometer.
+ * operations: user registration, project creation, application submissions, authentication events,
+ * and MinIO storage operations. Database connection pool metrics are provided automatically by
+ * HikariCP via Micrometer.
  */
 @Service
 public class BusinessMetricsService {
