@@ -14,7 +14,7 @@ groups:
         annotations:
           summary: "High JVM heap memory usage"
           description: >
-            JVM heap usage is {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            JVM heap usage is {{ $value | humanizePercentage }}
             (threshold 80%) for more than 2 minutes.
 
       - alert: CriticalHeapMemoryUsage
@@ -41,7 +41,7 @@ groups:
         annotations:
           summary: "High process CPU usage"
           description: >
-            Process CPU usage is {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            Process CPU usage is {{ $value | humanizePercentage }}
             (threshold 70%) for more than 3 minutes on instance {{ $labels.instance }}.
 
       - alert: HighSystemCpuUsage
@@ -52,7 +52,7 @@ groups:
         annotations:
           summary: "High system CPU usage"
           description: >
-            System CPU usage is {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            System CPU usage is {{ $value | humanizePercentage }}
             (threshold 85%) for more than 3 minutes on instance {{ $labels.instance }}.
 
   - name: http_error_alerts
@@ -69,7 +69,7 @@ groups:
         annotations:
           summary: "High HTTP 5xx error rate"
           description: >
-            HTTP 5xx error rate is {{ printf "%.2f" (mul (index .Values 0) 100) }}%
+            HTTP 5xx error rate is {{ $value | humanizePercentage }}
             (threshold 5%) over the last 5 minutes.
 
       - alert: CriticalHttpErrorRate
@@ -96,7 +96,7 @@ groups:
         annotations:
           summary: "High HTTP 4xx rate"
           description: >
-            HTTP 4xx rate is {{ printf "%.2f" (mul (index .Values 0) 100) }}%
+            HTTP 4xx rate is {{ $value | humanizePercentage }}
             (threshold 10%) over the last 5 minutes — may indicate bad client requests
             or a misconfiguration.
 
@@ -128,7 +128,7 @@ groups:
         annotations:
           summary: "Database connection pool usage above 80%"
           description: >
-            HikariCP pool usage is {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            HikariCP pool usage is {{ $value | humanizePercentage }}
             for pool {{ $labels.pool }}. Consider increasing maximum pool size.
 
       - alert: DatabaseConnectionAcquireTimeout
@@ -249,7 +249,7 @@ groups:
           summary: "High authentication failure rate (>30%)"
           description: >
             Authentication failure rate is
-            {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            {{ $value | humanizePercentage }}
             over the last 5 minutes. Possible brute-force attack.
 
       - alert: AuthenticationFailureSurge
@@ -279,7 +279,7 @@ groups:
           summary: "High MinIO upload failure rate (>5%)"
           description: >
             MinIO upload failure rate is
-            {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            {{ $value | humanizePercentage }}
             over the last 5 minutes. Check MinIO connectivity.
 
       - alert: SlowMinioUpload

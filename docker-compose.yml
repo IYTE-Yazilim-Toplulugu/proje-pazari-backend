@@ -21,8 +21,8 @@ services:
     container_name: proje-pazari-minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     ports:
       - "9002:9000"
       - "9003:9001"
@@ -41,9 +41,9 @@ services:
     image: postgres:16-alpine
     container_name: proje-pazari-db
     environment:
-      POSTGRES_DB: proje_pazari_db
-      POSTGRES_USER: yazilim
-      POSTGRES_PASSWORD: yazilim123
+      POSTGRES_DB: ${POSTGRES_DB:-proje_pazari_db}
+      POSTGRES_USER: ${POSTGRES_USER:-yazilim}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yazilim123}
     ports:
       - "5432:5432"
     volumes:
@@ -63,19 +63,19 @@ services:
       dockerfile: Dockerfile
     container_name: proje-pazari-app
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/proje_pazari_db
-      SPRING_DATASOURCE_USERNAME: yazilim
-      SPRING_DATASOURCE_PASSWORD: yazilim123
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-proje_pazari_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-yazilim}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-yazilim123}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
       SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
-      JWT_SECRET: "proje-pazari-dev-secret-key-2025-please-change-in-production-this-is-just-for-development"
+      JWT_SECRET: ${JWT_SECRET:-proje-pazari-dev-secret-key-2025-please-change-in-production-this-is-just-for-development}
       # MinIO Storage Configuration
       STORAGE_PROVIDER: minio
       MINIO_URL: http://minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin123
-      MINIO_BUCKET: proje-pazari-files
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-proje-pazari-files}
       # Elasticsearch Configuration
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
       # Redis Configuration
@@ -105,8 +105,8 @@ services:
     image: dpage/pgadmin4:latest
     container_name: proje-pazari-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@proje-pazari.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@proje-pazari.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
       - "5050:80"
@@ -206,8 +206,8 @@ services:
       - "3030:3000"
     environment:
       # Admin credentials
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD:-admin123}
       - GF_USERS_ALLOW_SIGN_UP=false
       # Unified alerting (Grafana 9+)
       - GF_UNIFIED_ALERTING_ENABLED=true
