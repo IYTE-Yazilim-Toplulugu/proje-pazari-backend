@@ -6,6 +6,7 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -31,6 +32,7 @@ public class LoginUserHandler
     private final JwtUtil jwtUtil;
     private final MessageService messageService;
     private final RefreshTokenService refreshTokenService;
+    private final BusinessMetricsService metricsService;
 
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
@@ -55,22 +57,26 @@ public class LoginUserHandler
         var errors = validator.validate(command);
         if (errors != null && errors.length > 0) {
             String errorMessage = String.join(", ", errors);
+            metricsService.incrementAuthLoginFailure();
             return ApiResponse.badRequest(errorMessage);
         }
 
         // --- 2. Find user by email ---
         UserEntity user = userRepository.findByEmail(command.email()).orElse(null);
         if (user == null) {
+            metricsService.incrementAuthLoginFailure();
             return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
         }
 
         // --- 3. Check if account is active ---
         if (user.getIsActive() == null || !user.getIsActive()) {
+            metricsService.incrementAuthLoginFailure();
             return ApiResponse.badRequest(messageService.getMessage("auth.account.deactivated"));
         }
 
         // --- 4. Verify password with BCrypt ---
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
+            metricsService.incrementAuthLoginFailure();
             return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
         }
 
@@ -101,6 +107,7 @@ public class LoginUserHandler
                         jwtExpiration);
 
         // --- 8. Response with localized message ---
+        metricsService.incrementAuthLoginSuccess();
         return ApiResponse.success(result, messageService.getMessage("auth.login.success"));
     }
 }

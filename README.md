@@ -14,6 +14,7 @@ A Spring Boot backend application for IYTE Project Marketplace, where students c
 - [Project Structure](#project-structure)
 - [Development Workflow](#development-workflow)
 - [API Documentation](#api-documentation)
+- [Monitoring](#monitoring)
 - [Testing](#testing)
 - [Contributing](#contributing)
 
@@ -54,6 +55,7 @@ cd proje-pazari-backend
 Create a `.env` file in the root directory (optional, for production):
 
 ```env
+# Application
 JWT_SECRET=your-secret-key-minimum-256-bits
 JWT_EXPIRATION=86400000
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/proje_pazari_db
@@ -61,6 +63,17 @@ SPRING_DATASOURCE_USERNAME=yazilim
 SPRING_DATASOURCE_PASSWORD=yazilim123
 EMAIL_USERNAME=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
+
+# Monitoring — Grafana alerts (optional)
+GF_SMTP_ENABLED=true
+GF_SMTP_HOST=smtp.gmail.com:587
+GF_SMTP_USER=your-email@gmail.com
+GF_SMTP_PASSWORD=your-app-password
+GF_SMTP_FROM_ADDRESS=grafana@proje-pazari.com
+GF_ALERT_EMAIL_TO=admin@proje-pazari.com
+GF_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
+GF_DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/xxx/yyy
+GF_SERVER_ROOT_URL=http://localhost:3030
 ```
 
 ### 3. Start PostgreSQL with Docker
@@ -71,7 +84,12 @@ docker-compose up -d
 
 This will start:
 - PostgreSQL on port 5432
-- PgAdmin on port 5050 (http://localhost:5050)
+- Redis on port 6379
+- MinIO API on port 9002 / Console on port 9003
+- Elasticsearch on port 9200
+- Prometheus on port 9090
+- Grafana on port 3030
+- PgAdmin on port 5050 (use `--profile tools` flag)
 
 ### 4. Run the Application
 
@@ -599,9 +617,241 @@ When using Swagger UI, you can set the `Accept-Language` header for each request
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [CQRS Pattern](https://martinfowler.com/bliki/CQRS.html)
 
-## 🤝 Contributing
+## 📊 Monitoring
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+The application ships with a full observability stack: **Prometheus** for metric collection, **Grafana** for visualization, and **Micrometer** for instrumentation.
+
+### Multi-environment startup
+
+```bash
+# Development (fast scraping, anonymous Grafana read access, SQL logging)
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up
+
+# Staging (production-like, all secrets via env)
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env.staging up
+
+# Production (resource limits, Prometheus port closed, restart:always)
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+Copy and fill in the env template for your target environment:
+
+```bash
+cp .env.dev.example .env.dev          # development
+cp .env.staging.example .env.staging  # staging
+cp .env.prod.example .env.prod        # production (never commit!)
+```
+
+### Service URLs
+
+| Service | URL | Credentials |
+|---|---|---|
+| **Prometheus** | http://localhost:9090 | — (no auth) |
+| **Grafana** | http://localhost:3030 | `admin` / `admin123` |
+| **Spring Actuator** | http://localhost:8080/actuator | — |
+| **Prometheus metrics endpoint** | http://localhost:8080/actuator/prometheus | — |
+
+---
+
+### Accessing Metrics
+
+#### Prometheus Raw Metrics
+
+```bash
+# All metrics exposed by the application
+curl http://localhost:8080/actuator/prometheus
+
+# Health check
+curl http://localhost:8080/actuator/health
+
+# Specific metric via Actuator JSON
+curl http://localhost:8080/actuator/metrics/jvm.memory.used
+curl http://localhost:8080/actuator/metrics/http.server.requests
+curl http://localhost:8080/actuator/metrics/hikaricp.connections.active
+```
+
+#### Prometheus UI
+
+Open http://localhost:9090 to run ad-hoc PromQL queries. Useful queries:
+
+```promql
+# JVM heap usage %
+sum(jvm_memory_used_bytes{area="heap"}) / sum(jvm_memory_max_bytes{area="heap"}) * 100
+
+# HTTP p95 response time
+histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))
+
+# 5xx error rate %
+sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+/ sum(rate(http_server_requests_seconds_count[5m])) * 100
+
+# Active DB connections
+hikaricp_connections_active
+
+# Auth failure rate
+rate(auth_login_total{status="failure"}[5m])
+```
+
+#### Grafana Dashboards
+
+Log in to Grafana at http://localhost:3030 with `admin` / `admin123`.
+Three dashboards are provisioned automatically on first start:
+
+| Dashboard | UID | Direct URL | Description |
+|---|---|---|---|
+| **Application Performance** | `spring-boot-app` | http://localhost:3030/d/spring-boot-app | JVM memory, CPU, threads, HTTP request rate, response time percentiles (p50/p95/p99), status code distribution, active sessions, DB connection pool, query performance |
+| **Business Metrics** | `business-metrics` | http://localhost:3030/d/business-metrics | Total users, active projects, application submissions by status, new registrations (24 h / 7 d / 30 d), project/category distribution, auth success rate, user activity heatmap, file storage activity |
+| **Infrastructure** | `infrastructure` | http://localhost:3030/d/infrastructure | PostgreSQL HikariCP pool, Redis command latency & cache hit ratio, MinIO operation rates & upload duration, Elasticsearch request latency, container CPU / memory / network / disk I/O |
+
+> 📸 Dashboard screenshots are stored in [`docs/screenshots/`](docs/screenshots/). Run the stack and capture them with **Grafana → Share → Export PNG**.
+
+#### Dashboard Backup
+
+```bash
+# Windows
+.\scripts\Backup-Dashboards.ps1
+
+# Linux / macOS
+./scripts/backup-dashboards.sh
+
+# Custom URL / credentials
+.\scripts\Backup-Dashboards.ps1 -GrafanaUrl http://my-server:3030 -Password secret
+```
+
+Backups are saved under `backups/grafana/<YYYY-MM-DD_HH-mm>/` as individual JSON files plus a `manifest.json`.
+
+#### Metrics Reference
+
+See **[`docs/metrics-explorer.md`](docs/metrics-explorer.md)** for the complete PromQL query reference, tag filtering guide, and cheat sheet for all exposed metrics.
+
+#### Stack Verification
+
+Run the automated testing checklist after starting the stack:
+
+```bash
+# Windows
+.\scripts\Verify-Stack.ps1
+
+# Linux / macOS
+./scripts/verify-stack.sh
+
+# Include container restart / persistence test
+.\scripts\Verify-Stack.ps1 -TestPersistence
+./scripts/verify-stack.sh --test-persistence
+```
+
+The script covers all 12 checklist items: service health, Prometheus scraping, Grafana login, datasource connection, dashboard provisioning, business metric counters, HTTP metrics, alert rules, data persistence, and README completeness.
+
+---
+
+### Custom Business Metrics
+
+The following application-level metrics are exposed at `/actuator/prometheus`:
+
+| Metric | Labels | Description |
+|---|---|---|
+| `user_registration_total` | `status={success,failure}` | User registration counter |
+| `project_creation_total` | `status={success,failure}` | Project creation counter |
+| `application_submission_total` | `status={success,failure}` | Application submission counter |
+| `auth_login_total` | `status={success,failure}` | Authentication attempts |
+| `minio_upload_total` | `status={success,failure}` | MinIO upload counter |
+| `minio_upload_duration_seconds` | — | MinIO upload duration histogram |
+| `minio_download_total` | `status={success,failure}` | MinIO presigned URL generation counter |
+| `minio_delete_total` | `status={success,failure}` | MinIO delete counter |
+
+All metrics carry an `application="proje-pazari"` tag set via:
+
+```properties
+management.metrics.tags.application=${spring.application.name}
+```
+
+Auto-instrumented metrics (no code needed):
+
+- **`http_server_requests_seconds`** — per-endpoint request rate, duration histogram, status codes
+- **`hikaricp_connections_*`** — full HikariCP connection pool stats
+- **`jvm_memory_*`, `jvm_threads_*`** — JVM internals
+- **`process_cpu_usage`, `system_cpu_usage`** — CPU
+- **`tomcat_sessions_*`** — active HTTP sessions
+- **`lettuce_command_*`, `cache_gets_total`** — Redis / Lettuce
+
+---
+
+### Alert Rules
+
+Prometheus evaluates `docker/prometheus/rules.yml` every 15 s.
+Alerts fire to Grafana's unified alerting engine which routes notifications based on severity.
+
+| Alert | Condition | Severity | Notification |
+|---|---|---|---|
+| `HighHeapMemoryUsage` | Heap > 80 % for 2 m | warning | Email + Slack |
+| `CriticalHeapMemoryUsage` | Heap > 95 % for 1 m | critical | Email + Slack + Discord |
+| `HighProcessCpuUsage` | CPU > 70 % for 3 m | warning | Email + Slack |
+| `HighHttpErrorRate` | 5xx > 5 % for 2 m | warning | Email + Slack |
+| `CriticalHttpErrorRate` | 5xx > 20 % for 1 m | critical | Email + Slack + Discord |
+| `DatabaseConnectionPoolExhaustion` | Pool full + pending waiters | critical | Email + Slack + Discord |
+| `DatabaseConnectionPoolHighUsage` | Pool > 80 % for 2 m | warning | Email + Slack |
+| `DatabaseConnectionAcquireTimeout` | Any timeout in 5 m | warning | Email + Slack |
+| `SlowApiResponseTime` | p95 > 2 s for 5 m | warning | Email + Slack |
+| `CriticalApiResponseTime` | p95 > 5 s for 2 m | critical | Email + Slack + Discord |
+| `SlowApiEndpoint` | Per-endpoint p95 > 2 s | warning | Email + Slack |
+| `SpringBootAppDown` | `up == 0` for 1 m | critical | Email + Slack + Discord |
+| `PrometheusTargetMissing` | Any target `up == 0` for 2 m | critical | Email + Slack + Discord |
+| `HighAuthenticationFailureRate` | Failure rate > 30 % for 3 m | warning | Email + Slack |
+| `AuthenticationFailureSurge` | > 5 failures/s for 1 m | critical | Email + Slack + Discord |
+| `MinioUploadFailureRateHigh` | Upload failure > 5 % for 3 m | warning | Email + Slack |
+| `SlowMinioUpload` | Upload p95 > 10 s for 5 m | warning | Email + Slack |
+
+#### Notification channels
+
+Configure alert destinations by setting environment variables (in `.env` or shell):
+
+```bash
+# Email (SMTP)
+GF_SMTP_ENABLED=true
+GF_SMTP_HOST=smtp.gmail.com:587
+GF_SMTP_USER=your-email@gmail.com
+GF_SMTP_PASSWORD=your-app-password
+GF_ALERT_EMAIL_TO=oncall@proje-pazari.com
+
+# Slack (optional)
+GF_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T.../B.../xxx
+
+# Discord (optional)
+GF_DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/.../xxx
+```
+
+Routing policy:
+
+| Severity | Email | Slack | Discord | Repeat interval |
+|---|---|---|---|---|
+| critical | ✅ | ✅ `#alerts-critical` | ✅ | 1 h |
+| warning | ✅ | ✅ `#alerts-warning` | — | 8 h |
+| service-down | ✅ | ✅ | ✅ | 30 min |
+
+---
+
+### Monitoring File Structure
+
+```
+docker/
+├── prometheus/
+│   ├── prometheus.yml          # Scrape config — targets app:8080/actuator/prometheus
+│   └── rules.yml               # 19 alert rules across 8 groups
+└── grafana/
+    └── provisioning/
+        ├── datasources/
+        │   └── prometheus.yml  # Auto-wires Prometheus as default datasource
+        ├── dashboards/
+        │   ├── dashboard.yml                    # Dashboard loader config
+        │   ├── spring-boot-dashboard.json       # JVM + HTTP dashboard
+        │   ├── business-metrics-dashboard.json  # Business KPIs dashboard
+        │   └── infrastructure-dashboard.json    # Infra health dashboard
+        └── alerting/
+            ├── contact-points.yml       # Email, Slack, Discord contact points
+            └── notification-policies.yml # Alert routing rules
+```
+
+## 🤝 Contributingfor details on our code of conduct and the process for submitting pull requests.
 
 ## 📝 License
 
