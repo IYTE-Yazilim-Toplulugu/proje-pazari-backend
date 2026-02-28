@@ -211,7 +211,7 @@ check.dependsOn jacocoTestCoverageVerification
 spotless {
     java {
         target 'src/**/*.java'
-        googleJavaFormat('1.19.1').aosp()  // AOSP style uses 4-space indentation
+        googleJavaFormat('1.19.2').aosp()  // AOSP style uses 4-space indentation
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
