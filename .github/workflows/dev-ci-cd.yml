@@ -63,14 +63,8 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build -x test
 
-      - name: Run tests
-        run: ./gradlew test
-
-      - name: Generate coverage report
-        run: ./gradlew jacocoTestReport
-
-      - name: Verify coverage threshold
-        run: ./gradlew jacocoTestCoverageVerification
+      - name: Run tests with coverage
+        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification
 
       - name: Upload test results
         if: always()

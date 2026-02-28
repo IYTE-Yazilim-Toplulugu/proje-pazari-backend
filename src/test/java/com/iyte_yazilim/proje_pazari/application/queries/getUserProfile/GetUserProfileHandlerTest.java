@@ -25,14 +25,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GetUserProfileHandlerTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private ProjectRepository projectRepository;
+    @Mock private ProjectRepository projectRepository;
 
-    @InjectMocks
-    private GetUserProfileHandler handler;
+    @InjectMocks private GetUserProfileHandler handler;
 
     @Test
     @DisplayName("Should return user profile with projects")

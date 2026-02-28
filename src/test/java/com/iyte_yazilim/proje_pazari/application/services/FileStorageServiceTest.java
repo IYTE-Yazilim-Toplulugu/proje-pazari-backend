@@ -16,8 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 class FileStorageServiceTest {
 
-    @TempDir
-    Path tempDir;
+    @TempDir Path tempDir;
 
     private FileStorageService fileStorageService;
 
@@ -34,7 +33,7 @@ class FileStorageServiceTest {
         when(file.getContentType()).thenReturn("image/jpeg");
         when(file.getOriginalFilename()).thenReturn("photo.jpg");
         when(file.getSize()).thenReturn(1024L);
-        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[] { 1, 2, 3 }));
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[] {1, 2, 3}));
 
         // When
         String fileName = fileStorageService.storeFile(file, "user-123");
@@ -55,9 +54,10 @@ class FileStorageServiceTest {
         when(file.getOriginalFilename()).thenReturn("document.pdf");
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> fileStorageService.storeFile(file, "user-123"));
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> fileStorageService.storeFile(file, "user-123"));
         assertEquals("Only image files are allowed", exception.getMessage());
     }
 
@@ -71,9 +71,10 @@ class FileStorageServiceTest {
         when(file.getSize()).thenReturn(6L * 1024 * 1024); // 6MB
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> fileStorageService.storeFile(file, "user-123"));
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> fileStorageService.storeFile(file, "user-123"));
         assertEquals("File size exceeds 5MB limit", exception.getMessage());
     }
 
@@ -97,7 +98,7 @@ class FileStorageServiceTest {
     void shouldLoadFile_whenFileExists() throws IOException {
         // Given
         Path testFile = tempDir.resolve("test-file.jpg");
-        Files.write(testFile, new byte[] { 1, 2, 3 });
+        Files.write(testFile, new byte[] {1, 2, 3});
 
         // When
         Resource resource = fileStorageService.loadFileAsResource("test-file.jpg");
@@ -112,8 +113,7 @@ class FileStorageServiceTest {
     void shouldThrow_whenFileDoesNotExist() {
         // When & Then
         assertThrows(
-                IOException.class,
-                () -> fileStorageService.loadFileAsResource("nonexistent.jpg"));
+                IOException.class, () -> fileStorageService.loadFileAsResource("nonexistent.jpg"));
     }
 
     @Test
@@ -121,7 +121,7 @@ class FileStorageServiceTest {
     void shouldDeleteFile_whenFileExists() throws IOException {
         // Given
         Path testFile = tempDir.resolve("to-delete.jpg");
-        Files.write(testFile, new byte[] { 1, 2, 3 });
+        Files.write(testFile, new byte[] {1, 2, 3});
 
         // When
         fileStorageService.deleteFile("to-delete.jpg");

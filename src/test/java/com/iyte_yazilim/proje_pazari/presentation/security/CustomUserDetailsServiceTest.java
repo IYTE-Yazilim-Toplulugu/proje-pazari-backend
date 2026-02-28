@@ -18,11 +18,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 @ExtendWith(MockitoExtension.class)
 class CustomUserDetailsServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @InjectMocks
-    private CustomUserDetailsService service;
+    @InjectMocks private CustomUserDetailsService service;
 
     @Test
     @DisplayName("Should load user details when user exists and is active")
@@ -54,9 +52,9 @@ class CustomUserDetailsServiceTest {
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         // When & Then
-        UsernameNotFoundException exception = assertThrows(
-                UsernameNotFoundException.class,
-                () -> service.loadUserByUsername(email));
+        UsernameNotFoundException exception =
+                assertThrows(
+                        UsernameNotFoundException.class, () -> service.loadUserByUsername(email));
         assertTrue(exception.getMessage().contains("User not found"));
     }
 
@@ -74,9 +72,9 @@ class CustomUserDetailsServiceTest {
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
 
         // When & Then
-        UsernameNotFoundException exception = assertThrows(
-                UsernameNotFoundException.class,
-                () -> service.loadUserByUsername(email));
+        UsernameNotFoundException exception =
+                assertThrows(
+                        UsernameNotFoundException.class, () -> service.loadUserByUsername(email));
         assertTrue(exception.getMessage().contains("deactivated"));
     }
 
@@ -94,7 +92,6 @@ class CustomUserDetailsServiceTest {
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
 
         // When & Then
-        assertThrows(
-                UsernameNotFoundException.class, () -> service.loadUserByUsername(email));
+        assertThrows(UsernameNotFoundException.class, () -> service.loadUserByUsername(email));
     }
 }

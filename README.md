@@ -6,8 +6,6 @@ A Spring Boot backend application for IYTE Project Marketplace, where students c
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
 [![CI](https://github.com/IYTE-Yazilim-Toplulugu/proje-pazari-backend/actions/workflows/dev-ci-cd.yml/badge.svg)](https://github.com/IYTE-Yazilim-Toplulugu/proje-pazari-backend/actions/workflows/dev-ci-cd.yml)
-[![Tests](https://img.shields.io/badge/tests-125%20passed-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen.svg)]()
 
 ## 📋 Table of Contents
 

@@ -24,17 +24,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GetAllUsersHandlerTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private UserMapper userMapper;
+    @Mock private UserMapper userMapper;
 
-    @Mock
-    private UserDtoMapper userDtoMapper;
+    @Mock private UserDtoMapper userDtoMapper;
 
-    @InjectMocks
-    private GetAllUsersHandler handler;
+    @InjectMocks private GetAllUsersHandler handler;
 
     @Test
     @DisplayName("Should return all users successfully")
@@ -58,8 +54,12 @@ class GetAllUsersHandlerTest {
         domain2.setId(Ulid.fast());
         domain2.setEmail("user2@std.iyte.edu.tr");
 
-        UserDto dto1 = new UserDto("user-1", "user1@std.iyte.edu.tr", "John", "Doe", null, null, null, null);
-        UserDto dto2 = new UserDto("user-2", "user2@std.iyte.edu.tr", "Jane", "Smith", null, null, null, null);
+        UserDto dto1 =
+                new UserDto(
+                        "user-1", "user1@std.iyte.edu.tr", "John", "Doe", null, null, null, null);
+        UserDto dto2 =
+                new UserDto(
+                        "user-2", "user2@std.iyte.edu.tr", "Jane", "Smith", null, null, null, null);
 
         when(userRepository.findAll()).thenReturn(List.of(entity1, entity2));
         when(userMapper.entityToDomain(entity1)).thenReturn(domain1);

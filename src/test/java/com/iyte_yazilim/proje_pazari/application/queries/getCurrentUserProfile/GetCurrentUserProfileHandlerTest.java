@@ -25,8 +25,7 @@ class GetCurrentUserProfileHandlerTest {
     @Mock
     private IRequestHandler<GetUserProfileQuery, ApiResponse<UserProfileDTO>> getUserProfileHandler;
 
-    @InjectMocks
-    private GetCurrentUserProfileHandler handler;
+    @InjectMocks private GetCurrentUserProfileHandler handler;
 
     @Test
     @DisplayName("Should delegate to GetUserProfileHandler with correct user ID")
@@ -35,23 +34,24 @@ class GetCurrentUserProfileHandlerTest {
         String authenticatedUserId = "auth-user-123";
         GetCurrentUserProfileQuery query = new GetCurrentUserProfileQuery(authenticatedUserId);
 
-        UserProfileDTO expectedProfile = new UserProfileDTO(
-                authenticatedUserId,
-                "test@std.iyte.edu.tr",
-                "John",
-                "Doe",
-                "John Doe",
-                null,
-                null,
-                null,
-                null,
-                LocalDateTime.now(),
-                0,
-                0,
-                Collections.emptyList());
+        UserProfileDTO expectedProfile =
+                new UserProfileDTO(
+                        authenticatedUserId,
+                        "test@std.iyte.edu.tr",
+                        "John",
+                        "Doe",
+                        "John Doe",
+                        null,
+                        null,
+                        null,
+                        null,
+                        LocalDateTime.now(),
+                        0,
+                        0,
+                        Collections.emptyList());
 
-        ApiResponse<UserProfileDTO> expectedResponse = ApiResponse.success(expectedProfile,
-                "User profile retrieved successfully");
+        ApiResponse<UserProfileDTO> expectedResponse =
+                ApiResponse.success(expectedProfile, "User profile retrieved successfully");
 
         when(getUserProfileHandler.handle(any(GetUserProfileQuery.class)))
                 .thenReturn(expectedResponse);
@@ -65,7 +65,8 @@ class GetCurrentUserProfileHandlerTest {
         assertEquals(authenticatedUserId, response.getData().id());
 
         // Verify delegation with correct user ID
-        ArgumentCaptor<GetUserProfileQuery> captor = ArgumentCaptor.forClass(GetUserProfileQuery.class);
+        ArgumentCaptor<GetUserProfileQuery> captor =
+                ArgumentCaptor.forClass(GetUserProfileQuery.class);
         verify(getUserProfileHandler).handle(captor.capture());
         assertEquals(authenticatedUserId, captor.getValue().userId());
     }

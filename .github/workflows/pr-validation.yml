@@ -35,22 +35,12 @@ jobs:
           echo "status=✅ Code formatting is correct" >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      - name: Run tests
+      - name: Run tests with coverage
         id: tests
         run: |
-          ./gradlew test
+          ./gradlew test jacocoTestReport jacocoTestCoverageVerification
           echo "status=✅ All tests passed" >> $GITHUB_OUTPUT
         continue-on-error: true
-
-      - name: Generate coverage
-        run: ./gradlew jacocoTestReport
-
-      - name: Verify coverage threshold (70%)
-        id: coverage
-        run: |
-          ./gradlew jacocoTestCoverageVerification
-          echo "status=✅ Coverage threshold met" >> $GITHUB_OUTPUT
-        continue-on-error: false
 
       - name: Upload coverage report
         if: always()
@@ -74,7 +64,6 @@ jobs:
           script: |
             const formatStatus = '${{ steps.format-check.outcome }}' === 'success' ? '✅' : '❌';
             const testStatus = '${{ steps.tests.outcome }}' === 'success' ? '✅' : '❌';
-            const coverageStatus = '${{ steps.coverage.outcome }}' === 'success' ? '✅' : '❌';
             const buildStatus = '${{ steps.build.outcome }}' === 'success' ? '✅' : '❌';
 
             const body = `## PR Validation Results
@@ -82,13 +71,11 @@ jobs:
             | Check | Status |
             |-------|--------|
             | Code Formatting | ${formatStatus} |
-            | Tests | ${testStatus} |
-            | Coverage (≥70%) | ${coverageStatus} |
+            | Tests & Coverage | ${testStatus} |
             | Build | ${buildStatus} |
 
             ${formatStatus === '❌' ? '⚠️ Please run `make format` to fix formatting issues\n' : ''}
-            ${testStatus === '❌' ? '⚠️ Some tests are failing. Please fix them before merging\n' : ''}
-            ${coverageStatus === '❌' ? '⚠️ Code coverage is below 70%. Please add more tests\n' : ''}
+            ${testStatus === '❌' ? '⚠️ Some tests are failing or coverage is below 70%. Please fix before merging\n' : ''}
             ${buildStatus === '❌' ? '⚠️ Build failed. Please check the logs\n' : ''}
 
             **Commit**: ${context.sha.substring(0, 7)}
@@ -103,7 +90,7 @@ jobs:
             });
 
       - name: Check if validation passed
-        if: steps.format-check.outcome != 'success' || steps.tests.outcome != 'success' || steps.coverage.outcome != 'success' || steps.build.outcome != 'success'
+        if: steps.format-check.outcome != 'success' || steps.tests.outcome != 'success' || steps.build.outcome != 'success'
         run: |
           echo "❌ PR validation failed. Please fix the issues above."
           exit 1

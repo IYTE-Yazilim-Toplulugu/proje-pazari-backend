@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.presentation.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -100,18 +101,17 @@ class JwtUtilTest {
     @Test
     @DisplayName("Should invalidate expired token")
     void shouldInvalidateExpiredToken() throws Exception {
-        // Set very short expiration
+        // Set negative expiration to make token expire immediately
         Field expirationField = JwtUtil.class.getDeclaredField("expiration");
         expirationField.setAccessible(true);
-        expirationField.set(jwtUtil, 1L); // 1ms expiration
+        expirationField.set(jwtUtil, -1L); // Past expiration
 
         String token = jwtUtil.generateToken("test@std.iyte.edu.tr");
 
-        // Wait for token to expire
-        Thread.sleep(50);
-
-        // When & Then
-        assertThrows(Exception.class, () -> jwtUtil.validateToken(token, "test@std.iyte.edu.tr"));
+        // When & Then - expect specific ExpiredJwtException
+        assertThrows(
+                ExpiredJwtException.class,
+                () -> jwtUtil.validateToken(token, "test@std.iyte.edu.tr"));
     }
 
     @Test
