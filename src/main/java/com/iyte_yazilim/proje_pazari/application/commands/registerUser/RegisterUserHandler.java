@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 import com.iyte_yazilim.proje_pazari.application.mappers.RegisterUserMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
@@ -38,6 +39,7 @@ public class RegisterUserHandler
     private final ApplicationEventPublisher eventPublisher;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final BusinessMetricsService metricsService;
 
     /**
      * Handles user registration command.
@@ -60,6 +62,7 @@ public class RegisterUserHandler
         var errors = validator.validate(command);
         if (errors != null && errors.length > 0) {
             String errorMessage = String.join(", ", errors);
+            metricsService.incrementUserRegistrationFailure();
             return ApiResponse.badRequest(errorMessage);
         }
 
@@ -68,11 +71,13 @@ public class RegisterUserHandler
         try {
             iyteEmail = IyteEmail.of(command.email());
         } catch (IllegalArgumentException e) {
+            metricsService.incrementUserRegistrationFailure();
             return ApiResponse.badRequest(e.getMessage());
         }
 
         // --- 2. Check if email already exists ---
         if (userRepository.existsByEmail(iyteEmail.getValue())) {
+            metricsService.incrementUserRegistrationFailure();
             return ApiResponse.badRequest(
                     messageService.getMessage("auth.email.already.registered"));
         }
@@ -114,6 +119,7 @@ public class RegisterUserHandler
         var result = registerUserMapper.domainToResult(savedDomainUser);
 
         // --- 11. Response with localized message ---
+        metricsService.incrementUserRegistrationSuccess();
         return ApiResponse.created(result, messageService.getMessage("user.registered.success"));
     }
 }

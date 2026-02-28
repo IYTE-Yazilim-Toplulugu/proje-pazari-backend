@@ -1,0 +1,49 @@
+# docker-compose.staging.yml
+# Staging overrides — merge with:
+#   docker-compose -f docker-compose.yml -f docker-compose.staging.yml up
+#
+# What this changes vs base:
+#   • app runs with staging profile
+#   • All secrets come from environment / .env.staging
+#   • Resource limits applied (realistic but not as tight as prod)
+#   • Grafana branding and custom ini applied
+#   • pgAdmin disabled
+
+services:
+  app:
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      MINIO_URL: ${MINIO_URL}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  prometheus:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  grafana:
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - ./docker/grafana/grafana.ini:/etc/grafana/grafana.ini
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  pgadmin:
+    profiles:
+      - tools     # Only start pgAdmin with --profile tools in staging

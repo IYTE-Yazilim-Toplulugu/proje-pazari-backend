@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
 import com.iyte_yazilim.proje_pazari.application.mappers.CreateProjectMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
@@ -37,6 +38,7 @@ public class CreateProjectHandler
     private final UserMapper userMapper;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final BusinessMetricsService metricsService;
 
     /**
      * Handles project creation command.
@@ -58,12 +60,14 @@ public class CreateProjectHandler
         var errors = validator.validate(command);
         if (errors != null && errors.length > 0) {
             String errorMessage = String.join(", ", errors);
+            metricsService.incrementProjectCreationFailure();
             return ApiResponse.badRequest(errorMessage);
         }
 
         // --- 2. Verify Owner Exists ---
         UserEntity ownerEntity = userRepository.findById(command.ownerId()).orElse(null);
         if (ownerEntity == null) {
+            metricsService.incrementProjectCreationFailure();
             return ApiResponse.notFound(
                     messageService.getMessage(
                             "project.owner.not.found", new Object[] {command.ownerId()}));
@@ -99,6 +103,7 @@ public class CreateProjectHandler
                         LocalDateTime.now()));
 
         // --- 10. Response ---
+        metricsService.incrementProjectCreationSuccess();
         return ApiResponse.created(result, messageService.getMessage("project.created.success"));
     }
 }

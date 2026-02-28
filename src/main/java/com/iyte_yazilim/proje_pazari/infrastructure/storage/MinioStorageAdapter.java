@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
@@ -31,15 +32,18 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
 
     private final MinioClient minioClient;
     private final String bucketName;
+    private final BusinessMetricsService metricsService;
 
     @Autowired
     public MinioStorageAdapter(
             @Value("${minio.url}") String url,
             @Value("${minio.access-key}") String accessKey,
             @Value("${minio.secret-key}") String secretKey,
-            @Value("${minio.bucket-name}") String bucketName) {
+            @Value("${minio.bucket-name}") String bucketName,
+            BusinessMetricsService metricsService) {
 
         this.bucketName = bucketName;
+        this.metricsService = metricsService;
         this.minioClient =
                 MinioClient.builder().endpoint(url).credentials(accessKey, secretKey).build();
 
@@ -52,9 +56,10 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
      * @param minioClient the MinIO client (can be mocked)
      * @param bucketName the bucket name
      */
-    MinioStorageAdapter(MinioClient minioClient, String bucketName) {
+    MinioStorageAdapter(MinioClient minioClient, String bucketName, BusinessMetricsService metricsService) {
         this.minioClient = minioClient;
         this.bucketName = bucketName;
+        this.metricsService = metricsService;
     }
 
     private void createBucketIfNotExists() {
@@ -84,36 +89,42 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
 
     @Override
     public String store(MultipartFile file, String path) {
-        try {
-            minioClient.putObject(
-                    PutObjectArgs.builder().bucket(bucketName).object(path).stream(
-                                    file.getInputStream(), file.getSize(), -1)
-                            .contentType(file.getContentType())
-                            .build());
+        return metricsService.getMinioUploadTimer().record(() -> {
+            try {
+                minioClient.putObject(
+                        PutObjectArgs.builder().bucket(bucketName).object(path).stream(
+                                        file.getInputStream(), file.getSize(), -1)
+                                .contentType(file.getContentType())
+                                .build());
 
-            log.debug("Stored file in MinIO: {}/{}", bucketName, path);
+                log.debug("Stored file in MinIO: {}/{}", bucketName, path);
+                metricsService.incrementMinioUploadSuccess();
+                return path;
 
-            return path;
+                // Return the permanent object path; presigned URLs should be generated on-demand
+                // using generatePresignedUrl when temporary access is needed.
 
-            // Return the permanent object path; presigned URLs should be generated on-demand
-            // using generatePresignedUrl when temporary access is needed.
-
-        } catch (Exception e) {
-            throw new FileStorageException("Failed to upload file to MinIO", e);
-        }
+            } catch (Exception e) {
+                metricsService.incrementMinioUploadFailure();
+                throw new FileStorageException("Failed to upload file to MinIO", e);
+            }
+        });
     }
 
     @Override
     public String generatePresignedUrl(String path, int expirationMinutes) {
         try {
-            return minioClient.getPresignedObjectUrl(
+            String url = minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(bucketName)
                             .object(path)
                             .expiry(expirationMinutes, TimeUnit.MINUTES)
                             .build());
+            metricsService.incrementMinioDownloadSuccess();
+            return url;
         } catch (Exception e) {
+            metricsService.incrementMinioDownloadFailure();
             throw new FileStorageException("Failed to generate presigned URL", e);
         }
     }
@@ -124,7 +135,9 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
             minioClient.removeObject(
                     RemoveObjectArgs.builder().bucket(bucketName).object(path).build());
             log.debug("Deleted file from MinIO: {}/{}", bucketName, path);
+            metricsService.incrementMinioDeleteSuccess();
         } catch (Exception e) {
+            metricsService.incrementMinioDeleteFailure();
             throw new FileStorageException("Failed to delete file from MinIO", e);
         }
     }
