@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -32,12 +33,13 @@ class MinioStorageAdapterUnitTest {
 
     @Mock private MinioClient mockMinioClient;
     @Mock private MultipartFile mockFile;
+    @Mock private BusinessMetricsService metricsService;
     private MinioStorageAdapter adapter;
 
     @BeforeEach
     void setUp() throws Exception {
         // Create adapter using the package-private constructor for testing with mock client
-        adapter = new MinioStorageAdapter(mockMinioClient, "test-bucket");
+        adapter = new MinioStorageAdapter(mockMinioClient, "test-bucket", metricsService);
     }
 
     @Nested
