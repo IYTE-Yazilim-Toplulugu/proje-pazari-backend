@@ -1,0 +1,28 @@
+package com.iyte_yazilim.proje_pazari.application.services;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
+
+/**
+ * Application service for email verification token operations.
+ *
+ * <p>Handles token generation and validation logic at the application layer.
+ */
+@Service
+public class VerificationTokenService {
+
+    private static final long EXPIRATION_HOURS = 24;
+
+    public String generateToken() {
+        return UUID.randomUUID().toString();
+    }
+
+    public LocalDateTime calculateExpirationDate() {
+        return LocalDateTime.now().plusHours(EXPIRATION_HOURS);
+    }
+
+    public boolean isTokenExpired(LocalDateTime expirationDate) {
+        return LocalDateTime.now().isAfter(expirationDate);
+    }
+}

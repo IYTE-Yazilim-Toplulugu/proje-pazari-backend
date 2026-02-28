@@ -1,8 +1,11 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -37,6 +40,10 @@ public class UserEntity {
     @Column(name = "last_name")
     private String lastName;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private RoleType role;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -49,6 +56,13 @@ public class UserEntity {
     @Column(name = "github_url")
     private String githubUrl;
 
+    /**
+     * User's preferred language for API responses (e.g., "tr", "en") Default: "tr" (Turkish) If
+     * set, overrides Accept-Language header
+     */
+    @Column(name = "preferred_language", length = 5)
+    private String preferredLanguage = "tr";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -58,6 +72,15 @@ public class UserEntity {
     @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
     private Boolean isActive = true;
 
+    @Column(
+            name = "two_factor_enabled",
+            nullable = false,
+            columnDefinition = "boolean default false")
+    private boolean isTwoFactorEnabled = false;
+
+    @Column(name = "two_factor_secret")
+    private String twoFactorSecret;
+
     @PrePersist
     protected void onCreate() {
         if (id == null || id.isBlank()) {
@@ -65,6 +88,12 @@ public class UserEntity {
         }
         if (isActive == null) {
             isActive = true;
+        }
+        if (role == null) {
+            role = RoleType.APPLICANT;
+        }
+        if (preferredLanguage == null || preferredLanguage.isBlank()) {
+            preferredLanguage = "tr";
         }
         createdAt = LocalDateTime.now();
     }

@@ -1,0 +1,32 @@
+# docker-compose.dev.yml
+# Development overrides — merge with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# What this changes vs base:
+#   • app runs with dev profile (SQL logging, dev JWT secret)
+#   • Prometheus scrape interval reduced to 5s for faster feedback
+#   • Grafana allows anonymous read-only access for easy browsing
+#   • pgAdmin enabled by default (no --profile flag needed)
+#   • Resource limits removed for developer machines
+
+services:
+  app:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    # Hot-reload: mount source for devtools (optional, requires spring-boot-devtools)
+    volumes:
+      - ./src:/workspace/src:ro
+
+  prometheus:
+    volumes:
+      - ./docker/prometheus/prometheus.dev.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_LOG_LEVEL: "info"
+    volumes:
+      - ./docker/grafana/grafana.ini:/etc/grafana/grafana.ini
+
+  pgadmin:
+    profiles: []       # override: always start in dev (no --profile tools required)
