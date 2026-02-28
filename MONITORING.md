@@ -290,7 +290,7 @@ Source  : LoginUserHandler.handle()
 | `status=success` | JWT + refresh token generated, `ApiResponse.success()` returned |
 | `status=failure` | Validation error, user not found, account inactive, wrong password |
 
-> ⚠️ A high `status=failure` rate may indicate a brute-force attack.  
+> ⚠️ A high `status=failure` rate may indicate a brute-force attack.
 > The `AuthenticationFailureSurge` alert fires at > 5 failures/s.
 
 **Example PromQL:**
