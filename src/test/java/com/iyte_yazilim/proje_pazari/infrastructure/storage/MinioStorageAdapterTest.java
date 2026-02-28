@@ -52,7 +52,11 @@ class MinioStorageAdapterTest {
         try {
             adapter =
                     new MinioStorageAdapter(
-                            "http://localhost:9000", "minioadmin", "minioadmin123", "test-bucket", metricsService);
+                            "http://localhost:9000",
+                            "minioadmin",
+                            "minioadmin123",
+                            "test-bucket",
+                            metricsService);
         } catch (FileStorageException e) {
             // Constructor failed because MinIO isn't running
             // Create adapter using reflection to bypass the connection attempt
@@ -89,7 +93,11 @@ class MinioStorageAdapterTest {
         try {
             tempAdapter =
                     new MinioStorageAdapter(
-                            "http://localhost:9000", "minioadmin", "minioadmin123", "test-bucket", metricsService);
+                            "http://localhost:9000",
+                            "minioadmin",
+                            "minioadmin123",
+                            "test-bucket",
+                            metricsService);
         } catch (FileStorageException e) {
             // If it still fails, we need to create it differently
             // This is a limitation - the constructor always tries to connect

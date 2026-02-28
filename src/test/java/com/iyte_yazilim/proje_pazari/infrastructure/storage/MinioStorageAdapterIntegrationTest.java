@@ -61,7 +61,9 @@ class MinioStorageAdapterIntegrationTest {
                 "MinIO container should be running");
         String minioUrl = minioContainer.getS3URL();
         BusinessMetricsService metricsService = mock(BusinessMetricsService.class);
-        adapter = new MinioStorageAdapter(minioUrl, ACCESS_KEY, SECRET_KEY, BUCKET_NAME, metricsService);
+        adapter =
+                new MinioStorageAdapter(
+                        minioUrl, ACCESS_KEY, SECRET_KEY, BUCKET_NAME, metricsService);
     }
 
     @Test
