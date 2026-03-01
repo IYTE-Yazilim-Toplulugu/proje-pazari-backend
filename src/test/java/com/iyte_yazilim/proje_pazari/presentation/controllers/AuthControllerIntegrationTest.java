@@ -6,7 +6,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iyte_yazilim.proje_pazari.TestRateLimitConfig;
 import com.iyte_yazilim.proje_pazari.TestRedisConfig;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
 import java.util.Map;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,8 @@ class AuthControllerIntegrationTest {
 
         @Autowired
         private MockMvc mockMvc;
+        @Autowired
+        private EmailVerificationRepository emailVerificationRepository;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Test
@@ -81,6 +86,12 @@ class AuthControllerIntegrationTest {
                                                 .content(objectMapper.writeValueAsString(registerRequest)))
                                 .andExpect(status().isCreated());
 
+                EmailVerificationEntity verification = emailVerificationRepository
+                                .findByEmailAndVerifiedAtIsNull("logintest@std.iyte.edu.tr")
+                                .orElseThrow();
+                verification.setVerifiedAt(LocalDateTime.now());
+                emailVerificationRepository.save(verification);
+
                 Map<String, String> loginRequest = Map.of(
                                 "email", "logintest@std.iyte.edu.tr",
                                 "password", "SecurePassword123!");
@@ -90,7 +101,7 @@ class AuthControllerIntegrationTest {
                                                 .contentType(MediaType.APPLICATION_JSON)
                                                 .content(objectMapper.writeValueAsString(loginRequest)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.token").exists())
+                                .andExpect(jsonPath("$.data.accessToken").exists())
                                 .andExpect(jsonPath("$.data.email").value("logintest@std.iyte.edu.tr"));
         }
 
@@ -108,6 +119,12 @@ class AuthControllerIntegrationTest {
                                                 .contentType(MediaType.APPLICATION_JSON)
                                                 .content(objectMapper.writeValueAsString(registerRequest)))
                                 .andExpect(status().isCreated());
+
+                EmailVerificationEntity verification = emailVerificationRepository
+                                .findByEmailAndVerifiedAtIsNull("wrongpw@std.iyte.edu.tr")
+                                .orElseThrow();
+                verification.setVerifiedAt(LocalDateTime.now());
+                emailVerificationRepository.save(verification);
 
                 Map<String, String> loginRequest = Map.of(
                                 "email", "wrongpw@std.iyte.edu.tr",

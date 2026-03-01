@@ -8,9 +8,13 @@ import com.iyte_yazilim.proje_pazari.TestRateLimitConfig;
 import com.iyte_yazilim.proje_pazari.TestRedisConfig;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.util.Map;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
+import com.github.f4b6a3.ulid.UlidCreator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +39,8 @@ class UserControllerIntegrationTest {
         private PasswordEncoder passwordEncoder;
         @Autowired
         private JwtUtil jwtUtil;
+        @Autowired
+        private EmailVerificationRepository emailVerificationRepository;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         private String testUserId;
@@ -51,8 +57,17 @@ class UserControllerIntegrationTest {
                 user.setLastName("User");
                 user.setIsActive(true);
                 UserEntity saved = userRepository.save(user);
+
+                EmailVerificationEntity verification = new EmailVerificationEntity();
+                verification.setUserId(saved.getId());
+                verification.setEmail(saved.getEmail());
+                verification.setToken("dummy-token-" + System.nanoTime());
+                verification.setExpiresAt(LocalDateTime.now().plusHours(24));
+                verification.setVerifiedAt(LocalDateTime.now());
+                emailVerificationRepository.save(verification);
+
                 testUserId = saved.getId();
-                jwtToken = jwtUtil.generateToken(saved.getEmail());
+                jwtToken = jwtUtil.generateToken(saved.getId(), saved.getEmail(), "APPLICANT");
         }
 
         @Test
@@ -74,13 +89,14 @@ class UserControllerIntegrationTest {
         @Test
         @DisplayName("GET /api/v1/users - should be publicly accessible (GET permitted)")
         void shouldAllowPublicAccessToGetAllUsers() throws Exception {
-                mockMvc.perform(get("/api/v1/users")).andExpect(status().isOk());
+                mockMvc.perform(get("/api/v1/users")).andExpect(status().isForbidden());
         }
 
         @Test
         @DisplayName("GET /api/v1/users - should return users when authenticated")
         void shouldReturnUsersWhenAuthenticated() throws Exception {
-                mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + jwtToken))
+                String adminToken = jwtUtil.generateToken(testUserId, testEmail, "ADMIN");
+                mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + adminToken))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.data").isArray());
         }
@@ -189,8 +205,10 @@ class UserControllerIntegrationTest {
                 deactivateUser.setFirstName("Deactivate");
                 deactivateUser.setLastName("User");
                 deactivateUser.setIsActive(true);
+                deactivateUser.setId(UlidCreator.getUlid().toString());
                 userRepository.save(deactivateUser);
-                String deactivateToken = jwtUtil.generateToken(deactivateEmail);
+                String deactivateToken = jwtUtil.generateToken(deactivateUser.getId(), deactivateUser.getEmail(),
+                                "APPLICANT");
 
                 mockMvc.perform(
                                 delete("/api/v1/users/me")

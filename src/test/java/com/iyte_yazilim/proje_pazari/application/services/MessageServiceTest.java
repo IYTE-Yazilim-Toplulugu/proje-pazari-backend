@@ -12,15 +12,15 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
-@TestPropertySource(
-        properties = {
-            "spring.data.elasticsearch.enabled=false",
-            "spring.data.elasticsearch.repositories.enabled=false",
-            "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration,org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration,org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration"
-        })
+@TestPropertySource(properties = {
+        "spring.data.elasticsearch.enabled=false",
+        "spring.data.elasticsearch.repositories.enabled=false",
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration,org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration,org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration"
+})
 class MessageServiceTest {
 
-    @Autowired private MessageService messageService;
+    @Autowired
+    private MessageService messageService;
 
     @BeforeEach
     void setUp() {
@@ -69,7 +69,7 @@ class MessageServiceTest {
     void shouldReturnMessageWithParameters_inTurkish() {
         // Given
         LocaleContextHolder.setLocale(Locale.forLanguageTag("tr"));
-        Object[] args = {"E-posta"};
+        Object[] args = { "E-posta" };
 
         // When
         String message = messageService.getMessage("validation.field.required", args);
@@ -83,7 +83,7 @@ class MessageServiceTest {
     void shouldReturnMessageWithParameters_inEnglish() {
         // Given
         LocaleContextHolder.setLocale(Locale.forLanguageTag("en"));
-        Object[] args = {"Email"};
+        Object[] args = { "Email" };
 
         // When
         String message = messageService.getMessage("validation.field.required", args);
@@ -124,7 +124,7 @@ class MessageServiceTest {
     void shouldHandleMultipleParameters() {
         // Given
         LocaleContextHolder.setLocale(Locale.forLanguageTag("en"));
-        Object[] args = {"Password", "8", "100"};
+        Object[] args = { "Password", "8", "100" };
 
         // When
         String message = messageService.getMessage("validation.field.size", args);
@@ -152,12 +152,12 @@ class MessageServiceTest {
     void shouldHandleProjectMessages() {
         // Turkish
         LocaleContextHolder.setLocale(Locale.forLanguageTag("tr"));
-        String turkishMessage = messageService.getMessage("project.created");
+        String turkishMessage = messageService.getMessage("project.created.success");
         assertEquals("Proje başarıyla oluşturuldu", turkishMessage);
 
         // English
         LocaleContextHolder.setLocale(Locale.forLanguageTag("en"));
-        String englishMessage = messageService.getMessage("project.created");
+        String englishMessage = messageService.getMessage("project.created.success");
         assertEquals("Project created successfully", englishMessage);
     }
 

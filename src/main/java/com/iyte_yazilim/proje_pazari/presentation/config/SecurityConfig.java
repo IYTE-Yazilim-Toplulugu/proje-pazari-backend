@@ -22,61 +22,63 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final RateLimitFilter rateLimitFilter;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final RateLimitFilter rateLimitFilter;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-            throws Exception {
-        return config.getAuthenticationManager();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+                        throws Exception {
+                return config.getAuthenticationManager();
+        }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(
-                        auth ->
-                                auth
-                                        // Swagger/OpenAPI endpoints
-                                        .requestMatchers(
-                                                "/swagger-ui/**",
-                                                "/swagger-ui",
-                                                "/v3/api-docs/**",
-                                                "/swagger-ui.html",
-                                                "/swagger-resources/**",
-                                                "/webjars/**")
-                                        .permitAll()
-                                        // Actuator health endpoints
-                                        .requestMatchers("/actuator/**")
-                                        .permitAll()
-                                        .requestMatchers("/api/v1/health")
-                                        .permitAll()
-                                        // Public authentication endpoints
-                                        .requestMatchers("/api/v1/auth/**")
-                                        .permitAll()
-                                        // File serving endpoints (profile pictures are public)
-                                        .requestMatchers("/api/v1/files/**")
-                                        .permitAll()
-                                        // Public read-only endpoints - anyone can view user
-                                        // profiles and projects
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/users/**")
-                                        .permitAll()
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/**")
-                                        .permitAll()
-                                        // All other requests require authentication
-                                        .anyRequest()
-                                        .authenticated())
-                .sessionManagement(
-                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(
-                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http.csrf(AbstractHttpConfigurer::disable)
+                                .authorizeHttpRequests(
+                                                auth -> auth
+                                                                // Swagger/OpenAPI endpoints
+                                                                .requestMatchers(
+                                                                                "/swagger-ui/**",
+                                                                                "/swagger-ui",
+                                                                                "/v3/api-docs/**",
+                                                                                "/swagger-ui.html",
+                                                                                "/swagger-resources/**",
+                                                                                "/webjars/**")
+                                                                .permitAll()
+                                                                // Actuator health endpoints
+                                                                .requestMatchers("/actuator/**")
+                                                                .permitAll()
+                                                                .requestMatchers("/api/v1/health")
+                                                                .permitAll()
+                                                                // Public authentication endpoints
+                                                                .requestMatchers("/api/v1/auth/**")
+                                                                .permitAll()
+                                                                // File serving endpoints (profile pictures are public)
+                                                                .requestMatchers("/api/v1/files/**")
+                                                                .permitAll()
+                                                                // Public read-only endpoints - anyone can view user
+                                                                // profiles and projects
+                                                                .requestMatchers(HttpMethod.GET, "/api/v1/users",
+                                                                                "/api/v1/users/**")
+                                                                .permitAll()
+                                                                .requestMatchers(HttpMethod.GET, "/api/v1/projects",
+                                                                                "/api/v1/projects/**")
+                                                                .permitAll()
+                                                                // All other requests require authentication
+                                                                .anyRequest()
+                                                                .authenticated())
+                                .sessionManagement(
+                                                session -> session
+                                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                                .addFilterBefore(
+                                                jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+                return http.build();
+        }
 }

@@ -8,8 +8,11 @@ import com.iyte_yazilim.proje_pazari.TestRateLimitConfig;
 import com.iyte_yazilim.proje_pazari.TestRedisConfig;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.util.Map;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +37,8 @@ class ProjectControllerIntegrationTest {
         private PasswordEncoder passwordEncoder;
         @Autowired
         private JwtUtil jwtUtil;
+        @Autowired
+        private EmailVerificationRepository emailVerificationRepository;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         private String testUserId;
@@ -48,8 +53,17 @@ class ProjectControllerIntegrationTest {
                 user.setLastName("Owner");
                 user.setIsActive(true);
                 UserEntity saved = userRepository.save(user);
+
+                EmailVerificationEntity verification = new EmailVerificationEntity();
+                verification.setUserId(saved.getId());
+                verification.setEmail(saved.getEmail());
+                verification.setToken("dummy-token-" + System.nanoTime());
+                verification.setExpiresAt(LocalDateTime.now().plusHours(24));
+                verification.setVerifiedAt(LocalDateTime.now());
+                emailVerificationRepository.save(verification);
+
                 testUserId = saved.getId();
-                jwtToken = jwtUtil.generateToken(saved.getEmail());
+                jwtToken = jwtUtil.generateToken(saved.getId(), saved.getEmail(), "PROJECT_OWNER");
         }
 
         @Test

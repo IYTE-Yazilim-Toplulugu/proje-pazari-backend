@@ -14,6 +14,10 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
+import java.time.LocalDateTime;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
@@ -29,6 +33,10 @@ class UserJourneyE2ETest {
 
         @Autowired
         private MockMvc mockMvc;
+        @Autowired
+        private UserRepository userRepository;
+        @Autowired
+        private EmailVerificationRepository emailVerificationRepository;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         private static String jwtToken;
@@ -54,8 +62,20 @@ class UserJourneyE2ETest {
 
         @Test
         @Order(2)
-        @DisplayName("E2E: User logs in and receives JWT token")
+        @DisplayName("E2E: User verifies email, logs in and receives JWT token")
         void step2_login() throws Exception {
+                // Change role to EMPLOYER so they can create projects later
+                com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity user = userRepository
+                                .findByEmail("e2e-journey@std.iyte.edu.tr").orElseThrow();
+                user.setRole(com.iyte_yazilim.proje_pazari.domain.enums.RoleType.PROJECT_OWNER);
+                userRepository.save(user);
+
+                EmailVerificationEntity verification = emailVerificationRepository
+                                .findByEmailAndVerifiedAtIsNull("e2e-journey@std.iyte.edu.tr")
+                                .orElseThrow();
+                verification.setVerifiedAt(LocalDateTime.now());
+                emailVerificationRepository.save(verification);
+
                 Map<String, String> request = Map.of(
                                 "email", "e2e-journey@std.iyte.edu.tr",
                                 "password", "SecureE2EPassword123!");
@@ -65,12 +85,12 @@ class UserJourneyE2ETest {
                                                 .contentType(MediaType.APPLICATION_JSON)
                                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.token").exists())
+                                .andExpect(jsonPath("$.data.accessToken").exists())
                                 .andReturn();
 
                 String responseBody = result.getResponse().getContentAsString();
                 JsonNode body = objectMapper.readTree(responseBody);
-                jwtToken = body.get("data").get("token").asText();
+                jwtToken = body.get("data").get("accessToken").asText();
                 userId = body.get("data").get("userId").asText();
         }
 
