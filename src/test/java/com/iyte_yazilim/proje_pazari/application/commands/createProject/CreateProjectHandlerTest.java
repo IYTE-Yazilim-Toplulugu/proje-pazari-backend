@@ -30,26 +30,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class CreateProjectHandlerTest {
 
-    @Mock
-    private ProjectRepository projectRepository;
+    @Mock private ProjectRepository projectRepository;
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private IValidator<CreateProjectCommand> validator;
+    @Mock private IValidator<CreateProjectCommand> validator;
 
-    @Mock
-    private CreateProjectMapper createProjectMapper;
+    @Mock private CreateProjectMapper createProjectMapper;
 
-    @Mock
-    private ProjectMapper projectMapper;
+    @Mock private ProjectMapper projectMapper;
 
-    @Mock
-    private UserMapper userMapper;
+    @Mock private UserMapper userMapper;
 
-    @InjectMocks
-    private CreateProjectHandler handler;
+    @InjectMocks private CreateProjectHandler handler;
 
     @Test
     @DisplayName("Should create project successfully when valid command provided")
@@ -60,16 +53,17 @@ class CreateProjectHandlerTest {
         String ownerId = ownerUlid.toString();
         String projectId = projectUlid.toString();
 
-        CreateProjectCommand command = new CreateProjectCommand(
-                "Test Project",
-                "This is a test project description",
-                ownerId,
-                new String[] {},
-                new String[] { "java", "spring" },
-                5,
-                new String[] { "Java", "Spring Boot" },
-                "Software Development",
-                LocalDateTime.now().plusDays(30));
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "Test Project",
+                        "This is a test project description",
+                        ownerId,
+                        new String[] {},
+                        new String[] {"java", "spring"},
+                        5,
+                        new String[] {"Java", "Spring Boot"},
+                        "Software Development",
+                        LocalDateTime.now().plusDays(30));
 
         UserEntity ownerEntity = new UserEntity();
         ownerEntity.setId(ownerId);
@@ -93,18 +87,19 @@ class CreateProjectHandlerTest {
         savedDomainProject.setTitle(command.projectName());
         savedDomainProject.setOwner(ownerDomain);
 
-        CreateProjectCommandResult expectedResult = new CreateProjectCommandResult(
-                projectId,
-                command.projectName(),
-                command.description(),
-                ownerId,
-                new String[] {},
-                new String[] {},
-                5,
-                0,
-                new String[] { "Java", "Spring Boot" },
-                "Software Development",
-                LocalDateTime.now().plusDays(30));
+        CreateProjectCommandResult expectedResult =
+                new CreateProjectCommandResult(
+                        projectId,
+                        command.projectName(),
+                        command.description(),
+                        ownerId,
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        0,
+                        new String[] {"Java", "Spring Boot"},
+                        "Software Development",
+                        LocalDateTime.now().plusDays(30));
 
         when(validator.validate(command)).thenReturn(null);
         when(userRepository.findById(ownerId)).thenReturn(Optional.of(ownerEntity));
@@ -132,13 +127,13 @@ class CreateProjectHandlerTest {
     @DisplayName("Should return validation error when command is invalid")
     void shouldReturnError_whenValidationFails() {
         // Given
-        CreateProjectCommand command = new CreateProjectCommand(
-                "", "Short", "", null, null, null, null, null, null);
+        CreateProjectCommand command =
+                new CreateProjectCommand("", "Short", "", null, null, null, null, null, null);
 
         when(validator.validate(command))
                 .thenReturn(
                         new String[] {
-                                "Project name is required", "Description must be at least 10 characters"
+                            "Project name is required", "Description must be at least 10 characters"
                         });
 
         // When
@@ -157,16 +152,17 @@ class CreateProjectHandlerTest {
     void shouldReturnError_whenOwnerNotFound() {
         // Given
         String nonExistentOwnerId = Ulid.fast().toString();
-        CreateProjectCommand command = new CreateProjectCommand(
-                "Test Project",
-                "This is a test project description",
-                nonExistentOwnerId,
-                new String[] {},
-                new String[] {},
-                5,
-                new String[] {},
-                null,
-                null);
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "Test Project",
+                        "This is a test project description",
+                        nonExistentOwnerId,
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        new String[] {},
+                        null,
+                        null);
 
         when(validator.validate(command)).thenReturn(null);
         when(userRepository.findById(nonExistentOwnerId)).thenReturn(Optional.empty());
@@ -190,16 +186,17 @@ class CreateProjectHandlerTest {
         String ownerId = ownerUlid.toString();
         String projectId = projectUlid.toString();
 
-        CreateProjectCommand command = new CreateProjectCommand(
-                "Valid Project",
-                "This is a valid project description",
-                ownerId,
-                new String[] {},
-                new String[] {},
-                5,
-                new String[] {},
-                null,
-                null);
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "Valid Project",
+                        "This is a valid project description",
+                        ownerId,
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        new String[] {},
+                        null,
+                        null);
 
         UserEntity ownerEntity = new UserEntity();
         ownerEntity.setId(ownerId);
@@ -214,18 +211,19 @@ class CreateProjectHandlerTest {
         Project savedDomainProject = new Project();
         savedDomainProject.setId(projectUlid);
 
-        CreateProjectCommandResult expectedResult = new CreateProjectCommandResult(
-                projectId,
-                command.projectName(),
-                command.description(),
-                ownerId,
-                new String[] {},
-                new String[] {},
-                5,
-                0,
-                new String[] {},
-                null,
-                null);
+        CreateProjectCommandResult expectedResult =
+                new CreateProjectCommandResult(
+                        projectId,
+                        command.projectName(),
+                        command.description(),
+                        ownerId,
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        0,
+                        new String[] {},
+                        null,
+                        null);
 
         when(validator.validate(command)).thenReturn(new String[] {});
         when(userRepository.findById(ownerId)).thenReturn(Optional.of(ownerEntity));

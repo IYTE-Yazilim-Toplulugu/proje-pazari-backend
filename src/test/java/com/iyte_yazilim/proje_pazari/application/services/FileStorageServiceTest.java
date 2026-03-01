@@ -21,11 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 @ExtendWith(MockitoExtension.class)
 class FileStorageServiceTest {
 
-    @Mock
-    private IFileStorageAdapter storageAdapter;
+    @Mock private IFileStorageAdapter storageAdapter;
 
-    @InjectMocks
-    private FileStorageService fileStorageService;
+    @InjectMocks private FileStorageService fileStorageService;
 
     private void setDefaultConfig() {
         ReflectionTestUtils.setField(fileStorageService, "maxFileSize", DataSize.ofMegabytes(10));
@@ -149,8 +147,7 @@ class FileStorageServiceTest {
     void shouldRejectInvalidPath() {
         // When & Then
         assertThrows(
-                FileStorageException.class,
-                () -> fileStorageService.deleteFile("../etc/passwd"));
+                FileStorageException.class, () -> fileStorageService.deleteFile("../etc/passwd"));
     }
 
     @Test

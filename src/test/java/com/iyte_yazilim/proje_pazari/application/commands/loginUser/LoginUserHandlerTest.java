@@ -29,32 +29,23 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class LoginUserHandlerTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private EmailVerificationRepository emailVerificationRepository;
+    @Mock private EmailVerificationRepository emailVerificationRepository;
 
-    @Mock
-    private IValidator<LoginUserCommand> validator;
+    @Mock private IValidator<LoginUserCommand> validator;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    @Mock private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private JwtUtil jwtUtil;
+    @Mock private JwtUtil jwtUtil;
 
-    @Mock
-    private MessageService messageService;
+    @Mock private MessageService messageService;
 
-    @Mock
-    private RefreshTokenService refreshTokenService;
+    @Mock private RefreshTokenService refreshTokenService;
 
-    @Mock
-    private BusinessMetricsService metricsService;
+    @Mock private BusinessMetricsService metricsService;
 
-    @InjectMocks
-    private LoginUserHandler handler;
+    @InjectMocks private LoginUserHandler handler;
 
     @Test
     @DisplayName("Should login successfully when credentials are valid")
@@ -110,7 +101,7 @@ class LoginUserHandlerTest {
         LoginUserCommand command = new LoginUserCommand("", "");
 
         when(validator.validate(command))
-                .thenReturn(new String[] { "Email is required", "Password is required" });
+                .thenReturn(new String[] {"Email is required", "Password is required"});
 
         // When
         ApiResponse<LoginUserResult> response = handler.handle(command);

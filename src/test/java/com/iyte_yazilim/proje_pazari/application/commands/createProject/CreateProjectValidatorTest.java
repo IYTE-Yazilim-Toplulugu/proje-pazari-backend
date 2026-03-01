@@ -14,16 +14,17 @@ class CreateProjectValidatorTest {
     @DisplayName("Should return no errors for valid command")
     void shouldReturnNoErrors_whenCommandIsValid() {
         // Given
-        CreateProjectCommand command = new CreateProjectCommand(
-                "Test Project",
-                "A valid project description",
-                "owner-123",
-                new String[] {},
-                new String[] { "java" },
-                5,
-                new String[] { "Java" },
-                "Software Development",
-                LocalDateTime.now().plusDays(30));
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "Test Project",
+                        "A valid project description",
+                        "owner-123",
+                        new String[] {},
+                        new String[] {"java"},
+                        5,
+                        new String[] {"Java"},
+                        "Software Development",
+                        LocalDateTime.now().plusDays(30));
 
         // When
         String[] errors = validator.validate(command);
@@ -37,16 +38,17 @@ class CreateProjectValidatorTest {
     @DisplayName("Should return error when project name is null")
     void shouldReturnError_whenProjectNameIsNull() {
         // Given
-        CreateProjectCommand command = new CreateProjectCommand(
-                null,
-                "A valid description",
-                "owner-123",
-                new String[] {},
-                new String[] {},
-                5,
-                new String[] {},
-                null,
-                null);
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        null,
+                        "A valid description",
+                        "owner-123",
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        new String[] {},
+                        null,
+                        null);
 
         // When
         String[] errors = validator.validate(command);
@@ -67,16 +69,17 @@ class CreateProjectValidatorTest {
     @DisplayName("Should return error when project name is empty")
     void shouldReturnError_whenProjectNameIsEmpty() {
         // Given
-        CreateProjectCommand command = new CreateProjectCommand(
-                "",
-                "A valid description",
-                "owner-123",
-                new String[] {},
-                new String[] {},
-                5,
-                new String[] {},
-                null,
-                null);
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "",
+                        "A valid description",
+                        "owner-123",
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        new String[] {},
+                        null,
+                        null);
 
         // When
         String[] errors = validator.validate(command);
@@ -97,16 +100,17 @@ class CreateProjectValidatorTest {
     @DisplayName("Should return error when owner ID is null")
     void shouldReturnError_whenOwnerIdIsNull() {
         // Given
-        CreateProjectCommand command = new CreateProjectCommand(
-                "Test Project",
-                "A valid description",
-                null,
-                new String[] {},
-                new String[] {},
-                5,
-                new String[] {},
-                null,
-                null);
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "Test Project",
+                        "A valid description",
+                        null,
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        new String[] {},
+                        null,
+                        null);
 
         // When
         String[] errors = validator.validate(command);
@@ -127,16 +131,17 @@ class CreateProjectValidatorTest {
     @DisplayName("Should return error when owner ID is empty")
     void shouldReturnError_whenOwnerIdIsEmpty() {
         // Given
-        CreateProjectCommand command = new CreateProjectCommand(
-                "Test Project",
-                "A valid description",
-                "",
-                new String[] {},
-                new String[] {},
-                5,
-                new String[] {},
-                null,
-                null);
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "Test Project",
+                        "A valid description",
+                        "",
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        new String[] {},
+                        null,
+                        null);
 
         // When
         String[] errors = validator.validate(command);
@@ -157,16 +162,9 @@ class CreateProjectValidatorTest {
     @DisplayName("Should return multiple errors when both name and owner ID are missing")
     void shouldReturnMultipleErrors_whenBothFieldsAreMissing() {
         // Given
-        CreateProjectCommand command = new CreateProjectCommand(
-                null,
-                "A valid description",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null);
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        null, "A valid description", null, null, null, null, null, null, null);
 
         // When
         String[] errors = validator.validate(command);
