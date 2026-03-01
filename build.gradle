@@ -110,6 +110,7 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql:1.20.4'
     testImplementation 'org.testcontainers:elasticsearch:1.20.4'
     testImplementation 'org.testcontainers:minio:1.20.4'
+    testImplementation 'com.redis:testcontainers-redis:2.2.4'
 
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
@@ -146,6 +147,8 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
+    dependsOn processResources
+    mustRunAfter test
     violationRules {
         rule {
             limit {
