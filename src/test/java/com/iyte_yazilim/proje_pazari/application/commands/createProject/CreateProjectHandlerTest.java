@@ -34,247 +34,241 @@ import org.springframework.context.ApplicationEventPublisher;
 @ExtendWith(MockitoExtension.class)
 class CreateProjectHandlerTest {
 
-        @Mock
-        private ProjectRepository projectRepository;
+    @Mock private ProjectRepository projectRepository;
 
-        @Mock
-        private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-        @Mock
-        private IValidator<CreateProjectCommand> validator;
+    @Mock private IValidator<CreateProjectCommand> validator;
 
-        @Mock
-        private CreateProjectMapper createProjectMapper;
+    @Mock private CreateProjectMapper createProjectMapper;
 
-        @Mock
-        private ProjectMapper projectMapper;
+    @Mock private ProjectMapper projectMapper;
 
-        @Mock
-        private UserMapper userMapper;
+    @Mock private UserMapper userMapper;
 
-        @Mock
-        private MessageService messageService;
+    @Mock private MessageService messageService;
 
-        @Mock
-        private ApplicationEventPublisher applicationEventPublisher;
+    @Mock private ApplicationEventPublisher applicationEventPublisher;
 
-        @Mock
-        private BusinessMetricsService metricsService;
+    @Mock private BusinessMetricsService metricsService;
 
-        @InjectMocks
-        private CreateProjectHandler handler;
+    @InjectMocks private CreateProjectHandler handler;
 
-        @BeforeEach
-        void setUp() {
-                lenient()
-                                .when(messageService.getMessage("project.created.success"))
-                                .thenReturn("Project created successfully");
-                lenient()
-                                .when(messageService.getMessage(eq("project.owner.not.found"), any(Object[].class)))
-                                .thenAnswer(
-                                                invocation -> {
-                                                        Object[] args = invocation.getArgument(1);
-                                                        return "Owner with ID " + args[0] + " not found";
-                                                });
-        }
+    @BeforeEach
+    void setUp() {
+        lenient()
+                .when(messageService.getMessage("project.created.success"))
+                .thenReturn("Project created successfully");
+        lenient()
+                .when(messageService.getMessage(eq("project.owner.not.found"), any(Object[].class)))
+                .thenAnswer(
+                        invocation -> {
+                            Object[] args = invocation.getArgument(1);
+                            return "Owner with ID " + args[0] + " not found";
+                        });
+    }
 
-        @Test
-        @DisplayName("Should create project successfully when valid command provided")
-        void shouldCreateProject_whenValidCommand() {
-                // Given
-                Ulid ownerUlid = Ulid.fast();
-                Ulid projectUlid = Ulid.fast();
-                String ownerId = ownerUlid.toString();
-                String projectId = projectUlid.toString();
+    @Test
+    @DisplayName("Should create project successfully when valid command provided")
+    void shouldCreateProject_whenValidCommand() {
+        // Given
+        Ulid ownerUlid = Ulid.fast();
+        Ulid projectUlid = Ulid.fast();
+        String ownerId = ownerUlid.toString();
+        String projectId = projectUlid.toString();
 
-                CreateProjectCommand command = new CreateProjectCommand(
-                                "Test Project",
-                                "This is a test project description",
-                                ownerId,
-                                new String[] {},
-                                new String[] { "java", "spring" },
-                                5,
-                                new String[] { "Java", "Spring Boot" },
-                                "Software Development",
-                                LocalDateTime.now().plusDays(30));
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "Test Project",
+                        "This is a test project description",
+                        ownerId,
+                        new String[] {},
+                        new String[] {"java", "spring"},
+                        5,
+                        new String[] {"Java", "Spring Boot"},
+                        "Software Development",
+                        LocalDateTime.now().plusDays(30));
 
-                UserEntity ownerEntity = new UserEntity();
-                ownerEntity.setId(ownerId);
-                ownerEntity.setEmail("owner@std.iyte.edu.tr");
+        UserEntity ownerEntity = new UserEntity();
+        ownerEntity.setId(ownerId);
+        ownerEntity.setEmail("owner@std.iyte.edu.tr");
 
-                User ownerDomain = new User();
-                ownerDomain.setId(ownerUlid);
-                ownerDomain.setEmail("owner@std.iyte.edu.tr");
-                ownerDomain.setFirstName("Owner");
+        User ownerDomain = new User();
+        ownerDomain.setId(ownerUlid);
+        ownerDomain.setEmail("owner@std.iyte.edu.tr");
+        ownerDomain.setFirstName("Owner");
 
-                Project domainProject = new Project();
-                domainProject.setTitle(command.projectName());
-                domainProject.setDescription(command.description());
+        Project domainProject = new Project();
+        domainProject.setTitle(command.projectName());
+        domainProject.setDescription(command.description());
 
-                ProjectEntity projectEntity = new ProjectEntity();
-                projectEntity.setId(projectId);
-                projectEntity.setTitle(command.projectName());
-                projectEntity.setOwner(ownerEntity);
+        ProjectEntity projectEntity = new ProjectEntity();
+        projectEntity.setId(projectId);
+        projectEntity.setTitle(command.projectName());
+        projectEntity.setOwner(ownerEntity);
 
-                Project savedDomainProject = new Project();
-                savedDomainProject.setId(projectUlid);
-                savedDomainProject.setTitle(command.projectName());
-                savedDomainProject.setOwner(ownerDomain);
+        Project savedDomainProject = new Project();
+        savedDomainProject.setId(projectUlid);
+        savedDomainProject.setTitle(command.projectName());
+        savedDomainProject.setOwner(ownerDomain);
 
-                CreateProjectCommandResult expectedResult = new CreateProjectCommandResult(
-                                projectId,
-                                command.projectName(),
-                                command.description(),
-                                ownerId,
-                                new String[] {},
-                                new String[] {},
-                                5,
-                                0,
-                                new String[] { "Java", "Spring Boot" },
-                                "Software Development",
-                                LocalDateTime.now().plusDays(30));
+        CreateProjectCommandResult expectedResult =
+                new CreateProjectCommandResult(
+                        projectId,
+                        command.projectName(),
+                        command.description(),
+                        ownerId,
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        0,
+                        new String[] {"Java", "Spring Boot"},
+                        "Software Development",
+                        LocalDateTime.now().plusDays(30));
 
-                when(validator.validate(command)).thenReturn(null);
-                when(userRepository.findById(ownerId)).thenReturn(Optional.of(ownerEntity));
-                when(createProjectMapper.commandToDomain(command)).thenReturn(domainProject);
-                when(userMapper.entityToDomain(ownerEntity)).thenReturn(ownerDomain);
-                when(projectMapper.domainToEntity(domainProject)).thenReturn(projectEntity);
-                when(projectRepository.save(projectEntity)).thenReturn(projectEntity);
-                when(projectMapper.entityToDomain(projectEntity)).thenReturn(savedDomainProject);
-                when(createProjectMapper.domainToResult(savedDomainProject)).thenReturn(expectedResult);
+        when(validator.validate(command)).thenReturn(null);
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(ownerEntity));
+        when(createProjectMapper.commandToDomain(command)).thenReturn(domainProject);
+        when(userMapper.entityToDomain(ownerEntity)).thenReturn(ownerDomain);
+        when(projectMapper.domainToEntity(domainProject)).thenReturn(projectEntity);
+        when(projectRepository.save(projectEntity)).thenReturn(projectEntity);
+        when(projectMapper.entityToDomain(projectEntity)).thenReturn(savedDomainProject);
+        when(createProjectMapper.domainToResult(savedDomainProject)).thenReturn(expectedResult);
 
-                // When
-                ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
+        // When
+        ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.CREATED, response.getCode());
-                assertEquals("Project created successfully", response.getMessage());
-                assertNotNull(response.getData());
-                assertEquals(expectedResult.projectId(), response.getData().projectId());
-                assertEquals(expectedResult.projectName(), response.getData().projectName());
-                assertEquals(ownerId, response.getData().ownerId());
-                verify(projectRepository).save(projectEntity);
-                verify(metricsService).incrementProjectCreationSuccess();
-        }
+        // Then
+        assertEquals(ResponseCode.CREATED, response.getCode());
+        assertEquals("Project created successfully", response.getMessage());
+        assertNotNull(response.getData());
+        assertEquals(expectedResult.projectId(), response.getData().projectId());
+        assertEquals(expectedResult.projectName(), response.getData().projectName());
+        assertEquals(ownerId, response.getData().ownerId());
+        verify(projectRepository).save(projectEntity);
+        verify(metricsService).incrementProjectCreationSuccess();
+    }
 
-        @Test
-        @DisplayName("Should return validation error when command is invalid")
-        void shouldReturnError_whenValidationFails() {
-                // Given
-                CreateProjectCommand command = new CreateProjectCommand("", "Short", "", null, null, null, null, null,
-                                null);
+    @Test
+    @DisplayName("Should return validation error when command is invalid")
+    void shouldReturnError_whenValidationFails() {
+        // Given
+        CreateProjectCommand command =
+                new CreateProjectCommand("", "Short", "", null, null, null, null, null, null);
 
-                when(validator.validate(command))
-                                .thenReturn(
-                                                new String[] {
-                                                                "Project name is required",
-                                                                "Description must be at least 10 characters"
-                                                });
+        when(validator.validate(command))
+                .thenReturn(
+                        new String[] {
+                            "Project name is required", "Description must be at least 10 characters"
+                        });
 
-                // When
-                ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
+        // When
+        ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
-                assertTrue(response.getMessage().contains("Project name is required"));
-                assertTrue(response.getMessage().contains("Description must be at least 10 characters"));
-                verify(userRepository, never()).findById(any());
-                verify(projectRepository, never()).save(any());
-                verify(metricsService).incrementProjectCreationFailure();
-        }
+        // Then
+        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
+        assertTrue(response.getMessage().contains("Project name is required"));
+        assertTrue(response.getMessage().contains("Description must be at least 10 characters"));
+        verify(userRepository, never()).findById(any());
+        verify(projectRepository, never()).save(any());
+        verify(metricsService).incrementProjectCreationFailure();
+    }
 
-        @Test
-        @DisplayName("Should return not found error when owner does not exist")
-        void shouldReturnError_whenOwnerNotFound() {
-                // Given
-                String nonExistentOwnerId = Ulid.fast().toString();
-                CreateProjectCommand command = new CreateProjectCommand(
-                                "Test Project",
-                                "This is a test project description",
-                                nonExistentOwnerId,
-                                new String[] {},
-                                new String[] {},
-                                5,
-                                new String[] {},
-                                null,
-                                null);
+    @Test
+    @DisplayName("Should return not found error when owner does not exist")
+    void shouldReturnError_whenOwnerNotFound() {
+        // Given
+        String nonExistentOwnerId = Ulid.fast().toString();
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "Test Project",
+                        "This is a test project description",
+                        nonExistentOwnerId,
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        new String[] {},
+                        null,
+                        null);
 
-                when(validator.validate(command)).thenReturn(null);
-                when(userRepository.findById(nonExistentOwnerId)).thenReturn(Optional.empty());
+        when(validator.validate(command)).thenReturn(null);
+        when(userRepository.findById(nonExistentOwnerId)).thenReturn(Optional.empty());
 
-                // When
-                ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
+        // When
+        ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-                assertTrue(response.getMessage().contains("Owner with ID"));
-                assertTrue(response.getMessage().contains("not found"));
-                verify(projectRepository, never()).save(any());
-                verify(metricsService).incrementProjectCreationFailure();
-        }
+        // Then
+        assertEquals(ResponseCode.NOT_FOUND, response.getCode());
+        assertTrue(response.getMessage().contains("Owner with ID"));
+        assertTrue(response.getMessage().contains("not found"));
+        verify(projectRepository, never()).save(any());
+        verify(metricsService).incrementProjectCreationFailure();
+    }
 
-        @Test
-        @DisplayName("Should proceed when validator returns empty array")
-        void shouldProceed_whenValidatorReturnsEmptyArray() {
-                // Given
-                Ulid ownerUlid = Ulid.fast();
-                Ulid projectUlid = Ulid.fast();
-                String ownerId = ownerUlid.toString();
-                String projectId = projectUlid.toString();
+    @Test
+    @DisplayName("Should proceed when validator returns empty array")
+    void shouldProceed_whenValidatorReturnsEmptyArray() {
+        // Given
+        Ulid ownerUlid = Ulid.fast();
+        Ulid projectUlid = Ulid.fast();
+        String ownerId = ownerUlid.toString();
+        String projectId = projectUlid.toString();
 
-                CreateProjectCommand command = new CreateProjectCommand(
-                                "Valid Project",
-                                "This is a valid project description",
-                                ownerId,
-                                new String[] {},
-                                new String[] {},
-                                5,
-                                new String[] {},
-                                null,
-                                null);
+        CreateProjectCommand command =
+                new CreateProjectCommand(
+                        "Valid Project",
+                        "This is a valid project description",
+                        ownerId,
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        new String[] {},
+                        null,
+                        null);
 
-                UserEntity ownerEntity = new UserEntity();
-                ownerEntity.setId(ownerId);
+        UserEntity ownerEntity = new UserEntity();
+        ownerEntity.setId(ownerId);
 
-                User ownerDomain = new User();
-                ownerDomain.setId(ownerUlid);
-                ownerDomain.setFirstName("Owner");
+        User ownerDomain = new User();
+        ownerDomain.setId(ownerUlid);
+        ownerDomain.setFirstName("Owner");
 
-                Project domainProject = new Project();
-                ProjectEntity projectEntity = new ProjectEntity();
-                projectEntity.setId(projectId);
+        Project domainProject = new Project();
+        ProjectEntity projectEntity = new ProjectEntity();
+        projectEntity.setId(projectId);
 
-                Project savedDomainProject = new Project();
-                savedDomainProject.setId(projectUlid);
-                savedDomainProject.setOwner(ownerDomain);
+        Project savedDomainProject = new Project();
+        savedDomainProject.setId(projectUlid);
+        savedDomainProject.setOwner(ownerDomain);
 
-                CreateProjectCommandResult expectedResult = new CreateProjectCommandResult(
-                                projectId,
-                                command.projectName(),
-                                command.description(),
-                                ownerId,
-                                new String[] {},
-                                new String[] {},
-                                5,
-                                0,
-                                new String[] {},
-                                null,
-                                null);
+        CreateProjectCommandResult expectedResult =
+                new CreateProjectCommandResult(
+                        projectId,
+                        command.projectName(),
+                        command.description(),
+                        ownerId,
+                        new String[] {},
+                        new String[] {},
+                        5,
+                        0,
+                        new String[] {},
+                        null,
+                        null);
 
-                when(validator.validate(command)).thenReturn(new String[] {});
-                when(userRepository.findById(ownerId)).thenReturn(Optional.of(ownerEntity));
-                when(createProjectMapper.commandToDomain(command)).thenReturn(domainProject);
-                when(userMapper.entityToDomain(ownerEntity)).thenReturn(ownerDomain);
-                when(projectMapper.domainToEntity(domainProject)).thenReturn(projectEntity);
-                when(projectRepository.save(projectEntity)).thenReturn(projectEntity);
-                when(projectMapper.entityToDomain(projectEntity)).thenReturn(savedDomainProject);
-                when(createProjectMapper.domainToResult(savedDomainProject)).thenReturn(expectedResult);
+        when(validator.validate(command)).thenReturn(new String[] {});
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(ownerEntity));
+        when(createProjectMapper.commandToDomain(command)).thenReturn(domainProject);
+        when(userMapper.entityToDomain(ownerEntity)).thenReturn(ownerDomain);
+        when(projectMapper.domainToEntity(domainProject)).thenReturn(projectEntity);
+        when(projectRepository.save(projectEntity)).thenReturn(projectEntity);
+        when(projectMapper.entityToDomain(projectEntity)).thenReturn(savedDomainProject);
+        when(createProjectMapper.domainToResult(savedDomainProject)).thenReturn(expectedResult);
 
-                // When
-                ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
+        // When
+        ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.CREATED, response.getCode());
-                verify(projectRepository).save(projectEntity);
-        }
+        // Then
+        assertEquals(ResponseCode.CREATED, response.getCode());
+        verify(projectRepository).save(projectEntity);
+    }
 }

@@ -27,20 +27,15 @@ import org.springframework.web.multipart.MultipartFile;
 @ExtendWith(MockitoExtension.class)
 class UploadProfilePictureHandlerTest {
 
-    @Mock
-    private FileStorageService fileStorageService;
+    @Mock private FileStorageService fileStorageService;
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private MessageService messageService;
+    @Mock private MessageService messageService;
 
-    @Mock
-    private MultipartFile mockFile;
+    @Mock private MultipartFile mockFile;
 
-    @InjectMocks
-    private UploadProfilePictureHandler handler;
+    @InjectMocks private UploadProfilePictureHandler handler;
 
     @BeforeEach
     void setUp() {
@@ -114,7 +109,8 @@ class UploadProfilePictureHandlerTest {
     void shouldReturnError_whenUserNotFound() {
         // Given
         String nonExistentUserId = Ulid.fast().toString();
-        UploadProfilePictureCommand command = new UploadProfilePictureCommand(nonExistentUserId, mockFile);
+        UploadProfilePictureCommand command =
+                new UploadProfilePictureCommand(nonExistentUserId, mockFile);
 
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 

@@ -24,317 +24,325 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class UpdateUserProfileHandlerTest {
 
-        @Mock
-        private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-        @Mock
-        private UserDtoMapper userDtoMapper;
+    @Mock private UserDtoMapper userDtoMapper;
 
-        @Mock
-        private MessageService messageService;
+    @Mock private MessageService messageService;
 
-        @InjectMocks
-        private UpdateUserProfileHandler handler;
+    @InjectMocks private UpdateUserProfileHandler handler;
 
-        @BeforeEach
-        void setUp() {
-                lenient()
-                                .when(messageService.getMessage("user.profile.updated"))
-                                .thenReturn("Profile updated successfully");
-                lenient()
-                                .when(messageService.getMessage(eq("user.not.found.with.id"), any(Object[].class)))
-                                .thenAnswer(
-                                                invocation -> {
-                                                        Object[] args = invocation.getArgument(1);
-                                                        return "User with ID " + args[0] + " not found";
-                                                });
-        }
+    @BeforeEach
+    void setUp() {
+        lenient()
+                .when(messageService.getMessage("user.profile.updated"))
+                .thenReturn("Profile updated successfully");
+        lenient()
+                .when(messageService.getMessage(eq("user.not.found.with.id"), any(Object[].class)))
+                .thenAnswer(
+                        invocation -> {
+                            Object[] args = invocation.getArgument(1);
+                            return "User with ID " + args[0] + " not found";
+                        });
+    }
 
-        @Test
-        @DisplayName("Should update profile successfully with all fields")
-        void shouldUpdateProfile_whenAllFieldsProvided() {
-                // Given
-                String userId = Ulid.fast().toString();
-                UpdateUserProfileCommand command = new UpdateUserProfileCommand(
-                                userId,
-                                "John",
-                                "Doe",
-                                "Software Engineer",
-                                "https://www.linkedin.com/in/johndoe",
-                                "https://github.com/johndoe",
-                                "en");
+    @Test
+    @DisplayName("Should update profile successfully with all fields")
+    void shouldUpdateProfile_whenAllFieldsProvided() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        userId,
+                        "John",
+                        "Doe",
+                        "Software Engineer",
+                        "https://www.linkedin.com/in/johndoe",
+                        "https://github.com/johndoe",
+                        "en");
 
-                UserEntity userEntity = new UserEntity();
-                userEntity.setId(userId);
-                userEntity.setEmail("john@std.iyte.edu.tr");
-                userEntity.setFirstName("OldFirstName");
-                userEntity.setLastName("OldLastName");
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(userId);
+        userEntity.setEmail("john@std.iyte.edu.tr");
+        userEntity.setFirstName("OldFirstName");
+        userEntity.setLastName("OldLastName");
 
-                UserDto expectedDto = new UserDto(
-                                userId,
-                                "john@std.iyte.edu.tr",
-                                "John",
-                                "Doe",
-                                "Software Engineer",
-                                null,
-                                "https://www.linkedin.com/in/johndoe",
-                                "https://github.com/johndoe",
-                                "en");
+        UserDto expectedDto =
+                new UserDto(
+                        userId,
+                        "john@std.iyte.edu.tr",
+                        "John",
+                        "Doe",
+                        "Software Engineer",
+                        null,
+                        "https://www.linkedin.com/in/johndoe",
+                        "https://github.com/johndoe",
+                        "en");
 
-                when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-                when(userRepository.save(userEntity)).thenReturn(userEntity);
-                when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(userEntity)).thenReturn(userEntity);
+        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
 
-                // When
-                ApiResponse<UserDto> response = handler.handle(command);
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.SUCCESS, response.getCode());
-                assertEquals("Profile updated successfully", response.getMessage());
-                assertNotNull(response.getData());
-                assertEquals("John", response.getData().firstName());
-                assertEquals("Doe", response.getData().lastName());
-                assertEquals("Software Engineer", response.getData().description());
-                verify(userRepository).save(userEntity);
-        }
+        // Then
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals("Profile updated successfully", response.getMessage());
+        assertNotNull(response.getData());
+        assertEquals("John", response.getData().firstName());
+        assertEquals("Doe", response.getData().lastName());
+        assertEquals("Software Engineer", response.getData().description());
+        verify(userRepository).save(userEntity);
+    }
 
-        @Test
-        @DisplayName("Should update only provided fields")
-        void shouldUpdateProfile_whenPartialFieldsProvided() {
-                // Given
-                String userId = Ulid.fast().toString();
-                UpdateUserProfileCommand command = new UpdateUserProfileCommand(userId, "NewFirstName", null, null,
-                                null, null, null);
+    @Test
+    @DisplayName("Should update only provided fields")
+    void shouldUpdateProfile_whenPartialFieldsProvided() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(userId, "NewFirstName", null, null, null, null, null);
 
-                UserEntity userEntity = new UserEntity();
-                userEntity.setId(userId);
-                userEntity.setEmail("user@std.iyte.edu.tr");
-                userEntity.setFirstName("OldFirstName");
-                userEntity.setLastName("OldLastName");
-                userEntity.setDescription("Old description");
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(userId);
+        userEntity.setEmail("user@std.iyte.edu.tr");
+        userEntity.setFirstName("OldFirstName");
+        userEntity.setLastName("OldLastName");
+        userEntity.setDescription("Old description");
 
-                UserDto expectedDto = new UserDto(
-                                userId,
-                                "user@std.iyte.edu.tr",
-                                "NewFirstName",
-                                "OldLastName",
-                                "Old description",
-                                null,
-                                null,
-                                null,
-                                null);
+        UserDto expectedDto =
+                new UserDto(
+                        userId,
+                        "user@std.iyte.edu.tr",
+                        "NewFirstName",
+                        "OldLastName",
+                        "Old description",
+                        null,
+                        null,
+                        null,
+                        null);
 
-                when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-                when(userRepository.save(userEntity)).thenReturn(userEntity);
-                when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(userEntity)).thenReturn(userEntity);
+        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
 
-                // When
-                ApiResponse<UserDto> response = handler.handle(command);
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.SUCCESS, response.getCode());
-                assertEquals("NewFirstName", userEntity.getFirstName());
-                assertEquals("OldLastName", userEntity.getLastName());
-                assertEquals("Old description", userEntity.getDescription());
-                verify(userRepository).save(userEntity);
-        }
+        // Then
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals("NewFirstName", userEntity.getFirstName());
+        assertEquals("OldLastName", userEntity.getLastName());
+        assertEquals("Old description", userEntity.getDescription());
+        verify(userRepository).save(userEntity);
+    }
 
-        @Test
-        @DisplayName("Should return validation error for invalid LinkedIn URL")
-        void shouldReturnError_whenLinkedInUrlIsInvalid() {
-                // Given
-                String userId = Ulid.fast().toString();
-                UpdateUserProfileCommand command = new UpdateUserProfileCommand(
-                                userId,
-                                "John",
-                                "Doe",
-                                null,
-                                "https://invalid-linkedin.com/johndoe",
-                                null,
-                                null);
+    @Test
+    @DisplayName("Should return validation error for invalid LinkedIn URL")
+    void shouldReturnError_whenLinkedInUrlIsInvalid() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        userId,
+                        "John",
+                        "Doe",
+                        null,
+                        "https://invalid-linkedin.com/johndoe",
+                        null,
+                        null);
 
-                // When
-                ApiResponse<UserDto> response = handler.handle(command);
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-                assertTrue(response.getMessage().contains("Invalid LinkedIn URL format"));
-                verify(userRepository, never()).findById(any());
-                verify(userRepository, never()).save(any());
-        }
+        // Then
+        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
+        assertTrue(response.getMessage().contains("Invalid LinkedIn URL format"));
+        verify(userRepository, never()).findById(any());
+        verify(userRepository, never()).save(any());
+    }
 
-        @Test
-        @DisplayName("Should return validation error for invalid GitHub URL")
-        void shouldReturnError_whenGithubUrlIsInvalid() {
-                // Given
-                String userId = Ulid.fast().toString();
-                UpdateUserProfileCommand command = new UpdateUserProfileCommand(
-                                userId, "John", "Doe", null, null, "https://gitlab.com/johndoe", null);
+    @Test
+    @DisplayName("Should return validation error for invalid GitHub URL")
+    void shouldReturnError_whenGithubUrlIsInvalid() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        userId, "John", "Doe", null, null, "https://gitlab.com/johndoe", null);
 
-                // When
-                ApiResponse<UserDto> response = handler.handle(command);
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-                assertTrue(response.getMessage().contains("Invalid GitHub URL format"));
-                verify(userRepository, never()).findById(any());
-                verify(userRepository, never()).save(any());
-        }
+        // Then
+        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
+        assertTrue(response.getMessage().contains("Invalid GitHub URL format"));
+        verify(userRepository, never()).findById(any());
+        verify(userRepository, never()).save(any());
+    }
 
-        @Test
-        @DisplayName("Should return not found error when user does not exist")
-        void shouldReturnError_whenUserNotFound() {
-                // Given
-                String nonExistentUserId = Ulid.fast().toString();
-                UpdateUserProfileCommand command = new UpdateUserProfileCommand(
-                                nonExistentUserId, "John", "Doe", null, null, null, null);
+    @Test
+    @DisplayName("Should return not found error when user does not exist")
+    void shouldReturnError_whenUserNotFound() {
+        // Given
+        String nonExistentUserId = Ulid.fast().toString();
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        nonExistentUserId, "John", "Doe", null, null, null, null);
 
-                when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
+        when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
-                // When
-                ApiResponse<UserDto> response = handler.handle(command);
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-                assertTrue(response.getMessage().contains("User with ID"));
-                assertTrue(response.getMessage().contains("not found"));
-                verify(userRepository, never()).save(any());
-        }
+        // Then
+        assertEquals(ResponseCode.NOT_FOUND, response.getCode());
+        assertTrue(response.getMessage().contains("User with ID"));
+        assertTrue(response.getMessage().contains("not found"));
+        verify(userRepository, never()).save(any());
+    }
 
-        @Test
-        @DisplayName("Should set URL to null when blank URL provided")
-        void shouldSetUrlToNull_whenBlankUrlProvided() {
-                // Given
-                String userId = Ulid.fast().toString();
-                UpdateUserProfileCommand command = new UpdateUserProfileCommand(userId, null, null, null, "   ", "   ",
-                                null);
+    @Test
+    @DisplayName("Should set URL to null when blank URL provided")
+    void shouldSetUrlToNull_whenBlankUrlProvided() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(userId, null, null, null, "   ", "   ", null);
 
-                UserEntity userEntity = new UserEntity();
-                userEntity.setId(userId);
-                userEntity.setLinkedinUrl("https://www.linkedin.com/in/old");
-                userEntity.setGithubUrl("https://github.com/old");
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(userId);
+        userEntity.setLinkedinUrl("https://www.linkedin.com/in/old");
+        userEntity.setGithubUrl("https://github.com/old");
 
-                UserDto expectedDto = new UserDto(userId, null, null, null, null, null, null, null, null);
+        UserDto expectedDto = new UserDto(userId, null, null, null, null, null, null, null, null);
 
-                when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-                when(userRepository.save(userEntity)).thenReturn(userEntity);
-                when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(userEntity)).thenReturn(userEntity);
+        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
 
-                // When
-                ApiResponse<UserDto> response = handler.handle(command);
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.SUCCESS, response.getCode());
-                assertNull(userEntity.getLinkedinUrl());
-                assertNull(userEntity.getGithubUrl());
-                verify(userRepository).save(userEntity);
-        }
+        // Then
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertNull(userEntity.getLinkedinUrl());
+        assertNull(userEntity.getGithubUrl());
+        verify(userRepository).save(userEntity);
+    }
 
-        @Test
-        @DisplayName("Should accept valid LinkedIn URL with www")
-        void shouldAcceptValidLinkedInUrl_withWww() {
-                // Given
-                String userId = Ulid.fast().toString();
-                UpdateUserProfileCommand command = new UpdateUserProfileCommand(
-                                userId,
-                                null,
-                                null,
-                                null,
-                                "https://www.linkedin.com/in/johndoe",
-                                null,
-                                null);
+    @Test
+    @DisplayName("Should accept valid LinkedIn URL with www")
+    void shouldAcceptValidLinkedInUrl_withWww() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        userId,
+                        null,
+                        null,
+                        null,
+                        "https://www.linkedin.com/in/johndoe",
+                        null,
+                        null);
 
-                UserEntity userEntity = new UserEntity();
-                userEntity.setId(userId);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(userId);
 
-                UserDto expectedDto = new UserDto(
-                                userId,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                "https://www.linkedin.com/in/johndoe",
-                                null,
-                                null);
+        UserDto expectedDto =
+                new UserDto(
+                        userId,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        "https://www.linkedin.com/in/johndoe",
+                        null,
+                        null);
 
-                when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-                when(userRepository.save(userEntity)).thenReturn(userEntity);
-                when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(userEntity)).thenReturn(userEntity);
+        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
 
-                // When
-                ApiResponse<UserDto> response = handler.handle(command);
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.SUCCESS, response.getCode());
-                assertEquals("https://www.linkedin.com/in/johndoe", userEntity.getLinkedinUrl());
-        }
+        // Then
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals("https://www.linkedin.com/in/johndoe", userEntity.getLinkedinUrl());
+    }
 
-        @Test
-        @DisplayName("Should accept valid LinkedIn URL without www")
-        void shouldAcceptValidLinkedInUrl_withoutWww() {
-                // Given
-                String userId = Ulid.fast().toString();
-                UpdateUserProfileCommand command = new UpdateUserProfileCommand(
-                                userId, null, null, null, "https://linkedin.com/in/johndoe", null, null);
+    @Test
+    @DisplayName("Should accept valid LinkedIn URL without www")
+    void shouldAcceptValidLinkedInUrl_withoutWww() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        userId, null, null, null, "https://linkedin.com/in/johndoe", null, null);
 
-                UserEntity userEntity = new UserEntity();
-                userEntity.setId(userId);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(userId);
 
-                UserDto expectedDto = new UserDto(
-                                userId,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                "https://linkedin.com/in/johndoe",
-                                null,
-                                null);
+        UserDto expectedDto =
+                new UserDto(
+                        userId,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        "https://linkedin.com/in/johndoe",
+                        null,
+                        null);
 
-                when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-                when(userRepository.save(userEntity)).thenReturn(userEntity);
-                when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(userEntity)).thenReturn(userEntity);
+        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
 
-                // When
-                ApiResponse<UserDto> response = handler.handle(command);
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.SUCCESS, response.getCode());
-                assertEquals("https://linkedin.com/in/johndoe", userEntity.getLinkedinUrl());
-        }
+        // Then
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals("https://linkedin.com/in/johndoe", userEntity.getLinkedinUrl());
+    }
 
-        @Test
-        @DisplayName("Should accept valid GitHub URL with path")
-        void shouldAcceptValidGithubUrl_withPath() {
-                // Given
-                String userId = Ulid.fast().toString();
-                UpdateUserProfileCommand command = new UpdateUserProfileCommand(
-                                userId, null, null, null, null, "https://github.com/johndoe/my-repo", null);
+    @Test
+    @DisplayName("Should accept valid GitHub URL with path")
+    void shouldAcceptValidGithubUrl_withPath() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        userId, null, null, null, null, "https://github.com/johndoe/my-repo", null);
 
-                UserEntity userEntity = new UserEntity();
-                userEntity.setId(userId);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(userId);
 
-                UserDto expectedDto = new UserDto(
-                                userId,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                "https://github.com/johndoe/my-repo",
-                                null);
+        UserDto expectedDto =
+                new UserDto(
+                        userId,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        "https://github.com/johndoe/my-repo",
+                        null);
 
-                when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-                when(userRepository.save(userEntity)).thenReturn(userEntity);
-                when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(userEntity)).thenReturn(userEntity);
+        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
 
-                // When
-                ApiResponse<UserDto> response = handler.handle(command);
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
 
-                // Then
-                assertEquals(ResponseCode.SUCCESS, response.getCode());
-                assertEquals("https://github.com/johndoe/my-repo", userEntity.getGithubUrl());
-        }
+        // Then
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals("https://github.com/johndoe/my-repo", userEntity.getGithubUrl());
+    }
 }

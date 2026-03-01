@@ -13,7 +13,8 @@ class RegisterUserValidatorTest {
     @DisplayName("Should return empty array for valid command")
     void shouldReturnEmpty_whenCommandIsValid() {
         // Given
-        RegisterUserCommand command = new RegisterUserCommand("test@std.iyte.edu.tr", "password123", "John", "Doe");
+        RegisterUserCommand command =
+                new RegisterUserCommand("test@std.iyte.edu.tr", "password123", "John", "Doe");
 
         // When
         String[] errors = validator.validate(command);

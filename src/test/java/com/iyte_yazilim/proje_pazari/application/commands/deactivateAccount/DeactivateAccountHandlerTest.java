@@ -21,14 +21,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DeactivateAccountHandlerTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private MessageService messageService;
+    @Mock private MessageService messageService;
 
-    @InjectMocks
-    private DeactivateAccountHandler handler;
+    @InjectMocks private DeactivateAccountHandler handler;
 
     @BeforeEach
     void setUp() {
@@ -114,7 +111,8 @@ class DeactivateAccountHandlerTest {
     void shouldReturnError_whenUserNotFound() {
         // Given
         String nonExistentUserId = Ulid.fast().toString();
-        DeactivateAccountCommand command = new DeactivateAccountCommand(nonExistentUserId, "Leaving");
+        DeactivateAccountCommand command =
+                new DeactivateAccountCommand(nonExistentUserId, "Leaving");
 
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 

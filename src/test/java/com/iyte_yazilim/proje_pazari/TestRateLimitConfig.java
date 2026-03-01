@@ -11,8 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
 /**
- * Test configuration that provides a RateLimitConfig with very high capacity to
- * avoid 429 errors in
+ * Test configuration that provides a RateLimitConfig with very high capacity to avoid 429 errors in
  * tests.
  */
 @TestConfiguration
@@ -30,10 +29,11 @@ public class TestRateLimitConfig {
             }
 
             private Bucket createHighCapacityBucket(String ip) {
-                Bandwidth limit = Bandwidth.builder()
-                        .capacity(10000)
-                        .refillIntervally(10000, Duration.ofMinutes(1))
-                        .build();
+                Bandwidth limit =
+                        Bandwidth.builder()
+                                .capacity(10000)
+                                .refillIntervally(10000, Duration.ofMinutes(1))
+                                .build();
                 return Bucket.builder().addLimit(limit).build();
             }
         };

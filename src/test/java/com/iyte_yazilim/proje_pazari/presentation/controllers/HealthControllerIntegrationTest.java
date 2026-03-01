@@ -15,11 +15,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({ TestRedisConfig.class, TestRateLimitConfig.class })
+@Import({TestRedisConfig.class, TestRateLimitConfig.class})
 class HealthControllerIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
     @Test
     @DisplayName("GET /api/v1/health - should return UP status")

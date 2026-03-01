@@ -23,17 +23,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @ExtendWith(MockitoExtension.class)
 class ChangePasswordHandlerTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    @Mock private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private MessageService messageService;
+    @Mock private MessageService messageService;
 
-    @InjectMocks
-    private ChangePasswordHandler changePasswordHandler;
+    @InjectMocks private ChangePasswordHandler changePasswordHandler;
 
     @BeforeEach
     void setUp() {
@@ -57,7 +53,8 @@ class ChangePasswordHandlerTest {
         String currentPass = "OldPass123!";
         String newPass = "NewStrongPass123!";
 
-        ChangePasswordCommand command = new ChangePasswordCommand(userId, currentPass, newPass, newPass);
+        ChangePasswordCommand command =
+                new ChangePasswordCommand(userId, currentPass, newPass, newPass);
 
         UserEntity userEntity = new UserEntity();
         userEntity.setId(userId);
@@ -82,7 +79,8 @@ class ChangePasswordHandlerTest {
     void shouldReturnError_WhenUserNotFound() {
         // Given
         String newPass = "NewPass123!";
-        ChangePasswordCommand command = new ChangePasswordCommand("unknown-user", "OldPass123!", newPass, newPass);
+        ChangePasswordCommand command =
+                new ChangePasswordCommand("unknown-user", "OldPass123!", newPass, newPass);
 
         when(userRepository.findById("unknown-user")).thenReturn(Optional.empty());
 
@@ -104,7 +102,8 @@ class ChangePasswordHandlerTest {
         String wrongPass = "WrongPass123!";
         String newPass = "NewPass123!";
 
-        ChangePasswordCommand command = new ChangePasswordCommand(userId, wrongPass, newPass, newPass);
+        ChangePasswordCommand command =
+                new ChangePasswordCommand(userId, wrongPass, newPass, newPass);
 
         UserEntity userEntity = new UserEntity();
         userEntity.setId(userId);
@@ -130,7 +129,8 @@ class ChangePasswordHandlerTest {
         String currentPass = "OldPass123!";
         String weakPass = "weak";
 
-        ChangePasswordCommand command = new ChangePasswordCommand(userId, currentPass, weakPass, weakPass);
+        ChangePasswordCommand command =
+                new ChangePasswordCommand(userId, currentPass, weakPass, weakPass);
 
         UserEntity userEntity = new UserEntity();
         userEntity.setId(userId);
@@ -152,8 +152,9 @@ class ChangePasswordHandlerTest {
     @DisplayName("Should return error when password confirmation does not match")
     void shouldReturnError_WhenConfirmationDoesNotMatch() {
         // Given
-        ChangePasswordCommand command = new ChangePasswordCommand(
-                "user-123", "OldPass123!", "NewPass123!", "DifferentPass123!");
+        ChangePasswordCommand command =
+                new ChangePasswordCommand(
+                        "user-123", "OldPass123!", "NewPass123!", "DifferentPass123!");
 
         // When
         ApiResponse<Void> response = changePasswordHandler.handle(command);
@@ -170,7 +171,8 @@ class ChangePasswordHandlerTest {
     void shouldReturnError_WhenNewPasswordSameAsCurrent() {
         // Given
         String samePass = "SamePass123!";
-        ChangePasswordCommand command = new ChangePasswordCommand("user-123", samePass, samePass, samePass);
+        ChangePasswordCommand command =
+                new ChangePasswordCommand("user-123", samePass, samePass, samePass);
 
         // When
         ApiResponse<Void> response = changePasswordHandler.handle(command);
