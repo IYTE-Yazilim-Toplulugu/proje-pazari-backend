@@ -126,7 +126,7 @@ jacoco {
 }
 
 jacocoTestReport {
-    dependsOn test
+    dependsOn compileJava, test
     reports {
         xml.required = true
         html.required = true
@@ -147,7 +147,7 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
-    dependsOn processResources
+    dependsOn compileJava, processResources
     mustRunAfter test
     violationRules {
         rule {
