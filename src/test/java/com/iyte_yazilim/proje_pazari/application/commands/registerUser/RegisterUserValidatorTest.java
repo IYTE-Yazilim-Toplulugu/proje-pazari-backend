@@ -13,8 +13,7 @@ class RegisterUserValidatorTest {
     @DisplayName("Should return empty array for valid command")
     void shouldReturnEmpty_whenCommandIsValid() {
         // Given
-        RegisterUserCommand command =
-                new RegisterUserCommand("test@std.iyte.edu.tr", "password123", "John", "Doe");
+        RegisterUserCommand command = new RegisterUserCommand("test@std.iyte.edu.tr", "password123", "John", "Doe");
 
         // When
         String[] errors = validator.validate(command);
@@ -25,9 +24,10 @@ class RegisterUserValidatorTest {
     }
 
     @Test
-    @DisplayName("Should return empty array - validation delegated to Jakarta annotations")
-    void shouldReturnEmpty_validationDelegatedToJakarta() {
-        // Given - even with unusual input, this validator delegates to Jakarta
+    @DisplayName("Should return errors for non-IYTE email - validator checks IYTE domain")
+    void shouldReturnErrors_whenNonIyteEmail() {
+        // Given - RegisterUserValidator now validates IYTE email via IyteEmail value
+        // object
         RegisterUserCommand command = new RegisterUserCommand("test@gmail.com", "short", "A", "B");
 
         // When
@@ -35,6 +35,6 @@ class RegisterUserValidatorTest {
 
         // Then
         assertNotNull(errors);
-        assertEquals(0, errors.length);
+        assertTrue(errors.length > 0, "Should return validation errors for non-IYTE email");
     }
 }

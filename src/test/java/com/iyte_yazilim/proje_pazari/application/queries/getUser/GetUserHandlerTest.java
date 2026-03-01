@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -13,6 +14,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,13 +25,28 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GetUserHandlerTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @Mock private UserMapper userMapper;
+    @Mock
+    private UserMapper userMapper;
 
-    @Mock private UserDtoMapper userDtoMapper;
+    @Mock
+    private UserDtoMapper userDtoMapper;
 
-    @InjectMocks private GetUserHandler handler;
+    @Mock
+    private MessageService messageService;
+
+    @InjectMocks
+    private GetUserHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        lenient()
+                .when(messageService.getMessage("user.retrieved.success"))
+                .thenReturn("User retrieved successfully");
+        lenient().when(messageService.getMessage("user.not.found")).thenReturn("User not found");
+    }
 
     @Test
     @DisplayName("Should return user successfully when user exists")
@@ -48,17 +65,16 @@ class GetUserHandlerTest {
         domainUser.setId(Ulid.fast());
         domainUser.setEmail("test@std.iyte.edu.tr");
 
-        UserDto expectedDto =
-                new UserDto(
-                        userId,
-                        "test@std.iyte.edu.tr",
-                        "John",
-                        "Doe",
-                        null,
-                        null,
-                        null,
-                        null,
-                        null);
+        UserDto expectedDto = new UserDto(
+                userId,
+                "test@std.iyte.edu.tr",
+                "John",
+                "Doe",
+                null,
+                null,
+                null,
+                null,
+                null);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
         when(userMapper.entityToDomain(userEntity)).thenReturn(domainUser);

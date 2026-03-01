@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,9 +21,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DeactivateAccountHandlerTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @InjectMocks private DeactivateAccountHandler handler;
+    @Mock
+    private MessageService messageService;
+
+    @InjectMocks
+    private DeactivateAccountHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(messageService.getMessage("user.not.found")).thenReturn("User not found");
+        lenient()
+                .when(messageService.getMessage("user.account.deactivated"))
+                .thenReturn("Account deactivated successfully");
+    }
 
     @Test
     @DisplayName("Should deactivate account successfully with reason")
@@ -99,8 +114,7 @@ class DeactivateAccountHandlerTest {
     void shouldReturnError_whenUserNotFound() {
         // Given
         String nonExistentUserId = Ulid.fast().toString();
-        DeactivateAccountCommand command =
-                new DeactivateAccountCommand(nonExistentUserId, "Leaving");
+        DeactivateAccountCommand command = new DeactivateAccountCommand(nonExistentUserId, "Leaving");
 
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 

@@ -1,9 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getUserProfile;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -15,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,11 +29,31 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GetUserProfileHandlerTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @Mock private ProjectRepository projectRepository;
+    @Mock
+    private ProjectRepository projectRepository;
 
-    @InjectMocks private GetUserProfileHandler handler;
+    @Mock
+    private MessageService messageService;
+
+    @InjectMocks
+    private GetUserProfileHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        lenient()
+                .when(messageService.getMessage("user.retrieved.success"))
+                .thenReturn("User retrieved successfully");
+        lenient()
+                .when(messageService.getMessage(eq("user.not.found"), any(Object[].class)))
+                .thenAnswer(
+                        invocation -> {
+                            Object[] args = invocation.getArgument(1);
+                            return "User " + args[0] + " not found";
+                        });
+    }
 
     @Test
     @DisplayName("Should return user profile with projects")

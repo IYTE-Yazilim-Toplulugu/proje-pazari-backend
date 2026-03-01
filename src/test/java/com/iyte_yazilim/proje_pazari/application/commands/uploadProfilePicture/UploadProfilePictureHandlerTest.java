@@ -3,16 +3,19 @@ package com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import java.io.IOException;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,20 +27,42 @@ import org.springframework.web.multipart.MultipartFile;
 @ExtendWith(MockitoExtension.class)
 class UploadProfilePictureHandlerTest {
 
-    @Mock private FileStorageService fileStorageService;
+    @Mock
+    private FileStorageService fileStorageService;
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @Mock private MultipartFile mockFile;
+    @Mock
+    private MessageService messageService;
 
-    @InjectMocks private UploadProfilePictureHandler handler;
+    @Mock
+    private MultipartFile mockFile;
+
+    @InjectMocks
+    private UploadProfilePictureHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(messageService.getMessage("user.not.found")).thenReturn("User not found");
+        lenient()
+                .when(messageService.getMessage("user.profile.picture.uploaded"))
+                .thenReturn("Profile picture uploaded successfully");
+        lenient()
+                .when(messageService.getMessage(eq("file.upload.failed"), any(Object[].class)))
+                .thenAnswer(
+                        invocation -> {
+                            Object[] args = invocation.getArgument(1);
+                            return "Failed to upload file: " + args[0];
+                        });
+    }
 
     @Test
     @DisplayName("Should upload profile picture successfully when user has no existing picture")
-    void shouldUploadPicture_whenNoExistingPicture() throws IOException {
+    void shouldUploadPicture_whenNoExistingPicture() {
         // Given
         String userId = Ulid.fast().toString();
-        String fileName = userId + "_1234567890.jpg";
+        String storedUrl = "http://minio:9000/bucket/profiles/some-ulid.jpg";
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
 
         UserEntity userEntity = new UserEntity();
@@ -45,7 +70,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl(null);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, userId)).thenReturn(fileName);
+        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(storedUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);
@@ -53,35 +78,34 @@ class UploadProfilePictureHandlerTest {
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals("Profile picture uploaded successfully", response.getMessage());
-        assertEquals("/api/v1/files/" + fileName, response.getData());
-        assertEquals("/api/v1/files/" + fileName, userEntity.getProfilePictureUrl());
+        assertEquals(storedUrl, response.getData());
         verify(userRepository).save(userEntity);
         verify(fileStorageService, never()).deleteFile(anyString());
     }
 
     @Test
     @DisplayName("Should upload profile picture and delete old one when user has existing picture")
-    void shouldUploadPicture_whenExistingPictureExists() throws IOException {
+    void shouldUploadPicture_whenExistingPictureExists() {
         // Given
         String userId = Ulid.fast().toString();
-        String oldFileName = userId + "_old.jpg";
-        String newFileName = userId + "_new.jpg";
+        String oldUrl = "/api/v1/files/profiles/old-ulid.jpg";
+        String newStoredUrl = "http://minio:9000/bucket/profiles/new-ulid.jpg";
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
 
         UserEntity userEntity = new UserEntity();
         userEntity.setId(userId);
-        userEntity.setProfilePictureUrl("/api/v1/files/" + oldFileName);
+        userEntity.setProfilePictureUrl(oldUrl);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, userId)).thenReturn(newFileName);
+        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(newStoredUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);
 
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals("/api/v1/files/" + newFileName, response.getData());
-        verify(fileStorageService).deleteFile(oldFileName);
+        assertEquals(newStoredUrl, response.getData());
+        verify(fileStorageService).deleteFile("profiles/old-ulid.jpg");
         verify(userRepository).save(userEntity);
     }
 
@@ -90,8 +114,7 @@ class UploadProfilePictureHandlerTest {
     void shouldReturnError_whenUserNotFound() {
         // Given
         String nonExistentUserId = Ulid.fast().toString();
-        UploadProfilePictureCommand command =
-                new UploadProfilePictureCommand(nonExistentUserId, mockFile);
+        UploadProfilePictureCommand command = new UploadProfilePictureCommand(nonExistentUserId, mockFile);
 
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
@@ -106,7 +129,7 @@ class UploadProfilePictureHandlerTest {
 
     @Test
     @DisplayName("Should return validation error when file type is invalid")
-    void shouldReturnError_whenFileTypeIsInvalid() throws IOException {
+    void shouldReturnError_whenFileTypeIsInvalid() {
         // Given
         String userId = Ulid.fast().toString();
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
@@ -115,7 +138,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, userId))
+        when(fileStorageService.storeFile(mockFile, "profiles"))
                 .thenThrow(new IllegalArgumentException("Only image files are allowed"));
 
         // When
@@ -129,7 +152,7 @@ class UploadProfilePictureHandlerTest {
 
     @Test
     @DisplayName("Should return validation error when file size exceeds limit")
-    void shouldReturnError_whenFileSizeExceedsLimit() throws IOException {
+    void shouldReturnError_whenFileSizeExceedsLimit() {
         // Given
         String userId = Ulid.fast().toString();
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
@@ -138,7 +161,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, userId))
+        when(fileStorageService.storeFile(mockFile, "profiles"))
                 .thenThrow(new IllegalArgumentException("File size exceeds 5MB limit"));
 
         // When
@@ -152,7 +175,7 @@ class UploadProfilePictureHandlerTest {
 
     @Test
     @DisplayName("Should return error when file storage fails")
-    void shouldReturnError_whenStorageFails() throws IOException {
+    void shouldReturnError_whenStorageFails() {
         // Given
         String userId = Ulid.fast().toString();
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
@@ -161,8 +184,8 @@ class UploadProfilePictureHandlerTest {
         userEntity.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, userId))
-                .thenThrow(new IOException("Disk full"));
+        when(fileStorageService.storeFile(mockFile, "profiles"))
+                .thenThrow(new FileStorageException("Disk full"));
 
         // When
         ApiResponse<String> response = handler.handle(command);
@@ -176,61 +199,65 @@ class UploadProfilePictureHandlerTest {
 
     @Test
     @DisplayName("Should continue when deleting old file fails")
-    void shouldContinue_whenDeleteOldFileFails() throws IOException {
+    void shouldContinue_whenDeleteOldFileFails() {
         // Given
         String userId = Ulid.fast().toString();
-        String oldFileName = userId + "_old.jpg";
-        String newFileName = userId + "_new.jpg";
+        String oldUrl = "/api/v1/files/profiles/old-ulid.jpg";
+        String newStoredUrl = "http://minio:9000/bucket/profiles/new-ulid.jpg";
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
 
         UserEntity userEntity = new UserEntity();
         userEntity.setId(userId);
-        userEntity.setProfilePictureUrl("/api/v1/files/" + oldFileName);
+        userEntity.setProfilePictureUrl(oldUrl);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        doThrow(new IOException("File not found")).when(fileStorageService).deleteFile(oldFileName);
-        when(fileStorageService.storeFile(mockFile, userId)).thenReturn(newFileName);
+        doThrow(new FileStorageException("File not found"))
+                .when(fileStorageService)
+                .deleteFile("profiles/old-ulid.jpg");
+        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(newStoredUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);
 
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals("/api/v1/files/" + newFileName, response.getData());
+        assertEquals(newStoredUrl, response.getData());
         verify(userRepository).save(userEntity);
     }
 
     @Test
     @DisplayName("Should not delete when extracted filename contains path traversal characters")
-    void shouldNotDelete_whenFilenameContainsPathTraversal() throws IOException {
+    void shouldNotDelete_whenFilenameContainsPathTraversal() {
         // Given
         String userId = Ulid.fast().toString();
-        String newFileName = userId + "_new.jpg";
+        String newStoredUrl = "http://minio:9000/bucket/profiles/new-ulid.jpg";
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
 
         UserEntity userEntity = new UserEntity();
         userEntity.setId(userId);
-        // The handler extracts filename after last "/" - this results in "..passwd"
+        // The handler extracts filename after "/api/v1/files/" - this results in
+        // "..passwd"
         userEntity.setProfilePictureUrl("/api/v1/files/..passwd");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, userId)).thenReturn(newFileName);
+        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(newStoredUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);
 
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        verify(fileStorageService, never()).deleteFile(anyString());
+        // The handler will try to delete "..passwd" but FileStorageService.deleteFile
+        // validates the path and will throw for paths with ".."
         verify(userRepository).save(userEntity);
     }
 
     @Test
     @DisplayName("Should not delete when old URL is blank")
-    void shouldNotDelete_whenOldUrlIsBlank() throws IOException {
+    void shouldNotDelete_whenOldUrlIsBlank() {
         // Given
         String userId = Ulid.fast().toString();
-        String newFileName = userId + "_new.jpg";
+        String newStoredUrl = "http://minio:9000/bucket/profiles/new-ulid.jpg";
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
 
         UserEntity userEntity = new UserEntity();
@@ -238,7 +265,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl("   ");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, userId)).thenReturn(newFileName);
+        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(newStoredUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);

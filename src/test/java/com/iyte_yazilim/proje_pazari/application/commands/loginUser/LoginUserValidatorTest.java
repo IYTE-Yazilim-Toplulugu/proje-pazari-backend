@@ -24,8 +24,8 @@ class LoginUserValidatorTest {
     }
 
     @Test
-    @DisplayName("Should return empty array - validation delegated to Jakarta annotations")
-    void shouldReturnEmpty_validationDelegatedToJakarta() {
+    @DisplayName("Should return errors for empty email and password")
+    void shouldReturnErrors_whenEmailAndPasswordAreEmpty() {
         // Given
         LoginUserCommand command = new LoginUserCommand("", "");
 
@@ -34,6 +34,6 @@ class LoginUserValidatorTest {
 
         // Then
         assertNotNull(errors);
-        assertEquals(0, errors.length);
+        assertTrue(errors.length > 0, "Should return validation errors for empty inputs");
     }
 }

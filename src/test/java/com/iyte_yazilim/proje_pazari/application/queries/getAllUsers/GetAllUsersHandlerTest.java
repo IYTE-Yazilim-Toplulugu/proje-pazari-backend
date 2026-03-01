@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -14,6 +15,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapp
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,13 +26,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GetAllUsersHandlerTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @Mock private UserMapper userMapper;
+    @Mock
+    private UserMapper userMapper;
 
-    @Mock private UserDtoMapper userDtoMapper;
+    @Mock
+    private UserDtoMapper userDtoMapper;
 
-    @InjectMocks private GetAllUsersHandler handler;
+    @Mock
+    private MessageService messageService;
+
+    @InjectMocks
+    private GetAllUsersHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        lenient()
+                .when(messageService.getMessage("user.list.retrieved.success"))
+                .thenReturn("Users retrieved successfully");
+    }
 
     @Test
     @DisplayName("Should return all users successfully")
@@ -54,28 +70,26 @@ class GetAllUsersHandlerTest {
         domain2.setId(Ulid.fast());
         domain2.setEmail("user2@std.iyte.edu.tr");
 
-        UserDto dto1 =
-                new UserDto(
-                        "user-1",
-                        "user1@std.iyte.edu.tr",
-                        "John",
-                        "Doe",
-                        null,
-                        null,
-                        null,
-                        null,
-                        null);
-        UserDto dto2 =
-                new UserDto(
-                        "user-2",
-                        "user2@std.iyte.edu.tr",
-                        "Jane",
-                        "Smith",
-                        null,
-                        null,
-                        null,
-                        null,
-                        null);
+        UserDto dto1 = new UserDto(
+                "user-1",
+                "user1@std.iyte.edu.tr",
+                "John",
+                "Doe",
+                null,
+                null,
+                null,
+                null,
+                null);
+        UserDto dto2 = new UserDto(
+                "user-2",
+                "user2@std.iyte.edu.tr",
+                "Jane",
+                "Smith",
+                null,
+                null,
+                null,
+                null,
+                null);
 
         when(userRepository.findAll()).thenReturn(List.of(entity1, entity2));
         when(userMapper.entityToDomain(entity1)).thenReturn(domain1);
