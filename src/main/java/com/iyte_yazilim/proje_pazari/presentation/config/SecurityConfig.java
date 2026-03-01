@@ -1,5 +1,7 @@
 package com.iyte_yazilim.proje_pazari.presentation.config;
 
+import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.IpBanFilter;
+import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.MaintenanceModeFilter;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.RateLimitFilter;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final IpBanFilter ipBanFilter;
+    private final MaintenanceModeFilter maintenanceModeFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -56,6 +60,9 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers("/api/v1/health")
                                         .permitAll()
+                                        // WebSocket endpoint
+                                        .requestMatchers("/ws/**")
+                                        .permitAll()
                                         // Public authentication endpoints
                                         .requestMatchers("/api/v1/auth/**")
                                         .permitAll()
@@ -77,9 +84,10 @@ public class SecurityConfig {
                                         .authenticated())
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(
-                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(ipBanFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(maintenanceModeFilter, IpBanFilter.class)
+                .addFilterAfter(rateLimitFilter, MaintenanceModeFilter.class)
+                .addFilterAfter(jwtAuthenticationFilter, RateLimitFilter.class);
 
         return http.build();
     }
