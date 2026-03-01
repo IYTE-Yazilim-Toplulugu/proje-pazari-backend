@@ -64,9 +64,13 @@ public class SecurityConfig {
                                         .permitAll()
                                         // Public read-only endpoints - anyone can view user
                                         // profiles and projects
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/users/**")
+                                        .requestMatchers(
+                                                HttpMethod.GET, "/api/v1/users", "/api/v1/users/**")
                                         .permitAll()
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/**")
+                                        .requestMatchers(
+                                                HttpMethod.GET,
+                                                "/api/v1/projects",
+                                                "/api/v1/projects/**")
                                         .permitAll()
                                         // All other requests require authentication
                                         .anyRequest()

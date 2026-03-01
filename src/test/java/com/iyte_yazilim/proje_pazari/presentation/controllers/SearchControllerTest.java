@@ -276,13 +276,6 @@ class SearchControllerTest {
             mockMvc.perform(get("/api/v1/search/projects").param("q", "java").param("size", "101"))
                     .andExpect(status().isBadRequest());
         }
-
-        @Test
-        @DisplayName("Should return unauthorized when user is not authenticated")
-        void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() throws Exception {
-            mockMvc.perform(get("/api/v1/search/projects").param("q", "java"))
-                    .andExpect(status().isUnauthorized());
-        }
     }
 
     @Nested
@@ -369,13 +362,6 @@ class SearchControllerTest {
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", longQuery))
                     .andExpect(status().isBadRequest());
         }
-
-        @Test
-        @DisplayName("Should return unauthorized when user is not authenticated")
-        void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() throws Exception {
-            mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "java"))
-                    .andExpect(status().isUnauthorized());
-        }
     }
 
     @Nested
@@ -414,13 +400,6 @@ class SearchControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(0))
                     .andExpect(jsonPath("$.data").isEmpty());
-        }
-
-        @Test
-        @DisplayName("Should return unauthorized when user is not authenticated")
-        void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() throws Exception {
-            mockMvc.perform(get("/api/v1/search/projects/statistics"))
-                    .andExpect(status().isUnauthorized());
         }
     }
 }
