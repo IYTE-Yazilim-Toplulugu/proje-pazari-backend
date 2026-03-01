@@ -21,92 +21,90 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ImportProjectsFromCsvHandlerTest {
 
-        @Mock
-        private ProjectRepository projectRepository;
-        @Mock
-        private UserRepository userRepository;
+    @Mock private ProjectRepository projectRepository;
+    @Mock private UserRepository userRepository;
 
-        @InjectMocks
-        private ImportProjectsFromCsvHandler handler;
+    @InjectMocks private ImportProjectsFromCsvHandler handler;
 
-        @Test
-        @DisplayName("Should import valid projects from CSV")
-        void shouldImportValidProjects() {
-                String csv = "title,description,ownerEmail,status,maxTeamSize,category,requiredSkills\n"
-                                + "Project A,A test project,owner@test.com,DRAFT,5,Software,Java;Spring\n";
+    @Test
+    @DisplayName("Should import valid projects from CSV")
+    void shouldImportValidProjects() {
+        String csv =
+                "title,description,ownerEmail,status,maxTeamSize,category,requiredSkills\n"
+                        + "Project A,A test project,owner@test.com,DRAFT,5,Software,Java;Spring\n";
 
-                UserEntity owner = new UserEntity();
-                owner.setId("owner-1");
-                owner.setEmail("owner@test.com");
-                when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
-                when(projectRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        UserEntity owner = new UserEntity();
+        owner.setId("owner-1");
+        owner.setEmail("owner@test.com");
+        when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
+        when(projectRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-                ApiResponse<ImportResultDTO> response = handler.handle(
-                                new ImportProjectsFromCsvCommand(csv));
+        ApiResponse<ImportResultDTO> response =
+                handler.handle(new ImportProjectsFromCsvCommand(csv));
 
-                assertNotNull(response);
-                assertNotNull(response.getData());
-                assertEquals(1, response.getData().totalRows());
-                assertEquals(1, response.getData().successCount());
-                assertEquals(0, response.getData().failedCount());
-                verify(projectRepository).save(any());
-        }
+        assertNotNull(response);
+        assertNotNull(response.getData());
+        assertEquals(1, response.getData().totalRows());
+        assertEquals(1, response.getData().successCount());
+        assertEquals(0, response.getData().failedCount());
+        verify(projectRepository).save(any());
+    }
 
-        @Test
-        @DisplayName("Should return validation error for empty CSV")
-        void shouldReturnValidationErrorForEmptyCsv() {
-                ApiResponse<ImportResultDTO> response = handler.handle(
-                                new ImportProjectsFromCsvCommand(""));
+    @Test
+    @DisplayName("Should return validation error for empty CSV")
+    void shouldReturnValidationErrorForEmptyCsv() {
+        ApiResponse<ImportResultDTO> response =
+                handler.handle(new ImportProjectsFromCsvCommand(""));
 
-                assertNotNull(response);
-                assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        }
+        assertNotNull(response);
+        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
+    }
 
-        @Test
-        @DisplayName("Should handle owner not found")
-        void shouldHandleOwnerNotFound() {
-                String csv = "title,description,ownerEmail,status\n"
-                                + "Project A,Desc,unknown@test.com,DRAFT\n";
+    @Test
+    @DisplayName("Should handle owner not found")
+    void shouldHandleOwnerNotFound() {
+        String csv =
+                "title,description,ownerEmail,status\n" + "Project A,Desc,unknown@test.com,DRAFT\n";
 
-                when(userRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
 
-                ApiResponse<ImportResultDTO> response = handler.handle(
-                                new ImportProjectsFromCsvCommand(csv));
+        ApiResponse<ImportResultDTO> response =
+                handler.handle(new ImportProjectsFromCsvCommand(csv));
 
-                assertNotNull(response);
-                assertEquals(0, response.getData().successCount());
-                assertEquals(1, response.getData().failedCount());
-        }
+        assertNotNull(response);
+        assertEquals(0, response.getData().successCount());
+        assertEquals(1, response.getData().failedCount());
+    }
 
-        @Test
-        @DisplayName("Should handle rows with insufficient fields")
-        void shouldHandleInsufficientFields() {
-                String csv = "title,description,ownerEmail,status\n"
-                                + "Project A,Desc\n"; // Only 2 fields
+    @Test
+    @DisplayName("Should handle rows with insufficient fields")
+    void shouldHandleInsufficientFields() {
+        String csv = "title,description,ownerEmail,status\n" + "Project A,Desc\n"; // Only 2 fields
 
-                ApiResponse<ImportResultDTO> response = handler.handle(
-                                new ImportProjectsFromCsvCommand(csv));
+        ApiResponse<ImportResultDTO> response =
+                handler.handle(new ImportProjectsFromCsvCommand(csv));
 
-                assertNotNull(response);
-                assertEquals(0, response.getData().successCount());
-                assertEquals(1, response.getData().failedCount());
-        }
+        assertNotNull(response);
+        assertEquals(0, response.getData().successCount());
+        assertEquals(1, response.getData().failedCount());
+    }
 
-        @Test
-        @DisplayName("Should handle invalid project status")
-        void shouldHandleInvalidStatus() {
-                String csv = "title,description,ownerEmail,status\n"
-                                + "Project A,Desc,owner@test.com,INVALID_STATUS\n";
+    @Test
+    @DisplayName("Should handle invalid project status")
+    void shouldHandleInvalidStatus() {
+        String csv =
+                "title,description,ownerEmail,status\n"
+                        + "Project A,Desc,owner@test.com,INVALID_STATUS\n";
 
-                UserEntity owner = new UserEntity();
-                owner.setId("owner-1");
-                when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
+        UserEntity owner = new UserEntity();
+        owner.setId("owner-1");
+        when(userRepository.findByEmail("owner@test.com")).thenReturn(Optional.of(owner));
 
-                ApiResponse<ImportResultDTO> response = handler.handle(
-                                new ImportProjectsFromCsvCommand(csv));
+        ApiResponse<ImportResultDTO> response =
+                handler.handle(new ImportProjectsFromCsvCommand(csv));
 
-                assertNotNull(response);
-                assertEquals(0, response.getData().successCount());
-                assertEquals(1, response.getData().failedCount());
-        }
+        assertNotNull(response);
+        assertEquals(0, response.getData().successCount());
+        assertEquals(1, response.getData().failedCount());
+    }
 }

@@ -19,63 +19,63 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ToggleMaintenanceModeHandlerTest {
 
-        @Mock
-        private SystemConfigRepository systemConfigRepository;
+    @Mock private SystemConfigRepository systemConfigRepository;
 
-        @InjectMocks
-        private ToggleMaintenanceModeHandler handler;
+    @InjectMocks private ToggleMaintenanceModeHandler handler;
 
-        @Test
-        @DisplayName("Should enable maintenance mode by creating new config")
-        void shouldEnableMaintenanceModeNewConfig() {
-                when(systemConfigRepository.findByConfigKey("maintenanceMode"))
-                                .thenReturn(Optional.empty());
-                when(systemConfigRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    @Test
+    @DisplayName("Should enable maintenance mode by creating new config")
+    void shouldEnableMaintenanceModeNewConfig() {
+        when(systemConfigRepository.findByConfigKey("maintenanceMode"))
+                .thenReturn(Optional.empty());
+        when(systemConfigRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-                ApiResponse<Void> response = handler.handle(new ToggleMaintenanceModeCommand(true));
+        ApiResponse<Void> response = handler.handle(new ToggleMaintenanceModeCommand(true));
 
-                assertNotNull(response);
-                assertEquals(ResponseCode.SUCCESS, response.getCode());
-                assertTrue(response.getMessage().contains("enabled"));
-                verify(systemConfigRepository).save(any(SystemConfigEntity.class));
-        }
+        assertNotNull(response);
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertTrue(response.getMessage().contains("enabled"));
+        verify(systemConfigRepository).save(any(SystemConfigEntity.class));
+    }
 
-        @Test
-        @DisplayName("Should disable maintenance mode by updating existing config")
-        void shouldDisableMaintenanceModeExistingConfig() {
-                SystemConfigEntity existing = SystemConfigEntity.builder()
-                                .id("config-1")
-                                .configKey("maintenanceMode")
-                                .configValue("true")
-                                .build();
-                when(systemConfigRepository.findByConfigKey("maintenanceMode"))
-                                .thenReturn(Optional.of(existing));
-                when(systemConfigRepository.save(any())).thenReturn(existing);
+    @Test
+    @DisplayName("Should disable maintenance mode by updating existing config")
+    void shouldDisableMaintenanceModeExistingConfig() {
+        SystemConfigEntity existing =
+                SystemConfigEntity.builder()
+                        .id("config-1")
+                        .configKey("maintenanceMode")
+                        .configValue("true")
+                        .build();
+        when(systemConfigRepository.findByConfigKey("maintenanceMode"))
+                .thenReturn(Optional.of(existing));
+        when(systemConfigRepository.save(any())).thenReturn(existing);
 
-                ApiResponse<Void> response = handler.handle(new ToggleMaintenanceModeCommand(false));
+        ApiResponse<Void> response = handler.handle(new ToggleMaintenanceModeCommand(false));
 
-                assertNotNull(response);
-                assertEquals(ResponseCode.SUCCESS, response.getCode());
-                assertTrue(response.getMessage().contains("disabled"));
-                assertEquals("false", existing.getConfigValue());
-                verify(systemConfigRepository).save(existing);
-        }
+        assertNotNull(response);
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertTrue(response.getMessage().contains("disabled"));
+        assertEquals("false", existing.getConfigValue());
+        verify(systemConfigRepository).save(existing);
+    }
 
-        @Test
-        @DisplayName("Should update existing config when enabling maintenance mode")
-        void shouldUpdateExistingConfigWhenEnabling() {
-                SystemConfigEntity existing = SystemConfigEntity.builder()
-                                .id("config-1")
-                                .configKey("maintenanceMode")
-                                .configValue("false")
-                                .build();
-                when(systemConfigRepository.findByConfigKey("maintenanceMode"))
-                                .thenReturn(Optional.of(existing));
-                when(systemConfigRepository.save(any())).thenReturn(existing);
+    @Test
+    @DisplayName("Should update existing config when enabling maintenance mode")
+    void shouldUpdateExistingConfigWhenEnabling() {
+        SystemConfigEntity existing =
+                SystemConfigEntity.builder()
+                        .id("config-1")
+                        .configKey("maintenanceMode")
+                        .configValue("false")
+                        .build();
+        when(systemConfigRepository.findByConfigKey("maintenanceMode"))
+                .thenReturn(Optional.of(existing));
+        when(systemConfigRepository.save(any())).thenReturn(existing);
 
-                ApiResponse<Void> response = handler.handle(new ToggleMaintenanceModeCommand(true));
+        ApiResponse<Void> response = handler.handle(new ToggleMaintenanceModeCommand(true));
 
-                assertNotNull(response);
-                assertEquals("true", existing.getConfigValue());
-        }
+        assertNotNull(response);
+        assertEquals("true", existing.getConfigValue());
+    }
 }

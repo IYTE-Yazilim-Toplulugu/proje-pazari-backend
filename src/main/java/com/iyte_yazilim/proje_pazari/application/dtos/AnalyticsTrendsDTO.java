@@ -6,6 +6,5 @@ import java.util.List;
 public record AnalyticsTrendsDTO(List<DailyDataPoint> dataPoints, int totalDays) {
 
     public record DailyDataPoint(
-            LocalDate date, long newUsers, long newProjects, long newApplications) {
-    }
+            LocalDate date, long newUsers, long newProjects, long newApplications) {}
 }

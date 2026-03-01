@@ -19,11 +19,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ScheduleEmailHandlerTest {
 
-    @Mock
-    private ScheduledEmailRepository scheduledEmailRepository;
+    @Mock private ScheduledEmailRepository scheduledEmailRepository;
 
-    @InjectMocks
-    private ScheduleEmailHandler handler;
+    @InjectMocks private ScheduleEmailHandler handler;
 
     @Test
     @DisplayName("Should schedule email successfully")
@@ -31,8 +29,8 @@ class ScheduleEmailHandlerTest {
         LocalDateTime futureTime = LocalDateTime.now().plusDays(1);
         when(scheduledEmailRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ScheduleEmailCommand command = new ScheduleEmailCommand(
-                "Test Subject", "Test Body", "ALL", futureTime);
+        ScheduleEmailCommand command =
+                new ScheduleEmailCommand("Test Subject", "Test Body", "ALL", futureTime);
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);
@@ -43,8 +41,8 @@ class ScheduleEmailHandlerTest {
     @Test
     @DisplayName("Should return validation error for missing subject")
     void shouldReturnValidationErrorForMissingSubject() {
-        ScheduleEmailCommand command = new ScheduleEmailCommand(
-                null, "body", "ALL", LocalDateTime.now().plusDays(1));
+        ScheduleEmailCommand command =
+                new ScheduleEmailCommand(null, "body", "ALL", LocalDateTime.now().plusDays(1));
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);
@@ -55,8 +53,8 @@ class ScheduleEmailHandlerTest {
     @Test
     @DisplayName("Should return validation error for blank subject")
     void shouldReturnValidationErrorForBlankSubject() {
-        ScheduleEmailCommand command = new ScheduleEmailCommand(
-                "  ", "body", "ALL", LocalDateTime.now().plusDays(1));
+        ScheduleEmailCommand command =
+                new ScheduleEmailCommand("  ", "body", "ALL", LocalDateTime.now().plusDays(1));
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);
@@ -66,8 +64,8 @@ class ScheduleEmailHandlerTest {
     @Test
     @DisplayName("Should return validation error for missing body")
     void shouldReturnValidationErrorForMissingBody() {
-        ScheduleEmailCommand command = new ScheduleEmailCommand(
-                "Subject", null, "ALL", LocalDateTime.now().plusDays(1));
+        ScheduleEmailCommand command =
+                new ScheduleEmailCommand("Subject", null, "ALL", LocalDateTime.now().plusDays(1));
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);
@@ -77,8 +75,7 @@ class ScheduleEmailHandlerTest {
     @Test
     @DisplayName("Should return validation error for null scheduled time")
     void shouldReturnValidationErrorForNullScheduledTime() {
-        ScheduleEmailCommand command = new ScheduleEmailCommand(
-                "Subject", "Body", "ALL", null);
+        ScheduleEmailCommand command = new ScheduleEmailCommand("Subject", "Body", "ALL", null);
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);
@@ -88,8 +85,9 @@ class ScheduleEmailHandlerTest {
     @Test
     @DisplayName("Should return validation error for past scheduled time")
     void shouldReturnValidationErrorForPastTime() {
-        ScheduleEmailCommand command = new ScheduleEmailCommand(
-                "Subject", "Body", "ALL", LocalDateTime.now().minusDays(1));
+        ScheduleEmailCommand command =
+                new ScheduleEmailCommand(
+                        "Subject", "Body", "ALL", LocalDateTime.now().minusDays(1));
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);

@@ -19,21 +19,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class CancelScheduledEmailHandlerTest {
 
-    @Mock
-    private ScheduledEmailRepository scheduledEmailRepository;
+    @Mock private ScheduledEmailRepository scheduledEmailRepository;
 
-    @InjectMocks
-    private CancelScheduledEmailHandler handler;
+    @InjectMocks private CancelScheduledEmailHandler handler;
 
     @Test
     @DisplayName("Should cancel pending scheduled email")
     void shouldCancelPendingEmail() {
-        ScheduledEmailEntity entity = ScheduledEmailEntity.builder()
-                .id("email-1")
-                .subject("Test")
-                .body("Body")
-                .status("PENDING")
-                .build();
+        ScheduledEmailEntity entity =
+                ScheduledEmailEntity.builder()
+                        .id("email-1")
+                        .subject("Test")
+                        .body("Body")
+                        .status("PENDING")
+                        .build();
         when(scheduledEmailRepository.findById("email-1")).thenReturn(Optional.of(entity));
         when(scheduledEmailRepository.save(any())).thenReturn(entity);
 
@@ -60,12 +59,13 @@ class CancelScheduledEmailHandlerTest {
     @Test
     @DisplayName("Should return validation error when cancelling non-pending email")
     void shouldReturnValidationErrorForNonPendingEmail() {
-        ScheduledEmailEntity entity = ScheduledEmailEntity.builder()
-                .id("email-2")
-                .subject("Sent Email")
-                .body("Body")
-                .status("SENT")
-                .build();
+        ScheduledEmailEntity entity =
+                ScheduledEmailEntity.builder()
+                        .id("email-2")
+                        .subject("Sent Email")
+                        .body("Body")
+                        .status("SENT")
+                        .build();
         when(scheduledEmailRepository.findById("email-2")).thenReturn(Optional.of(entity));
 
         ApiResponse<Void> response = handler.handle(new CancelScheduledEmailCommand("email-2"));
