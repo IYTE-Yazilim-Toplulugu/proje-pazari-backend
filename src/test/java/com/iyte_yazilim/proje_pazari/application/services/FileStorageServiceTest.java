@@ -1,153 +1,171 @@
 package com.iyte_yazilim.proje_pazari.application.services;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import org.junit.jupiter.api.BeforeEach;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
+import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.springframework.core.io.Resource;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
+@ExtendWith(MockitoExtension.class)
 class FileStorageServiceTest {
 
-    @TempDir Path tempDir;
+    @Mock
+    private IFileStorageAdapter storageAdapter;
 
+    @InjectMocks
     private FileStorageService fileStorageService;
 
-    @BeforeEach
-    void setUp() {
-        fileStorageService = new FileStorageService(tempDir);
+    private void setDefaultConfig() {
+        ReflectionTestUtils.setField(fileStorageService, "maxFileSize", DataSize.ofMegabytes(10));
+        ReflectionTestUtils.setField(
+                fileStorageService,
+                "allowedContentTypesString",
+                "image/jpeg,image/png,image/gif,image/webp,application/pdf");
     }
 
     @Test
-    @DisplayName("Should store image file successfully")
-    void shouldStoreFile_whenFileIsValidImage() throws IOException {
+    @DisplayName("Should store file successfully")
+    void shouldStoreFile_whenFileIsValid() {
         // Given
+        setDefaultConfig();
         MultipartFile file = mock(MultipartFile.class);
         when(file.getContentType()).thenReturn("image/jpeg");
         when(file.getOriginalFilename()).thenReturn("photo.jpg");
         when(file.getSize()).thenReturn(1024L);
-        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[] {1, 2, 3}));
+        when(file.isEmpty()).thenReturn(false);
+        when(storageAdapter.store(any(MultipartFile.class), anyString()))
+                .thenReturn("https://storage.example.com/profiles/photo.jpg");
 
         // When
-        String fileName = fileStorageService.storeFile(file, "user-123");
+        String url = fileStorageService.storeFile(file, "profiles");
 
         // Then
-        assertNotNull(fileName);
-        assertTrue(fileName.startsWith("user-123_"));
-        assertTrue(fileName.endsWith(".jpg"));
-        assertTrue(Files.exists(tempDir.resolve(fileName)));
+        assertNotNull(url);
+        assertTrue(url.contains("storage.example.com"));
+        verify(storageAdapter).store(any(MultipartFile.class), anyString());
     }
 
     @Test
-    @DisplayName("Should reject non-image file")
-    void shouldRejectFile_whenNotImage() {
+    @DisplayName("Should reject empty file")
+    void shouldRejectFile_whenEmpty() {
         // Given
+        setDefaultConfig();
         MultipartFile file = mock(MultipartFile.class);
-        when(file.getContentType()).thenReturn("application/pdf");
-        when(file.getOriginalFilename()).thenReturn("document.pdf");
+        when(file.isEmpty()).thenReturn(true);
 
         // When & Then
-        IllegalArgumentException exception =
-                assertThrows(
-                        IllegalArgumentException.class,
-                        () -> fileStorageService.storeFile(file, "user-123"));
-        assertEquals("Only image files are allowed", exception.getMessage());
+        assertThrows(
+                FileStorageException.class, () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
     @DisplayName("Should reject file exceeding size limit")
     void shouldRejectFile_whenSizeExceedsLimit() {
         // Given
+        setDefaultConfig();
         MultipartFile file = mock(MultipartFile.class);
-        when(file.getContentType()).thenReturn("image/png");
-        when(file.getOriginalFilename()).thenReturn("large.png");
-        when(file.getSize()).thenReturn(6L * 1024 * 1024); // 6MB
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(20L * 1024 * 1024); // 20MB exceeds 10MB limit
 
         // When & Then
-        IllegalArgumentException exception =
-                assertThrows(
-                        IllegalArgumentException.class,
-                        () -> fileStorageService.storeFile(file, "user-123"));
-        assertEquals("File size exceeds 5MB limit", exception.getMessage());
+        assertThrows(
+                FileStorageException.class, () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
-    @DisplayName("Should reject file with null filename")
-    void shouldRejectFile_whenFilenameIsNull() {
+    @DisplayName("Should reject file with disallowed content type")
+    void shouldRejectFile_whenContentTypeNotAllowed() {
         // Given
+        setDefaultConfig();
         MultipartFile file = mock(MultipartFile.class);
-        when(file.getContentType()).thenReturn("image/jpeg");
-        when(file.getOriginalFilename()).thenReturn(null);
+        when(file.isEmpty()).thenReturn(false);
         when(file.getSize()).thenReturn(1024L);
+        when(file.getContentType()).thenReturn("application/zip");
 
         // When & Then
         assertThrows(
-                IllegalArgumentException.class,
-                () -> fileStorageService.storeFile(file, "user-123"));
+                FileStorageException.class, () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
-    @DisplayName("Should load existing file as resource")
-    void shouldLoadFile_whenFileExists() throws IOException {
+    @DisplayName("Should delete file")
+    void shouldDeleteFile() {
         // Given
-        Path testFile = tempDir.resolve("test-file.jpg");
-        Files.write(testFile, new byte[] {1, 2, 3});
+        String path = "profiles/photo.jpg";
 
         // When
-        Resource resource = fileStorageService.loadFileAsResource("test-file.jpg");
+        fileStorageService.deleteFile(path);
 
         // Then
-        assertNotNull(resource);
-        assertTrue(resource.exists());
+        verify(storageAdapter).delete(path);
     }
 
     @Test
-    @DisplayName("Should throw when trying to load non-existent file")
-    void shouldThrow_whenFileDoesNotExist() {
-        // When & Then
-        assertThrows(
-                IOException.class, () -> fileStorageService.loadFileAsResource("nonexistent.jpg"));
-    }
-
-    @Test
-    @DisplayName("Should delete existing file")
-    void shouldDeleteFile_whenFileExists() throws IOException {
+    @DisplayName("Should check if file exists")
+    void shouldCheckFileExists() {
         // Given
-        Path testFile = tempDir.resolve("to-delete.jpg");
-        Files.write(testFile, new byte[] {1, 2, 3});
+        String path = "profiles/photo.jpg";
+        when(storageAdapter.exists(path)).thenReturn(true);
 
         // When
-        fileStorageService.deleteFile("to-delete.jpg");
+        boolean exists = fileStorageService.fileExists(path);
 
         // Then
-        assertFalse(Files.exists(testFile));
+        assertTrue(exists);
+        verify(storageAdapter).exists(path);
     }
 
     @Test
-    @DisplayName("Should not throw when deleting non-existent file")
-    void shouldNotThrow_whenDeletingNonExistentFile() {
-        // When & Then
-        assertDoesNotThrow(() -> fileStorageService.deleteFile("nonexistent.jpg"));
-    }
-
-    @Test
-    @DisplayName("Should reject file with image content type but wrong extension")
-    void shouldRejectFile_whenExtensionIsInvalid() {
+    @DisplayName("Should get file metadata")
+    void shouldGetFileMetadata() {
         // Given
-        MultipartFile file = mock(MultipartFile.class);
-        when(file.getContentType()).thenReturn("image/jpeg");
-        when(file.getOriginalFilename()).thenReturn("malicious.exe");
+        String path = "profiles/photo.jpg";
+        FileMetadata expectedMetadata = mock(FileMetadata.class);
+        when(storageAdapter.getMetadata(path)).thenReturn(expectedMetadata);
 
+        // When
+        FileMetadata metadata = fileStorageService.getFileMetadata(path);
+
+        // Then
+        assertNotNull(metadata);
+        assertEquals(expectedMetadata, metadata);
+        verify(storageAdapter).getMetadata(path);
+    }
+
+    @Test
+    @DisplayName("Should reject invalid file path with directory traversal")
+    void shouldRejectInvalidPath() {
         // When & Then
         assertThrows(
-                IllegalArgumentException.class,
-                () -> fileStorageService.storeFile(file, "user-123"));
+                FileStorageException.class,
+                () -> fileStorageService.deleteFile("../etc/passwd"));
+    }
+
+    @Test
+    @DisplayName("Should generate presigned URL")
+    void shouldGeneratePresignedUrl() {
+        // Given
+        String path = "profiles/photo.jpg";
+        String expectedUrl = "https://storage.example.com/presigned/photo.jpg";
+        when(storageAdapter.generatePresignedUrl(path, 60)).thenReturn(expectedUrl);
+
+        // When
+        String url = fileStorageService.getFileUrl(path);
+
+        // Then
+        assertEquals(expectedUrl, url);
+        verify(storageAdapter).generatePresignedUrl(path, 60);
     }
 }

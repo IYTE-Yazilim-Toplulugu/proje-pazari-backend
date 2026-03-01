@@ -23,13 +23,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GetUserHandlerTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @Mock private UserMapper userMapper;
+    @Mock
+    private UserMapper userMapper;
 
-    @Mock private UserDtoMapper userDtoMapper;
+    @Mock
+    private UserDtoMapper userDtoMapper;
 
-    @InjectMocks private GetUserHandler handler;
+    @InjectMocks
+    private GetUserHandler handler;
 
     @Test
     @DisplayName("Should return user successfully when user exists")
@@ -48,8 +52,16 @@ class GetUserHandlerTest {
         domainUser.setId(Ulid.fast());
         domainUser.setEmail("test@std.iyte.edu.tr");
 
-        UserDto expectedDto =
-                new UserDto(userId, "test@std.iyte.edu.tr", "John", "Doe", null, null, null, null);
+        UserDto expectedDto = new UserDto(
+                userId,
+                "test@std.iyte.edu.tr",
+                "John",
+                "Doe",
+                null,
+                null,
+                null,
+                null,
+                null);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
         when(userMapper.entityToDomain(userEntity)).thenReturn(domainUser);

@@ -5,12 +5,16 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -20,19 +24,37 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class LoginUserHandlerTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @Mock private IValidator<LoginUserCommand> validator;
+    @Mock
+    private EmailVerificationRepository emailVerificationRepository;
 
-    @Mock private PasswordEncoder passwordEncoder;
+    @Mock
+    private IValidator<LoginUserCommand> validator;
 
-    @Mock private JwtUtil jwtUtil;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
-    @InjectMocks private LoginUserHandler handler;
+    @Mock
+    private JwtUtil jwtUtil;
+
+    @Mock
+    private MessageService messageService;
+
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
+    @Mock
+    private BusinessMetricsService metricsService;
+
+    @InjectMocks
+    private LoginUserHandler handler;
 
     @Test
     @DisplayName("Should login successfully when credentials are valid")
@@ -42,7 +64,10 @@ class LoginUserHandlerTest {
         String email = "test@std.iyte.edu.tr";
         String password = "SecurePass123!";
         String encodedPassword = "encoded-password";
-        String jwtToken = "jwt.token.here";
+        String accessToken = "jwt.access.token";
+        String refreshToken = "jwt.refresh.token";
+
+        ReflectionTestUtils.setField(handler, "jwtExpiration", 3600L);
 
         LoginUserCommand command = new LoginUserCommand(email, password);
 
@@ -57,7 +82,11 @@ class LoginUserHandlerTest {
         when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
         when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
-        when(jwtUtil.generateToken(email)).thenReturn(jwtToken);
+        when(emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(userId))
+                .thenReturn(true);
+        when(jwtUtil.generateToken(userId, email, "APPLICANT")).thenReturn(accessToken);
+        when(refreshTokenService.createRefreshToken(userId)).thenReturn(refreshToken);
+        when(messageService.getMessage("auth.login.success")).thenReturn("Login successful");
 
         // When
         ApiResponse<LoginUserResult> response = handler.handle(command);
@@ -70,7 +99,8 @@ class LoginUserHandlerTest {
         assertEquals(email, response.getData().email());
         assertEquals("John", response.getData().firstName());
         assertEquals("Doe", response.getData().lastName());
-        assertEquals(jwtToken, response.getData().token());
+        assertEquals(accessToken, response.getData().accessToken());
+        assertEquals(refreshToken, response.getData().refreshToken());
     }
 
     @Test
@@ -80,7 +110,7 @@ class LoginUserHandlerTest {
         LoginUserCommand command = new LoginUserCommand("", "");
 
         when(validator.validate(command))
-                .thenReturn(new String[] {"Email is required", "Password is required"});
+                .thenReturn(new String[] { "Email is required", "Password is required" });
 
         // When
         ApiResponse<LoginUserResult> response = handler.handle(command);
@@ -101,6 +131,8 @@ class LoginUserHandlerTest {
 
         when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(messageService.getMessage("auth.login.failed"))
+                .thenReturn("Invalid email or password");
 
         // When
         ApiResponse<LoginUserResult> response = handler.handle(command);
@@ -125,6 +157,8 @@ class LoginUserHandlerTest {
 
         when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
+        when(messageService.getMessage("auth.account.deactivated"))
+                .thenReturn("Account has been deactivated");
 
         // When
         ApiResponse<LoginUserResult> response = handler.handle(command);
@@ -149,6 +183,8 @@ class LoginUserHandlerTest {
 
         when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
+        when(messageService.getMessage("auth.account.deactivated"))
+                .thenReturn("Account has been deactivated");
 
         // When
         ApiResponse<LoginUserResult> response = handler.handle(command);
@@ -178,6 +214,8 @@ class LoginUserHandlerTest {
         when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
         when(passwordEncoder.matches(wrongPassword, encodedPassword)).thenReturn(false);
+        when(messageService.getMessage("auth.login.failed"))
+                .thenReturn("Invalid email or password");
 
         // When
         ApiResponse<LoginUserResult> response = handler.handle(command);
@@ -185,7 +223,7 @@ class LoginUserHandlerTest {
         // Then
         assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
         assertEquals("Invalid email or password", response.getMessage());
-        verify(jwtUtil, never()).generateToken(anyString());
+        verify(jwtUtil, never()).generateToken(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -195,7 +233,10 @@ class LoginUserHandlerTest {
         String userId = Ulid.fast().toString();
         String email = "test@std.iyte.edu.tr";
         String password = "SecurePass123!";
-        String jwtToken = "jwt.token.here";
+        String accessToken = "jwt.access.token";
+        String refreshToken = "jwt.refresh.token";
+
+        ReflectionTestUtils.setField(handler, "jwtExpiration", 3600L);
 
         LoginUserCommand command = new LoginUserCommand(email, password);
 
@@ -210,7 +251,11 @@ class LoginUserHandlerTest {
         when(validator.validate(command)).thenReturn(new String[] {});
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
         when(passwordEncoder.matches(password, "encoded-password")).thenReturn(true);
-        when(jwtUtil.generateToken(email)).thenReturn(jwtToken);
+        when(emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(userId))
+                .thenReturn(true);
+        when(jwtUtil.generateToken(userId, email, "APPLICANT")).thenReturn(accessToken);
+        when(refreshTokenService.createRefreshToken(userId)).thenReturn(refreshToken);
+        when(messageService.getMessage("auth.login.success")).thenReturn("Login successful");
 
         // When
         ApiResponse<LoginUserResult> response = handler.handle(command);
@@ -218,6 +263,7 @@ class LoginUserHandlerTest {
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertNotNull(response.getData());
-        assertEquals(jwtToken, response.getData().token());
+        assertEquals(accessToken, response.getData().accessToken());
+        assertEquals(refreshToken, response.getData().refreshToken());
     }
 }
