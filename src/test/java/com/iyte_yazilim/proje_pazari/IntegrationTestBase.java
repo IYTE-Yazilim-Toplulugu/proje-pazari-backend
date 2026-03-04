@@ -29,37 +29,27 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 public abstract class IntegrationTestBase {
-    @Autowired
-    protected MockMvc mockMvc;
+    @Autowired protected MockMvc mockMvc;
 
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
-    @MockitoBean
-    protected StringRedisTemplate stringRedisTemplate;
+    @MockitoBean protected StringRedisTemplate stringRedisTemplate;
 
-    @MockitoBean
-    protected TokenBlacklistService tokenBlacklistService;
+    @MockitoBean protected TokenBlacklistService tokenBlacklistService;
 
-    @MockitoBean
-    protected JavaMailSender javaMailSender;
+    @MockitoBean protected JavaMailSender javaMailSender;
 
-    @MockitoBean
-    protected RateLimitConfig rateLimitConfig;
+    @MockitoBean protected RateLimitConfig rateLimitConfig;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    @Autowired private RefreshTokenRepository refreshTokenRepository;
 
-    @Autowired
-    private EmailVerificationRepository emailVerificationRepository;
+    @Autowired private EmailVerificationRepository emailVerificationRepository;
 
-    @Autowired
-    private ProjectApplicationRepository projectApplicationRepository;
+    @Autowired private ProjectApplicationRepository projectApplicationRepository;
 
-    @Autowired
-    private ProjectRepository projectRepository;
+    @Autowired private ProjectRepository projectRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    @Autowired private UserRepository userRepository;
 
     @BeforeEach
     void setUp() {

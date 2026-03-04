@@ -476,9 +476,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
         void deactivateAccount_authenticated_returns200() throws Exception {
             String token = createVerifiedUserAndGetToken();
 
-            mockMvc.perform(
-                            delete(BASE_URL + "/me")
-                                    .header("Authorization", "Bearer " + token))
+            mockMvc.perform(delete(BASE_URL + "/me").header("Authorization", "Bearer " + token))
                     .andExpect(status().isOk());
         }
 
@@ -500,9 +498,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
             String token = createVerifiedUserAndGetToken();
             String userId = getUserId(VALID_EMAIL);
 
-            mockMvc.perform(
-                            delete(BASE_URL + "/me")
-                                    .header("Authorization", "Bearer " + token))
+            mockMvc.perform(delete(BASE_URL + "/me").header("Authorization", "Bearer " + token))
                     .andExpect(status().isOk());
 
             UserEntity user = userRepository.findById(userId).orElseThrow();
@@ -527,8 +523,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
         void getAllUsers_asApplicant_returns403() throws Exception {
             String token = createVerifiedUserAndGetToken();
 
-            mockMvc.perform(
-                            get(BASE_URL).header("Authorization", "Bearer " + token))
+            mockMvc.perform(get(BASE_URL).header("Authorization", "Bearer " + token))
                     .andExpect(status().isForbidden());
         }
 

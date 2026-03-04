@@ -1,0 +1,483 @@
+package com.iyte_yazilim.proje_pazari.presentation.controllers;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
+import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
+import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
+
+class ApplicationControllerIntegrationTest extends IntegrationTestBase {
+
+    private static final String OWNER_EMAIL = "owner@std.iyte.edu.tr";
+    private static final String APPLICANT_EMAIL = "applicant@std.iyte.edu.tr";
+    private static final String APPLICANT2_EMAIL = "applicant2@std.iyte.edu.tr";
+    private static final String VALID_PASSWORD = "SecurePass123!";
+
+    @Autowired private UserRepository userRepository;
+    @Autowired private EmailVerificationRepository emailVerificationRepository;
+    @Autowired private ProjectRepository projectRepository;
+    @Autowired private ProjectApplicationRepository applicationRepository;
+
+    // ── Helper Methods ──────────────────────────────────────────────────
+
+    private void registerAndVerifyUser(
+            String email, String password, String firstName, String lastName) throws Exception {
+        var command = new RegisterUserCommand(email, password, firstName, lastName);
+        mockMvc.perform(
+                        post("/api/v1/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(command)))
+                .andExpect(status().isCreated());
+
+        var user = userRepository.findByEmail(email).orElseThrow();
+        var verification =
+                emailVerificationRepository
+                        .findTopByUserIdOrderByCreatedAtDesc(user.getId())
+                        .orElseThrow();
+        verification.setVerifiedAt(LocalDateTime.now());
+        emailVerificationRepository.save(verification);
+    }
+
+    private String loginAndGetToken(String email, String password) throws Exception {
+        var command = new LoginUserCommand(email, password);
+        MvcResult result =
+                mockMvc.perform(
+                                post("/api/v1/auth/login")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(command)))
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
+        return jsonNode.get("data").get("accessToken").asText();
+    }
+
+    private void promoteToProjectOwner(String email) {
+        UserEntity user = userRepository.findByEmail(email).orElseThrow();
+        user.setRole(RoleType.PROJECT_OWNER);
+        userRepository.save(user);
+    }
+
+    private String getUserId(String email) {
+        return userRepository.findByEmail(email).orElseThrow().getId();
+    }
+
+    private String createProjectOwnerAndGetToken() throws Exception {
+        registerAndVerifyUser(OWNER_EMAIL, VALID_PASSWORD, "Ali", "Yilmaz");
+        promoteToProjectOwner(OWNER_EMAIL);
+        return loginAndGetToken(OWNER_EMAIL, VALID_PASSWORD);
+    }
+
+    private String createApplicantAndGetToken(String email, String firstName) throws Exception {
+        registerAndVerifyUser(email, VALID_PASSWORD, firstName, "Demir");
+        return loginAndGetToken(email, VALID_PASSWORD);
+    }
+
+    private Map<String, Object> validProjectData() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("projectName", "AI Chatbot Project");
+        data.put(
+                "description",
+                "Building an AI-powered chatbot for customer support using modern NLP techniques.");
+        data.put("maxTeamSize", 5);
+        data.put("requiredSkills", new String[] {"Python", "NLP", "Machine Learning"});
+        data.put("category", "Artificial Intelligence");
+        return data;
+    }
+
+    private String createProjectAndGetId(String ownerToken) throws Exception {
+        MvcResult result =
+                mockMvc.perform(
+                                post("/api/v1/projects")
+                                        .header("Authorization", "Bearer " + ownerToken)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(
+                                                objectMapper.writeValueAsString(
+                                                        validProjectData())))
+                        .andExpect(status().isCreated())
+                        .andReturn();
+
+        var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
+        return jsonNode.get("data").get("projectId").asText();
+    }
+
+    private String submitApplicationUrl(String projectId) {
+        return "/api/v1/projects/" + projectId + "/applications";
+    }
+
+    private String reviewApplicationUrl(String applicationId) {
+        return "/api/v1/applications/" + applicationId + "/review";
+    }
+
+    // ── 1. Submit Application Tests ─────────────────────────────────────
+
+    @Nested
+    @DisplayName("POST /api/v1/projects/{projectId}/applications")
+    class SubmitApplicationTests {
+
+        @Test
+        @DisplayName("1. Submit application to a project returns 201 CREATED")
+        void submitApplication_returns201() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.data.applicationId").isNotEmpty())
+                    .andExpect(jsonPath("$.data.projectId").value(projectId))
+                    .andExpect(jsonPath("$.data.projectTitle").value("AI Chatbot Project"))
+                    .andExpect(jsonPath("$.data.status").value("PENDING"));
+        }
+
+        @Test
+        @DisplayName("2. Application is persisted in database with PENDING status")
+        void submitApplication_persistedInDatabase() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            var applications = applicationRepository.findByProjectId(projectId);
+            assertThat(applications).hasSize(1);
+            assertThat(applications.get(0).getStatus()).isEqualTo(ApplicationStatus.PENDING);
+            assertThat(applications.get(0).getUser().getEmail()).isEqualTo(APPLICANT_EMAIL);
+        }
+
+        @Test
+        @DisplayName("3. Duplicate application returns 400 BAD_REQUEST")
+        void submitApplication_duplicate_returns400() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            // First application
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            // Duplicate application
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("4. Submit application without authentication returns 403 FORBIDDEN")
+        void submitApplication_noAuth_returns403() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("5. Submit application to non-existent project returns 404 NOT_FOUND")
+        void submitApplication_nonExistentProject_returns404() throws Exception {
+            // Create an applicant (need a project owner first for infrastructure, but use applicant
+            // token)
+            createProjectOwnerAndGetToken();
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl("01NONEXISTENT0000000000000"))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("6. Multiple users can apply to the same project")
+        void submitApplication_multipleApplicants_allPersisted() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+
+            String applicant1Token = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicant2Token = createApplicantAndGetToken(APPLICANT2_EMAIL, "Ayse");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicant1Token)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicant2Token)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            var applications = applicationRepository.findByProjectId(projectId);
+            assertThat(applications).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("7. Same user can apply to different projects")
+        void submitApplication_differentProjects_allPersisted() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId1 = createProjectAndGetId(ownerToken);
+            String projectId2 = createProjectAndGetId(ownerToken);
+
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId1))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId2))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            String applicantId = getUserId(APPLICANT_EMAIL);
+            var applications = applicationRepository.findByUserId(applicantId);
+            assertThat(applications).hasSize(2);
+        }
+    }
+
+    // ── 2. Review Application Tests ─────────────────────────────────────
+
+    @Nested
+    @DisplayName("PUT /api/v1/applications/{applicationId}/review")
+    class ReviewApplicationTests {
+
+        private String createApplicationAndGetId(String projectId, String applicantToken)
+                throws Exception {
+            MvcResult result =
+                    mockMvc.perform(
+                                    post(submitApplicationUrl(projectId))
+                                            .header("Authorization", "Bearer " + applicantToken)
+                                            .contentType(MediaType.APPLICATION_JSON))
+                            .andExpect(status().isCreated())
+                            .andReturn();
+
+            var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
+            return jsonNode.get("data").get("applicationId").asText();
+        }
+
+        @Test
+        @DisplayName("1. Approve application returns 200 OK")
+        void reviewApplication_approve_returns200() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicationId = createApplicationAndGetId(projectId, applicantToken);
+
+            String reviewBody =
+                    """
+                    {
+                        "status": "APPROVED",
+                        "reviewMessage": "Welcome to the team!"
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl(applicationId))
+                                    .header("Authorization", "Bearer " + ownerToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.applicationId").value(applicationId))
+                    .andExpect(jsonPath("$.data.projectId").value(projectId))
+                    .andExpect(jsonPath("$.data.status").value("APPROVED"));
+        }
+
+        @Test
+        @DisplayName("2. Reject application returns 200 OK")
+        void reviewApplication_reject_returns200() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicationId = createApplicationAndGetId(projectId, applicantToken);
+
+            String reviewBody =
+                    """
+                    {
+                        "status": "REJECTED",
+                        "reviewMessage": "Unfortunately we need different skills."
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl(applicationId))
+                                    .header("Authorization", "Bearer " + ownerToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.applicationId").value(applicationId))
+                    .andExpect(jsonPath("$.data.status").value("REJECTED"));
+        }
+
+        @Test
+        @DisplayName("3. Approved application status is persisted in database")
+        void reviewApplication_approve_persistedInDatabase() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicationId = createApplicationAndGetId(projectId, applicantToken);
+
+            String reviewBody =
+                    """
+                    {
+                        "status": "APPROVED"
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl(applicationId))
+                                    .header("Authorization", "Bearer " + ownerToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isOk());
+
+            var savedApp = applicationRepository.findById(applicationId).orElseThrow();
+            assertThat(savedApp.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+        }
+
+        @Test
+        @DisplayName("4. Review non-existent application returns 404 NOT_FOUND")
+        void reviewApplication_nonExistent_returns404() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+
+            String reviewBody =
+                    """
+                    {
+                        "status": "APPROVED"
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl("01NONEXISTENT0000000000000"))
+                                    .header("Authorization", "Bearer " + ownerToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("5. Review without authentication returns 403 FORBIDDEN")
+        void reviewApplication_noAuth_returns403() throws Exception {
+            String reviewBody =
+                    """
+                    {
+                        "status": "APPROVED"
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl("01SOMEAPPLICATIONID00000000"))
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("6. Review with PENDING status returns 400 BAD_REQUEST")
+        void reviewApplication_pendingStatus_returns400() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicationId = createApplicationAndGetId(projectId, applicantToken);
+
+            String reviewBody =
+                    """
+                    {
+                        "status": "PENDING"
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl(applicationId))
+                                    .header("Authorization", "Bearer " + ownerToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("7. Review without status returns 400 BAD_REQUEST")
+        void reviewApplication_noStatus_returns400() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicationId = createApplicationAndGetId(projectId, applicantToken);
+
+            String reviewBody =
+                    """
+                    {
+                        "reviewMessage": "Some message"
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl(applicationId))
+                                    .header("Authorization", "Bearer " + ownerToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("8. Review with optional review message is included in response")
+        void reviewApplication_withMessage_returns200() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicationId = createApplicationAndGetId(projectId, applicantToken);
+
+            String reviewBody =
+                    """
+                    {
+                        "status": "APPROVED",
+                        "reviewMessage": "Great portfolio! Welcome aboard."
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl(applicationId))
+                                    .header("Authorization", "Bearer " + ownerToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.status").value("APPROVED"));
+        }
+    }
+}

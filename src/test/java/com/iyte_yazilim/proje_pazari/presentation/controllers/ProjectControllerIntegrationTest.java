@@ -105,7 +105,9 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
     private Map<String, Object> validProjectData() {
         Map<String, Object> data = new HashMap<>();
         data.put("projectName", "AI Chatbot Project");
-        data.put("description", "Building an AI-powered chatbot for customer support using modern NLP techniques.");
+        data.put(
+                "description",
+                "Building an AI-powered chatbot for customer support using modern NLP techniques.");
         data.put("maxTeamSize", 5);
         data.put("requiredSkills", new String[] {"Python", "NLP", "Machine Learning"});
         data.put("category", "Artificial Intelligence");
@@ -226,14 +228,16 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         void createProject_pastDeadline_returns400() throws Exception {
             String token = createProjectOwnerAndGetToken();
 
-            String json = """
+            String json =
+                    """
                     {
                         "projectName": "AI Chatbot Project",
                         "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
                         "maxTeamSize": 5,
                         "deadline": "%s"
                     }
-                    """.formatted(LocalDateTime.now().minusDays(1).toString());
+                    """
+                            .formatted(LocalDateTime.now().minusDays(1).toString());
 
             mockMvc.perform(
                             post(BASE_URL)
@@ -304,14 +308,16 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         void createProject_futureDeadline_returns201() throws Exception {
             String token = createProjectOwnerAndGetToken();
 
-            String json = """
+            String json =
+                    """
                     {
                         "projectName": "AI Chatbot Project",
                         "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
                         "maxTeamSize": 5,
                         "deadline": "%s"
                     }
-                    """.formatted(LocalDateTime.now().plusMonths(3).toString());
+                    """
+                            .formatted(LocalDateTime.now().plusMonths(3).toString());
 
             mockMvc.perform(
                             post(BASE_URL)
@@ -347,7 +353,9 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
             Map<String, Object> data = new HashMap<>();
             data.put("projectName", "Minimal Project");
-            data.put("description", "A minimal project with only required fields for testing purposes.");
+            data.put(
+                    "description",
+                    "A minimal project with only required fields for testing purposes.");
 
             mockMvc.perform(
                             post(BASE_URL)
