@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
         matchIfMissing = true)
 @Tag(name = "Search", description = "Elasticsearch-powered search endpoints for projects")
 @SecurityRequirement(name = "Bearer Authentication")
+@PreAuthorize("isAuthenticated()")
 public class SearchController extends BaseController {
 
     @GetMapping("/projects")

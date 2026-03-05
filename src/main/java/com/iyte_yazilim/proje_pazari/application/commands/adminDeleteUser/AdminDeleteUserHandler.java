@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser;
 
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -21,7 +22,7 @@ public class AdminDeleteUserHandler
         UserEntity user = userRepository.findById(command.userId()).orElse(null);
 
         if (user == null) {
-            return ApiResponse.notFound("User not found with id: " + command.userId());
+            throw new UserNotFoundException("User not found with id: " + command.userId());
         }
 
         // Soft delete: deactivate the user

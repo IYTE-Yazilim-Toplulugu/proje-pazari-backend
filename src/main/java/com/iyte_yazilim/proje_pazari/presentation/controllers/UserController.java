@@ -32,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
                 "User management endpoints. Includes profile management, password change, "
                         + "profile picture upload, and account deactivation. "
                         + "Most endpoints require authentication.")
+@PreAuthorize("isAuthenticated()")
 public class UserController extends BaseController {
 
     @GetMapping
