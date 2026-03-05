@@ -53,6 +53,7 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("permitAll()")
     @Operation(
             summary = "Get user profile by ID",
             description = "Retrieves any user's public profile with statistics")

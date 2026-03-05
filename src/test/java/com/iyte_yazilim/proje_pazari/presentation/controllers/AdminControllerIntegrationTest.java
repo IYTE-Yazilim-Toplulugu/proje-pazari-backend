@@ -5,12 +5,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.iyte_yazilim.proje_pazari.TestRateLimitConfig;
+import com.iyte_yazilim.proje_pazari.TestRedisConfig;
+import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
@@ -18,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import({TestRedisConfig.class, TestRateLimitConfig.class})
 @TestPropertySource(
         properties = {
             "spring.data.elasticsearch.enabled=false",
@@ -27,6 +33,14 @@ import org.springframework.test.web.servlet.MockMvc;
 class AdminControllerIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
+    @Autowired private JwtUtil jwtUtil;
+
+    private String adminToken;
+
+    @BeforeEach
+    void setUp() {
+        adminToken = jwtUtil.generateToken("admin-test-id", "admin@test.com", "ADMIN");
+    }
 
     // --- Access Control Tests ---
 
@@ -75,19 +89,21 @@ class AdminControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return 200 OK for list users endpoint when authenticated as ADMIN")
-        @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturn200ForListUsers() throws Exception {
-            mockMvc.perform(get("/api/v1/admin/users").contentType(MediaType.APPLICATION_JSON))
+            mockMvc.perform(
+                            get("/api/v1/admin/users")
+                                    .header("Authorization", "Bearer " + adminToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(0)); // ResponseCode.SUCCESS = 0
         }
 
         @Test
         @DisplayName("Should return 200 OK for system health endpoint")
-        @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturn200ForSystemHealth() throws Exception {
             mockMvc.perform(
                             get("/api/v1/admin/health/services")
+                                    .header("Authorization", "Bearer " + adminToken)
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.status").exists());
@@ -95,10 +111,10 @@ class AdminControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return 200 OK for system overview stats endpoint")
-        @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturn200ForSystemOverview() throws Exception {
             mockMvc.perform(
                             get("/api/v1/admin/stats/overview")
+                                    .header("Authorization", "Bearer " + adminToken)
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.totalUsers").exists());
@@ -106,9 +122,10 @@ class AdminControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return CSV content for export users endpoint")
-        @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturnCsvForExportUsers() throws Exception {
-            mockMvc.perform(get("/api/v1/admin/export/users"))
+            mockMvc.perform(
+                            get("/api/v1/admin/export/users")
+                                    .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType("text/csv;charset=UTF-8"));
         }
@@ -122,10 +139,10 @@ class AdminControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return 200 OK for get feature flags")
-        @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturn200ForGetFeatureFlags() throws Exception {
             mockMvc.perform(
                             get("/api/v1/admin/feature-flags")
+                                    .header("Authorization", "Bearer " + adminToken)
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(0));
@@ -138,9 +155,11 @@ class AdminControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return 200 OK for get banned IPs")
-        @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturn200ForGetBannedIps() throws Exception {
-            mockMvc.perform(get("/api/v1/admin/ip-bans").contentType(MediaType.APPLICATION_JSON))
+            mockMvc.perform(
+                            get("/api/v1/admin/ip-bans")
+                                    .header("Authorization", "Bearer " + adminToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(0));
         }
@@ -152,10 +171,10 @@ class AdminControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return 200 OK for analytics trends")
-        @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturn200ForAnalyticsTrends() throws Exception {
             mockMvc.perform(
                             get("/api/v1/admin/analytics/trends")
+                                    .header("Authorization", "Bearer " + adminToken)
                                     .param("days", "7")
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
