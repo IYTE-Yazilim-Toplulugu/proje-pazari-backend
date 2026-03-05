@@ -11,6 +11,7 @@ import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -164,5 +165,217 @@ class FileStorageServiceTest {
         // Then
         assertEquals(expectedUrl, url);
         verify(storageAdapter).generatePresignedUrl(path, 60);
+    }
+
+    @Test
+    @DisplayName("Should reject executable file (.exe content type)")
+    void shouldRejectFile_whenExecutableContentType() {
+        // Given
+        setDefaultConfig();
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getContentType()).thenReturn("application/x-msdownload");
+
+        // When & Then
+        FileStorageException exception =
+                assertThrows(
+                        FileStorageException.class,
+                        () -> fileStorageService.storeFile(file, "profiles"));
+        assertTrue(exception.getMessage().contains("File type not allowed"));
+    }
+
+    @Test
+    @DisplayName("Should reject shell script file (.sh content type)")
+    void shouldRejectFile_whenShellScriptContentType() {
+        // Given
+        setDefaultConfig();
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getContentType()).thenReturn("application/x-sh");
+
+        // When & Then
+        FileStorageException exception =
+                assertThrows(
+                        FileStorageException.class,
+                        () -> fileStorageService.storeFile(file, "profiles"));
+        assertTrue(exception.getMessage().contains("File type not allowed"));
+    }
+
+    @Test
+    @DisplayName("Should reject octet-stream content type (generic binary)")
+    void shouldRejectFile_whenOctetStreamContentType() {
+        // Given
+        setDefaultConfig();
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getContentType()).thenReturn("application/octet-stream");
+
+        // When & Then
+        assertThrows(
+                FileStorageException.class, () -> fileStorageService.storeFile(file, "uploads"));
+    }
+
+    @Test
+    @DisplayName("Should reject file with null content type")
+    void shouldRejectFile_whenContentTypeIsNull() {
+        // Given
+        setDefaultConfig();
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getContentType()).thenReturn(null);
+
+        // When & Then
+        assertThrows(
+                FileStorageException.class, () -> fileStorageService.storeFile(file, "profiles"));
+    }
+
+    @Test
+    @DisplayName("Should reject file at exact size limit boundary (10MB + 1 byte)")
+    void shouldRejectFile_whenSizeExactlyExceedsLimit() {
+        // Given
+        setDefaultConfig();
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(10L * 1024 * 1024 + 1); // 10MB + 1 byte
+
+        // When & Then
+        FileStorageException exception =
+                assertThrows(
+                        FileStorageException.class,
+                        () -> fileStorageService.storeFile(file, "profiles"));
+        assertTrue(exception.getMessage().contains("exceeds the maximum allowed size"));
+    }
+
+    @Test
+    @DisplayName("Should accept PDF file")
+    void shouldAcceptFile_whenPdfContentType() {
+        // Given
+        setDefaultConfig();
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getContentType()).thenReturn("application/pdf");
+        when(file.getOriginalFilename()).thenReturn("document.pdf");
+        when(file.getSize()).thenReturn(5000L);
+        when(file.isEmpty()).thenReturn(false);
+        when(storageAdapter.store(any(MultipartFile.class), anyString()))
+                .thenReturn("https://storage.example.com/docs/document.pdf");
+
+        // When
+        String url = fileStorageService.storeFile(file, "docs");
+
+        // Then
+        assertNotNull(url);
+        verify(storageAdapter).store(any(MultipartFile.class), anyString());
+    }
+
+    @Test
+    @DisplayName("Should accept WebP image file")
+    void shouldAcceptFile_whenWebpContentType() {
+        // Given
+        setDefaultConfig();
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getContentType()).thenReturn("image/webp");
+        when(file.getOriginalFilename()).thenReturn("image.webp");
+        when(file.getSize()).thenReturn(2048L);
+        when(file.isEmpty()).thenReturn(false);
+        when(storageAdapter.store(any(MultipartFile.class), anyString()))
+                .thenReturn("https://storage.example.com/profiles/image.webp");
+
+        // When
+        String url = fileStorageService.storeFile(file, "profiles");
+
+        // Then
+        assertNotNull(url);
+        verify(storageAdapter).store(any(MultipartFile.class), anyString());
+    }
+
+    @Test
+    @DisplayName("Should accept GIF image file")
+    void shouldAcceptFile_whenGifContentType() {
+        // Given
+        setDefaultConfig();
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getContentType()).thenReturn("image/gif");
+        when(file.getOriginalFilename()).thenReturn("animation.gif");
+        when(file.getSize()).thenReturn(3072L);
+        when(file.isEmpty()).thenReturn(false);
+        when(storageAdapter.store(any(MultipartFile.class), anyString()))
+                .thenReturn("https://storage.example.com/profiles/animation.gif");
+
+        // When
+        String url = fileStorageService.storeFile(file, "profiles");
+
+        // Then
+        assertNotNull(url);
+        verify(storageAdapter).store(any(MultipartFile.class), anyString());
+    }
+
+    @Test
+    @DisplayName("Should store file in correct directory path")
+    void shouldStoreFile_inCorrectDirectory() {
+        // Given
+        setDefaultConfig();
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getOriginalFilename()).thenReturn("photo.jpg");
+        when(file.getSize()).thenReturn(1024L);
+        when(file.isEmpty()).thenReturn(false);
+        when(storageAdapter.store(any(MultipartFile.class), anyString())).thenReturn("stored-url");
+
+        // When
+        fileStorageService.storeFile(file, "projects/user123");
+
+        // Then
+        ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+        verify(storageAdapter).store(any(MultipartFile.class), pathCaptor.capture());
+        assertTrue(pathCaptor.getValue().startsWith("projects/user123/"));
+        assertTrue(pathCaptor.getValue().endsWith(".jpg"));
+    }
+
+    @Test
+    @DisplayName("Should reject path with leading slash")
+    void shouldRejectPath_whenStartsWithSlash() {
+        assertThrows(
+                FileStorageException.class,
+                () -> fileStorageService.deleteFile("/profiles/photo.jpg"));
+    }
+
+    @Test
+    @DisplayName("Should reject path with backslash traversal")
+    void shouldRejectPath_whenContainsBackslashTraversal() {
+        assertThrows(
+                FileStorageException.class,
+                () -> fileStorageService.deleteFile("\\profiles\\photo.jpg"));
+    }
+
+    @Test
+    @DisplayName("Should reject blank path")
+    void shouldRejectPath_whenBlank() {
+        assertThrows(FileStorageException.class, () -> fileStorageService.deleteFile("   "));
+    }
+
+    @Test
+    @DisplayName("Should reject null path")
+    void shouldRejectPath_whenNull() {
+        assertThrows(FileStorageException.class, () -> fileStorageService.deleteFile(null));
+    }
+
+    @Test
+    @DisplayName("Should generate presigned URL with custom expiration")
+    void shouldGeneratePresignedUrl_withCustomExpiration() {
+        // Given
+        String path = "profiles/photo.jpg";
+        String expectedUrl = "https://storage.example.com/presigned/photo.jpg";
+        when(storageAdapter.generatePresignedUrl(path, 120)).thenReturn(expectedUrl);
+
+        // When
+        String url = fileStorageService.getFileUrl(path, 120);
+
+        // Then
+        assertEquals(expectedUrl, url);
+        verify(storageAdapter).generatePresignedUrl(path, 120);
     }
 }

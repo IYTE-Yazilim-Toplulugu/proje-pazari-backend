@@ -463,6 +463,95 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(multipart(BASE_URL + "/me/profile-picture").file(file))
                     .andExpect(status().isForbidden());
         }
+
+        @Test
+        @DisplayName("4. Upload executable file (.exe) is rejected")
+        void uploadProfilePicture_executableFile_isRejected() throws Exception {
+            String token = createVerifiedUserAndGetToken();
+
+            MockMultipartFile file =
+                    new MockMultipartFile(
+                            "file",
+                            "malware.exe",
+                            "application/x-msdownload",
+                            "fake-exe-content".getBytes());
+
+            mockMvc.perform(
+                            multipart(BASE_URL + "/me/profile-picture")
+                                    .file(file)
+                                    .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isInternalServerError());
+        }
+
+        @Test
+        @DisplayName("5. Upload shell script (.sh) is rejected")
+        void uploadProfilePicture_shellScript_isRejected() throws Exception {
+            String token = createVerifiedUserAndGetToken();
+
+            MockMultipartFile file =
+                    new MockMultipartFile(
+                            "file",
+                            "script.sh",
+                            "application/x-sh",
+                            "#!/bin/bash\necho hello".getBytes());
+
+            mockMvc.perform(
+                            multipart(BASE_URL + "/me/profile-picture")
+                                    .file(file)
+                                    .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isInternalServerError());
+        }
+
+        @Test
+        @DisplayName("6. Upload non-image file (ZIP) is rejected")
+        void uploadProfilePicture_zipFile_isRejected() throws Exception {
+            String token = createVerifiedUserAndGetToken();
+
+            MockMultipartFile file =
+                    new MockMultipartFile(
+                            "file",
+                            "archive.zip",
+                            "application/zip",
+                            "fake-zip-content".getBytes());
+
+            mockMvc.perform(
+                            multipart(BASE_URL + "/me/profile-picture")
+                                    .file(file)
+                                    .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isInternalServerError());
+        }
+
+        @Test
+        @DisplayName("7. Upload valid GIF image returns 200")
+        void uploadProfilePicture_validGif_returns200() throws Exception {
+            String token = createVerifiedUserAndGetToken();
+
+            MockMultipartFile file =
+                    new MockMultipartFile(
+                            "file", "animated.gif", "image/gif", "fake-gif-content".getBytes());
+
+            mockMvc.perform(
+                            multipart(BASE_URL + "/me/profile-picture")
+                                    .file(file)
+                                    .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("8. Upload valid WebP image returns 200")
+        void uploadProfilePicture_validWebp_returns200() throws Exception {
+            String token = createVerifiedUserAndGetToken();
+
+            MockMultipartFile file =
+                    new MockMultipartFile(
+                            "file", "photo.webp", "image/webp", "fake-webp-content".getBytes());
+
+            mockMvc.perform(
+                            multipart(BASE_URL + "/me/profile-picture")
+                                    .file(file)
+                                    .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk());
+        }
     }
 
     // ── 5. Deactivate Account Tests ─────────────────────────────────────
