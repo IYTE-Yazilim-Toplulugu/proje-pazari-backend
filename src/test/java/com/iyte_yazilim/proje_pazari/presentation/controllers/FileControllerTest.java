@@ -97,7 +97,8 @@ class FileControllerTest {
         @Test
         @DisplayName("Should redirect to presigned URL when file exists")
         void shouldRedirectToPresignedUrl_whenFileExists() throws Exception {
-            String presignedUrl = "https://minio.example.com/bucket/profiles/ulid123.jpg?signed=true";
+            String presignedUrl =
+                    "https://minio.example.com/bucket/profiles/ulid123.jpg?signed=true";
             when(mediator.send(any(DownloadFileQuery.class)))
                     .thenReturn(
                             ApiResponse.success(presignedUrl, "File URL generated successfully"));
