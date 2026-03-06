@@ -130,6 +130,7 @@ services:
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
