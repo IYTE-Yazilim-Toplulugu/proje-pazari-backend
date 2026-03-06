@@ -101,6 +101,30 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+  frontend:
+    build:
+      context: ../proje-pazari
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* vars are baked in at build time.
+        # The browser calls the backend directly, so this must be the host-accessible URL.
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
+    container_name: proje-pazari-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - proje-pazari-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: proje-pazari-pgadmin
