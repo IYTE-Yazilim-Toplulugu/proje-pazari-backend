@@ -1,42 +1,5 @@
 services:
 
-  redis:
-    image: redis:7-alpine
-    container_name: proje-pazari-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - proje-pazari-network
-    restart: unless-stopped
-
-  minio:
-    image: minio/minio:latest
-    container_name: proje-pazari-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    ports:
-      - "9002:9000"
-      - "9003:9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    networks:
-      - proje-pazari-network
-    restart: unless-stopped
-
   postgres:
     image: postgres:16-alpine
     container_name: proje-pazari-db
@@ -44,8 +7,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -55,7 +16,97 @@ services:
       retries: 5
     networks:
       - proje-pazari-network
-    restart: unless-stopped
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  redis:
+    image: redis:7-alpine
+    container_name: proje-pazari-redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - proje-pazari-network
+    restart: always
+
+  minio:
+    image: minio/minio:latest
+    container_name: proje-pazari-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - proje-pazari-network
+    restart: always
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    container_name: proje-pazari-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - proje-pazari-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.0.0
+    container_name: proje-pazari-logstash
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "127.0.0.1:5000:5000/tcp"
+      - "127.0.0.1:5000:5000/udp"
+    environment:
+      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+    networks:
+      - proje-pazari-network
+    restart: always
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.0.0
+    container_name: proje-pazari-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - proje-pazari-network
+    restart: always
 
   app:
     build:
@@ -63,26 +114,24 @@ services:
       dockerfile: Dockerfile
     container_name: proje-pazari-app
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
-      SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL:-false}
-      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:-false}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "false"
       JWT_SECRET: ${JWT_SECRET}
-      # MinIO Storage Configuration
       STORAGE_PROVIDER: minio
       MINIO_URL: ${MINIO_URL}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: ${MINIO_BUCKET}
-      # Elasticsearch Configuration
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
-      # Redis Configuration
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,30 +143,34 @@ services:
         condition: service_healthy
     networks:
       - proje-pazari-network
-    restart: unless-stopped
+    restart: always
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
   frontend:
     build:
       context: ../proje-pazari
       dockerfile: Dockerfile
       args:
-        # NEXT_PUBLIC_* vars are baked in at build time.
-        # The browser calls the backend directly, so this must be the host-accessible URL.
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
     container_name: proje-pazari-frontend
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       app:
         condition: service_healthy
     networks:
       - proje-pazari-network
-    restart: unless-stopped
+    restart: always
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
@@ -125,86 +178,9 @@ services:
       retries: 3
       start_period: 30s
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: proje-pazari-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
-      - ./docker/pgadmin/pgpass:/pgpass:ro
-    depends_on:
-      - postgres
-    networks:
-      - proje-pazari-network
-    restart: unless-stopped
-    profiles:
-      - tools
-
-  # Elasticsearch stack for logging and monitoring
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
-    container_name: proje_pazari_elasticsearch
-    environment:
-      - discovery.type=single-node
-      # Default heap size set to 1GB; adjust -Xms / -Xmx based on your data volume and workload.
-      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
-      - xpack.security.enabled=false
-      - xpack.security.http.ssl.enabled=false
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - proje-pazari-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:9.0.0
-    container_name: proje_pazari_kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - xpack.security.enabled=false
-    ports:
-      - "5601:5601"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - proje-pazari-network
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:9.0.0
-    container_name: proje_pazari_logstash
-    volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
-      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
-    ports:
-      - "5000:5000/tcp"
-      - "5000:5000/udp"
-      - "9600:9600"
-    environment:
-      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
-    depends_on:
-      - elasticsearch
-    networks:
-      - proje-pazari-network
-
   prometheus:
     image: prom/prometheus:latest
     container_name: proje-pazari-prometheus
-    ports:
-      - "9090:9090"
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./docker/prometheus/rules.yml:/etc/prometheus/rules.yml
@@ -216,40 +192,42 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
     networks:
       - proje-pazari-network
+    restart: always
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
 
   grafana:
     image: grafana/grafana:latest
     container_name: proje-pazari-grafana
     ports:
-      - "3030:3000"
+      - "127.0.0.1:3030:3000"
     environment:
-      # Admin credentials
       - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
-      # Unified alerting (Grafana 9+)
+      - GF_AUTH_ANONYMOUS_ENABLED=false
       - GF_UNIFIED_ALERTING_ENABLED=true
       - GF_ALERTING_ENABLED=false
-      # SMTP — email notifications
+      - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL}
       - GF_SMTP_ENABLED=${GF_SMTP_ENABLED:-false}
       - GF_SMTP_HOST=${GF_SMTP_HOST:-smtp.gmail.com:587}
       - GF_SMTP_USER=${GF_SMTP_USER:-}
       - GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD:-}
-      - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@proje-pazari.com}
+      - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@projepazari.site}
       - GF_SMTP_FROM_NAME=Proje Pazarı Grafana
       - GF_SMTP_STARTTLS_POLICY=MandatoryStartTLS
-      # Alert contact point destinations (used in contact-points.yml)
-      - GF_ALERT_EMAIL_TO=${GF_ALERT_EMAIL_TO:-admin@proje-pazari.com}
+      - GF_ALERT_EMAIL_TO=${GF_ALERT_EMAIL_TO:-}
       - GF_SLACK_WEBHOOK_URL=${GF_SLACK_WEBHOOK_URL:-}
       - GF_DISCORD_WEBHOOK_URL=${GF_DISCORD_WEBHOOK_URL:-}
-      # Grafana server URL (needed for alert links in notifications)
-      - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL:-http://localhost:3030}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./docker/grafana/provisioning:/etc/grafana/provisioning
@@ -259,12 +237,39 @@ services:
         condition: service_healthy
     networks:
       - proje-pazari-network
+    restart: always
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: proje-pazari-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "127.0.0.1:5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./docker/pgadmin/pgpass:/pgpass:ro
+    depends_on:
+      - postgres
+    networks:
+      - proje-pazari-network
+    restart: unless-stopped
+    profiles:
+      - tools
 
 volumes:
   postgres_data:
@@ -285,4 +290,5 @@ volumes:
 networks:
   proje-pazari-network:
     driver: bridge
+
 
