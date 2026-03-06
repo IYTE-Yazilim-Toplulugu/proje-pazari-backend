@@ -37,3 +37,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+.env.dev
+.env.prod
+.env.staging
