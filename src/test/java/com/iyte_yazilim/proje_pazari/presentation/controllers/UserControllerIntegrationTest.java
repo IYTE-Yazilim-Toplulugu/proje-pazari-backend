@@ -134,7 +134,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
     // ── 2. Update Profile Tests ─────────────────────────────────────────
 
     @Nested
-    @DisplayName("PUT /api/v1/users")
+    @DisplayName("PUT /api/v1/users/me")
     class UpdateProfileTests {
 
         @Test
@@ -148,7 +148,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
             updateData.put("description", "Updated bio");
 
             mockMvc.perform(
-                            put(BASE_URL)
+                            put(BASE_URL + "/me")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(updateData)))
@@ -165,7 +165,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
             updateData.put("firstName", "Jane");
 
             mockMvc.perform(
-                            put(BASE_URL)
+                            put(BASE_URL + "/me")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(updateData)))
                     .andExpect(status().isForbidden());
@@ -180,7 +180,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
             updateData.put("linkedinUrl", "https://www.linkedin.com/in/johndoe");
 
             mockMvc.perform(
-                            put(BASE_URL)
+                            put(BASE_URL + "/me")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(updateData)))
@@ -199,7 +199,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
             updateData.put("linkedinUrl", "https://not-linkedin.com/profile");
 
             mockMvc.perform(
-                            put(BASE_URL)
+                            put(BASE_URL + "/me")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(updateData)))
@@ -215,7 +215,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
             updateData.put("githubUrl", "https://github.com/johndoe");
 
             mockMvc.perform(
-                            put(BASE_URL)
+                            put(BASE_URL + "/me")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(updateData)))
@@ -232,7 +232,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
             updateData.put("githubUrl", "https://not-github.com/user");
 
             mockMvc.perform(
-                            put(BASE_URL)
+                            put(BASE_URL + "/me")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(updateData)))
@@ -250,7 +250,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
             updateData.put("description", "New description");
 
             mockMvc.perform(
-                            put(BASE_URL)
+                            put(BASE_URL + "/me")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(updateData)))
