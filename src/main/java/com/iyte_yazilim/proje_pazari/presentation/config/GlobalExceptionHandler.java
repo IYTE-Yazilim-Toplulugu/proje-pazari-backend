@@ -2,7 +2,7 @@ package com.iyte_yazilim.proje_pazari.presentation.config;
 
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.*;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
@@ -119,6 +119,33 @@ public class GlobalExceptionHandler {
         log.error("Illegal argument: {}", ex.getMessage());
         ApiResponse<Void> response = ApiResponse.badRequest(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFoundException(UserNotFoundException ex) {
+        log.warn("User not found: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProjectNotFoundException(ProjectNotFoundException ex) {
+        log.warn("Project not found: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(ApplicationNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleApplicationNotFoundException(ApplicationNotFoundException ex) {
+        log.warn("Application not found: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(FlaggedContentNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFlaggedContentNotFoundException(FlaggedContentNotFoundException ex) {
+        log.warn("Flagged content not found: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(Exception.class)
