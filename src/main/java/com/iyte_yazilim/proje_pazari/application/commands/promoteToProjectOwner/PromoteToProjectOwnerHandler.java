@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -27,13 +28,8 @@ public class PromoteToProjectOwnerHandler
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
     public ApiResponse<Void> handle(PromoteToProjectOwnerCommand command) {
-        UserEntity user = userRepository.findById(command.userId()).orElse(null);
-
-        if (user == null) {
-            return ApiResponse.notFound(
-                    messageService.getMessage(
-                            "user.not.found.with.id", new Object[] {command.userId()}));
-        }
+        UserEntity user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         if (user.getRole() == RoleType.PROJECT_OWNER) {
             return ApiResponse.validationError(

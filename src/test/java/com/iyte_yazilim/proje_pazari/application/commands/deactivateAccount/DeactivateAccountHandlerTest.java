@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -107,8 +108,8 @@ class DeactivateAccountHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return not found error when user does not exist")
-    void shouldReturnError_whenUserNotFound() {
+    @DisplayName("Should throw UserNotFoundException when user does not exist")
+    void shouldThrowException_whenUserNotFound() {
         // Given
         String nonExistentUserId = Ulid.fast().toString();
         DeactivateAccountCommand command =
@@ -116,12 +117,8 @@ class DeactivateAccountHandlerTest {
 
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
-        // When
-        ApiResponse<Void> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-        assertEquals("User not found", response.getMessage());
+        // When & Then
+        assertThrows(UserNotFoundException.class, () -> handler.handle(command));
         verify(userRepository, never()).save(any());
     }
 

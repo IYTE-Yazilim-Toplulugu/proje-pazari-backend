@@ -19,11 +19,8 @@ public class AdminDeleteUserHandler
     @Override
     @Transactional
     public ApiResponse<Void> handle(AdminDeleteUserCommand command) {
-        UserEntity user = userRepository.findById(command.userId()).orElse(null);
-
-        if (user == null) {
-            throw new UserNotFoundException("User not found with id: " + command.userId());
-        }
+        UserEntity user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         // Soft delete: deactivate the user
         user.setIsActive(false);

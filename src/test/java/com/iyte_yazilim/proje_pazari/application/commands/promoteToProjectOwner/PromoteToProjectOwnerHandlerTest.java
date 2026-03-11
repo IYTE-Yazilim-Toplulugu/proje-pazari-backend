@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -90,22 +91,16 @@ class PromoteToProjectOwnerHandlerTest {
         }
 
         @Test
-        @DisplayName("should return NOT_FOUND when user does not exist")
-        void shouldReturnNotFoundWhenUserDoesNotExist() {
+        @DisplayName("should throw UserNotFoundException when user does not exist")
+        void shouldThrowException_whenUserDoesNotExist() {
             // Given
             String userId = "nonexistent";
             when(userRepository.findById(userId)).thenReturn(Optional.empty());
-            when(messageService.getMessage(eq("user.not.found.with.id"), any(Object[].class)))
-                    .thenReturn("User not found with id: nonexistent");
 
             PromoteToProjectOwnerCommand command = new PromoteToProjectOwnerCommand(userId);
 
-            // When
-            ApiResponse<Void> response = handler.handle(command);
-
-            // Then
-            assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-            assertEquals("User not found with id: nonexistent", response.getMessage());
+            // When & Then
+            assertThrows(UserNotFoundException.class, () -> handler.handle(command));
             verify(userRepository, never()).save(any());
         }
 

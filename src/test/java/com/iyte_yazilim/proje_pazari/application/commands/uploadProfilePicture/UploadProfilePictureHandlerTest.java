@@ -11,6 +11,7 @@ import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -105,8 +106,8 @@ class UploadProfilePictureHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return not found error when user does not exist")
-    void shouldReturnError_whenUserNotFound() {
+    @DisplayName("Should throw UserNotFoundException when user does not exist")
+    void shouldThrowException_whenUserNotFound() {
         // Given
         String nonExistentUserId = Ulid.fast().toString();
         UploadProfilePictureCommand command =
@@ -114,12 +115,8 @@ class UploadProfilePictureHandlerTest {
 
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
-        // When
-        ApiResponse<String> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-        assertEquals("User not found", response.getMessage());
+        // When & Then
+        assertThrows(UserNotFoundException.class, () -> handler.handle(command));
         verify(userRepository, never()).save(any());
     }
 

@@ -148,6 +148,54 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmailNotVerifiedException(
+            EmailNotVerifiedException ex) {
+        log.warn("Email not verified: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.forbidden(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    @ExceptionHandler(EmailAlreadyVerifiedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmailAlreadyVerifiedException(
+            EmailAlreadyVerifiedException ex) {
+        log.warn("Email already verified: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.conflict(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(VerificationTokenExpiredException.class)
+    public ResponseEntity<ApiResponse<Void>> handleVerificationTokenExpiredException(
+            VerificationTokenExpiredException ex) {
+        log.warn("Verification token expired: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.badRequest(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(InvalidVerificationTokenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidVerificationTokenException(
+            InvalidVerificationTokenException ex) {
+        log.warn("Invalid verification token: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.badRequest(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(EmailSendException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmailSendException(EmailSendException ex) {
+        log.error("Email send failed: {}", ex.getMessage());
+        ApiResponse<Void> response =
+                ApiResponse.internalError(messageService.getMessage("error.internal"));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDomainValidationException(
+            com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException ex) {
+        log.warn("Domain validation error: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.validationError(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception ex) {
         log.error("Unexpected error occurred", ex);

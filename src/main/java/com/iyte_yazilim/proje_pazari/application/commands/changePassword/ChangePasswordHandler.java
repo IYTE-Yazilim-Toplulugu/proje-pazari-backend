@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.changePassword;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -34,11 +35,8 @@ public class ChangePasswordHandler
             return ApiResponse.validationError(e.getMessage());
         }
 
-        UserEntity user = userRepository.findById(command.userId()).orElse(null);
-
-        if (user == null) {
-            return ApiResponse.notFound(messageService.getMessage("user.not.found"));
-        }
+        UserEntity user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         // Verify current password
         if (!passwordEncoder.matches(command.currentPassword(), user.getPassword())) {
