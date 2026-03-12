@@ -35,37 +35,33 @@ public class UploadProfilePictureHandler
         UserEntity user = userRepository.findById(command.userId())
                 .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
-        try {
-            // Delete old profile picture if exists
-            String oldUrl = user.getProfilePictureUrl();
-            if (oldUrl != null && !oldUrl.isBlank()) {
-                String oldPath = extractPathFromUrl(oldUrl);
-                if (oldPath != null) {
-                    try {
-                        fileStorageService.deleteFile(oldPath);
-                    } catch (FileStorageException e) {
-                        // Ignore if old file doesn't exist
-                    }
+        if (command.file() == null || command.file().isEmpty()) {
+            throw new com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException("File is required");
+        }
+
+        // Delete old profile picture if exists
+        String oldUrl = user.getProfilePictureUrl();
+        if (oldUrl != null && !oldUrl.isBlank()) {
+            String oldPath = extractPathFromUrl(oldUrl);
+            if (oldPath != null) {
+                try {
+                    fileStorageService.deleteFile(oldPath);
+                } catch (FileStorageException e) {
+                    // Ignore if old file doesn't exist
                 }
             }
-
-            // Store new file in profiles folder - returns presigned URL for MinIO
-            String storedUrl = fileStorageService.storeFile(command.file(), PROFILES_FOLDER);
-
-            // Update user profile picture URL
-            user.setProfilePictureUrl(storedUrl);
-            userRepository.save(user);
-
-            return ApiResponse.success(
-                    user.getProfilePictureUrl(),
-                    messageService.getMessage("user.profile.picture.uploaded"));
-
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.validationError(e.getMessage());
-        } catch (FileStorageException e) {
-            return ApiResponse.error(
-                    messageService.getMessage("file.upload.failed", new Object[] {e.getMessage()}));
         }
+
+        // Store new file in profiles folder - returns presigned URL for MinIO
+        String storedUrl = fileStorageService.storeFile(command.file(), PROFILES_FOLDER);
+
+        // Update user profile picture URL
+        user.setProfilePictureUrl(storedUrl);
+        userRepository.save(user);
+
+        return ApiResponse.success(
+                user.getProfilePictureUrl(),
+                messageService.getMessage("user.profile.picture.uploaded"));
     }
 
     private String extractPathFromUrl(String url) {
