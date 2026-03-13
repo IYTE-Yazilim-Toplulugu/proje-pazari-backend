@@ -184,9 +184,8 @@ public class ProjectController {
                         description = "Internal server error")
             })
     public ResponseEntity<ApiResponse<List<Project>>> getAllProjects() {
-        List<Project> projects = projectRepository.findAll().stream()
-                .map(projectMapper::entityToDomain)
-                .toList();
+        List<Project> projects =
+                projectRepository.findAll().stream().map(projectMapper::entityToDomain).toList();
 
         return ResponseEntity.ok(ApiResponse.success(projects, "Projects retrieved successfully"));
     }
@@ -206,11 +205,14 @@ public class ProjectController {
                         description = "Project not found")
             })
     public ResponseEntity<ApiResponse<Project>> getProject(@PathVariable String projectId) {
-        return projectRepository.findById(projectId)
-                .map(entity -> {
-                    Project project = projectMapper.entityToDomain(entity);
-                    return ResponseEntity.ok(ApiResponse.success(project, "Project retrieved successfully"));
-                })
+        return projectRepository
+                .findById(projectId)
+                .map(
+                        entity -> {
+                            Project project = projectMapper.entityToDomain(entity);
+                            return ResponseEntity.ok(
+                                    ApiResponse.success(project, "Project retrieved successfully"));
+                        })
                 .orElse(ResponseEntity.notFound().build());
     }
 }

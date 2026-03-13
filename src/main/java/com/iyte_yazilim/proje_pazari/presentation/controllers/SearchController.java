@@ -30,7 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
         name = "spring.data.elasticsearch.enabled",
         havingValue = "true",
         matchIfMissing = true)
-@Tag(name = "Search", description = "Elasticsearch-powered search endpoints for projects. Public access.")
+@Tag(
+        name = "Search",
+        description = "Elasticsearch-powered search endpoints for projects. Public access.")
 public class SearchController {
 
     private final ProjectSearchService searchService;

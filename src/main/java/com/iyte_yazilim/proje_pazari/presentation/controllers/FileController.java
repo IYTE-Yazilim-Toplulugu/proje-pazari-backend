@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -23,7 +24,10 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/files")
 @RequiredArgsConstructor
-@Tag(name = "Files", description = "File management endpoints. Download is public, upload requires authentication.")
+@Tag(
+        name = "Files",
+        description =
+                "File management endpoints. Download is public, upload requires authentication.")
 @Slf4j
 public class FileController {
 
@@ -137,39 +141,40 @@ public class FileController {
                         description = "Internal server error")
             })
     public ResponseEntity<ApiResponse<Map<String, Object>>> uploadFile(
-            @Parameter(description = "File to upload", required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-            @RequestParam("file") MultipartFile file) {
+            @Parameter(
+                            description = "File to upload",
+                            required = true,
+                            content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+                    @RequestParam("file")
+                    MultipartFile file) {
         try {
             if (file.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(ApiResponse.error("File is empty"));
+                return ResponseEntity.badRequest().body(ApiResponse.error("File is empty"));
             }
 
             // Validate file - check for null/empty filename
             String filename = file.getOriginalFilename();
             if (filename == null || filename.isBlank()) {
-                return ResponseEntity.badRequest()
-                        .body(ApiResponse.error("Invalid filename"));
+                return ResponseEntity.badRequest().body(ApiResponse.error("Invalid filename"));
             }
 
             // Check for path traversal attacks
             if (filename.contains("..")) {
-                return ResponseEntity.badRequest()
-                        .body(ApiResponse.error("Invalid filename"));
+                return ResponseEntity.badRequest().body(ApiResponse.error("Invalid filename"));
             }
 
-            // Store file and get the path
-            String filePath = fileStorageService.storeFile(file);
+            // Store file and get the path (using "uploads" as default directory)
+            String filePath = fileStorageService.storeFile(file, "uploads");
 
             // Get file size
             long fileSize = file.getSize();
 
             // Build response
-            Map<String, Object> fileData = Map.of(
-                    "filename", filename,
-                    "url", "/api/v1/files/" + filePath,
-                    "size", fileSize
-            );
+            Map<String, Object> fileData =
+                    Map.of(
+                            "filename", filename,
+                            "url", "/api/v1/files/" + filePath,
+                            "size", fileSize);
 
             return ResponseEntity.ok(ApiResponse.success(fileData, "File uploaded successfully"));
 
