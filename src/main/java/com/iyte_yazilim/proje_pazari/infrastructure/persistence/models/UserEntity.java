@@ -72,6 +72,15 @@ public class UserEntity {
     @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
     private Boolean isActive = true;
 
+    @Column(
+            name = "two_factor_enabled",
+            nullable = false,
+            columnDefinition = "boolean default false")
+    private boolean isTwoFactorEnabled = false;
+
+    @Column(name = "two_factor_secret")
+    private String twoFactorSecret;
+
     @PrePersist
     protected void onCreate() {
         if (id == null || id.isBlank()) {

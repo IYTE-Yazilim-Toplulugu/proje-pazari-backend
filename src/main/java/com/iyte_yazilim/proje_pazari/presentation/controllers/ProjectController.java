@@ -20,11 +20,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/projects")
-@RequiredArgsConstructor
 @Tag(
         name = "Projects",
         description =
@@ -59,16 +59,16 @@ public class ProjectController {
                                                         name = "Success Response",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "CREATED",
-                                            "message": "Project created successfully",
-                                            "data": {
-                                                "projectId": "01HQXV5KXBW9FYMN8CJZSP2R4H",
-                                                "title": "AI Chatbot Project",
-                                                "status": "DRAFT"
-                                            }
-                                        }
-                                        """))),
+                    {
+                        "code": "CREATED",
+                        "message": "Project created successfully",
+                        "data": {
+                            "projectId": "01HQXV5KXBW9FYMN8CJZSP2R4H",
+                            "title": "AI Chatbot Project",
+                            "status": "DRAFT"
+                        }
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "Invalid request data",
@@ -81,12 +81,12 @@ public class ProjectController {
                                                         name = "Validation Error",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "BAD_REQUEST",
-                                            "message": "Title is required",
-                                            "data": null
-                                        }
-                                        """))),
+                    {
+                        "code": "BAD_REQUEST",
+                        "message": "Title is required",
+                        "data": null
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
                         description = "Unauthorized - authentication required",
@@ -98,12 +98,12 @@ public class ProjectController {
                                                         name = "Unauthorized",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "UNAUTHORIZED",
-                                            "message": "Authentication required",
-                                            "data": null
-                                        }
-                                        """))),
+                    {
+                        "code": "UNAUTHORIZED",
+                        "message": "Authentication required",
+                        "data": null
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "500",
                         description = "Internal server error")
@@ -120,31 +120,19 @@ public class ProjectController {
                                             name = "Create Project Request",
                                             value =
                                                     """
-                        {
-                            "title": "AI Chatbot Project",
-                            "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
-                            "summary": "AI chatbot with NLP capabilities",
-                            "maxTeamSize": 5,
-                            "requiredSkills": ["Python", "NLP", "Machine Learning", "FastAPI"],
-                            "category": "Artificial Intelligence",
-                            "deadline": "2025-06-15T23:59:59"
-                        }
-                        """)))
+            {
+                "title": "AI Chatbot Project",
+                "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                "summary": "AI chatbot with NLP capabilities",
+                "maxTeamSize": 5,
+                "requiredSkills": ["Python", "NLP", "Machine Learning", "FastAPI"],
+                "category": "Artificial Intelligence",
+                "deadline": "2025-06-15T23:59:59"
+            }
+            """)))
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
-            @RequestBody CreateProjectCommand command) {
-
-        ApiResponse<CreateProjectCommandResult> response = mediator.send(command);
-
-        HttpStatus status =
-                switch (response.getCode()) {
-                    case CREATED -> HttpStatus.CREATED;
-                    case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
-                    case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    case INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
-                    default -> HttpStatus.OK;
-                };
-
-        return ResponseEntity.status(status).body(response);
+            @RequestBody CreateProjectCommand command, Authentication auth) {
+        return send(CreateProjectCommand.class, null, null, command, auth);
     }
 
     @GetMapping

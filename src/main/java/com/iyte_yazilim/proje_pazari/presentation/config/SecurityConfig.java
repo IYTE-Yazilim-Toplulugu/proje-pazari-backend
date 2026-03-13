@@ -1,5 +1,8 @@
 package com.iyte_yazilim.proje_pazari.presentation.config;
 
+import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.IpBanFilter;
+import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.MaintenanceModeFilter;
+import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.RateLimitFilter;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +25,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
+    private final IpBanFilter ipBanFilter;
+    private final MaintenanceModeFilter maintenanceModeFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -54,6 +60,9 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers("/api/v1/health")
                                         .permitAll()
+                                        // WebSocket endpoint
+                                        .requestMatchers("/ws/**")
+                                        .permitAll()
                                         // Public authentication endpoints
                                         .requestMatchers("/api/v1/auth/**")
                                         .permitAll()
@@ -65,17 +74,23 @@ public class SecurityConfig {
                                         .permitAll()
                                         // Public read-only endpoints - anyone can view user
                                         // profiles and projects
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/users/**")
+                                        .requestMatchers(
+                                                HttpMethod.GET, "/api/v1/users", "/api/v1/users/**")
                                         .permitAll()
-                                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/**")
+                                        .requestMatchers(
+                                                HttpMethod.GET,
+                                                "/api/v1/projects",
+                                                "/api/v1/projects/**")
                                         .permitAll()
                                         // All other requests require authentication
                                         .anyRequest()
                                         .authenticated())
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(
-                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(ipBanFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(maintenanceModeFilter, IpBanFilter.class)
+                .addFilterAfter(rateLimitFilter, MaintenanceModeFilter.class)
+                .addFilterAfter(jwtAuthenticationFilter, RateLimitFilter.class);
 
         return http.build();
     }
