@@ -60,6 +60,9 @@ public class SecurityConfig {
                                         // File serving endpoints (profile pictures are public)
                                         .requestMatchers("/api/v1/files/**")
                                         .permitAll()
+                                        // Search endpoints - public access for project discovery
+                                        .requestMatchers(HttpMethod.GET, "/api/v1/search/**")
+                                        .permitAll()
                                         // Public read-only endpoints - anyone can view user
                                         // profiles and projects
                                         .requestMatchers(HttpMethod.GET, "/api/v1/users/**")
