@@ -3,7 +3,6 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 import com.iyte_yazilim.proje_pazari.application.services.ProjectSearchService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -31,14 +30,12 @@ import org.springframework.web.bind.annotation.RestController;
         name = "spring.data.elasticsearch.enabled",
         havingValue = "true",
         matchIfMissing = true)
-@Tag(name = "Search", description = "Elasticsearch-powered search endpoints for projects")
-@SecurityRequirement(name = "Bearer Authentication")
+@Tag(name = "Search", description = "Elasticsearch-powered search endpoints for projects. Public access.")
 public class SearchController {
 
     private final ProjectSearchService searchService;
 
     @GetMapping("/projects")
-    @SecurityRequirement(name = "Bearer Authentication")
     public ApiResponse<List<ProjectDocument>> searchProjects(
             @RequestParam @NotBlank @Size(min = 2, max = 100) String q,
             @RequestParam(required = false) String status,
@@ -56,7 +53,6 @@ public class SearchController {
     }
 
     @GetMapping("/projects/suggest")
-    @SecurityRequirement(name = "Bearer Authentication")
     public ApiResponse<List<String>> suggestProjects(
             @RequestParam @NotBlank @Size(min = 1, max = 100) String q) {
         List<String> suggestions = searchService.getSuggestions(q);
@@ -64,7 +60,6 @@ public class SearchController {
     }
 
     @GetMapping("/projects/statistics")
-    @SecurityRequirement(name = "Bearer Authentication")
     public ApiResponse<Map<String, Long>> getStatistics() {
         Map<String, Long> stats = searchService.getProjectStatistics();
         return ApiResponse.success(stats, "Statistics retrieved successfully");
