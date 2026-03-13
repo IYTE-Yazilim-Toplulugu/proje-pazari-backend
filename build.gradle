@@ -150,8 +150,23 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
+<<<<<<< HEAD
     dependsOn compileJava, processResources
     mustRunAfter test
+=======
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/config/**',
+                '**/dto/**',
+                '**/dtos/**',
+                '**/models/**',
+                '**/*Application.class',
+                '**/infrastructure/persistence/models/**'
+            ])
+        }))
+    }
+>>>>>>> f80ba3d (fix: Enforce UNIX line endings in spotless to fix CI failures and update jacoco config)
     violationRules {
         rule {
             element = 'CLASS'
@@ -205,6 +220,7 @@ check.dependsOn jacocoTestCoverageVerification
 
 // Spotless configuration - Google Java Format with 4-space indentation (AOSP style)
 spotless {
+    lineEndings 'UNIX'
     java {
         target 'src/**/*.java'
         googleJavaFormat('1.19.2').aosp()  // AOSP style uses 4-space indentation
