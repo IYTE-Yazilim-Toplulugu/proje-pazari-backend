@@ -152,6 +152,7 @@ jacocoTestReport {
 jacocoTestCoverageVerification {
     dependsOn compileJava, processResources
     mustRunAfter test
+
     violationRules {
         rule {
             element = 'CLASS'
@@ -173,20 +174,17 @@ jacocoTestCoverageVerification {
                 '*.dtos.*',
                 '*.models.*',
                 '*Application',
-                // Domain entities and base classes (Lombok-generated)
                 '*.domain.entities.*',
-                // Domain events, enums, validators (simple framework classes)
                 '*.domain.events.*',
                 '*.domain.enums.*',
                 '*.domain.validators.*',
-                // Infrastructure converters and generated MapStruct mappers
                 '*.infrastructure.persistence.converters.*',
                 '*MapperImpl',
-                // FileController (minimal usage, not core feature)
                 '*.presentation.controllers.FileController'
             ]
         }
     }
+
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
@@ -205,6 +203,7 @@ check.dependsOn jacocoTestCoverageVerification
 
 // Spotless configuration - Google Java Format with 4-space indentation (AOSP style)
 spotless {
+    lineEndings 'UNIX'
     java {
         target 'src/**/*.java'
         googleJavaFormat('1.19.2').aosp()  // AOSP style uses 4-space indentation
