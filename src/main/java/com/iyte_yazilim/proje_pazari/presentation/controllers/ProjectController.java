@@ -1,7 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
-import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
@@ -16,7 +15,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,14 +23,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/projects")
+@RequiredArgsConstructor
 @Tag(
         name = "Projects",
         description =
                 "Project management endpoints. "
                         + "Allows users to create, read, update, and delete projects.")
-public class ProjectController {
-
-    private final IMediator mediator;
+public class ProjectController extends BaseController {
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
 
@@ -154,19 +151,19 @@ public class ProjectController {
                                                         name = "Success Response",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "SUCCESS",
-                                            "message": "Projects retrieved successfully",
-                                            "data": [
-                                                {
-                                                    "id": "1",
-                                                    "title": "AI Chatbot Project",
-                                                    "description": "Building an AI-powered chatbot",
-                                                    "status": "ACTIVE"
-                                                }
-                                            ]
-                                        }
-                                        """))),
+                    {
+                        "code": "SUCCESS",
+                        "message": "Projects retrieved successfully",
+                        "data": [
+                            {
+                                "id": "1",
+                                "title": "AI Chatbot Project",
+                                "description": "Building an AI-powered chatbot",
+                                "status": "ACTIVE"
+                            }
+                        ]
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "500",
                         description = "Internal server error")

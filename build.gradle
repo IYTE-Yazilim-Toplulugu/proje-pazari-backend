@@ -150,23 +150,9 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
-<<<<<<< HEAD
     dependsOn compileJava, processResources
     mustRunAfter test
-=======
-    afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: [
-                '**/config/**',
-                '**/dto/**',
-                '**/dtos/**',
-                '**/models/**',
-                '**/*Application.class',
-                '**/infrastructure/persistence/models/**'
-            ])
-        }))
-    }
->>>>>>> f80ba3d (fix: Enforce UNIX line endings in spotless to fix CI failures and update jacoco config)
+
     violationRules {
         rule {
             element = 'CLASS'
@@ -188,20 +174,17 @@ jacocoTestCoverageVerification {
                 '*.dtos.*',
                 '*.models.*',
                 '*Application',
-                // Domain entities and base classes (Lombok-generated)
                 '*.domain.entities.*',
-                // Domain events, enums, validators (simple framework classes)
                 '*.domain.events.*',
                 '*.domain.enums.*',
                 '*.domain.validators.*',
-                // Infrastructure converters and generated MapStruct mappers
                 '*.infrastructure.persistence.converters.*',
                 '*MapperImpl',
-                // FileController (minimal usage, not core feature)
                 '*.presentation.controllers.FileController'
             ]
         }
     }
+
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [

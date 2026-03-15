@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import com.iyte_yazilim.proje_pazari.application.queries.downloadFile.DownloadFileQuery;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -29,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
         description =
                 "File management endpoints. Download is public, upload requires authentication.")
 @Slf4j
-public class FileController {
+public class FileController extends BaseController {
 
     private static final int DEFAULT_EXPIRY_MINUTES = 60;
 
