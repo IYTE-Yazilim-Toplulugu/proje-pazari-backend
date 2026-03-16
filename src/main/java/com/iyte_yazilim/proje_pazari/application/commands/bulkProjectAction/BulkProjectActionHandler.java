@@ -28,11 +28,13 @@ public class BulkProjectActionHandler
 
         for (String projectId : command.projectIds()) {
             try {
-                ProjectEntity project = projectRepository.findById(projectId).orElse(null);
-                if (project == null) {
-                    result.addFailure(projectId, "Project not found");
-                    continue;
-                }
+                ProjectEntity project =
+                        projectRepository
+                                .findById(projectId)
+                                .orElseThrow(
+                                        () ->
+                                                new com.iyte_yazilim.proje_pazari.domain.exceptions
+                                                        .ProjectNotFoundException(projectId));
 
                 switch (command.action().toUpperCase()) {
                     case "DELETE":
