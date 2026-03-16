@@ -28,8 +28,13 @@ public class BulkApplicationActionHandler
 
         for (String appId : command.applicationIds()) {
             try {
-                ProjectApplicationEntity app = applicationRepository.findById(appId)
-                    .orElseThrow(() -> new com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException(appId));
+                ProjectApplicationEntity app =
+                        applicationRepository
+                                .findById(appId)
+                                .orElseThrow(
+                                        () ->
+                                                new com.iyte_yazilim.proje_pazari.domain.exceptions
+                                                        .ApplicationNotFoundException(appId));
 
                 switch (command.action().toUpperCase()) {
                     case "APPROVE":

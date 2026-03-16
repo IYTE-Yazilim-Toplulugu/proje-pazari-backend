@@ -29,8 +29,10 @@ public class DeactivateAccountHandler
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
     public ApiResponse<Void> handle(DeactivateAccountCommand command) {
-        UserEntity user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException(command.userId()));
+        UserEntity user =
+                userRepository
+                        .findById(command.userId())
+                        .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         // Log deactivation reason
         if (command.reason() != null && !command.reason().isBlank()) {

@@ -135,8 +135,11 @@ class UploadProfilePictureHandlerTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
 
         // When & Then
-        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException exception = 
-                assertThrows(com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException.class, () -> handler.handle(command));
+        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException exception =
+                assertThrows(
+                        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException
+                                .class,
+                        () -> handler.handle(command));
         assertEquals("File is required", exception.getMessage());
         verify(userRepository, never()).save(any());
     }
@@ -155,8 +158,11 @@ class UploadProfilePictureHandlerTest {
         when(mockFile.isEmpty()).thenReturn(true);
 
         // When & Then
-        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException exception = 
-                assertThrows(com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException.class, () -> handler.handle(command));
+        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException exception =
+                assertThrows(
+                        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException
+                                .class,
+                        () -> handler.handle(command));
         assertEquals("File is required", exception.getMessage());
         verify(userRepository, never()).save(any());
     }
@@ -177,7 +183,8 @@ class UploadProfilePictureHandlerTest {
                 .thenThrow(new IllegalArgumentException("Only image files are allowed"));
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> handler.handle(command));
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> handler.handle(command));
         assertEquals("Only image files are allowed", exception.getMessage());
         verify(userRepository, never()).save(any());
     }
@@ -198,7 +205,8 @@ class UploadProfilePictureHandlerTest {
                 .thenThrow(new IllegalArgumentException("File size exceeds 5MB limit"));
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> handler.handle(command));
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> handler.handle(command));
         assertEquals("File size exceeds 5MB limit", exception.getMessage());
         verify(userRepository, never()).save(any());
     }
@@ -219,7 +227,8 @@ class UploadProfilePictureHandlerTest {
                 .thenThrow(new FileStorageException("Disk full"));
 
         // When & Then
-        FileStorageException exception = assertThrows(FileStorageException.class, () -> handler.handle(command));
+        FileStorageException exception =
+                assertThrows(FileStorageException.class, () -> handler.handle(command));
         assertEquals("Disk full", exception.getMessage());
         verify(userRepository, never()).save(any());
     }

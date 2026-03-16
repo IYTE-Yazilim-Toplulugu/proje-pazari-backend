@@ -28,8 +28,13 @@ public class BulkUserActionHandler
 
         for (String userId : command.userIds()) {
             try {
-                UserEntity user = userRepository.findById(userId)
-                    .orElseThrow(() -> new com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException(userId));
+                UserEntity user =
+                        userRepository
+                                .findById(userId)
+                                .orElseThrow(
+                                        () ->
+                                                new com.iyte_yazilim.proje_pazari.domain.exceptions
+                                                        .UserNotFoundException(userId));
 
                 switch (command.action().toUpperCase()) {
                     case "DELETE":

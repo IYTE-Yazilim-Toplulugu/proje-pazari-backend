@@ -19,8 +19,10 @@ public class AdminUpdateUserHandler
     @Override
     @Transactional
     public ApiResponse<Void> handle(AdminUpdateUserCommand command) {
-        UserEntity user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException(command.userId()));
+        UserEntity user =
+                userRepository
+                        .findById(command.userId())
+                        .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         if (command.role() != null) {
             user.setRole(command.role());

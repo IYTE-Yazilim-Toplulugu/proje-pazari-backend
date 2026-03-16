@@ -32,11 +32,14 @@ public class UploadProfilePictureHandler
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
     public ApiResponse<String> handle(UploadProfilePictureCommand command) {
-        UserEntity user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException(command.userId()));
+        UserEntity user =
+                userRepository
+                        .findById(command.userId())
+                        .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         if (command.file() == null || command.file().isEmpty()) {
-            throw new com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException("File is required");
+            throw new com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException(
+                    "File is required");
         }
 
         // Delete old profile picture if exists

@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.reviewApplication;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationReviewedEvent;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -54,8 +54,10 @@ public class ReviewApplicationHandler
 
         // --- 2. Verify Application Exists ---
         ProjectApplicationEntity applicationEntity =
-                applicationRepository.findById(command.applicationId())
-                        .orElseThrow(() -> new ApplicationNotFoundException(command.applicationId()));
+                applicationRepository
+                        .findById(command.applicationId())
+                        .orElseThrow(
+                                () -> new ApplicationNotFoundException(command.applicationId()));
 
         // --- 3. Update Status ---
         applicationEntity.setStatus(command.status());

@@ -35,8 +35,10 @@ public class ChangePasswordHandler
             return ApiResponse.validationError(e.getMessage());
         }
 
-        UserEntity user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException(command.userId()));
+        UserEntity user =
+                userRepository
+                        .findById(command.userId())
+                        .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         // Verify current password
         if (!passwordEncoder.matches(command.currentPassword(), user.getPassword())) {

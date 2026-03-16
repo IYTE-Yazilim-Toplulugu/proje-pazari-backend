@@ -36,8 +36,10 @@ public class UpdateUserProfileHandler
             return ApiResponse.validationError(e.getMessage());
         }
 
-        UserEntity user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException(command.userId()));
+        UserEntity user =
+                userRepository
+                        .findById(command.userId())
+                        .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         // Update fields
         if (command.firstName() != null) {

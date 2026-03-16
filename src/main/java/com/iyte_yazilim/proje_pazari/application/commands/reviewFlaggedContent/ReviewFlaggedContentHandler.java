@@ -26,7 +26,8 @@ public class ReviewFlaggedContentHandler
     @Transactional
     public ApiResponse<Void> handle(ReviewFlaggedContentCommand command) {
         FlaggedContentEntity flag =
-                flaggedContentRepository.findById(command.flagId())
+                flaggedContentRepository
+                        .findById(command.flagId())
                         .orElseThrow(() -> new FlaggedContentNotFoundException(command.flagId()));
 
         String action = command.action() != null ? command.action().toUpperCase() : "";

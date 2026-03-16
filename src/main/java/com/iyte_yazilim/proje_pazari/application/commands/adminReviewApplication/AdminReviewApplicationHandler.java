@@ -20,8 +20,10 @@ public class AdminReviewApplicationHandler
     @Transactional
     public ApiResponse<Void> handle(AdminReviewApplicationCommand command) {
         ProjectApplicationEntity application =
-                applicationRepository.findById(command.applicationId())
-                        .orElseThrow(() -> new ApplicationNotFoundException(command.applicationId()));
+                applicationRepository
+                        .findById(command.applicationId())
+                        .orElseThrow(
+                                () -> new ApplicationNotFoundException(command.applicationId()));
 
         application.setStatus(command.status());
         applicationRepository.save(application);
