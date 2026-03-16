@@ -1,17 +1,17 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
-import com.iyte_yazilim.proje_pazari.application.queries.getProjectStatistics.GetProjectStatisticsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.searchProjects.SearchProjectsQuery;
-import com.iyte_yazilim.proje_pazari.application.queries.suggestProjects.SuggestProjectsQuery;
+import com.iyte_yazilim.proje_pazari.application.services.ProjectSearchService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,15 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
         name = "spring.data.elasticsearch.enabled",
         havingValue = "true",
         matchIfMissing = true)
-@Tag(name = "Search", description = "Elasticsearch-powered search endpoints for projects")
-@SecurityRequirement(name = "Bearer Authentication")
-@PreAuthorize("isAuthenticated()")
+@Tag(
+        name = "Search",
+        description = "Elasticsearch-powered search endpoints for projects. Public access.")
+@RequiredArgsConstructor
 public class SearchController extends BaseController {
 
+    private final ProjectSearchService searchService;
+
     @GetMapping("/projects")
-    @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<ApiResponse<List<ProjectDocument>>> searchProjects(
-            @RequestParam String q,
+            @RequestParam @NotBlank @Size(min = 2, max = 100) String q,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) List<String> tags,
             @RequestParam(defaultValue = "0") int page,
@@ -40,14 +42,15 @@ public class SearchController extends BaseController {
     }
 
     @GetMapping("/projects/suggest")
-    @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<ApiResponse<List<String>>> suggestProjects(@RequestParam String q) {
-        return send(new SuggestProjectsQuery(q));
+    public ApiResponse<List<String>> suggestProjects(
+            @RequestParam @NotBlank @Size(min = 1, max = 100) String q) {
+        List<String> suggestions = searchService.getSuggestions(q);
+        return ApiResponse.success(suggestions, "Suggestions retrieved successfully");
     }
 
     @GetMapping("/projects/statistics")
-    @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<ApiResponse<Map<String, Long>>> getStatistics() {
-        return send(new GetProjectStatisticsQuery());
+    public ApiResponse<Map<String, Long>> getStatistics() {
+        Map<String, Long> stats = searchService.getProjectStatistics();
+        return ApiResponse.success(stats, "Statistics retrieved successfully");
     }
 }
