@@ -513,14 +513,7 @@ public class AdminController extends BaseController {
             importUsers(
                     @org.springframework.web.bind.annotation.RequestPart("file")
                             org.springframework.web.multipart.MultipartFile file) {
-        try {
-            String csvContent =
-                    new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            return send(new ImportUsersFromCsvCommand(csvContent));
-        } catch (java.io.IOException e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.validationError("Failed to read file: " + e.getMessage()));
-        }
+        return send(ImportUsersFromCsvCommand.class, null, null, null, null, Map.of("file", file));
     }
 
     @PostMapping(value = "/import/projects", consumes = "multipart/form-data")
@@ -533,14 +526,13 @@ public class AdminController extends BaseController {
             importProjects(
                     @org.springframework.web.bind.annotation.RequestPart("file")
                             org.springframework.web.multipart.MultipartFile file) {
-        try {
-            String csvContent =
-                    new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            return send(new ImportProjectsFromCsvCommand(csvContent));
-        } catch (java.io.IOException e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.validationError("Failed to read file: " + e.getMessage()));
-        }
+        return send(
+                ImportProjectsFromCsvCommand.class,
+                null,
+                null,
+                null,
+                null,
+                Map.of("file", file));
     }
 
     // ==================== SCHEDULED EMAIL BROADCASTS ====================
