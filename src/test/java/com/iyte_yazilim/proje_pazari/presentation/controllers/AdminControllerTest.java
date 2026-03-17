@@ -188,10 +188,10 @@ class AdminControllerTest {
             when(mediator.send(any(BulkUserActionCommand.class)))
                     .thenReturn(ApiResponse.success(result, "Bulk action completed"));
 
-            Map<String, Object> request =
-                    Map.of("action", "SUSPEND", "userIds", List.of("user-1", "user-2"));
             ResponseEntity<ApiResponse<BulkActionResult>> response =
-                    adminController.bulkUserAction(request);
+                    adminController.bulkUserAction(
+                            new AdminController.BulkUserActionRequest(
+                                    "SUSPEND", List.of("user-1", "user-2")));
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertEquals(1, response.getBody().getData().getSuccessCount());
@@ -232,7 +232,8 @@ class AdminControllerTest {
                     .thenReturn(ApiResponse.success(null, "Content flagged successfully"));
 
             ResponseEntity<ApiResponse<Void>> response =
-                    adminController.flagContent("PROJECT", "proj-1", Map.of("reason", "SPAM"));
+                    adminController.flagContent(
+                            "PROJECT", "proj-1", new AdminController.FlagContentRequest("SPAM"));
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
         }
@@ -294,7 +295,8 @@ class AdminControllerTest {
                     .thenReturn(ApiResponse.success(null, "Config updated"));
 
             ResponseEntity<ApiResponse<Void>> response =
-                    adminController.updateSystemConfig(Map.of("key", "value"));
+                    adminController.updateSystemConfig(
+                            new AdminController.UpdateSystemConfigRequest(Map.of("key", "value")));
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
         }

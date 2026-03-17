@@ -10,9 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
+import com.iyte_yazilim.proje_pazari.application.queries.getProjectStatistics.GetProjectStatisticsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.searchProjects.SearchProjectsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.suggestProjects.SuggestProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.application.services.ProjectSearchService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
@@ -56,8 +57,6 @@ class SearchControllerTest {
     @MockitoBean private MessageService messageService;
 
     @MockitoBean private UserRepository userRepository;
-
-    @MockitoBean private ProjectSearchService searchService;
 
     @MockitoBean
     private com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService
@@ -311,7 +310,9 @@ class SearchControllerTest {
         void shouldReturnSuggestionsWhenQueryIsValid() throws Exception {
             List<String> suggestions =
                     List.of("Java Spring Boot Project", "Java Backend Application");
-            when(searchService.getSuggestions("java")).thenReturn(suggestions);
+            when(mediator.send(any(SuggestProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(suggestions, "Suggestions retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "java"))
                     .andExpect(status().isOk())
@@ -321,14 +322,17 @@ class SearchControllerTest {
                     .andExpect(jsonPath("$.data[0]").value("Java Spring Boot Project"))
                     .andExpect(jsonPath("$.data[1]").value("Java Backend Application"));
 
-            verify(searchService).getSuggestions("java");
+            verify(mediator).send(any(SuggestProjectsQuery.class));
         }
 
         @Test
         @WithMockUser
         @DisplayName("Should return empty list when no suggestions found")
         void shouldReturnEmptyListWhenNoSuggestionsFound() throws Exception {
-            when(searchService.getSuggestions("xyz")).thenReturn(Collections.emptyList());
+            when(mediator.send(any(SuggestProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    Collections.emptyList(), "Suggestions retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "xyz"))
                     .andExpect(status().isOk())
@@ -340,7 +344,10 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should accept single character query")
         void shouldAcceptSingleCharacterQuery() throws Exception {
-            when(searchService.getSuggestions("j")).thenReturn(List.of("Java Project"));
+            when(mediator.send(any(SuggestProjectsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    List.of("Java Project"), "Suggestions retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "j"))
                     .andExpect(status().isOk())
@@ -382,7 +389,8 @@ class SearchControllerTest {
         @DisplayName("Should return statistics successfully")
         void shouldReturnStatisticsSuccessfully() throws Exception {
             Map<String, Long> stats = Map.of("ACTIVE", 10L, "COMPLETED", 5L, "DRAFT", 3L);
-            when(searchService.getProjectStatistics()).thenReturn(stats);
+            when(mediator.send(any(GetProjectStatisticsQuery.class)))
+                    .thenReturn(ApiResponse.success(stats, "Statistics retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/statistics"))
                     .andExpect(status().isOk())
@@ -392,14 +400,17 @@ class SearchControllerTest {
                     .andExpect(jsonPath("$.data.COMPLETED").value(5))
                     .andExpect(jsonPath("$.data.DRAFT").value(3));
 
-            verify(searchService).getProjectStatistics();
+            verify(mediator).send(any(GetProjectStatisticsQuery.class));
         }
 
         @Test
         @WithMockUser
         @DisplayName("Should return empty statistics when no data")
         void shouldReturnEmptyStatisticsWhenNoData() throws Exception {
-            when(searchService.getProjectStatistics()).thenReturn(Collections.emptyMap());
+            when(mediator.send(any(GetProjectStatisticsQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    Collections.emptyMap(), "Statistics retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/statistics"))
                     .andExpect(status().isOk())
