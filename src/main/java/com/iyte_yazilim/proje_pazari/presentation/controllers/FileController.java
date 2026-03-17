@@ -1,8 +1,7 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import com.iyte_yazilim.proje_pazari.application.commands.uploadFile.UploadFileCommand;
 import com.iyte_yazilim.proje_pazari.application.queries.downloadFile.DownloadFileQuery;
-import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,8 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController extends BaseController {
 
     private static final int DEFAULT_EXPIRY_MINUTES = 60;
-
-    private final FileStorageService fileStorageService;
 
     @GetMapping("/{*path}")
     @PreAuthorize("permitAll()")
@@ -122,41 +119,6 @@ public class FileController extends BaseController {
                             content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
                     @RequestParam("file")
                     MultipartFile file) {
-        try {
-            if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("File is empty"));
-            }
-
-            // Validate file - check for null/empty filename
-            String filename = file.getOriginalFilename();
-            if (filename == null || filename.isBlank()) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("Invalid filename"));
-            }
-
-            // Check for path traversal attacks
-            if (filename.contains("..")) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("Invalid filename"));
-            }
-
-            // Store file and get the path (using "uploads" as default directory)
-            String filePath = fileStorageService.storeFile(file, "uploads");
-
-            // Get file size
-            long fileSize = file.getSize();
-
-            // Build response
-            Map<String, Object> fileData =
-                    Map.of(
-                            "filename", filename,
-                            "url", "/api/v1/files/" + filePath,
-                            "size", fileSize);
-
-            return ResponseEntity.ok(ApiResponse.success(fileData, "File uploaded successfully"));
-
-        } catch (FileStorageException e) {
-            log.error("File upload failed: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("File upload failed: " + e.getMessage()));
-        }
+        return send(UploadFileCommand.class, null, null, null, null, Map.of("file", file));
     }
 }

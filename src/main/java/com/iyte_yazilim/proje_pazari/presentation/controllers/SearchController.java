@@ -1,7 +1,8 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import com.iyte_yazilim.proje_pazari.application.queries.getProjectStatistics.GetProjectStatisticsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.searchProjects.SearchProjectsQuery;
-import com.iyte_yazilim.proje_pazari.application.services.ProjectSearchService;
+import com.iyte_yazilim.proje_pazari.application.queries.suggestProjects.SuggestProjectsQuery;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,8 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SearchController extends BaseController {
 
-    private final ProjectSearchService searchService;
-
     @GetMapping("/projects")
     public ResponseEntity<ApiResponse<List<ProjectDocument>>> searchProjects(
             @RequestParam @NotBlank @Size(min = 2, max = 100) String q,
@@ -42,15 +41,13 @@ public class SearchController extends BaseController {
     }
 
     @GetMapping("/projects/suggest")
-    public ApiResponse<List<String>> suggestProjects(
+    public ResponseEntity<ApiResponse<List<String>>> suggestProjects(
             @RequestParam @NotBlank @Size(min = 1, max = 100) String q) {
-        List<String> suggestions = searchService.getSuggestions(q);
-        return ApiResponse.success(suggestions, "Suggestions retrieved successfully");
+        return send(new SuggestProjectsQuery(q));
     }
 
     @GetMapping("/projects/statistics")
-    public ApiResponse<Map<String, Long>> getStatistics() {
-        Map<String, Long> stats = searchService.getProjectStatistics();
-        return ApiResponse.success(stats, "Statistics retrieved successfully");
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getStatistics() {
+        return send(new GetProjectStatisticsQuery());
     }
 }

@@ -1,11 +1,11 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
+import com.iyte_yazilim.proje_pazari.application.queries.getAllProjects.GetAllProjectsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getProjectById.GetProjectByIdQuery;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -30,8 +30,6 @@ import org.springframework.web.bind.annotation.*;
                 "Project management endpoints. "
                         + "Allows users to create, read, update, and delete projects.")
 public class ProjectController extends BaseController {
-    private final ProjectRepository projectRepository;
-    private final ProjectMapper projectMapper;
 
     @PostMapping
     @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
@@ -169,10 +167,7 @@ public class ProjectController extends BaseController {
                         description = "Internal server error")
             })
     public ResponseEntity<ApiResponse<List<Project>>> getAllProjects() {
-        List<Project> projects =
-                projectRepository.findAll().stream().map(projectMapper::entityToDomain).toList();
-
-        return ResponseEntity.ok(ApiResponse.success(projects, "Projects retrieved successfully"));
+        return send(new GetAllProjectsQuery());
     }
 
     @GetMapping("/{projectId}")
@@ -190,14 +185,6 @@ public class ProjectController extends BaseController {
                         description = "Project not found")
             })
     public ResponseEntity<ApiResponse<Project>> getProject(@PathVariable String projectId) {
-        return projectRepository
-                .findById(projectId)
-                .map(
-                        entity -> {
-                            Project project = projectMapper.entityToDomain(entity);
-                            return ResponseEntity.ok(
-                                    ApiResponse.success(project, "Project retrieved successfully"));
-                        })
-                .orElse(ResponseEntity.notFound().build());
+        return send(new GetProjectByIdQuery(projectId));
     }
 }
