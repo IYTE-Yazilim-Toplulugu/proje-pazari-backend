@@ -105,8 +105,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("1. Download existing file redirects to presigned URL")
         void downloadFile_existingFile_redirects() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            String presignedUrl =
-                    "https://minio.example.com/bucket/profiles/test.jpg?signed=true";
+            String presignedUrl = "https://minio.example.com/bucket/profiles/test.jpg?signed=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
             when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
                     .thenReturn(presignedUrl);
@@ -153,8 +152,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("5. Download PDF file redirects correctly")
         void downloadFile_pdf_redirects() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            String presignedUrl =
-                    "https://minio.example.com/bucket/docs/report.pdf?signed=true";
+            String presignedUrl = "https://minio.example.com/bucket/docs/report.pdf?signed=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
             when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
                     .thenReturn(presignedUrl);
@@ -194,8 +192,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("1. User-scoped file path (profiles/) resolves correctly")
         void downloadFile_userScopedPath_resolves() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            String presignedUrl =
-                    "https://minio.example.com/bucket/profiles/ulid123.jpg?s=true";
+            String presignedUrl = "https://minio.example.com/bucket/profiles/ulid123.jpg?s=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
             when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
                     .thenReturn(presignedUrl);
@@ -210,8 +207,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("2. Project-scoped file path (projects/) resolves correctly")
         void downloadFile_projectScopedPath_resolves() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            String presignedUrl =
-                    "https://minio.example.com/bucket/projects/proj1/doc.pdf?s=true";
+            String presignedUrl = "https://minio.example.com/bucket/projects/proj1/doc.pdf?s=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
             when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
                     .thenReturn(presignedUrl);
@@ -398,8 +394,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String token = createVerifiedUserAndGetToken();
             when(fileStorageService.storeFile(any(), anyString()))
                     .thenThrow(
-                            new FileStorageException(
-                                    "File size exceeds the maximum allowed size"));
+                            new FileStorageException("File size exceeds the maximum allowed size"));
 
             byte[] oversizedContent = new byte[1024];
             MockMultipartFile file =

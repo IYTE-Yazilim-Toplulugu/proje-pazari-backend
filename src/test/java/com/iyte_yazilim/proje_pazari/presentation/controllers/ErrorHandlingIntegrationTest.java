@@ -439,9 +439,7 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("4. INTERNAL_SERVER_ERROR code is 10")
         void internalServerErrorCode_is10() throws Exception {
-            mockMvc.perform(
-                            get("/api/v1/auth/verify-email")
-                                    .param("token", "bad-token"))
+            mockMvc.perform(get("/api/v1/auth/verify-email").param("token", "bad-token"))
                     .andExpect(status().isInternalServerError())
                     .andExpect(jsonPath("$.code").value(10));
         }

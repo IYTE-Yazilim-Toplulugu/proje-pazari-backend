@@ -220,9 +220,7 @@ class SearchControllerIntegrationTest {
                                     List.of(projectWithDescription),
                                     "Projects retrieved successfully"));
 
-            mockMvc.perform(
-                            get("/api/v1/search/projects")
-                                    .param("q", "React frontend"))
+            mockMvc.perform(get("/api/v1/search/projects").param("q", "React frontend"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data").isArray())
                     .andExpect(jsonPath("$.data[0].title").value("Web Application"))
@@ -407,10 +405,7 @@ class SearchControllerIntegrationTest {
                                     List.of(projectWithTitle, projectWithDescription),
                                     "Projects retrieved successfully"));
 
-            mockMvc.perform(
-                            get("/api/v1/search/projects")
-                                    .param("q", "project")
-                                    .param("page", "0"))
+            mockMvc.perform(get("/api/v1/search/projects").param("q", "project").param("page", "0"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.length()").value(2));
         }
@@ -441,10 +436,7 @@ class SearchControllerIntegrationTest {
                             ApiResponse.success(
                                     List.of(projectWithTitle), "Projects retrieved successfully"));
 
-            mockMvc.perform(
-                            get("/api/v1/search/projects")
-                                    .param("q", "project")
-                                    .param("size", "1"))
+            mockMvc.perform(get("/api/v1/search/projects").param("q", "project").param("size", "1"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.length()").value(1));
         }

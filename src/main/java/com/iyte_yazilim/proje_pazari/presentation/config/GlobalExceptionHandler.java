@@ -2,10 +2,7 @@ package com.iyte_yazilim.proje_pazari.presentation.config;
 
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;

@@ -1,5 +1,7 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -8,12 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iyte_yazilim.proje_pazari.TestRateLimitConfig;
 import com.iyte_yazilim.proje_pazari.TestRedisConfig;
-import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
 import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.config.RateLimitConfig;
+import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import java.time.Duration;
@@ -50,7 +49,6 @@ class AdminControllerIntegrationTest {
     @Autowired private JwtUtil jwtUtil;
 
     private String adminToken;
-
 
     @MockitoBean private StringRedisTemplate stringRedisTemplate;
 
