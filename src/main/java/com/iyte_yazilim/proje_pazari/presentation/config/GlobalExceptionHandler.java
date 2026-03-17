@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 
@@ -99,8 +100,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHandlerMethodValidationException(
+            HandlerMethodValidationException ex) {
+        log.error("Method validation error: {}", ex.getMessage());
+        ApiResponse<Void> response =
+                ApiResponse.validationError(messageService.getMessage("error.validation"));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(ValidationException ex) {
+        log.error("Validation error: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.validationError(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDomainValidationException(
+            com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException ex) {
         log.error("Validation error: {}", ex.getMessage());
         ApiResponse<Void> response = ApiResponse.validationError(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);

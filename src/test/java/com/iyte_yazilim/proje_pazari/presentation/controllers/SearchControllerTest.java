@@ -238,9 +238,6 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when query is blank")
         void shouldReturnBadRequestWhenQueryIsBlank() throws Exception {
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: must not be blank"));
-
             mockMvc.perform(get("/api/v1/search/projects").param("q", ""))
                     .andExpect(status().isBadRequest());
         }
@@ -256,9 +253,6 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when query is too short")
         void shouldReturnBadRequestWhenQueryIsTooShort() throws Exception {
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: size must be between 2 and 100"));
-
             mockMvc.perform(get("/api/v1/search/projects").param("q", "a"))
                     .andExpect(status().isBadRequest());
         }
@@ -268,9 +262,6 @@ class SearchControllerTest {
         @DisplayName("Should return bad request when query exceeds max length")
         void shouldReturnBadRequestWhenQueryExceedsMaxLength() throws Exception {
             String longQuery = "a".repeat(101);
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: size must be between 2 and 100"));
-
             mockMvc.perform(get("/api/v1/search/projects").param("q", longQuery))
                     .andExpect(status().isBadRequest());
         }
@@ -367,9 +358,6 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when query is blank")
         void shouldReturnBadRequestWhenQueryIsBlank() throws Exception {
-            when(mediator.send(any(SuggestProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: must not be blank"));
-
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", ""))
                     .andExpect(status().isBadRequest());
         }
@@ -387,9 +375,6 @@ class SearchControllerTest {
         @DisplayName("Should return bad request when query exceeds max length")
         void shouldReturnBadRequestWhenQueryExceedsMaxLength() throws Exception {
             String longQuery = "a".repeat(101);
-            when(mediator.send(any(SuggestProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: size must be between 1 and 100"));
-
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", longQuery))
                     .andExpect(status().isBadRequest());
         }

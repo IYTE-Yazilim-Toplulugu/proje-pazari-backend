@@ -1,6 +1,9 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
+import com.iyte_yazilim.proje_pazari.application.queries.getAllProjects.GetAllProjectsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getProjectById.GetProjectByIdQuery;
+import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +13,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,12 +23,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/projects")
+@RequiredArgsConstructor
 @Tag(
         name = "Projects",
         description =
                 "Project management endpoints. "
                         + "Allows users to create, read, update, and delete projects.")
-@PreAuthorize("isAuthenticated()")
 public class ProjectController extends BaseController {
 
     @PostMapping
@@ -123,5 +128,63 @@ public class ProjectController extends BaseController {
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
             @RequestBody CreateProjectCommand command, Authentication auth) {
         return send(CreateProjectCommand.class, null, null, command, auth);
+    }
+
+    @GetMapping
+    @PreAuthorize("permitAll()")
+    @Operation(
+            summary = "Get all projects",
+            description = "Retrieves a list of all projects. Public access.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Projects retrieved successfully",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                    {
+                        "code": "SUCCESS",
+                        "message": "Projects retrieved successfully",
+                        "data": [
+                            {
+                                "id": "1",
+                                "title": "AI Chatbot Project",
+                                "description": "Building an AI-powered chatbot",
+                                "status": "ACTIVE"
+                            }
+                        ]
+                    }
+                    """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "Internal server error")
+            })
+    public ResponseEntity<ApiResponse<List<Project>>> getAllProjects() {
+        return send(new GetAllProjectsQuery());
+    }
+
+    @GetMapping("/{projectId}")
+    @PreAuthorize("permitAll()")
+    @Operation(
+            summary = "Get project by ID",
+            description = "Retrieves a specific project by its ID. Public access.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Project retrieved successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "Project not found")
+            })
+    public ResponseEntity<ApiResponse<Project>> getProject(@PathVariable String projectId) {
+        return send(new GetProjectByIdQuery(projectId));
     }
 }

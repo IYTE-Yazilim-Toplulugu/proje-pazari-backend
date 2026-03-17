@@ -142,10 +142,12 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("4. Download without authentication returns 403")
-        void downloadFile_noAuth_returns403() throws Exception {
+        @DisplayName("4. Download without authentication returns 404 for non-existent file")
+        void downloadFile_noAuth_returns404() throws Exception {
+            // File endpoints are now public (for profile pictures)
+            // Non-existent file returns 404
             mockMvc.perform(get(FILES_URL + "/profiles/photo.png"))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isNotFound());
         }
 
         @Test
