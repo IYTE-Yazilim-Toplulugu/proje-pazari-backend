@@ -77,7 +77,8 @@ public class AuthController extends BaseController {
 
     public AuthController(
             IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler,
-            IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>> resendVerificationEmailHandler) {
+            IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
+                    resendVerificationEmailHandler) {
         this.verifyEmailHandler = verifyEmailHandler;
         this.resendVerificationEmailHandler = resendVerificationEmailHandler;
     }
@@ -284,7 +285,8 @@ public class AuthController extends BaseController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<RefreshTokenResult>> refreshToken(@RequestParam String refreshToken) {
+    public ResponseEntity<ApiResponse<RefreshTokenResult>> refreshToken(
+            @RequestParam String refreshToken) {
         return send(new RefreshTokenCommand(refreshToken));
     }
 }

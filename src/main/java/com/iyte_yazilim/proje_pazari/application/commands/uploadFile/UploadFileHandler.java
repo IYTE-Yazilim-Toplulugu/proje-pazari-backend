@@ -33,9 +33,12 @@ public class UploadFileHandler
             String filePath = fileStorageService.storeFile(command.file(), DEFAULT_DIRECTORY);
             Map<String, Object> fileData =
                     Map.of(
-                            "filename", filename,
-                            "url", "/api/v1/files/" + filePath,
-                            "size", command.file().getSize());
+                            "filename",
+                            filename,
+                            "url",
+                            "/api/v1/files/" + filePath,
+                            "size",
+                            command.file().getSize());
             return ApiResponse.success(fileData, "File uploaded successfully");
         } catch (FileStorageException e) {
             log.error("File upload failed: {}", e.getMessage());

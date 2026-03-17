@@ -312,8 +312,7 @@ class SearchControllerTest {
                     List.of("Java Spring Boot Project", "Java Backend Application");
             when(mediator.send(any(SuggestProjectsQuery.class)))
                     .thenReturn(
-                            ApiResponse.success(
-                                    suggestions, "Suggestions retrieved successfully"));
+                            ApiResponse.success(suggestions, "Suggestions retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "java"))
                     .andExpect(status().isOk())
@@ -391,8 +390,7 @@ class SearchControllerTest {
         void shouldReturnStatisticsSuccessfully() throws Exception {
             Map<String, Long> stats = Map.of("ACTIVE", 10L, "COMPLETED", 5L, "DRAFT", 3L);
             when(mediator.send(any(GetProjectStatisticsQuery.class)))
-                    .thenReturn(
-                            ApiResponse.success(stats, "Statistics retrieved successfully"));
+                    .thenReturn(ApiResponse.success(stats, "Statistics retrieved successfully"));
 
             mockMvc.perform(get("/api/v1/search/projects/statistics"))
                     .andExpect(status().isOk())

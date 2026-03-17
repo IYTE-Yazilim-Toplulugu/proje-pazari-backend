@@ -53,6 +53,7 @@ import com.iyte_yazilim.proje_pazari.application.queries.exportApplications.Expo
 import com.iyte_yazilim.proje_pazari.application.queries.exportProjects.ExportProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.exportUsers.ExportUsersQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getActiveSessions.GetActiveSessionsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getAnalyticsTrends.GetAnalyticsTrendsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getApplicationStats.GetApplicationStatsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getAuditLogs.GetAuditLogsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getFeatureFlags.GetFeatureFlagsQuery;
@@ -64,7 +65,6 @@ import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSyst
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSystemHealthQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserStats.GetUserStatsQuery;
-import com.iyte_yazilim.proje_pazari.application.queries.getAnalyticsTrends.GetAnalyticsTrendsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.listBannedIps.ListBannedIpsQuery;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
@@ -124,7 +124,14 @@ public class AdminController extends BaseController {
     @Audited(action = "ADMIN_UPDATE_USER", entityType = "USER")
     public ResponseEntity<ApiResponse<Void>> updateUser(
             @PathVariable String userId, @RequestBody UpdateUserRequest request) {
-        return send(new AdminUpdateUserCommand(userId, request.role(), request.isActive(), request.firstName(), request.lastName(), request.description()));
+        return send(
+                new AdminUpdateUserCommand(
+                        userId,
+                        request.role(),
+                        request.isActive(),
+                        request.firstName(),
+                        request.lastName(),
+                        request.description()));
     }
 
     @DeleteMapping("/users/{userId}")
@@ -267,8 +274,8 @@ public class AdminController extends BaseController {
             summary = "Analytics trends",
             description =
                     "Get time-series trend data for user growth, project creation, and application activity")
-    public ResponseEntity<ApiResponse<AnalyticsTrendsDTO>>
-            getAnalyticsTrends(@RequestParam(defaultValue = "30") int days) {
+    public ResponseEntity<ApiResponse<AnalyticsTrendsDTO>> getAnalyticsTrends(
+            @RequestParam(defaultValue = "30") int days) {
         return send(new GetAnalyticsTrendsQuery(days));
     }
 
@@ -319,7 +326,8 @@ public class AdminController extends BaseController {
     @Audited(action = "REVIEW_FLAGGED_CONTENT", entityType = "CONTENT")
     public ResponseEntity<ApiResponse<Void>> reviewFlaggedContent(
             @PathVariable String flagId, @RequestBody ReviewFlaggedContentRequest request) {
-        return send(new ReviewFlaggedContentCommand(flagId, request.action(), request.reviewNote()));
+        return send(
+                new ReviewFlaggedContentCommand(flagId, request.action(), request.reviewNote()));
     }
 
     // ==================== EMAIL & NOTIFICATIONS ====================
@@ -331,7 +339,8 @@ public class AdminController extends BaseController {
     @Audited(action = "BROADCAST_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> broadcastEmail(
             @RequestBody BroadcastEmailRequest request) {
-        return send(new BroadcastEmailCommand(request.subject(), request.body(), request.targetRole()));
+        return send(
+                new BroadcastEmailCommand(request.subject(), request.body(), request.targetRole()));
     }
 
     @PostMapping("/email/targeted")
@@ -339,7 +348,8 @@ public class AdminController extends BaseController {
     @Audited(action = "TARGETED_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> sendTargetedEmail(
             @RequestBody SendTargetedEmailRequest request) {
-        return send(new SendTargetedEmailCommand(request.userIds(), request.subject(), request.body()));
+        return send(
+                new SendTargetedEmailCommand(request.userIds(), request.subject(), request.body()));
     }
 
     // ==================== DATA EXPORT ====================
@@ -509,10 +519,9 @@ public class AdminController extends BaseController {
             description =
                     "Import users from a CSV file. Expected columns: email,firstName,lastName,role,password")
     @Audited(action = "IMPORT_USERS_CSV", entityType = "USER")
-    public ResponseEntity<ApiResponse<ImportResultDTO>>
-            importUsers(
-                    @org.springframework.web.bind.annotation.RequestPart("file")
-                            org.springframework.web.multipart.MultipartFile file) {
+    public ResponseEntity<ApiResponse<ImportResultDTO>> importUsers(
+            @org.springframework.web.bind.annotation.RequestPart("file")
+                    org.springframework.web.multipart.MultipartFile file) {
         return send(ImportUsersFromCsvCommand.class, null, null, null, null, Map.of("file", file));
     }
 
@@ -522,17 +531,11 @@ public class AdminController extends BaseController {
             description =
                     "Import projects from a CSV file. Expected columns: title,description,ownerEmail,status,maxTeamSize,category,requiredSkills")
     @Audited(action = "IMPORT_PROJECTS_CSV", entityType = "PROJECT")
-    public ResponseEntity<ApiResponse<ImportResultDTO>>
-            importProjects(
-                    @org.springframework.web.bind.annotation.RequestPart("file")
-                            org.springframework.web.multipart.MultipartFile file) {
+    public ResponseEntity<ApiResponse<ImportResultDTO>> importProjects(
+            @org.springframework.web.bind.annotation.RequestPart("file")
+                    org.springframework.web.multipart.MultipartFile file) {
         return send(
-                ImportProjectsFromCsvCommand.class,
-                null,
-                null,
-                null,
-                null,
-                Map.of("file", file));
+                ImportProjectsFromCsvCommand.class, null, null, null, null, Map.of("file", file));
     }
 
     // ==================== SCHEDULED EMAIL BROADCASTS ====================
@@ -544,16 +547,19 @@ public class AdminController extends BaseController {
     @Audited(action = "SCHEDULE_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> scheduleEmail(
             @RequestBody ScheduleEmailRequest request) {
-        return send(new ScheduleEmailCommand(request.subject(), request.body(), request.targetRole(), request.scheduledAt()));
+        return send(
+                new ScheduleEmailCommand(
+                        request.subject(),
+                        request.body(),
+                        request.targetRole(),
+                        request.scheduledAt()));
     }
 
     @GetMapping("/email/scheduled")
     @Operation(
             summary = "List scheduled emails",
             description = "Get all scheduled email broadcasts")
-    public ResponseEntity<
-                    ApiResponse<List<ScheduledEmailDTO>>>
-            getScheduledEmails() {
+    public ResponseEntity<ApiResponse<List<ScheduledEmailDTO>>> getScheduledEmails() {
         return send(new GetScheduledEmailsQuery());
     }
 

@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.refreshToken;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -35,8 +35,10 @@ public class RefreshTokenHandler
         }
 
         String userId = userIdOpt.get();
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+        UserEntity user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new UserNotFoundException(userId));
 
         refreshTokenService.revokeRefreshToken(refreshToken);
         String newRefreshToken = refreshTokenService.createRefreshToken(userId);
