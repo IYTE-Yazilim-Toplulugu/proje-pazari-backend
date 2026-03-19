@@ -11,6 +11,7 @@ import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
 @Getter
 @Setter
@@ -18,6 +19,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Document(indexName = "#{@environment.getProperty('app.elasticsearch.user-index')}")
+@Setting(settingPath = "elasticsearch/user-settings.json")
 public class UserDocument {
 
     @Id @EqualsAndHashCode.Include private String id;
