@@ -6,7 +6,7 @@
       "analyzer": {
         "custom_analyzer": {
           "type": "custom",
-          "tokenizer": "standard",
+          "tokenizer": "turkhis_search",
           "filter": ["lowercase", "asciifolding"]
         }
       }
