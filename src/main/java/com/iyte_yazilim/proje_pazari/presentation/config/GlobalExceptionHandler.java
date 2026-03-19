@@ -210,14 +210,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
-    @ExceptionHandler(com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDomainValidationException(
-            com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException ex) {
-        log.warn("Domain validation error: {}", ex.getMessage());
-        ApiResponse<Void> response = ApiResponse.validationError(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception ex) {
         log.error("Unexpected error occurred", ex);

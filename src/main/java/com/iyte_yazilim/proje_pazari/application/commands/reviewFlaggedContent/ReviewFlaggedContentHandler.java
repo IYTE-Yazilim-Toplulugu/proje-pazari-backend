@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FlaggedContentNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.FlaggedContentRepository;
@@ -51,11 +52,13 @@ public class ReviewFlaggedContentHandler
             case "BAN_USER":
                 flag.setStatus("REMOVED");
                 if ("USER".equals(flag.getContentType())) {
-                    UserEntity user = userRepository.findById(flag.getContentId()).orElse(null);
-                    if (user != null) {
-                        user.setIsActive(false);
-                        userRepository.save(user);
-                    }
+                    UserEntity user =
+                            userRepository
+                                    .findById(flag.getContentId())
+                                    .orElseThrow(
+                                            () -> new UserNotFoundException(flag.getContentId()));
+                    user.setIsActive(false);
+                    userRepository.save(user);
                 }
                 break;
             default:
