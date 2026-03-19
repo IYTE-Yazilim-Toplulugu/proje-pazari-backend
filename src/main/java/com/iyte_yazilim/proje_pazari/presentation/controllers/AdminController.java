@@ -1,23 +1,33 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.iyte_yazilim.proje_pazari.application.commands.adminDeleteProject.AdminDeleteProjectCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser.AdminDeleteUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.adminFeatureProject.AdminFeatureProjectCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.adminReviewApplication.AdminReviewApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.adminUpdateUser.AdminUpdateUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.banIp.BanIpCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.broadcastEmail.BroadcastEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.bulkApplicationAction.BulkApplicationActionCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.bulkProjectAction.BulkProjectActionCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction.BulkUserActionCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.cancelScheduledEmail.CancelScheduledEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.flagContent.FlagContentCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.importProjectsFromCsv.ImportProjectsFromCsvCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.importUsersFromCsv.ImportUsersFromCsvCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.invalidateAllSessions.InvalidateAllSessionsCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.invalidateUserSessions.InvalidateUserSessionsCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent.ReviewFlaggedContentCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.scheduleEmail.ScheduleEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.sendTargetedEmail.SendTargetedEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.toggleMaintenanceMode.ToggleMaintenanceModeCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.unbanIp.UnbanIpCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateFeatureFlag.UpdateFeatureFlagCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
 import com.iyte_yazilim.proje_pazari.application.common.Audited;
 import com.iyte_yazilim.proje_pazari.application.dtos.ActiveSessionDTO;
+import com.iyte_yazilim.proje_pazari.application.dtos.AnalyticsTrendsDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationStatsDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.AuditLogDTO;
@@ -25,9 +35,11 @@ import com.iyte_yazilim.proje_pazari.application.dtos.BannedIpDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.application.dtos.FeatureFlagDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.FlaggedContentDTO;
+import com.iyte_yazilim.proje_pazari.application.dtos.ImportResultDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectStatsDTO;
+import com.iyte_yazilim.proje_pazari.application.dtos.ScheduledEmailDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemConfigDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemHealthDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemOverviewDTO;
@@ -41,16 +53,19 @@ import com.iyte_yazilim.proje_pazari.application.queries.exportApplications.Expo
 import com.iyte_yazilim.proje_pazari.application.queries.exportProjects.ExportProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.exportUsers.ExportUsersQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getActiveSessions.GetActiveSessionsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getAnalyticsTrends.GetAnalyticsTrendsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getApplicationStats.GetApplicationStatsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getAuditLogs.GetAuditLogsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getFeatureFlags.GetFeatureFlagsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getFlaggedContent.GetFlaggedContentQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getMaintenanceStatus.GetMaintenanceStatusQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectStats.GetProjectStatsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getScheduledEmails.GetScheduledEmailsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSystemConfigQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSystemHealthQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserStats.GetUserStatsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.listBannedIps.ListBannedIpsQuery;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
@@ -58,6 +73,7 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
@@ -107,18 +123,15 @@ public class AdminController extends BaseController {
     @Operation(summary = "Update user", description = "Update user role, status, or profile")
     @Audited(action = "ADMIN_UPDATE_USER", entityType = "USER")
     public ResponseEntity<ApiResponse<Void>> updateUser(
-            @PathVariable String userId, @RequestBody Map<String, Object> updates) {
-        RoleType role =
-                updates.containsKey("role") ? RoleType.valueOf((String) updates.get("role")) : null;
-        Boolean isActive =
-                updates.containsKey("isActive") ? (Boolean) updates.get("isActive") : null;
-        String firstName = (String) updates.get("firstName");
-        String lastName = (String) updates.get("lastName");
-        String description = (String) updates.get("description");
-
+            @PathVariable String userId, @RequestBody UpdateUserRequest request) {
         return send(
                 new AdminUpdateUserCommand(
-                        userId, role, isActive, firstName, lastName, description));
+                        userId,
+                        request.role(),
+                        request.isActive(),
+                        request.firstName(),
+                        request.lastName(),
+                        request.description()));
     }
 
     @DeleteMapping("/users/{userId}")
@@ -135,11 +148,8 @@ public class AdminController extends BaseController {
                     "Perform bulk operations on users (DELETE, SUSPEND, ACTIVATE, CHANGE_ROLE)")
     @Audited(action = "BULK_USER_ACTION", entityType = "USER")
     public ResponseEntity<ApiResponse<BulkActionResult>> bulkUserAction(
-            @RequestBody Map<String, Object> request) {
-        String action = (String) request.get("action");
-        @SuppressWarnings("unchecked")
-        List<String> userIds = (List<String>) request.get("userIds");
-        return send(new BulkUserActionCommand(action, userIds));
+            @RequestBody BulkUserActionRequest request) {
+        return send(new BulkUserActionCommand(request.action(), request.userIds()));
     }
 
     @PostMapping("/users/{userId}/promote-to-project-owner")
@@ -190,11 +200,8 @@ public class AdminController extends BaseController {
                     "Perform bulk operations on projects (DELETE, FEATURE, UNFEATURE, CANCEL)")
     @Audited(action = "BULK_PROJECT_ACTION", entityType = "PROJECT")
     public ResponseEntity<ApiResponse<BulkActionResult>> bulkProjectAction(
-            @RequestBody Map<String, Object> request) {
-        String action = (String) request.get("action");
-        @SuppressWarnings("unchecked")
-        List<String> projectIds = (List<String>) request.get("projectIds");
-        return send(new BulkProjectActionCommand(action, projectIds));
+            @RequestBody BulkProjectActionRequest request) {
+        return send(new BulkProjectActionCommand(request.action(), request.projectIds()));
     }
 
     // ==================== APPLICATION MANAGEMENT ====================
@@ -218,10 +225,8 @@ public class AdminController extends BaseController {
             description = "Admin review of any application (approve/reject)")
     @Audited(action = "ADMIN_REVIEW_APPLICATION", entityType = "APPLICATION")
     public ResponseEntity<ApiResponse<Void>> reviewApplication(
-            @PathVariable String applicationId, @RequestBody Map<String, String> request) {
-        ApplicationStatus applicationStatus =
-                ApplicationStatus.valueOf(request.get("status").toUpperCase());
-        return send(new AdminReviewApplicationCommand(applicationId, applicationStatus));
+            @PathVariable String applicationId, @RequestBody ReviewApplicationRequest request) {
+        return send(new AdminReviewApplicationCommand(applicationId, request.status()));
     }
 
     @PostMapping("/applications/bulk-action")
@@ -230,11 +235,8 @@ public class AdminController extends BaseController {
             description = "Bulk approve/reject applications")
     @Audited(action = "BULK_APPLICATION_ACTION", entityType = "APPLICATION")
     public ResponseEntity<ApiResponse<BulkActionResult>> bulkApplicationAction(
-            @RequestBody Map<String, Object> request) {
-        String action = (String) request.get("action");
-        @SuppressWarnings("unchecked")
-        List<String> applicationIds = (List<String>) request.get("applicationIds");
-        return send(new BulkApplicationActionCommand(action, applicationIds));
+            @RequestBody BulkApplicationActionRequest request) {
+        return send(new BulkApplicationActionCommand(request.action(), request.applicationIds()));
     }
 
     // ==================== STATISTICS & ANALYTICS ====================
@@ -272,16 +274,9 @@ public class AdminController extends BaseController {
             summary = "Analytics trends",
             description =
                     "Get time-series trend data for user growth, project creation, and application activity")
-    public ResponseEntity<
-                    ApiResponse<com.iyte_yazilim.proje_pazari.application.dtos.AnalyticsTrendsDTO>>
-            getAnalyticsTrends(@RequestParam(defaultValue = "30") int days) {
-        return send(
-                new com.iyte_yazilim
-                        .proje_pazari
-                        .application
-                        .queries
-                        .getAnalyticsTrends
-                        .GetAnalyticsTrendsQuery(days));
+    public ResponseEntity<ApiResponse<AnalyticsTrendsDTO>> getAnalyticsTrends(
+            @RequestParam(defaultValue = "30") int days) {
+        return send(new GetAnalyticsTrendsQuery(days));
     }
 
     // ==================== AUDIT LOGS ====================
@@ -308,9 +303,8 @@ public class AdminController extends BaseController {
     public ResponseEntity<ApiResponse<Void>> flagContent(
             @PathVariable String type,
             @PathVariable String id,
-            @RequestBody Map<String, String> request) {
-        String reason = request.getOrDefault("reason", "INAPPROPRIATE");
-        return send(new FlagContentCommand(type, id, reason));
+            @RequestBody FlagContentRequest request) {
+        return send(new FlagContentCommand(type, id, request.reason()));
     }
 
     @GetMapping("/content/flagged")
@@ -331,10 +325,9 @@ public class AdminController extends BaseController {
             description = "Review flagged content (APPROVE, REMOVE, BAN_USER)")
     @Audited(action = "REVIEW_FLAGGED_CONTENT", entityType = "CONTENT")
     public ResponseEntity<ApiResponse<Void>> reviewFlaggedContent(
-            @PathVariable String flagId, @RequestBody Map<String, String> request) {
-        String reviewAction = request.getOrDefault("action", "APPROVE");
-        String reviewNote = request.get("reviewNote");
-        return send(new ReviewFlaggedContentCommand(flagId, reviewAction, reviewNote));
+            @PathVariable String flagId, @RequestBody ReviewFlaggedContentRequest request) {
+        return send(
+                new ReviewFlaggedContentCommand(flagId, request.action(), request.reviewNote()));
     }
 
     // ==================== EMAIL & NOTIFICATIONS ====================
@@ -345,23 +338,18 @@ public class AdminController extends BaseController {
             description = "Send email to all users or users with a specific role")
     @Audited(action = "BROADCAST_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> broadcastEmail(
-            @RequestBody Map<String, String> request) {
-        String subject = request.get("subject");
-        String body = request.get("body");
-        String targetRole = request.getOrDefault("targetRole", "ALL");
-        return send(new BroadcastEmailCommand(subject, body, targetRole));
+            @RequestBody BroadcastEmailRequest request) {
+        return send(
+                new BroadcastEmailCommand(request.subject(), request.body(), request.targetRole()));
     }
 
     @PostMapping("/email/targeted")
     @Operation(summary = "Send targeted email", description = "Send email to specific users by ID")
     @Audited(action = "TARGETED_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> sendTargetedEmail(
-            @RequestBody Map<String, Object> request) {
-        String subject = (String) request.get("subject");
-        String body = (String) request.get("body");
-        @SuppressWarnings("unchecked")
-        List<String> userIds = (List<String>) request.get("userIds");
-        return send(new SendTargetedEmailCommand(userIds, subject, body));
+            @RequestBody SendTargetedEmailRequest request) {
+        return send(
+                new SendTargetedEmailCommand(request.userIds(), request.subject(), request.body()));
     }
 
     // ==================== DATA EXPORT ====================
@@ -427,8 +415,8 @@ public class AdminController extends BaseController {
             description = "Update system configuration entries (key-value pairs)")
     @Audited(action = "UPDATE_SYSTEM_CONFIG", entityType = "SYSTEM")
     public ResponseEntity<ApiResponse<Void>> updateSystemConfig(
-            @RequestBody Map<String, String> configs) {
-        return send(new UpdateSystemConfigCommand(configs));
+            @RequestBody UpdateSystemConfigRequest request) {
+        return send(new UpdateSystemConfigCommand(request.configs()));
     }
 
     // ==================== FEATURE FLAGS ====================
@@ -447,10 +435,8 @@ public class AdminController extends BaseController {
             description = "Create or update a feature flag by key")
     @Audited(action = "UPDATE_FEATURE_FLAG", entityType = "FEATURE_FLAG")
     public ResponseEntity<ApiResponse<Void>> updateFeatureFlag(
-            @PathVariable String key, @RequestBody Map<String, Object> request) {
-        boolean enabled = request.containsKey("enabled") ? (Boolean) request.get("enabled") : false;
-        String description = (String) request.get("description");
-        return send(new UpdateFeatureFlagCommand(key, enabled, description));
+            @PathVariable String key, @RequestBody UpdateFeatureFlagRequest request) {
+        return send(new UpdateFeatureFlagCommand(key, request.enabled(), request.description()));
     }
 
     // ==================== MAINTENANCE MODE ====================
@@ -469,9 +455,8 @@ public class AdminController extends BaseController {
             description = "Enable or disable maintenance mode")
     @Audited(action = "TOGGLE_MAINTENANCE_MODE", entityType = "SYSTEM")
     public ResponseEntity<ApiResponse<Void>> toggleMaintenanceMode(
-            @RequestBody Map<String, Boolean> request) {
-        boolean enabled = request.getOrDefault("enabled", false);
-        return send(new ToggleMaintenanceModeCommand(enabled));
+            @RequestBody ToggleMaintenanceModeRequest request) {
+        return send(new ToggleMaintenanceModeCommand(request.enabled()));
     }
 
     // ==================== SESSION MANAGEMENT ====================
@@ -490,13 +475,7 @@ public class AdminController extends BaseController {
             description = "Revoke all sessions for a specific user")
     @Audited(action = "INVALIDATE_USER_SESSIONS", entityType = "SESSION")
     public ResponseEntity<ApiResponse<Void>> invalidateUserSessions(@PathVariable String userId) {
-        return send(
-                new com.iyte_yazilim
-                        .proje_pazari
-                        .application
-                        .commands
-                        .invalidateUserSessions
-                        .InvalidateUserSessionsCommand(userId));
+        return send(new InvalidateUserSessionsCommand(userId));
     }
 
     @DeleteMapping("/sessions")
@@ -505,13 +484,7 @@ public class AdminController extends BaseController {
             description = "Revoke all active sessions globally")
     @Audited(action = "INVALIDATE_ALL_SESSIONS", entityType = "SESSION")
     public ResponseEntity<ApiResponse<Void>> invalidateAllSessions() {
-        return send(
-                new com.iyte_yazilim
-                        .proje_pazari
-                        .application
-                        .commands
-                        .invalidateAllSessions
-                        .InvalidateAllSessionsCommand());
+        return send(new InvalidateAllSessionsCommand());
     }
 
     // ==================== IP BAN MANAGEMENT ====================
@@ -521,36 +494,21 @@ public class AdminController extends BaseController {
             summary = "Ban IP address",
             description = "Ban a specific IP address from accessing the platform")
     @Audited(action = "BAN_IP", entityType = "IP_BAN")
-    public ResponseEntity<ApiResponse<Void>> banIp(@RequestBody Map<String, Object> request) {
-        String ipAddress = (String) request.get("ipAddress");
-        String reason = (String) request.get("reason");
-        java.time.LocalDateTime expiresAt = null;
-        if (request.containsKey("expiresAt") && request.get("expiresAt") != null) {
-            expiresAt = java.time.LocalDateTime.parse((String) request.get("expiresAt"));
-        }
-        return send(
-                new com.iyte_yazilim.proje_pazari.application.commands.banIp.BanIpCommand(
-                        ipAddress, reason, expiresAt));
+    public ResponseEntity<ApiResponse<Void>> banIp(@RequestBody BanIpRequest request) {
+        return send(new BanIpCommand(request.ipAddress(), request.reason(), request.expiresAt()));
     }
 
     @DeleteMapping("/ip-bans/{ip}")
     @Operation(summary = "Unban IP address", description = "Remove an IP address from the ban list")
     @Audited(action = "UNBAN_IP", entityType = "IP_BAN")
     public ResponseEntity<ApiResponse<Void>> unbanIp(@PathVariable String ip) {
-        return send(
-                new com.iyte_yazilim.proje_pazari.application.commands.unbanIp.UnbanIpCommand(ip));
+        return send(new UnbanIpCommand(ip));
     }
 
     @GetMapping("/ip-bans")
     @Operation(summary = "List banned IPs", description = "Get all currently banned IP addresses")
     public ResponseEntity<ApiResponse<List<BannedIpDTO>>> listBannedIps() {
-        return send(
-                new com.iyte_yazilim
-                        .proje_pazari
-                        .application
-                        .queries
-                        .listBannedIps
-                        .ListBannedIpsQuery());
+        return send(new ListBannedIpsQuery());
     }
 
     // ==================== DATA IMPORT ====================
@@ -561,25 +519,10 @@ public class AdminController extends BaseController {
             description =
                     "Import users from a CSV file. Expected columns: email,firstName,lastName,role,password")
     @Audited(action = "IMPORT_USERS_CSV", entityType = "USER")
-    public ResponseEntity<
-                    ApiResponse<com.iyte_yazilim.proje_pazari.application.dtos.ImportResultDTO>>
-            importUsers(
-                    @org.springframework.web.bind.annotation.RequestPart("file")
-                            org.springframework.web.multipart.MultipartFile file) {
-        try {
-            String csvContent =
-                    new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            return send(
-                    new com.iyte_yazilim
-                            .proje_pazari
-                            .application
-                            .commands
-                            .importUsersFromCsv
-                            .ImportUsersFromCsvCommand(csvContent));
-        } catch (java.io.IOException e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.validationError("Failed to read file: " + e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<ImportResultDTO>> importUsers(
+            @org.springframework.web.bind.annotation.RequestPart("file")
+                    org.springframework.web.multipart.MultipartFile file) {
+        return send(ImportUsersFromCsvCommand.class, null, null, null, null, Map.of("file", file));
     }
 
     @PostMapping(value = "/import/projects", consumes = "multipart/form-data")
@@ -588,25 +531,11 @@ public class AdminController extends BaseController {
             description =
                     "Import projects from a CSV file. Expected columns: title,description,ownerEmail,status,maxTeamSize,category,requiredSkills")
     @Audited(action = "IMPORT_PROJECTS_CSV", entityType = "PROJECT")
-    public ResponseEntity<
-                    ApiResponse<com.iyte_yazilim.proje_pazari.application.dtos.ImportResultDTO>>
-            importProjects(
-                    @org.springframework.web.bind.annotation.RequestPart("file")
-                            org.springframework.web.multipart.MultipartFile file) {
-        try {
-            String csvContent =
-                    new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            return send(
-                    new com.iyte_yazilim
-                            .proje_pazari
-                            .application
-                            .commands
-                            .importProjectsFromCsv
-                            .ImportProjectsFromCsvCommand(csvContent));
-        } catch (java.io.IOException e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.validationError("Failed to read file: " + e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<ImportResultDTO>> importProjects(
+            @org.springframework.web.bind.annotation.RequestPart("file")
+                    org.springframework.web.multipart.MultipartFile file) {
+        return send(
+                ImportProjectsFromCsvCommand.class, null, null, null, null, Map.of("file", file));
     }
 
     // ==================== SCHEDULED EMAIL BROADCASTS ====================
@@ -617,38 +546,21 @@ public class AdminController extends BaseController {
             description = "Schedule an email to be sent at a future date/time")
     @Audited(action = "SCHEDULE_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> scheduleEmail(
-            @RequestBody Map<String, String> request) {
-        String subject = request.get("subject");
-        String body = request.get("body");
-        String targetRole = request.getOrDefault("targetRole", "ALL");
-        java.time.LocalDateTime scheduledAt = null;
-        if (request.containsKey("scheduledAt")) {
-            scheduledAt = java.time.LocalDateTime.parse(request.get("scheduledAt"));
-        }
+            @RequestBody ScheduleEmailRequest request) {
         return send(
-                new com.iyte_yazilim
-                        .proje_pazari
-                        .application
-                        .commands
-                        .scheduleEmail
-                        .ScheduleEmailCommand(subject, body, targetRole, scheduledAt));
+                new ScheduleEmailCommand(
+                        request.subject(),
+                        request.body(),
+                        request.targetRole(),
+                        request.scheduledAt()));
     }
 
     @GetMapping("/email/scheduled")
     @Operation(
             summary = "List scheduled emails",
             description = "Get all scheduled email broadcasts")
-    public ResponseEntity<
-                    ApiResponse<
-                            List<com.iyte_yazilim.proje_pazari.application.dtos.ScheduledEmailDTO>>>
-            getScheduledEmails() {
-        return send(
-                new com.iyte_yazilim
-                        .proje_pazari
-                        .application
-                        .queries
-                        .getScheduledEmails
-                        .GetScheduledEmailsQuery());
+    public ResponseEntity<ApiResponse<List<ScheduledEmailDTO>>> getScheduledEmails() {
+        return send(new GetScheduledEmailsQuery());
     }
 
     @DeleteMapping("/email/scheduled/{id}")
@@ -657,12 +569,43 @@ public class AdminController extends BaseController {
             description = "Cancel a pending scheduled email broadcast")
     @Audited(action = "CANCEL_SCHEDULED_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> cancelScheduledEmail(@PathVariable String id) {
-        return send(
-                new com.iyte_yazilim
-                        .proje_pazari
-                        .application
-                        .commands
-                        .cancelScheduledEmail
-                        .CancelScheduledEmailCommand(id));
+        return send(new CancelScheduledEmailCommand(id));
     }
+
+    public record UpdateUserRequest(
+            RoleType role,
+            Boolean isActive,
+            String firstName,
+            String lastName,
+            String description) {}
+
+    public record BulkUserActionRequest(String action, List<String> userIds) {}
+
+    public record BulkProjectActionRequest(String action, List<String> projectIds) {}
+
+    public record ReviewApplicationRequest(ApplicationStatus status) {}
+
+    public record BulkApplicationActionRequest(String action, List<String> applicationIds) {}
+
+    public record FlagContentRequest(String reason) {}
+
+    public record ReviewFlaggedContentRequest(String action, String reviewNote) {}
+
+    public record BroadcastEmailRequest(String subject, String body, String targetRole) {}
+
+    public record SendTargetedEmailRequest(List<String> userIds, String subject, String body) {}
+
+    public record UpdateSystemConfigRequest(Map<String, String> configs) {
+        @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+        public UpdateSystemConfigRequest {}
+    }
+
+    public record UpdateFeatureFlagRequest(boolean enabled, String description) {}
+
+    public record ToggleMaintenanceModeRequest(boolean enabled) {}
+
+    public record BanIpRequest(String ipAddress, String reason, LocalDateTime expiresAt) {}
+
+    public record ScheduleEmailRequest(
+            String subject, String body, String targetRole, LocalDateTime scheduledAt) {}
 }
