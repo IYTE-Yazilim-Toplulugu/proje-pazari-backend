@@ -45,7 +45,8 @@ class AdminReviewApplicationHandlerTest {
 
         ApiResponse<Void> response =
                 handler.handle(
-                        new AdminReviewApplicationCommand(applicationId, ApplicationStatus.APPROVED));
+                        new AdminReviewApplicationCommand(
+                                applicationId, ApplicationStatus.APPROVED));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals(ApplicationStatus.APPROVED, applicationEntity.getStatus());
@@ -60,7 +61,8 @@ class AdminReviewApplicationHandlerTest {
 
         ApiResponse<Void> response =
                 handler.handle(
-                        new AdminReviewApplicationCommand(applicationId, ApplicationStatus.REJECTED));
+                        new AdminReviewApplicationCommand(
+                                applicationId, ApplicationStatus.REJECTED));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals(ApplicationStatus.REJECTED, applicationEntity.getStatus());

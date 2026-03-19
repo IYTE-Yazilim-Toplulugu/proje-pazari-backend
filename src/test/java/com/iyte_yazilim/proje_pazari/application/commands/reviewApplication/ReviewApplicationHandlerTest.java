@@ -105,8 +105,7 @@ class ReviewApplicationHandlerTest {
     @Test
     @DisplayName("Should return bad request when validation fails")
     void shouldReturnBadRequest_whenValidationFails() {
-        ReviewApplicationCommand command =
-                new ReviewApplicationCommand(applicationId, null, null);
+        ReviewApplicationCommand command = new ReviewApplicationCommand(applicationId, null, null);
 
         when(validator.validate(command)).thenReturn(new String[] {"Status is required"});
 

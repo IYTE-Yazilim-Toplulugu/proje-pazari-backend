@@ -83,7 +83,8 @@ class ReviewFlaggedContentHandlerTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
 
         ApiResponse<Void> response =
-                handler.handle(new ReviewFlaggedContentCommand(flagId, "BAN_USER", "Abusive behavior"));
+                handler.handle(
+                        new ReviewFlaggedContentCommand(flagId, "BAN_USER", "Abusive behavior"));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals("REMOVED", flagEntity.getStatus());
@@ -100,7 +101,9 @@ class ReviewFlaggedContentHandlerTest {
 
         assertThrows(
                 FlaggedContentNotFoundException.class,
-                () -> handler.handle(new ReviewFlaggedContentCommand(unknownFlagId, "APPROVE", null)));
+                () ->
+                        handler.handle(
+                                new ReviewFlaggedContentCommand(unknownFlagId, "APPROVE", null)));
         verify(flaggedContentRepository, never()).save(any());
     }
 
