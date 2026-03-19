@@ -7,9 +7,10 @@ import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
@@ -22,7 +23,7 @@ public class ElasticsearchEventListener {
 
     private final ElasticsearchSyncService syncService;
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleProjectCreated(ProjectCreatedEvent event) {
         try {
@@ -37,7 +38,7 @@ public class ElasticsearchEventListener {
         }
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleProjectUpdated(ProjectUpdatedEvent event) {
         try {
@@ -52,7 +53,7 @@ public class ElasticsearchEventListener {
         }
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleProjectDeleted(ProjectDeletedEvent event) {
         try {
