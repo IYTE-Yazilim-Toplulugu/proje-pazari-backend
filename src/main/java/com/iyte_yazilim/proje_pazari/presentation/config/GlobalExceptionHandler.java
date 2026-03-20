@@ -2,7 +2,16 @@ package com.iyte_yazilim.proje_pazari.presentation.config;
 
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.*;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailAlreadyVerifiedException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailSendException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FlaggedContentNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
@@ -119,16 +128,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDomainValidationException(
             com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException ex) {
-        log.error("Validation error: {}", ex.getMessage());
+        log.warn("Domain validation error: {}", ex.getMessage());
         ApiResponse<Void> response = ApiResponse.validationError(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<ApiResponse<Void>> handleFileStorageException(FileStorageException ex) {
-        log.debug("File storage error: {}", ex.getMessage());
-        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        log.error("File storage error: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.internalError(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
