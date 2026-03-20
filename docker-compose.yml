@@ -63,6 +63,8 @@ services:
       - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
+    ports:
+      - "127.0.0.1:9200:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     healthcheck:
@@ -191,6 +193,9 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - proje-pazari-network
     restart: always
@@ -226,7 +231,7 @@ services:
       - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@projepazari.site}
       - GF_SMTP_FROM_NAME=Proje Pazarı Grafana
       - GF_SMTP_STARTTLS_POLICY=MandatoryStartTLS
-      - GF_ALERT_EMAIL_TO=${GF_ALERT_EMAIL_TO:-}
+      - GF_ALERT_EMAIL_TO=${GF_ALERT_EMAIL_TO:-admin@localhost}
       - GF_SLACK_WEBHOOK_URL=${GF_SLACK_WEBHOOK_URL:-}
       - GF_DISCORD_WEBHOOK_URL=${GF_DISCORD_WEBHOOK_URL:-}
     volumes:

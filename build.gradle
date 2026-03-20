@@ -157,8 +157,7 @@ jacocoTestCoverageVerification {
         rule {
             element = 'CLASS'
             limit {
-                minimum = 0.00 // TODO: Increase back to 0.70 once adequate tests are written
-            }
+                minimum = 0.70            }
         }
 
         rule {
@@ -166,7 +165,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.00 // TODO: Increase back to 0.60 once adequate tests are written
+                minimum = 0.60
             }
             excludes = [
                 '*.config.*',

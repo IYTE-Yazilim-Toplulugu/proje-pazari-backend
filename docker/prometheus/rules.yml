@@ -14,7 +14,7 @@ groups:
         annotations:
           summary: "High JVM heap memory usage"
           description: >
-            JVM heap usage is {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            JVM heap usage is {{ humanizePercentage $value }}
             (threshold 80%) for more than 2 minutes.
 
       - alert: CriticalHeapMemoryUsage
@@ -41,7 +41,7 @@ groups:
         annotations:
           summary: "High process CPU usage"
           description: >
-            Process CPU usage is {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            Process CPU usage is {{ humanizePercentage $value }}
             (threshold 70%) for more than 3 minutes on instance {{ $labels.instance }}.
 
       - alert: HighSystemCpuUsage
@@ -52,7 +52,7 @@ groups:
         annotations:
           summary: "High system CPU usage"
           description: >
-            System CPU usage is {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            System CPU usage is {{ humanizePercentage $value }}
             (threshold 85%) for more than 3 minutes on instance {{ $labels.instance }}.
 
   - name: http_error_alerts
@@ -69,7 +69,7 @@ groups:
         annotations:
           summary: "High HTTP 5xx error rate"
           description: >
-            HTTP 5xx error rate is {{ printf "%.2f" (mul (index .Values 0) 100) }}%
+            HTTP 5xx error rate is {{ humanizePercentage $value }}
             (threshold 5%) over the last 5 minutes.
 
       - alert: CriticalHttpErrorRate
@@ -96,7 +96,7 @@ groups:
         annotations:
           summary: "High HTTP 4xx rate"
           description: >
-            HTTP 4xx rate is {{ printf "%.2f" (mul (index .Values 0) 100) }}%
+            HTTP 4xx rate is {{ humanizePercentage $value }}
             (threshold 10%) over the last 5 minutes — may indicate bad client requests
             or a misconfiguration.
 
@@ -128,7 +128,7 @@ groups:
         annotations:
           summary: "Database connection pool usage above 80%"
           description: >
-            HikariCP pool usage is {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            HikariCP pool usage is {{ humanizePercentage $value }}
             for pool {{ $labels.pool }}. Consider increasing maximum pool size.
 
       - alert: DatabaseConnectionAcquireTimeout
@@ -158,7 +158,7 @@ groups:
           summary: "Slow API response time (p95 > 2 s)"
           description: >
             The 95th-percentile API response time is
-            {{ printf "%.2f" (index .Values 0) }}s (threshold 2 s)
+            {{ printf "%.2f" $value }}s (threshold 2 s)
             over the last 5 minutes.
 
       - alert: CriticalApiResponseTime
@@ -191,7 +191,7 @@ groups:
           summary: "Slow endpoint: {{ $labels.method }} {{ $labels.uri }}"
           description: >
             p95 response time for {{ $labels.method }} {{ $labels.uri }} is
-            {{ printf "%.2f" (index .Values 0) }}s (threshold 2 s).
+            {{ printf "%.2f" $value }}s (threshold 2 s).
 
   - name: service_availability_alerts
     rules:
@@ -248,8 +248,7 @@ groups:
         annotations:
           summary: "High authentication failure rate (>30%)"
           description: >
-            Authentication failure rate is
-            {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            Authentication failure rate is {{ humanizePercentage $value }}
             over the last 5 minutes. Possible brute-force attack.
 
       - alert: AuthenticationFailureSurge
@@ -278,8 +277,7 @@ groups:
         annotations:
           summary: "High MinIO upload failure rate (>5%)"
           description: >
-            MinIO upload failure rate is
-            {{ printf "%.1f" (mul (index .Values 0) 100) }}%
+            MinIO upload failure rate is {{ humanizePercentage $value }}
             over the last 5 minutes. Check MinIO connectivity.
 
       - alert: SlowMinioUpload
@@ -294,5 +292,19 @@ groups:
         annotations:
           summary: "Slow MinIO uploads (p95 > 10 s)"
           description: >
-            MinIO upload p95 latency is {{ printf "%.1f" (index .Values 0) }}s
+            MinIO upload p95 latency is {{ printf "%.1f" $value }}s
             (threshold 10 s). Possible storage or network bottleneck.
+
+  - name: elasticsearch_alerts
+    rules:
+
+      - alert: ElasticsearchSyncFailing
+        expr: increase(elasticsearch_index_total{status="failure"}[10m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elasticsearch sync is failing"
+          description: >
+            More than 3 Elasticsearch index/delete sync failures in the last 10 minutes
+            on {{ $labels.instance }}. Projects may be out of sync with the search index.

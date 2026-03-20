@@ -39,3 +39,6 @@ out/
 .vscode/
 
 .env
+
+### Local dev overrides ###
+docker-compose.dev.yml

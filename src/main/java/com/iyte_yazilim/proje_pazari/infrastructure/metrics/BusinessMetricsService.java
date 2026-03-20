@@ -30,6 +30,10 @@ public class BusinessMetricsService {
     private final Counter authLoginSuccess;
     private final Counter authLoginFailure;
 
+    // ── Elasticsearch sync ───────────────────────────────────────
+    private final Counter esIndexSuccess;
+    private final Counter esIndexFailure;
+
     // ── MinIO storage ────────────────────────────────────────────────────────
     private final Counter minioUploadSuccess;
     private final Counter minioUploadFailure;
@@ -95,6 +99,20 @@ public class BusinessMetricsService {
                         .description("Total authentication attempts")
                         .tag("status", "failure")
                         .tag("layer", "security")
+                        .register(registry);
+
+        esIndexSuccess =
+                Counter.builder("elasticsearch.index.total")
+                        .description("Total Elasticsearch sync operations")
+                        .tag("status", "success")
+                        .tag("layer", "infrastructure")
+                        .register(registry);
+
+        esIndexFailure =
+                Counter.builder("elasticsearch.index.total")
+                        .description("Total Elasticsearch sync operations")
+                        .tag("status", "failure")
+                        .tag("layer", "infrastructure")
                         .register(registry);
 
         minioUploadSuccess =
@@ -214,5 +232,15 @@ public class BusinessMetricsService {
 
     public void incrementMinioDeleteFailure() {
         minioDeleteFailure.increment();
+    }
+
+    // ── Elasticsearch sync ───────────────────────────────────────
+
+    public void incrementEsIndexSuccess() {
+        esIndexSuccess.increment();
+    }
+
+    public void incrementEsIndexFailure() {
+        esIndexFailure.increment();
     }
 }
