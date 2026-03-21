@@ -6,7 +6,6 @@ import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
@@ -32,7 +31,6 @@ public class CreateProjectHandler
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-    private final IValidator<CreateProjectCommand> validator;
     private final CreateProjectMapper createProjectMapper;
     private final ProjectMapper projectMapper;
     private final UserMapper userMapper;
@@ -56,15 +54,7 @@ public class CreateProjectHandler
             propagation = Propagation.REQUIRED)
     public ApiResponse<CreateProjectCommandResult> handle(CreateProjectCommand command) {
 
-        // --- 1. Validation ---
-        var errors = validator.validate(command);
-        if (errors != null && errors.length > 0) {
-            String errorMessage = String.join(", ", errors);
-            metricsService.incrementProjectCreationFailure();
-            return ApiResponse.badRequest(errorMessage);
-        }
-
-        // --- 2. Verify Owner Exists ---
+        // --- 1. Verify Owner Exists ---
         UserEntity ownerEntity = userRepository.findById(command.ownerId()).orElse(null);
         if (ownerEntity == null) {
             metricsService.incrementProjectCreationFailure();

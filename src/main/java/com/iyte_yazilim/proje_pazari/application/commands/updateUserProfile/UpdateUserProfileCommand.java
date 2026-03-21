@@ -21,17 +21,4 @@ public record UpdateUserProfileCommand(
         @Schema(description = "LinkedIn profile URL") String linkedinUrl,
         @Schema(description = "GitHub profile URL") String githubUrl,
         @Schema(description = "Preferred language") String preferredLanguage)
-        implements ICommand<ApiResponse<UserDto>> {
-    public void validate() {
-        if (linkedinUrl != null
-                && !linkedinUrl.isBlank()
-                && !linkedinUrl.matches("^https://(www\\.)?linkedin\\.com/.*")) {
-            throw new IllegalArgumentException("Invalid LinkedIn URL format");
-        }
-        if (githubUrl != null
-                && !githubUrl.isBlank()
-                && !githubUrl.matches("^https://github\\.com/[a-zA-Z0-9_-]+(/.*)?$")) {
-            throw new IllegalArgumentException("Invalid GitHub URL format");
-        }
-    }
-}
+        implements ICommand<ApiResponse<UserDto>> {}
