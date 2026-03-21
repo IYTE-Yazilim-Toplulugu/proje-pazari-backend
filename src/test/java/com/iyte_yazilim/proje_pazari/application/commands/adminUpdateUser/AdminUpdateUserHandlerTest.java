@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -67,16 +68,14 @@ class AdminUpdateUserHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return not found for unknown user")
-    void shouldReturnNotFoundForUnknownUser() {
+    @DisplayName("Should throw UserNotFoundException for unknown user")
+    void shouldThrowException_whenUserNotFound() {
         when(userRepository.findById("unknown")).thenReturn(Optional.empty());
 
         AdminUpdateUserCommand command =
                 new AdminUpdateUserCommand("unknown", null, null, null, null, null);
 
-        ApiResponse<Void> response = handler.handle(command);
-
-        assertNotNull(response);
+        assertThrows(UserNotFoundException.class, () -> handler.handle(command));
         verify(userRepository, never()).save(any());
     }
 }
