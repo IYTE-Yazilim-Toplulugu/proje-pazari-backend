@@ -67,10 +67,10 @@ class AdminControllerIntegrationTest {
 
         @Test
         @DisplayName("Should return 200 OK for storage health endpoint")
-        @WithMockUser(username = "admin", roles = "ADMIN")
         void shouldReturn200ForStorageHealth() throws Exception {
             mockMvc.perform(
                             get("/api/v1/admin/storage/health")
+                                    .header("Authorization", "Bearer " + adminToken)
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.available").exists());

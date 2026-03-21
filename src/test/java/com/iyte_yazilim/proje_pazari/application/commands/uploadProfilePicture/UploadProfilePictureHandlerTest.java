@@ -65,7 +65,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl(null);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(storedUrl);
+        when(fileStorageService.storeUserAvatar(userId, mockFile)).thenReturn(storedUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);
@@ -92,7 +92,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl(oldUrl);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(newStoredUrl);
+        when(fileStorageService.storeUserAvatar(userId, mockFile)).thenReturn(newStoredUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);
@@ -134,7 +134,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, "profiles"))
+        when(fileStorageService.storeUserAvatar(userId, mockFile))
                 .thenThrow(new IllegalArgumentException("Only image files are allowed"));
 
         // When
@@ -157,7 +157,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, "profiles"))
+        when(fileStorageService.storeUserAvatar(userId, mockFile))
                 .thenThrow(new IllegalArgumentException("File size exceeds 5MB limit"));
 
         // When
@@ -180,7 +180,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, "profiles"))
+        when(fileStorageService.storeUserAvatar(userId, mockFile))
                 .thenThrow(new FileStorageException("Disk full"));
 
         // When
@@ -210,7 +210,7 @@ class UploadProfilePictureHandlerTest {
         doThrow(new FileStorageException("File not found"))
                 .when(fileStorageService)
                 .deleteFile("profiles/old-ulid.jpg");
-        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(newStoredUrl);
+        when(fileStorageService.storeUserAvatar(userId, mockFile)).thenReturn(newStoredUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);
@@ -236,7 +236,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl("/api/v1/files/..passwd");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(newStoredUrl);
+        when(fileStorageService.storeUserAvatar(userId, mockFile)).thenReturn(newStoredUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);
@@ -261,7 +261,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl("   ");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(fileStorageService.storeFile(mockFile, "profiles")).thenReturn(newStoredUrl);
+        when(fileStorageService.storeUserAvatar(userId, mockFile)).thenReturn(newStoredUrl);
 
         // When
         ApiResponse<String> response = handler.handle(command);
