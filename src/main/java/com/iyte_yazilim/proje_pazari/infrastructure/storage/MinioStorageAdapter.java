@@ -175,7 +175,8 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
 
     private void createBucketIfNotExists(String bucket) {
         try {
-            boolean exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
+            boolean exists =
+                    minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
             if (!exists) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
                 log.info("Created MinIO bucket: {}", bucket);
@@ -298,7 +299,10 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                             .build());
             return true;
         } catch (io.minio.errors.ErrorResponseException e) {
-            log.debug("File does not exist in MinIO: {}/{}", location.bucket(), location.objectPath());
+            log.debug(
+                    "File does not exist in MinIO: {}/{}",
+                    location.bucket(),
+                    location.objectPath());
             return false;
         } catch (Exception e) {
             log.warn("Error checking if file exists in MinIO: {}", e.getMessage());
@@ -422,7 +426,10 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
             }
             return extractMetricSum(response.body(), metricName);
         } catch (Exception e) {
-            log.debug("Failed to read MinIO metrics endpoint {}: {}", metricsEndpoint, e.getMessage());
+            log.debug(
+                    "Failed to read MinIO metrics endpoint {}: {}",
+                    metricsEndpoint,
+                    e.getMessage());
             return null;
         }
     }

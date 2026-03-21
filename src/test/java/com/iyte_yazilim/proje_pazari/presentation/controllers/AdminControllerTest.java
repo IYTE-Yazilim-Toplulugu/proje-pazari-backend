@@ -305,7 +305,8 @@ class AdminControllerTest {
                             java.time.LocalDateTime.now());
             when(storageHealthService.getStorageHealth()).thenReturn(health);
 
-            ResponseEntity<ApiResponse<StorageHealthDTO>> response = adminController.getStorageHealth();
+            ResponseEntity<ApiResponse<StorageHealthDTO>> response =
+                    adminController.getStorageHealth();
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertTrue(response.getBody().getData().available());

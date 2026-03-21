@@ -101,8 +101,7 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController extends BaseController {
 
-    @Autowired
-    private StorageHealthService storageHealthService;
+    @Autowired private StorageHealthService storageHealthService;
 
     // ==================== USER MANAGEMENT ====================
 
@@ -413,7 +412,8 @@ public class AdminController extends BaseController {
             description = "Check file storage status, usage, and bucket visibility")
     public ResponseEntity<ApiResponse<StorageHealthDTO>> getStorageHealth() {
         StorageHealthDTO health = storageHealthService.getStorageHealth();
-        return ResponseEntity.ok(ApiResponse.success(health, "Storage health retrieved successfully"));
+        return ResponseEntity.ok(
+                ApiResponse.success(health, "Storage health retrieved successfully"));
     }
 
     // ==================== CONFIGURATION MANAGEMENT ====================
