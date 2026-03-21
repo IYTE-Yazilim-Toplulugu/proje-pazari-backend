@@ -2,7 +2,6 @@ package com.iyte_yazilim.proje_pazari.presentation.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.iyte_yazilim.proje_pazari.presentation.security.UserPrincipal;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
