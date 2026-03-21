@@ -5,7 +5,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import javax.crypto.SecretKey;
@@ -147,33 +146,6 @@ public class JwtUtil {
                 .compact();
     }
 
-    /**
-     * Generates a new JWT token for a user.
-     *
-     * @param username the username to include as subject
-     * @return signed JWT token string
-     */
-    public String generateToken(String username) {
-        Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
-    }
-
-    /**
-     * Creates a signed JWT token with claims and subject.
-     *
-     * @param claims additional claims to include
-     * @param subject the token subject (username)
-     * @return signed JWT token string
-     */
-    private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder()
-                .claims(claims)
-                .subject(subject)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey())
-                .compact();
-    }
 
     /**
      * Validates a JWT token against a username.

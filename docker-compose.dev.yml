@@ -1,0 +1,33 @@
+# Overlay that exposes infra ports to the host so the Spring Boot app
+# can be run locally via Gradle (./gradlew bootRun) while all backing
+# services run in Docker.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+#     up -d postgres redis minio elasticsearch prometheus grafana
+#
+# Then in a separate terminal:
+#   ./gradlew bootRun --args='--spring.profiles.active=dev'
+
+services:
+
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  minio:
+    ports:
+      - "127.0.0.1:9002:9000"   # API  — matches minio.url in application-dev.properties
+      - "127.0.0.1:9001:9001"   # Console UI
+
+  elasticsearch:
+    ports:
+      - "127.0.0.1:9200:9200"
+
+  prometheus:
+    ports:
+      - "127.0.0.1:9090:9090"
