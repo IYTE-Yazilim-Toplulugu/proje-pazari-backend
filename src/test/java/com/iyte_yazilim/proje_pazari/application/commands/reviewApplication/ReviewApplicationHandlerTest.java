@@ -9,7 +9,6 @@ import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
@@ -30,7 +29,6 @@ import org.springframework.context.ApplicationEventPublisher;
 class ReviewApplicationHandlerTest {
 
     @Mock private ProjectApplicationRepository applicationRepository;
-    @Mock private IValidator<ReviewApplicationCommand> validator;
     @Mock private MessageService messageService;
     @Mock private ApplicationEventPublisher applicationEventPublisher;
 
@@ -75,7 +73,6 @@ class ReviewApplicationHandlerTest {
         ReviewApplicationCommand command =
                 new ReviewApplicationCommand(applicationId, ApplicationStatus.APPROVED, "Good fit");
 
-        when(validator.validate(command)).thenReturn(null);
         when(applicationRepository.findById(applicationId))
                 .thenReturn(Optional.of(applicationEntity));
         when(applicationRepository.save(applicationEntity)).thenReturn(applicationEntity);
@@ -94,24 +91,10 @@ class ReviewApplicationHandlerTest {
         ReviewApplicationCommand command =
                 new ReviewApplicationCommand(unknownId, ApplicationStatus.APPROVED, null);
 
-        when(validator.validate(command)).thenReturn(null);
         when(applicationRepository.findById(unknownId)).thenReturn(Optional.empty());
 
         assertThrows(ApplicationNotFoundException.class, () -> handler.handle(command));
         verify(applicationRepository, never()).save(any());
         verify(applicationEventPublisher, never()).publishEvent(any(Object.class));
-    }
-
-    @Test
-    @DisplayName("Should return bad request when validation fails")
-    void shouldReturnBadRequest_whenValidationFails() {
-        ReviewApplicationCommand command = new ReviewApplicationCommand(applicationId, null, null);
-
-        when(validator.validate(command)).thenReturn(new String[] {"Status is required"});
-
-        ApiResponse<ReviewApplicationCommandResult> response = handler.handle(command);
-
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
-        verify(applicationRepository, never()).findById(any());
     }
 }
