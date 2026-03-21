@@ -15,7 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * Queries are not wrapped in transactions.
  */
 @Component
-@Order(3)
+@Order(4)
 public class TransactionBehavior<TRequest extends IRequest<TResponse>, TResponse>
         implements IPipelineBehavior<TRequest, TResponse> {
 
