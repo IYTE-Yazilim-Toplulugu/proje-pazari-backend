@@ -94,6 +94,23 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                 resolveMetricsEndpoint(url));
     }
 
+    public MinioStorageAdapter(
+            String url,
+            String accessKey,
+            String secretKey,
+            String bucketName,
+            BusinessMetricsService metricsService) {
+        this(
+                MinioClient.builder().endpoint(url).credentials(accessKey, secretKey).build(),
+                bucketName,
+                DEFAULT_AVATARS_BUCKET,
+                DEFAULT_DOCUMENTS_BUCKET,
+                DEFAULT_BACKUPS_BUCKET,
+                metricsService,
+                true,
+                resolveMetricsEndpoint(url));
+    }
+
     /**
      * Package-private constructor for unit testing with a mock MinioClient.
      *
