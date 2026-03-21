@@ -29,7 +29,7 @@ public class UserRegisteredEventHandler implements IEventHandler<UserRegisteredE
     private final EmailService emailService;
 
     @Value("${app.frontend.url:http://localhost:3000}")
-    private String baseUrl;
+    private String baseUrl = "http://localhost:3000";
 
     @Override
     @Async // ← Email gönderme async olmalı
