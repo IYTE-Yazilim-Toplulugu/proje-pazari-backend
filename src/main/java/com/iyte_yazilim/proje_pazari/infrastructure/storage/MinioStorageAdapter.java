@@ -109,7 +109,8 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                 DEFAULT_DOCUMENTS_BUCKET,
                 DEFAULT_BACKUPS_BUCKET,
                 metricsService,
-                false);
+                false,
+                null);
     }
 
     MinioStorageAdapter(MinioClient minioClient, String bucketName) {
