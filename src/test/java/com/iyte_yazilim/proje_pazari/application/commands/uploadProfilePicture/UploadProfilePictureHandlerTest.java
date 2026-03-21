@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
@@ -135,11 +136,8 @@ class UploadProfilePictureHandlerTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
 
         // When & Then
-        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException exception =
-                assertThrows(
-                        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException
-                                .class,
-                        () -> handler.handle(command));
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> handler.handle(command));
         assertEquals("File is required", exception.getMessage());
         verify(userRepository, never()).save(any());
     }
@@ -158,11 +156,8 @@ class UploadProfilePictureHandlerTest {
         when(mockFile.isEmpty()).thenReturn(true);
 
         // When & Then
-        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException exception =
-                assertThrows(
-                        com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException
-                                .class,
-                        () -> handler.handle(command));
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> handler.handle(command));
         assertEquals("File is required", exception.getMessage());
         verify(userRepository, never()).save(any());
     }

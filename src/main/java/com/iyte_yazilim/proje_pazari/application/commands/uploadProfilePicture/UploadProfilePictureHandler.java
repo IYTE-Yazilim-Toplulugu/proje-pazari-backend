@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture;
 
+import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
@@ -23,7 +24,7 @@ public class UploadProfilePictureHandler
 
     private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     @Transactional(
@@ -38,8 +39,7 @@ public class UploadProfilePictureHandler
                         .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         if (command.file() == null || command.file().isEmpty()) {
-            throw new com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException(
-                    "File is required");
+            throw new ValidationException("File is required");
         }
 
         // Delete old profile picture if exists
