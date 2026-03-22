@@ -58,6 +58,11 @@ public class BulkProjectActionHandler
                         result.addFailure(projectId, "Unknown action: " + command.action());
                 }
             } catch (Exception e) {
+                // Intentional: domain exceptions (e.g. ProjectNotFoundException) are caught here
+                // and recorded as per-item failures rather than propagated. This preserves
+                // bulk-operation semantics — a single missing or invalid item must not abort the
+                // entire batch. GlobalExceptionHandler will NOT handle these; failures are surfaced
+                // in BulkActionResult instead.
                 result.addFailure(projectId, e.getMessage());
             }
         }

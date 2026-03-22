@@ -27,10 +27,10 @@ public class ResendVerificationEmailHandler
 
     @Override
     public ApiResponse<Void> handle(ResendVerificationEmailCommand command) {
+        // UserNotFoundException() no-arg form: do not echo the email in the error message
+        // to prevent user enumeration via the 404 response body.
         UserEntity userEntity =
-                userRepository
-                        .findByEmail(command.email())
-                        .orElseThrow(() -> new UserNotFoundException(command.email()));
+                userRepository.findByEmail(command.email()).orElseThrow(UserNotFoundException::new);
 
         // Check if already verified
         boolean isVerified =

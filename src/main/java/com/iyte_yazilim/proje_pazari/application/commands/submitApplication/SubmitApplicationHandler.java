@@ -4,7 +4,6 @@ import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationSubmittedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.SubmitApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
@@ -41,7 +40,6 @@ public class SubmitApplicationHandler
     private final ProjectApplicationRepository applicationRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-    private final IValidator<SubmitApplicationCommand> validator;
     private final ProjectApplicationMapper applicationMapper;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
@@ -55,15 +53,7 @@ public class SubmitApplicationHandler
             propagation = Propagation.REQUIRED)
     public ApiResponse<SubmitApplicationCommandResult> handle(SubmitApplicationCommand command) {
 
-        // --- 1. Validation ---
-        var errors = validator.validate(command);
-        if (errors != null && errors.length > 0) {
-            String errorMessage = String.join(", ", errors);
-            metricsService.incrementApplicationSubmissionFailure();
-            return ApiResponse.badRequest(errorMessage);
-        }
-
-        // --- 2. Verify Project Exists ---
+        // --- 1. Verify Project Exists ---
         ProjectEntity projectEntity = projectRepository.findById(command.projectId()).orElse(null);
         if (projectEntity == null) {
             metricsService.incrementApplicationSubmissionFailure();
