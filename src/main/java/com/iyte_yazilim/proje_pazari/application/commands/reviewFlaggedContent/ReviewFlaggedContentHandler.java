@@ -1,5 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent;
 
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FlaggedContentNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.FlaggedContentRepository;
@@ -25,10 +27,9 @@ public class ReviewFlaggedContentHandler
     @Transactional
     public ApiResponse<Void> handle(ReviewFlaggedContentCommand command) {
         FlaggedContentEntity flag =
-                flaggedContentRepository.findById(command.flagId()).orElse(null);
-        if (flag == null) {
-            return ApiResponse.notFound("Flagged content not found with id: " + command.flagId());
-        }
+                flaggedContentRepository
+                        .findById(command.flagId())
+                        .orElseThrow(() -> new FlaggedContentNotFoundException(command.flagId()));
 
         String action = command.action() != null ? command.action().toUpperCase() : "";
 
@@ -51,11 +52,13 @@ public class ReviewFlaggedContentHandler
             case "BAN_USER":
                 flag.setStatus("REMOVED");
                 if ("USER".equals(flag.getContentType())) {
-                    UserEntity user = userRepository.findById(flag.getContentId()).orElse(null);
-                    if (user != null) {
-                        user.setIsActive(false);
-                        userRepository.save(user);
-                    }
+                    UserEntity user =
+                            userRepository
+                                    .findById(flag.getContentId())
+                                    .orElseThrow(
+                                            () -> new UserNotFoundException(flag.getContentId()));
+                    user.setIsActive(false);
+                    userRepository.save(user);
                 }
                 break;
             default:

@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.bulkApplicationAction
 
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
@@ -28,11 +29,10 @@ public class BulkApplicationActionHandler
 
         for (String appId : command.applicationIds()) {
             try {
-                ProjectApplicationEntity app = applicationRepository.findById(appId).orElse(null);
-                if (app == null) {
-                    result.addFailure(appId, "Application not found");
-                    continue;
-                }
+                ProjectApplicationEntity app =
+                        applicationRepository
+                                .findById(appId)
+                                .orElseThrow(() -> new ApplicationNotFoundException(appId));
 
                 switch (command.action().toUpperCase()) {
                     case "APPROVE":

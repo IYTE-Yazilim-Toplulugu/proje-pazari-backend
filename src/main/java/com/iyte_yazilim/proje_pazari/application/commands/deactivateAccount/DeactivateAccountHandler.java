@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.deactivateAccount;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -28,11 +29,10 @@ public class DeactivateAccountHandler
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
     public ApiResponse<Void> handle(DeactivateAccountCommand command) {
-        UserEntity user = userRepository.findById(command.userId()).orElse(null);
-
-        if (user == null) {
-            return ApiResponse.notFound(messageService.getMessage("user.not.found"));
-        }
+        UserEntity user =
+                userRepository
+                        .findById(command.userId())
+                        .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         // Log deactivation reason
         if (command.reason() != null && !command.reason().isBlank()) {
