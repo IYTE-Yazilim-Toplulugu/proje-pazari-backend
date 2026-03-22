@@ -7,16 +7,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
-import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
-import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -33,44 +28,10 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
     private static final String APPLICANT2_EMAIL = "applicant2@std.iyte.edu.tr";
     private static final String VALID_PASSWORD = "SecurePass123!";
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private EmailVerificationRepository emailVerificationRepository;
     @Autowired private ProjectRepository projectRepository;
     @Autowired private ProjectApplicationRepository applicationRepository;
 
     // ── Helper Methods ──────────────────────────────────────────────────
-
-    private void registerAndVerifyUser(
-            String email, String password, String firstName, String lastName) throws Exception {
-        var command = new RegisterUserCommand(email, password, firstName, lastName);
-        mockMvc.perform(
-                        post("/api/v1/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(command)))
-                .andExpect(status().isCreated());
-
-        var user = userRepository.findByEmail(email).orElseThrow();
-        var verification =
-                emailVerificationRepository
-                        .findTopByUserIdOrderByCreatedAtDesc(user.getId())
-                        .orElseThrow();
-        verification.setVerifiedAt(LocalDateTime.now());
-        emailVerificationRepository.save(verification);
-    }
-
-    private String loginAndGetToken(String email, String password) throws Exception {
-        var command = new LoginUserCommand(email, password);
-        MvcResult result =
-                mockMvc.perform(
-                                post("/api/v1/auth/login")
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(command)))
-                        .andExpect(status().isOk())
-                        .andReturn();
-
-        var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
-        return jsonNode.get("data").get("accessToken").asText();
-    }
 
     private void promoteToProjectOwner(String email) {
         UserEntity user = userRepository.findByEmail(email).orElseThrow();

@@ -11,14 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
-import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
-import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
-import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +22,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MvcResult;
 
 class FileControllerIntegrationTest extends IntegrationTestBase {
 
@@ -38,61 +32,15 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
     private static final String VALID_FIRST_NAME = "File";
     private static final String VALID_LAST_NAME = "Tester";
 
-    @Autowired private UserRepository userRepository;
-
-    @Autowired private EmailVerificationRepository emailVerificationRepository;
-
     @Autowired private JwtUtil jwtUtil;
 
     @MockitoBean private FileStorageService fileStorageService;
 
     // ── Helper Methods ──────────────────────────────────────────────────
 
-    private void registerUser(String email, String password, String firstName, String lastName)
-            throws Exception {
-        var command = new RegisterUserCommand(email, password, firstName, lastName);
-        mockMvc.perform(
-                        post("/api/v1/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(command)))
-                .andExpect(status().isCreated());
-    }
-
-    private void registerAndVerifyUser(
-            String email, String password, String firstName, String lastName) throws Exception {
-        registerUser(email, password, firstName, lastName);
-
-        var user = userRepository.findByEmail(email).orElseThrow();
-        var verification =
-                emailVerificationRepository
-                        .findTopByUserIdOrderByCreatedAtDesc(user.getId())
-                        .orElseThrow();
-        verification.setVerifiedAt(LocalDateTime.now());
-        emailVerificationRepository.save(verification);
-    }
-
-    private String loginAndGetToken(String email, String password) throws Exception {
-        var command = new LoginUserCommand(email, password);
-        MvcResult result =
-                mockMvc.perform(
-                                post("/api/v1/auth/login")
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(command)))
-                        .andExpect(status().isOk())
-                        .andReturn();
-
-        var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
-        return jsonNode.get("data").get("accessToken").asText();
-    }
-
     private String createVerifiedUserAndGetToken() throws Exception {
-        registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
-        return loginAndGetToken(VALID_EMAIL, VALID_PASSWORD);
-    }
-
-    private static org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder post(
-            String url) {
-        return org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(url);
+        return createVerifiedUserAndGetToken(
+                VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
     }
 
     // ── 1. File Download Tests ──────────────────────────────────────────

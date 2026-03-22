@@ -58,20 +58,6 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
                         .content(objectMapper.writeValueAsString(command)));
     }
 
-    private void registerAndVerifyUser(
-            String email, String password, String firstName, String lastName) throws Exception {
-        registerUser(email, password, firstName, lastName).andExpect(status().isCreated());
-
-        // Manually verify the email in the DB
-        var user = userRepository.findByEmail(email).orElseThrow();
-        var verification =
-                emailVerificationRepository
-                        .findTopByUserIdOrderByCreatedAtDesc(user.getId())
-                        .orElseThrow();
-        verification.setVerifiedAt(LocalDateTime.now());
-        emailVerificationRepository.save(verification);
-    }
-
     private ResultActions loginUser(String email, String password) throws Exception {
         var command = new LoginUserCommand(email, password);
         return mockMvc.perform(
