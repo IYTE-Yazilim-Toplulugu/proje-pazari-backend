@@ -360,8 +360,8 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
     class InternalServerErrorTests {
 
         @Test
-        @DisplayName("1. Login with unverified email returns 500")
-        void login_unverifiedEmail_returns500() throws Exception {
+        @DisplayName("1. Login with unverified email returns 403")
+        void login_unverifiedEmail_returns403() throws Exception {
             var registerCmd =
                     new RegisterUserCommand(
                             VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
@@ -379,18 +379,18 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
                                             objectMapper.writeValueAsString(
                                                     new LoginUserCommand(
                                                             VALID_EMAIL, VALID_PASSWORD))))
-                    .andExpect(status().isInternalServerError())
-                    .andExpect(jsonPath("$.code").value(10));
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.code").value(6));
         }
 
         @Test
-        @DisplayName("2. Invalid verification token returns 500")
-        void verifyEmail_invalidToken_returns500() throws Exception {
+        @DisplayName("2. Invalid verification token returns 400")
+        void verifyEmail_invalidToken_returns400() throws Exception {
             mockMvc.perform(
                             get("/api/v1/auth/verify-email")
                                     .param("token", "completely-invalid-token"))
-                    .andExpect(status().isInternalServerError())
-                    .andExpect(jsonPath("$.code").value(10));
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(4));
         }
     }
 
@@ -437,11 +437,11 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("4. INTERNAL_SERVER_ERROR code is 10")
-        void internalServerErrorCode_is10() throws Exception {
+        @DisplayName("4. BAD_REQUEST code is 4 for invalid verification token")
+        void badRequestCode_is4_forInvalidToken() throws Exception {
             mockMvc.perform(get("/api/v1/auth/verify-email").param("token", "bad-token"))
-                    .andExpect(status().isInternalServerError())
-                    .andExpect(jsonPath("$.code").value(10));
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(4));
         }
 
         @Test
