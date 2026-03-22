@@ -414,8 +414,6 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("10. Upload empty file is rejected")
         void uploadProfilePicture_emptyFile_isRejected() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            when(fileStorageService.storeFile(any(), anyString()))
-                    .thenThrow(new FileStorageException("File is empty"));
 
             MockMultipartFile file =
                     new MockMultipartFile("file", "empty.jpg", "image/jpeg", new byte[0]);
@@ -424,7 +422,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
                             multipart(USERS_URL + "/me/profile-picture")
                                     .file(file)
                                     .header("Authorization", "Bearer " + token))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
