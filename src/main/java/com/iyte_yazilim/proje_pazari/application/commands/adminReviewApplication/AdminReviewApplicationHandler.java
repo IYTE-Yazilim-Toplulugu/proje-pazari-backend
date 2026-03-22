@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.adminReviewApplication;
 
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
@@ -19,12 +20,10 @@ public class AdminReviewApplicationHandler
     @Transactional
     public ApiResponse<Void> handle(AdminReviewApplicationCommand command) {
         ProjectApplicationEntity application =
-                applicationRepository.findById(command.applicationId()).orElse(null);
-
-        if (application == null) {
-            return ApiResponse.notFound(
-                    "Application not found with id: " + command.applicationId());
-        }
+                applicationRepository
+                        .findById(command.applicationId())
+                        .orElseThrow(
+                                () -> new ApplicationNotFoundException(command.applicationId()));
 
         application.setStatus(command.status());
         applicationRepository.save(application);

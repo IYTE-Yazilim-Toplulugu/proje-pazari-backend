@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -28,11 +29,10 @@ public class BulkUserActionHandler
 
         for (String userId : command.userIds()) {
             try {
-                UserEntity user = userRepository.findById(userId).orElse(null);
-                if (user == null) {
-                    result.addFailure(userId, "User not found");
-                    continue;
-                }
+                UserEntity user =
+                        userRepository
+                                .findById(userId)
+                                .orElseThrow(() -> new UserNotFoundException(userId));
 
                 switch (command.action().toUpperCase()) {
                     case "DELETE":
