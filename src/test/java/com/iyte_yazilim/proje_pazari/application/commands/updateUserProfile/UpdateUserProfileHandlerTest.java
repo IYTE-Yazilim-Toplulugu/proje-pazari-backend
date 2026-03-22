@@ -9,6 +9,7 @@ import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -183,8 +184,8 @@ class UpdateUserProfileHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return not found error when user does not exist")
-    void shouldReturnError_whenUserNotFound() {
+    @DisplayName("Should throw UserNotFoundException when user does not exist")
+    void shouldThrowException_whenUserNotFound() {
         // Given
         String nonExistentUserId = Ulid.fast().toString();
         UpdateUserProfileCommand command =
@@ -193,13 +194,8 @@ class UpdateUserProfileHandlerTest {
 
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
-        // When
-        ApiResponse<UserDto> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-        assertTrue(response.getMessage().contains("User with ID"));
-        assertTrue(response.getMessage().contains("not found"));
+        // When & Then
+        assertThrows(UserNotFoundException.class, () -> handler.handle(command));
         verify(userRepository, never()).save(any());
     }
 
