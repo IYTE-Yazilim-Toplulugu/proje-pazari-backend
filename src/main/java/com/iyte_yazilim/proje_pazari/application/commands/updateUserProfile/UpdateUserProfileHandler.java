@@ -21,7 +21,7 @@ public class UpdateUserProfileHandler
 
     private final UserRepository userRepository;
     private final UserDtoMapper userDtoMapper;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     @Transactional(

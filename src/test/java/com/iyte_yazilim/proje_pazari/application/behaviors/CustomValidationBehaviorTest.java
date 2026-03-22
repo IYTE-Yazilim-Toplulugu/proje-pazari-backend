@@ -2,10 +2,17 @@ package com.iyte_yazilim.proje_pazari.application.behaviors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserValidator;
+import com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile.UpdateUserProfileCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile.UpdateUserProfileValidator;
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.application.common.RequestHandlerDelegate;
+import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
+import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -151,5 +158,101 @@ class CustomValidationBehaviorTest {
         String result = behavior.handle(new TestRequest("test"), next);
 
         assertEquals("success", result);
+    }
+
+    // --- Pipeline-level integration tests for real IValidator implementations ---
+
+    @Test
+    void handle_shouldThrowValidationException_whenRegisterUserCommandHasNonIyteEmail() {
+        // Verifies that RegisterUserValidator is correctly discovered and invoked by the pipeline,
+        // reproducing the deleted handler-level IYTE email test at the behavior level.
+        CustomValidationBehavior<RegisterUserCommand, ApiResponse<RegisterUserResult>> behavior =
+                new CustomValidationBehavior<>(List.of(new RegisterUserValidator()));
+        behavior.initValidatorCache();
+
+        RegisterUserCommand command =
+                new RegisterUserCommand("user@gmail.com", "Password1!", "John", "Doe");
+        RequestHandlerDelegate<ApiResponse<RegisterUserResult>> next =
+                () -> {
+                    throw new AssertionError("Handler must not be called when validation fails");
+                };
+
+        ValidationException ex =
+                assertThrows(ValidationException.class, () -> behavior.handle(command, next));
+
+        assertTrue(
+                ex.getMessage().contains("Validation failed"),
+                "Exception message should indicate validation failure");
+        assertTrue(
+                ex.getMessage().contains("iyte"),
+                "Exception message should mention the IYTE domain requirement");
+    }
+
+    @Test
+    void handle_shouldThrowValidationException_whenUpdateUserProfileCommandHasInvalidLinkedInUrl() {
+        // Verifies that UpdateUserProfileValidator is correctly discovered and invoked by the
+        // pipeline, proving the URL validation regression reported in PR#83 is not present.
+        CustomValidationBehavior<UpdateUserProfileCommand, ApiResponse<UserDto>> behavior =
+                new CustomValidationBehavior<>(List.of(new UpdateUserProfileValidator()));
+        behavior.initValidatorCache();
+
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        "some-user-id", null, null, null, "not-a-valid-linkedin-url", null, null);
+        RequestHandlerDelegate<ApiResponse<UserDto>> next =
+                () -> {
+                    throw new AssertionError("Handler must not be called when validation fails");
+                };
+
+        ValidationException ex =
+                assertThrows(ValidationException.class, () -> behavior.handle(command, next));
+
+        assertTrue(
+                ex.getMessage().contains("Validation failed"),
+                "Exception message should indicate validation failure");
+        assertTrue(
+                ex.getMessage().toLowerCase().contains("linkedin"),
+                "Exception message should identify the invalid LinkedIn URL");
+    }
+
+    @Test
+    void handle_shouldThrowValidationException_whenUpdateUserProfileCommandHasInvalidGitHubUrl() {
+        CustomValidationBehavior<UpdateUserProfileCommand, ApiResponse<UserDto>> behavior =
+                new CustomValidationBehavior<>(List.of(new UpdateUserProfileValidator()));
+        behavior.initValidatorCache();
+
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        "some-user-id", null, null, null, null, "not-a-valid-github-url", null);
+        RequestHandlerDelegate<ApiResponse<UserDto>> next =
+                () -> {
+                    throw new AssertionError("Handler must not be called when validation fails");
+                };
+
+        ValidationException ex =
+                assertThrows(ValidationException.class, () -> behavior.handle(command, next));
+
+        assertTrue(ex.getMessage().contains("Validation failed"));
+        assertTrue(ex.getMessage().toLowerCase().contains("github"));
+    }
+
+    @Test
+    void handle_shouldPassWhenUpdateUserProfileCommandHasValidUrls() {
+        CustomValidationBehavior<UpdateUserProfileCommand, ApiResponse<UserDto>> behavior =
+                new CustomValidationBehavior<>(List.of(new UpdateUserProfileValidator()));
+        behavior.initValidatorCache();
+
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(
+                        "some-user-id",
+                        null,
+                        null,
+                        null,
+                        "https://www.linkedin.com/in/valid-user",
+                        "https://github.com/valid-user",
+                        null);
+        RequestHandlerDelegate<ApiResponse<UserDto>> next = () -> null;
+
+        assertDoesNotThrow(() -> behavior.handle(command, next));
     }
 }

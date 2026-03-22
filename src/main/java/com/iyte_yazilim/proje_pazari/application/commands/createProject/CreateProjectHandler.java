@@ -63,7 +63,7 @@ public class CreateProjectHandler
                             "project.owner.not.found", new Object[] {command.ownerId()}));
         }
 
-        // --- 3. Mapping (Command -> Domain Entity) ---
+        // --- 2. Mapping (Command -> Domain Entity) ---
         Project domainProject = createProjectMapper.commandToDomain(command);
 
         // --- 4. Set Owner (map from persistence to domain) ---
