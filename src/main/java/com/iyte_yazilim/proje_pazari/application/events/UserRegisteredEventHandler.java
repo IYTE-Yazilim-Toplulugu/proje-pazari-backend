@@ -6,6 +6,7 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IEventHandler;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,9 @@ public class UserRegisteredEventHandler implements IEventHandler<UserRegisteredE
 
     private final EmailService emailService;
 
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String baseUrl = "http://localhost:3000";
+
     @Override
     @Async // ← Email gönderme async olmalı
     @EventListener
@@ -41,7 +45,7 @@ public class UserRegisteredEventHandler implements IEventHandler<UserRegisteredE
                             "userName",
                             event.getFirstName(),
                             "verificationLink",
-                            "http://localhost:3000/verify?token=" + event.getVerificationToken());
+                            baseUrl + "/verify?token=" + event.getVerificationToken());
 
             emailService.sendTemplateEmailAsync(event.getEmail(), "welcome.html", variables);
 
