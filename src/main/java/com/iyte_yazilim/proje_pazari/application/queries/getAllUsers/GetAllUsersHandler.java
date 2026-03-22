@@ -20,7 +20,7 @@ public class GetAllUsersHandler
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final UserDtoMapper userDtoMapper;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     public ApiResponse<List<UserDto>> handle(GetAllUsersQuery query) {

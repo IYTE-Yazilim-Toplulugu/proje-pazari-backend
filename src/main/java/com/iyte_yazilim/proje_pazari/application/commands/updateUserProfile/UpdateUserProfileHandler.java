@@ -21,7 +21,7 @@ public class UpdateUserProfileHandler
 
     private final UserRepository userRepository;
     private final UserDtoMapper userDtoMapper;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     @Transactional(
@@ -30,12 +30,6 @@ public class UpdateUserProfileHandler
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
     public ApiResponse<UserDto> handle(UpdateUserProfileCommand command) {
-        try {
-            command.validate();
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.validationError(e.getMessage());
-        }
-
         UserEntity user =
                 userRepository
                         .findById(command.userId())

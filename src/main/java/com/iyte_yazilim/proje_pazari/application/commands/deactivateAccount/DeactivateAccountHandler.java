@@ -20,7 +20,7 @@ public class DeactivateAccountHandler
         implements IRequestHandler<DeactivateAccountCommand, ApiResponse<Void>> {
 
     private final UserRepository userRepository;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     @Transactional(

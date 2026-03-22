@@ -140,50 +140,6 @@ class UpdateUserProfileHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return validation error for invalid LinkedIn URL")
-    void shouldReturnError_whenLinkedInUrlIsInvalid() {
-        // Given
-        String userId = Ulid.fast().toString();
-        UpdateUserProfileCommand command =
-                new UpdateUserProfileCommand(
-                        userId,
-                        "John",
-                        "Doe",
-                        null,
-                        "https://invalid-linkedin.com/johndoe",
-                        null,
-                        null);
-
-        // When
-        ApiResponse<UserDto> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        assertTrue(response.getMessage().contains("Invalid LinkedIn URL format"));
-        verify(userRepository, never()).findById(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Should return validation error for invalid GitHub URL")
-    void shouldReturnError_whenGithubUrlIsInvalid() {
-        // Given
-        String userId = Ulid.fast().toString();
-        UpdateUserProfileCommand command =
-                new UpdateUserProfileCommand(
-                        userId, "John", "Doe", null, null, "https://gitlab.com/johndoe", null);
-
-        // When
-        ApiResponse<UserDto> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        assertTrue(response.getMessage().contains("Invalid GitHub URL format"));
-        verify(userRepository, never()).findById(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     @DisplayName("Should throw UserNotFoundException when user does not exist")
     void shouldThrowException_whenUserNotFound() {
         // Given

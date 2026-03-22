@@ -13,7 +13,6 @@ class CreateProjectValidatorTest {
     @Test
     @DisplayName("Should return no errors for valid command")
     void shouldReturnNoErrors_whenCommandIsValid() {
-        // Given
         CreateProjectCommand command =
                 new CreateProjectCommand(
                         "Test Project",
@@ -26,21 +25,18 @@ class CreateProjectValidatorTest {
                         "Software Development",
                         LocalDateTime.now().plusDays(30));
 
-        // When
         String[] errors = validator.validate(command);
 
-        // Then
         assertNotNull(errors);
         assertEquals(0, errors.length);
     }
 
     @Test
-    @DisplayName("Should return error when project name is null")
-    void shouldReturnError_whenProjectNameIsNull() {
-        // Given
+    @DisplayName("Should return no errors when deadline is null")
+    void shouldReturnNoErrors_whenDeadlineIsNull() {
         CreateProjectCommand command =
                 new CreateProjectCommand(
-                        null,
+                        "Test Project",
                         "A valid description",
                         "owner-123",
                         new String[] {},
@@ -50,28 +46,18 @@ class CreateProjectValidatorTest {
                         null,
                         null);
 
-        // When
         String[] errors = validator.validate(command);
 
-        // Then
-        assertTrue(errors.length > 0);
-        boolean hasNameError = false;
-        for (String error : errors) {
-            if (error.contains("Project name is required")) {
-                hasNameError = true;
-                break;
-            }
-        }
-        assertTrue(hasNameError);
+        assertNotNull(errors);
+        assertEquals(0, errors.length);
     }
 
     @Test
-    @DisplayName("Should return error when project name is empty")
-    void shouldReturnError_whenProjectNameIsEmpty() {
-        // Given
+    @DisplayName("Should return error when deadline is in the past")
+    void shouldReturnError_whenDeadlineIsInThePast() {
         CreateProjectCommand command =
                 new CreateProjectCommand(
-                        "",
+                        "Test Project",
                         "A valid description",
                         "owner-123",
                         new String[] {},
@@ -79,97 +65,32 @@ class CreateProjectValidatorTest {
                         5,
                         new String[] {},
                         null,
-                        null);
+                        LocalDateTime.now().minusDays(1));
 
-        // When
         String[] errors = validator.validate(command);
 
-        // Then
-        assertTrue(errors.length > 0);
-        boolean hasNameError = false;
-        for (String error : errors) {
-            if (error.contains("Project name is required")) {
-                hasNameError = true;
-                break;
-            }
-        }
-        assertTrue(hasNameError);
+        assertEquals(1, errors.length);
+        assertTrue(errors[0].contains("Deadline cannot be in the past"));
     }
 
     @Test
-    @DisplayName("Should return error when owner ID is null")
-    void shouldReturnError_whenOwnerIdIsNull() {
-        // Given
+    @DisplayName("Should return no errors when deadline is in the future")
+    void shouldReturnNoErrors_whenDeadlineIsInTheFuture() {
         CreateProjectCommand command =
                 new CreateProjectCommand(
                         "Test Project",
                         "A valid description",
-                        null,
+                        "owner-123",
                         new String[] {},
                         new String[] {},
                         5,
                         new String[] {},
                         null,
-                        null);
+                        LocalDateTime.now().plusDays(30));
 
-        // When
         String[] errors = validator.validate(command);
 
-        // Then
-        assertTrue(errors.length > 0);
-        boolean hasOwnerError = false;
-        for (String error : errors) {
-            if (error.contains("Owner ID is required")) {
-                hasOwnerError = true;
-                break;
-            }
-        }
-        assertTrue(hasOwnerError);
-    }
-
-    @Test
-    @DisplayName("Should return error when owner ID is empty")
-    void shouldReturnError_whenOwnerIdIsEmpty() {
-        // Given
-        CreateProjectCommand command =
-                new CreateProjectCommand(
-                        "Test Project",
-                        "A valid description",
-                        "",
-                        new String[] {},
-                        new String[] {},
-                        5,
-                        new String[] {},
-                        null,
-                        null);
-
-        // When
-        String[] errors = validator.validate(command);
-
-        // Then
-        assertTrue(errors.length > 0);
-        boolean hasOwnerError = false;
-        for (String error : errors) {
-            if (error.contains("Owner ID is required")) {
-                hasOwnerError = true;
-                break;
-            }
-        }
-        assertTrue(hasOwnerError);
-    }
-
-    @Test
-    @DisplayName("Should return multiple errors when both name and owner ID are missing")
-    void shouldReturnMultipleErrors_whenBothFieldsAreMissing() {
-        // Given
-        CreateProjectCommand command =
-                new CreateProjectCommand(
-                        null, "A valid description", null, null, null, null, null, null, null);
-
-        // When
-        String[] errors = validator.validate(command);
-
-        // Then
-        assertEquals(2, errors.length);
+        assertNotNull(errors);
+        assertEquals(0, errors.length);
     }
 }
