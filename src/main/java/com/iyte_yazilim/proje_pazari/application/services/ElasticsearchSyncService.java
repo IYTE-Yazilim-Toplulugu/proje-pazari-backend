@@ -64,6 +64,19 @@ public class ElasticsearchSyncService {
         projectSearchRepository.save(document);
     }
 
+    public void indexUser(String userId) {
+        UserEntity user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(
+                                () ->
+                                        new RuntimeException(
+                                                "User not found for indexing: " + userId));
+
+        UserDocument document = toUserDocument(user);
+        userSearchRepository.save(document);
+    }
+
     public void deleteProjectIndex(String projectId) {
         projectSearchRepository.deleteById(projectId);
     }
