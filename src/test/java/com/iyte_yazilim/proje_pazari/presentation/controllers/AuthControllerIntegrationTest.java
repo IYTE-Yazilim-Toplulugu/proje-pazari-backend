@@ -181,12 +181,12 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("4. Unverified email returns 500 INTERNAL_SERVER_ERROR")
-        void login_unverifiedEmail_returns500() throws Exception {
+        @DisplayName("4. Unverified email returns 403 FORBIDDEN")
+        void login_unverifiedEmail_returns403() throws Exception {
             registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
                     .andExpect(status().isCreated());
 
-            loginUser(VALID_EMAIL, VALID_PASSWORD).andExpect(status().isInternalServerError());
+            loginUser(VALID_EMAIL, VALID_PASSWORD).andExpect(status().isForbidden());
         }
 
         @Test
@@ -236,17 +236,17 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("2. Invalid token returns 500 INTERNAL_SERVER_ERROR")
-        void verifyEmail_invalidToken_returns500() throws Exception {
+        @DisplayName("2. Invalid token returns 400 BAD_REQUEST")
+        void verifyEmail_invalidToken_returns400() throws Exception {
             mockMvc.perform(
                             get(BASE_URL + "/verify-email")
                                     .param("token", "invalid-token-that-does-not-exist"))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
-        @DisplayName("3. Already verified email returns 500 INTERNAL_SERVER_ERROR")
-        void verifyEmail_alreadyVerified_returns500() throws Exception {
+        @DisplayName("3. Already verified email returns 409 CONFLICT")
+        void verifyEmail_alreadyVerified_returns409() throws Exception {
             registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
                     .andExpect(status().isCreated());
 
@@ -263,12 +263,12 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
 
             // Try to verify again
             mockMvc.perform(get(BASE_URL + "/verify-email").param("token", token))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isConflict());
         }
 
         @Test
-        @DisplayName("4. Expired token returns 500 INTERNAL_SERVER_ERROR")
-        void verifyEmail_expiredToken_returns500() throws Exception {
+        @DisplayName("4. Expired token returns 400 BAD_REQUEST")
+        void verifyEmail_expiredToken_returns400() throws Exception {
             registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
                     .andExpect(status().isCreated());
 
@@ -283,7 +283,7 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
             emailVerificationRepository.save(verification);
 
             mockMvc.perform(get(BASE_URL + "/verify-email").param("token", verification.getToken()))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
     }
 
@@ -308,8 +308,8 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("2. Already verified email returns 500 INTERNAL_SERVER_ERROR")
-        void resendVerification_alreadyVerified_returns500() throws Exception {
+        @DisplayName("2. Already verified email returns 409 CONFLICT")
+        void resendVerification_alreadyVerified_returns409() throws Exception {
             registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
 
             var command = new ResendVerificationEmailCommand(VALID_EMAIL);
@@ -317,18 +317,18 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
                             post(BASE_URL + "/resend-verification")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(command)))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isConflict());
         }
 
         @Test
-        @DisplayName("3. Non-existent email returns 500 INTERNAL_SERVER_ERROR")
-        void resendVerification_nonExistentEmail_returns500() throws Exception {
+        @DisplayName("3. Non-existent email returns 404 NOT_FOUND")
+        void resendVerification_nonExistentEmail_returns404() throws Exception {
             var command = new ResendVerificationEmailCommand("nonexistent@std.iyte.edu.tr");
             mockMvc.perform(
                             post(BASE_URL + "/resend-verification")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(command)))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isNotFound());
         }
     }
 
