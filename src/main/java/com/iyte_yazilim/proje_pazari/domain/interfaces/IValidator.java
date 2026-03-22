@@ -25,6 +25,15 @@ package com.iyte_yazilim.proje_pazari.domain.interfaces;
  * }
  * </pre>
  *
+ * <h2>Transaction Constraint:</h2>
+ *
+ * <p>Implementations are invoked by {@code CustomValidationBehavior} ({@code @Order(3)}), which
+ * runs <strong>before</strong> {@code TransactionBehavior} ({@code @Order(4)}). This means
+ * validators execute outside any active transaction. Do not perform transactional writes inside a
+ * validator. Read-only repository queries are acceptable, but they run without a transaction
+ * context. If a transactional read is required, use {@code Propagation.SUPPORTS} on the repository
+ * method, or move the check into the handler body which executes inside the transaction.
+ *
  * @param <T> the type of command to validate
  * @author IYTE Yazılım Topluluğu
  * @version 1.0

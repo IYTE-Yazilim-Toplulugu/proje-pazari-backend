@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.adminUpdateUser;
 
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -18,11 +19,10 @@ public class AdminUpdateUserHandler
     @Override
     @Transactional
     public ApiResponse<Void> handle(AdminUpdateUserCommand command) {
-        UserEntity user = userRepository.findById(command.userId()).orElse(null);
-
-        if (user == null) {
-            return ApiResponse.notFound("User not found with id: " + command.userId());
-        }
+        UserEntity user =
+                userRepository
+                        .findById(command.userId())
+                        .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         if (command.role() != null) {
             user.setRole(command.role());

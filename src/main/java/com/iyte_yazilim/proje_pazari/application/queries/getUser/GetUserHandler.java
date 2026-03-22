@@ -19,7 +19,7 @@ public class GetUserHandler implements IRequestHandler<GetUserQuery, ApiResponse
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final UserDtoMapper userDtoMapper;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     public ApiResponse<UserDto> handle(GetUserQuery query) {

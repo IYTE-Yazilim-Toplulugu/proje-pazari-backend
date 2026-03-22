@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.bulkProjectAction;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
@@ -28,11 +29,10 @@ public class BulkProjectActionHandler
 
         for (String projectId : command.projectIds()) {
             try {
-                ProjectEntity project = projectRepository.findById(projectId).orElse(null);
-                if (project == null) {
-                    result.addFailure(projectId, "Project not found");
-                    continue;
-                }
+                ProjectEntity project =
+                        projectRepository
+                                .findById(projectId)
+                                .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
                 switch (command.action().toUpperCase()) {
                     case "DELETE":
@@ -58,6 +58,11 @@ public class BulkProjectActionHandler
                         result.addFailure(projectId, "Unknown action: " + command.action());
                 }
             } catch (Exception e) {
+                // Intentional: domain exceptions (e.g. ProjectNotFoundException) are caught here
+                // and recorded as per-item failures rather than propagated. This preserves
+                // bulk-operation semantics — a single missing or invalid item must not abort the
+                // entire batch. GlobalExceptionHandler will NOT handle these; failures are surfaced
+                // in BulkActionResult instead.
                 result.addFailure(projectId, e.getMessage());
             }
         }

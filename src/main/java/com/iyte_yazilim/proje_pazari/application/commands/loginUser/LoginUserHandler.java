@@ -3,7 +3,6 @@ package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
@@ -27,7 +26,6 @@ public class LoginUserHandler
 
     private final UserRepository userRepository;
     private final EmailVerificationRepository emailVerificationRepository;
-    private final IValidator<LoginUserCommand> validator;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final MessageService messageService;
@@ -53,15 +51,7 @@ public class LoginUserHandler
             propagation = Propagation.REQUIRED)
     public ApiResponse<LoginUserResult> handle(LoginUserCommand command) {
 
-        // --- 1. Validation ---
-        var errors = validator.validate(command);
-        if (errors != null && errors.length > 0) {
-            String errorMessage = String.join(", ", errors);
-            metricsService.incrementAuthLoginFailure();
-            return ApiResponse.badRequest(errorMessage);
-        }
-
-        // --- 2. Find user by email ---
+        // --- 1. Find user by email ---
         UserEntity user = userRepository.findByEmail(command.email()).orElse(null);
         if (user == null) {
             metricsService.incrementAuthLoginFailure();

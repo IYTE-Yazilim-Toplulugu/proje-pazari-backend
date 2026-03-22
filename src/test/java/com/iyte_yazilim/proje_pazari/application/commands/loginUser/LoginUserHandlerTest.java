@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
@@ -32,8 +31,6 @@ class LoginUserHandlerTest {
     @Mock private UserRepository userRepository;
 
     @Mock private EmailVerificationRepository emailVerificationRepository;
-
-    @Mock private IValidator<LoginUserCommand> validator;
 
     @Mock private PasswordEncoder passwordEncoder;
 
@@ -70,7 +67,6 @@ class LoginUserHandlerTest {
         userEntity.setLastName("Doe");
         userEntity.setIsActive(true);
 
-        when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
         when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
         when(emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(userId))
@@ -95,32 +91,12 @@ class LoginUserHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return error when validation fails")
-    void shouldReturnError_whenValidationFails() {
-        // Given
-        LoginUserCommand command = new LoginUserCommand("", "");
-
-        when(validator.validate(command))
-                .thenReturn(new String[] {"Email is required", "Password is required"});
-
-        // When
-        ApiResponse<LoginUserResult> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
-        assertTrue(response.getMessage().contains("Email is required"));
-        assertTrue(response.getMessage().contains("Password is required"));
-        verify(userRepository, never()).findByEmail(anyString());
-    }
-
-    @Test
     @DisplayName("Should return error when user not found")
     void shouldReturnError_whenUserNotFound() {
         // Given
         String email = "nonexistent@std.iyte.edu.tr";
         LoginUserCommand command = new LoginUserCommand(email, "password123");
 
-        when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
         when(messageService.getMessage("auth.login.failed"))
                 .thenReturn("Invalid email or password");
@@ -146,7 +122,6 @@ class LoginUserHandlerTest {
         userEntity.setEmail(email);
         userEntity.setIsActive(false);
 
-        when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
         when(messageService.getMessage("auth.account.deactivated"))
                 .thenReturn("Account has been deactivated");
@@ -172,7 +147,6 @@ class LoginUserHandlerTest {
         userEntity.setEmail(email);
         userEntity.setIsActive(null);
 
-        when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
         when(messageService.getMessage("auth.account.deactivated"))
                 .thenReturn("Account has been deactivated");
@@ -202,7 +176,6 @@ class LoginUserHandlerTest {
         userEntity.setPassword(encodedPassword);
         userEntity.setIsActive(true);
 
-        when(validator.validate(command)).thenReturn(null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
         when(passwordEncoder.matches(wrongPassword, encodedPassword)).thenReturn(false);
         when(messageService.getMessage("auth.login.failed"))
@@ -215,46 +188,5 @@ class LoginUserHandlerTest {
         assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
         assertEquals("Invalid email or password", response.getMessage());
         verify(jwtUtil, never()).generateToken(anyString(), anyString(), anyString());
-    }
-
-    @Test
-    @DisplayName("Should proceed when validator returns empty array")
-    void shouldProceed_whenValidatorReturnsEmptyArray() {
-        // Given
-        String userId = Ulid.fast().toString();
-        String email = "test@std.iyte.edu.tr";
-        String password = "SecurePass123!";
-        String accessToken = "jwt.access.token";
-        String refreshToken = "jwt.refresh.token";
-
-        ReflectionTestUtils.setField(handler, "jwtExpiration", 3600L);
-
-        LoginUserCommand command = new LoginUserCommand(email, password);
-
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(userId);
-        userEntity.setEmail(email);
-        userEntity.setPassword("encoded-password");
-        userEntity.setFirstName("Jane");
-        userEntity.setLastName("Smith");
-        userEntity.setIsActive(true);
-
-        when(validator.validate(command)).thenReturn(new String[] {});
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
-        when(passwordEncoder.matches(password, "encoded-password")).thenReturn(true);
-        when(emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(userId))
-                .thenReturn(true);
-        when(jwtUtil.generateToken(userId, email, "APPLICANT")).thenReturn(accessToken);
-        when(refreshTokenService.createRefreshToken(userId)).thenReturn(refreshToken);
-        when(messageService.getMessage("auth.login.success")).thenReturn("Login successful");
-
-        // When
-        ApiResponse<LoginUserResult> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertNotNull(response.getData());
-        assertEquals(accessToken, response.getData().accessToken());
-        assertEquals(refreshToken, response.getData().refreshToken());
     }
 }

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -75,8 +76,8 @@ class ChangePasswordHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return error when user does not exist")
-    void shouldReturnError_WhenUserNotFound() {
+    @DisplayName("Should throw UserNotFoundException when user does not exist")
+    void shouldThrowException_WhenUserNotFound() {
         // Given
         String newPass = "NewPass123!";
         ChangePasswordCommand command =
@@ -84,12 +85,8 @@ class ChangePasswordHandlerTest {
 
         when(userRepository.findById("unknown-user")).thenReturn(Optional.empty());
 
-        // When
-        ApiResponse<Void> response = changePasswordHandler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-        assertEquals("User not found", response.getMessage());
+        // When & Then
+        assertThrows(UserNotFoundException.class, () -> changePasswordHandler.handle(command));
         verify(passwordEncoder, never()).matches(anyString(), anyString());
         verify(userRepository, never()).save(any());
     }

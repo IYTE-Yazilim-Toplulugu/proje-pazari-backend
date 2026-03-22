@@ -2,8 +2,8 @@ package com.iyte_yazilim.proje_pazari.application.commands.reviewApplication;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationReviewedEvent;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
@@ -32,7 +32,6 @@ public class ReviewApplicationHandler
                 ReviewApplicationCommand, ApiResponse<ReviewApplicationCommandResult>> {
 
     private final ProjectApplicationRepository applicationRepository;
-    private final IValidator<ReviewApplicationCommand> validator;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -44,21 +43,12 @@ public class ReviewApplicationHandler
             propagation = Propagation.REQUIRED)
     public ApiResponse<ReviewApplicationCommandResult> handle(ReviewApplicationCommand command) {
 
-        // --- 1. Validation ---
-        var errors = validator.validate(command);
-        if (errors != null && errors.length > 0) {
-            String errorMessage = String.join(", ", errors);
-            return ApiResponse.badRequest(errorMessage);
-        }
-
-        // --- 2. Verify Application Exists ---
+        // --- 1. Verify Application Exists ---
         ProjectApplicationEntity applicationEntity =
-                applicationRepository.findById(command.applicationId()).orElse(null);
-        if (applicationEntity == null) {
-            return ApiResponse.notFound(
-                    messageService.getMessage(
-                            "application.not.found", new Object[] {command.applicationId()}));
-        }
+                applicationRepository
+                        .findById(command.applicationId())
+                        .orElseThrow(
+                                () -> new ApplicationNotFoundException(command.applicationId()));
 
         // --- 3. Update Status ---
         applicationEntity.setStatus(command.status());

@@ -10,7 +10,6 @@ import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
@@ -35,8 +34,6 @@ class RegisterUserHandlerTest {
     @Mock private UserRepository userRepository;
 
     @Mock private EmailVerificationRepository emailVerificationRepository;
-
-    @Mock private IValidator<RegisterUserCommand> validator;
 
     @Mock private RegisterUserMapper registerUserMapper;
 
@@ -94,7 +91,6 @@ class RegisterUserHandlerTest {
                 new RegisterUserResult(
                         userId.toString(), email, command.firstName(), command.lastName());
 
-        when(validator.validate(command)).thenReturn(null);
         when(userRepository.existsByEmail(email)).thenReturn(false);
         when(registerUserMapper.commandToDomain(command)).thenReturn(domainUser);
         when(passwordEncoder.encode(command.password())).thenReturn("encoded-password");
@@ -126,7 +122,6 @@ class RegisterUserHandlerTest {
         String email = "existing@std.iyte.edu.tr";
         RegisterUserCommand command = new RegisterUserCommand(email, "password123", "John", "Doe");
 
-        when(validator.validate(command)).thenReturn(null);
         when(userRepository.existsByEmail(email)).thenReturn(true);
 
         // When
@@ -135,27 +130,6 @@ class RegisterUserHandlerTest {
         // Then
         assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
         assertEquals("Email already registered", response.getMessage());
-        verify(userRepository, never()).save(any());
-        verify(metricsService).incrementUserRegistrationFailure();
-    }
-
-    @Test
-    @DisplayName("Should return validation error for non-IYTE email")
-    void shouldReturnValidationError_whenNonIyteEmail() {
-        // Given
-        RegisterUserCommand command =
-                new RegisterUserCommand("test@gmail.com", "password123", "John", "Doe");
-
-        when(validator.validate(command))
-                .thenReturn(new String[] {"Email must be an IYTE email address"});
-
-        // When
-        ApiResponse<RegisterUserResult> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
-        assertTrue(response.getMessage().contains("IYTE"));
-        verify(userRepository, never()).existsByEmail(anyString());
         verify(userRepository, never()).save(any());
         verify(metricsService).incrementUserRegistrationFailure();
     }

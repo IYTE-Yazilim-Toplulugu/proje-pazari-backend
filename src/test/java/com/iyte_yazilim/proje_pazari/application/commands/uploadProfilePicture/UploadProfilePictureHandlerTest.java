@@ -7,10 +7,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -65,6 +67,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl(null);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockFile.isEmpty()).thenReturn(false);
         when(fileStorageService.storeUserAvatar(userId, mockFile)).thenReturn(storedUrl);
 
         // When
@@ -92,6 +95,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl(oldUrl);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockFile.isEmpty()).thenReturn(false);
         when(fileStorageService.storeUserAvatar(userId, mockFile)).thenReturn(newStoredUrl);
 
         // When
@@ -105,8 +109,8 @@ class UploadProfilePictureHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return not found error when user does not exist")
-    void shouldReturnError_whenUserNotFound() {
+    @DisplayName("Should throw UserNotFoundException when user does not exist")
+    void shouldThrowException_whenUserNotFound() {
         // Given
         String nonExistentUserId = Ulid.fast().toString();
         UploadProfilePictureCommand command =
@@ -114,18 +118,33 @@ class UploadProfilePictureHandlerTest {
 
         when(userRepository.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
-        // When
-        ApiResponse<String> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-        assertEquals("User not found", response.getMessage());
+        // When & Then
+        assertThrows(UserNotFoundException.class, () -> handler.handle(command));
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Should return validation error when file type is invalid")
-    void shouldReturnError_whenFileTypeIsInvalid() {
+    @DisplayName("Should throw ValidationException when file is null")
+    void shouldThrowException_whenFileIsNull() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, null);
+
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+
+        // When & Then
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> handler.handle(command));
+        assertEquals("File is required", exception.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw ValidationException when file is empty")
+    void shouldThrowException_whenFileIsEmpty() {
         // Given
         String userId = Ulid.fast().toString();
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
@@ -134,21 +153,40 @@ class UploadProfilePictureHandlerTest {
         userEntity.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockFile.isEmpty()).thenReturn(true);
+
+        // When & Then
+        ValidationException exception =
+                assertThrows(ValidationException.class, () -> handler.handle(command));
+        assertEquals("File is required", exception.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException when file type is invalid")
+    void shouldThrowException_whenFileTypeIsInvalid() {
+        // Given
+        String userId = Ulid.fast().toString();
+        UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
+
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockFile.isEmpty()).thenReturn(false);
         when(fileStorageService.storeUserAvatar(userId, mockFile))
                 .thenThrow(new IllegalArgumentException("Only image files are allowed"));
 
-        // When
-        ApiResponse<String> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        assertEquals("Only image files are allowed", response.getMessage());
+        // When & Then
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> handler.handle(command));
+        assertEquals("Only image files are allowed", exception.getMessage());
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Should return validation error when file size exceeds limit")
-    void shouldReturnError_whenFileSizeExceedsLimit() {
+    @DisplayName("Should throw IllegalArgumentException when file size exceeds limit")
+    void shouldThrowException_whenFileSizeExceedsLimit() {
         // Given
         String userId = Ulid.fast().toString();
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
@@ -157,21 +195,20 @@ class UploadProfilePictureHandlerTest {
         userEntity.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockFile.isEmpty()).thenReturn(false);
         when(fileStorageService.storeUserAvatar(userId, mockFile))
                 .thenThrow(new IllegalArgumentException("File size exceeds 5MB limit"));
 
-        // When
-        ApiResponse<String> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        assertEquals("File size exceeds 5MB limit", response.getMessage());
+        // When & Then
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> handler.handle(command));
+        assertEquals("File size exceeds 5MB limit", exception.getMessage());
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Should return error when file storage fails")
-    void shouldReturnError_whenStorageFails() {
+    @DisplayName("Should throw FileStorageException when file storage fails")
+    void shouldThrowException_whenStorageFails() {
         // Given
         String userId = Ulid.fast().toString();
         UploadProfilePictureCommand command = new UploadProfilePictureCommand(userId, mockFile);
@@ -180,16 +217,14 @@ class UploadProfilePictureHandlerTest {
         userEntity.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockFile.isEmpty()).thenReturn(false);
         when(fileStorageService.storeUserAvatar(userId, mockFile))
                 .thenThrow(new FileStorageException("Disk full"));
 
-        // When
-        ApiResponse<String> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.INTERNAL_SERVER_ERROR, response.getCode());
-        assertTrue(response.getMessage().contains("Failed to upload file"));
-        assertTrue(response.getMessage().contains("Disk full"));
+        // When & Then
+        FileStorageException exception =
+                assertThrows(FileStorageException.class, () -> handler.handle(command));
+        assertEquals("Disk full", exception.getMessage());
         verify(userRepository, never()).save(any());
     }
 
@@ -207,6 +242,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl(oldUrl);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockFile.isEmpty()).thenReturn(false);
         doThrow(new FileStorageException("File not found"))
                 .when(fileStorageService)
                 .deleteFile("profiles/old-ulid.jpg");
@@ -236,6 +272,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl("/api/v1/files/..passwd");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockFile.isEmpty()).thenReturn(false);
         when(fileStorageService.storeUserAvatar(userId, mockFile)).thenReturn(newStoredUrl);
 
         // When
@@ -261,6 +298,7 @@ class UploadProfilePictureHandlerTest {
         userEntity.setProfilePictureUrl("   ");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockFile.isEmpty()).thenReturn(false);
         when(fileStorageService.storeUserAvatar(userId, mockFile)).thenReturn(newStoredUrl);
 
         // When
