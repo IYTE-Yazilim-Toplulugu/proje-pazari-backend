@@ -5,11 +5,12 @@ import com.iyte_yazilim.proje_pazari.application.mappers.ProjectDetailDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.domain.models.results.PagedProjectsResult;
+import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +22,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class GetUserProjectsHandler
         implements IRequestHandler<GetUserProjectsQuery, ApiResponse<PagedProjectsResult>> {
+
+    private static final Set<String> SORTABLE_FIELDS =
+            Set.of("id", "title", "status", "createdAt", "deadline");
 
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
@@ -35,8 +39,7 @@ public class GetUserProjectsHandler
                 Sort.Direction.DESC.name().equalsIgnoreCase(query.sortDirection())
                         ? Sort.Direction.DESC
                         : Sort.Direction.ASC;
-        String sortBy =
-                (query.sortBy() != null && !query.sortBy().isBlank()) ? query.sortBy() : "id";
+        String sortBy = SORTABLE_FIELDS.contains(query.sortBy()) ? query.sortBy() : "id";
         Pageable pageable = PageRequest.of(query.page(), query.size(), Sort.by(direction, sortBy));
 
         // --- 2. Fetch User's Projects via Filter Query ---

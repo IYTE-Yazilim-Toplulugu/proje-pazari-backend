@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.dtos;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "Project detail data transfer object")
 public record ProjectDetailDto(
@@ -17,4 +18,9 @@ public record ProjectDetailDto(
                 int applicationCount,
         @Schema(description = "Current project status", example = "IN_PROGRESS")
                 ProjectStatus status,
+        @Schema(description = "Maximum team size", example = "5") Integer maxTeamSize,
+        @Schema(description = "Required skills", example = "[\"Java\", \"Spring Boot\"]")
+                List<String> requiredSkills,
+        @Schema(description = "Project category", example = "Web Development") String category,
+        @Schema(description = "Project deadline") LocalDateTime deadline,
         @Schema(description = "Creation timestamp") LocalDateTime createdAt) {}

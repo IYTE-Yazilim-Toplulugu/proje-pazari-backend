@@ -28,7 +28,9 @@ public class GetProjectQueryHandler
         // --- 1. Find project by ID ---
         ProjectEntity projectEntity = projectRepository.findById(query.projectId()).orElse(null);
         if (projectEntity == null) {
-            return ApiResponse.notFound(messageService.getMessage("project.not.found"));
+            return ApiResponse.notFound(
+                    messageService.getMessage(
+                            "project.not.found", new Object[] {query.projectId()}));
         }
 
         // --- 2. Map to domain ---

@@ -10,7 +10,7 @@ import com.iyte_yazilim.proje_pazari.application.queries.getProject.GetProjectQu
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProjects.GetUserProjectsQuery;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
-import com.iyte_yazilim.proje_pazari.domain.models.results.PagedProjectsResult;
+import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

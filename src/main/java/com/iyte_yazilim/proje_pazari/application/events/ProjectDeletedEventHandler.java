@@ -38,7 +38,8 @@ public class ProjectDeletedEventHandler implements IEventHandler<ProjectDeletedE
                 event.projectId(),
                 event.rejectedApplicationCount());
 
-        Map<String, Object> variables =
+        // --- 1. Notify the project owner ---
+        Map<String, Object> ownerVariables =
                 Map.of(
                         "subject",
                         "Project Deleted - " + event.projectTitle(),
@@ -53,6 +54,37 @@ public class ProjectDeletedEventHandler implements IEventHandler<ProjectDeletedE
                         "baseUrl",
                         baseUrl);
 
-        emailService.sendTemplateEmailAsync(event.ownerEmail(), "project-deleted.html", variables);
+        emailService.sendTemplateEmailAsync(
+                event.ownerEmail(), "project-deleted.html", ownerVariables);
+
+        // --- 2. Notify affected applicants ---
+        if (event.applicantEmails() != null && !event.applicantEmails().isEmpty()) {
+            for (int i = 0; i < event.applicantEmails().size(); i++) {
+                String applicantEmail = event.applicantEmails().get(i);
+                String applicantName =
+                        (event.applicantNames() != null && i < event.applicantNames().size())
+                                ? event.applicantNames().get(i)
+                                : "Applicant";
+
+                Map<String, Object> applicantVariables =
+                        Map.of(
+                                "subject",
+                                "Application Update - " + event.projectTitle(),
+                                "firstName",
+                                applicantName,
+                                "projectTitle",
+                                event.projectTitle(),
+                                "projectId",
+                                event.projectId(),
+                                "baseUrl",
+                                baseUrl);
+
+                emailService.sendTemplateEmailAsync(
+                        applicantEmail, "application-rejected.html", applicantVariables);
+            }
+            log.info(
+                    "Sent notification emails to {} affected applicants",
+                    event.applicantEmails().size());
+        }
     }
 }

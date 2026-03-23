@@ -1,6 +1,5 @@
-package com.iyte_yazilim.proje_pazari.domain.models.results;
+package com.iyte_yazilim.proje_pazari.application.dtos;
 
-import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationDto;
 import java.util.List;
 
 public record PagedApplicationsResult(

@@ -61,12 +61,18 @@ class DeleteProjectHandlerTest {
     }
 
     @Test
-    @DisplayName("Should delete project and reject pending applications")
-    void shouldDeleteProject_andRejectPendingApplications() {
+    @DisplayName("Should delete project and collect pending application info for notifications")
+    void shouldDeleteProject_andCollectPendingApplicationInfo() {
         // Arrange
+        UserEntity applicantUser = new UserEntity();
+        applicantUser.setId(Ulid.fast().toString());
+        applicantUser.setEmail("applicant@test.com");
+        applicantUser.setFirstName("Applicant");
+
         ProjectApplicationEntity pendingApp = new ProjectApplicationEntity();
         pendingApp.setId(Ulid.fast().toString());
         pendingApp.setStatus(ApplicationStatus.PENDING);
+        pendingApp.setUser(applicantUser);
 
         ProjectApplicationEntity approvedApp = new ProjectApplicationEntity();
         approvedApp.setId(Ulid.fast().toString());
@@ -83,18 +89,13 @@ class DeleteProjectHandlerTest {
         // Assert
         assertEquals(ResponseCode.SUCCESS, response.getCode());
 
-        // Verify pending app was rejected
-        assertEquals(ApplicationStatus.REJECTED, pendingApp.getStatus());
-        verify(applicationRepository).save(pendingApp);
-
-        // Verify approved app was NOT modified
-        assertEquals(ApplicationStatus.APPROVED, approvedApp.getStatus());
-        verify(applicationRepository, never()).save(approvedApp);
+        // Verify no application saves occur (cascade handles deletion)
+        verify(applicationRepository, never()).save(any());
 
         // Verify project was deleted
         verify(projectRepository).delete(projectEntity);
 
-        // Verify event was published with correct data
+        // Verify event was published with correct data including applicant info
         ArgumentCaptor<ProjectDeletedEvent> eventCaptor =
                 ArgumentCaptor.forClass(ProjectDeletedEvent.class);
         verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
@@ -103,6 +104,8 @@ class DeleteProjectHandlerTest {
         assertEquals("Test Project", event.projectTitle());
         assertEquals(ownerId, event.ownerId());
         assertEquals(1, event.rejectedApplicationCount());
+        assertEquals(List.of("applicant@test.com"), event.applicantEmails());
+        assertEquals(List.of("Applicant"), event.applicantNames());
     }
 
     @Test

@@ -8,13 +8,14 @@ import com.iyte_yazilim.proje_pazari.application.queries.getProjectApplications.
 import com.iyte_yazilim.proje_pazari.application.queries.getUserApplications.GetUserApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.domain.models.results.PagedApplicationsResult;
+import com.iyte_yazilim.proje_pazari.application.dtos.PagedApplicationsResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.SubmitApplicationCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
@@ -90,7 +91,7 @@ public class ApplicationController extends BaseController {
             })
     public ResponseEntity<ApiResponse<ReviewApplicationCommandResult>> reviewApplication(
             @PathVariable String applicationId,
-            @RequestBody ReviewApplicationCommand command,
+            @RequestBody @Valid ReviewApplicationCommand command,
             Authentication auth) {
         return send(
                 ReviewApplicationCommand.class,

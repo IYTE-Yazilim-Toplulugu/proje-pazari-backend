@@ -26,15 +26,15 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>When a project is deleted:
  *
  * <ul>
- *   <li>All pending applications are rejected
+ *   <li>Pending application count and applicant contact info are collected for notifications
  *   <li>The project is hard-deleted from the database (cascade removes applications)
- *   <li>A {@link ProjectDeletedEvent} is published for notifications
+ *   <li>A {@link ProjectDeletedEvent} is published for notifications to owner and applicants
  * </ul>
  *
  * <p>Projects in {@link ProjectStatus#IN_PROGRESS} cannot be deleted; they must be cancelled first.
  *
  * @author IYTE Yazılım Topluluğu
- * @version 1.1
+ * @version 1.2
  * @since 2026-03-23
  */
 @Slf4j
@@ -75,23 +75,27 @@ public class DeleteProjectHandler
                     messageService.getMessage("project.delete.has.active.work"));
         }
 
-        // --- 4. Reject Pending Applications ---
+        // --- 4. Collect Pending Application Info (for notifications) ---
         List<ProjectApplicationEntity> pendingApplications =
                 applicationRepository.findByProjectId(command.projectId()).stream()
                         .filter(app -> app.getStatus() == ApplicationStatus.PENDING)
                         .toList();
 
         int rejectedCount = pendingApplications.size();
-        for (ProjectApplicationEntity application : pendingApplications) {
-            application.setStatus(ApplicationStatus.REJECTED);
-            applicationRepository.save(application);
-        }
+        List<String> applicantEmails =
+                pendingApplications.stream()
+                        .map(app -> app.getUser().getEmail())
+                        .toList();
+        List<String> applicantNames =
+                pendingApplications.stream()
+                        .map(app -> app.getUser().getFirstName())
+                        .toList();
 
         if (rejectedCount > 0) {
             log.info(
-                    "Rejected {} pending applications for project {}",
-                    rejectedCount,
-                    command.projectId());
+                    "Project {} deletion will cascade-remove {} pending applications",
+                    command.projectId(),
+                    rejectedCount);
         }
 
         // --- 5. Capture owner info before deletion ---
@@ -112,6 +116,8 @@ public class DeleteProjectHandler
                         ownerEmail,
                         ownerName,
                         rejectedCount,
+                        applicantEmails,
+                        applicantNames,
                         LocalDateTime.now()));
 
         // --- 8. Response ---

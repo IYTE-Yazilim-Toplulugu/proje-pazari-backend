@@ -20,17 +20,8 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, String> 
 
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
-    @Query(
-            "SELECT p FROM ProjectEntity p WHERE "
-                    + "(:keyword IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) "
-                    + "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) "
-                    + "AND (:status IS NULL OR p.status = :status) "
-                    + "AND (:ownerId IS NULL OR p.owner.id = :ownerId)")
-    Page<ProjectEntity> searchProjects(
-            @Param("keyword") String keyword,
-            @Param("status") ProjectStatus status,
-            @Param("ownerId") String ownerId,
-            Pageable pageable);
+
+
 
     @Query(
             "SELECT p FROM ProjectEntity p WHERE "

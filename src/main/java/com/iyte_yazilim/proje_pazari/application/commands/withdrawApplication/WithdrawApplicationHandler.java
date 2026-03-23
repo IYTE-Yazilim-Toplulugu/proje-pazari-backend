@@ -49,8 +49,9 @@ public class WithdrawApplicationHandler
                     messageService.getMessage("application.withdraw.not.pending"));
         }
 
-        // --- 4. Delete ---
-        applicationRepository.delete(applicationEntity);
+        // --- 4. Withdraw (soft-delete via status transition) ---
+        applicationEntity.setStatus(ApplicationStatus.WITHDRAWN);
+        applicationRepository.save(applicationEntity);
 
         // --- 5. Response ---
         return ApiResponse.success(
