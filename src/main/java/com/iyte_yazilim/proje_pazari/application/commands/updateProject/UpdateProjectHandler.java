@@ -4,18 +4,38 @@ import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.ProjectDetailDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import java.util.Arrays;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Handles project update commands with proper field-level semantics.
+ *
+ * <p>Update semantics for optional fields:
+ *
+ * <ul>
+ *   <li>{@code null} → field is not changed (existing value preserved)
+ *   <li>Empty array {@code []} → clears existing values
+ *   <li>Non-empty value → replaces existing value
+ * </ul>
+ *
+ * <p>Projects in {@link ProjectStatus#COMPLETED} or {@link ProjectStatus#CANCELLED} status cannot
+ * be updated.
+ *
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.1
+ * @since 2026-03-23
+ */
 @Component
 @RequiredArgsConstructor
 public class UpdateProjectHandler
@@ -47,9 +67,16 @@ public class UpdateProjectHandler
             return ApiResponse.forbidden(messageService.getMessage("project.owner.mismatch"));
         }
 
-        // --- 3. Apply Updates ---
+        // --- 3. Verify Project Status Allows Updates ---
+        if (projectEntity.getStatus() == ProjectStatus.COMPLETED
+                || projectEntity.getStatus() == ProjectStatus.CANCELLED) {
+            return ApiResponse.forbidden(messageService.getMessage("project.update.not.allowed"));
+        }
+
+        // --- 4. Apply Updates (null = skip, empty = clear, non-empty = replace) ---
         projectEntity.setTitle(command.projectName());
         projectEntity.setDescription(command.description());
+
         if (command.summary() != null) {
             projectEntity.setSummary(command.summary());
         }
@@ -57,7 +84,11 @@ public class UpdateProjectHandler
             projectEntity.setMaxTeamSize(command.maxTeamSize());
         }
         if (command.requiredSkills() != null) {
-            projectEntity.setRequiredSkills(Arrays.asList(command.requiredSkills()));
+            if (command.requiredSkills().length == 0) {
+                projectEntity.setRequiredSkills(Collections.emptyList());
+            } else {
+                projectEntity.setRequiredSkills(Arrays.asList(command.requiredSkills()));
+            }
         }
         if (command.category() != null) {
             projectEntity.setCategory(command.category());
@@ -66,14 +97,14 @@ public class UpdateProjectHandler
             projectEntity.setDeadline(command.deadline());
         }
 
-        // --- 4. Persist ---
+        // --- 5. Persist ---
         ProjectEntity saved = projectRepository.save(projectEntity);
 
-        // --- 5. Map to DTO ---
+        // --- 6. Map to DTO ---
         Project domain = projectMapper.entityToDomain(saved);
         ProjectDetailDto dto = projectDetailDtoMapper.domainToDto(domain);
 
-        // --- 6. Response ---
+        // --- 7. Response ---
         return ApiResponse.success(dto, messageService.getMessage("project.updated.success"));
     }
 }

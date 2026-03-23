@@ -9,9 +9,20 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepositor
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import java.util.List;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * Handles project application queries with optional status filtering.
+ *
+ * <p>Only the project owner can view applications for their project. When a status filter is
+ * provided, only applications matching that status are returned.
+ *
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.1
+ * @since 2026-03-23
+ */
 @Service
 @RequiredArgsConstructor
 public class GetProjectApplicationsHandler
@@ -37,11 +48,15 @@ public class GetProjectApplicationsHandler
             return ApiResponse.forbidden(messageService.getMessage("project.owner.mismatch"));
         }
 
-        // --- 3. Fetch Applications ---
-        List<ApplicationDto> applications =
-                applicationRepository.findByProjectId(query.projectId()).stream()
-                        .map(this::toDto)
-                        .toList();
+        // --- 3. Fetch Applications with Optional Status Filter ---
+        Stream<ProjectApplicationEntity> applicationStream =
+                applicationRepository.findByProjectId(query.projectId()).stream();
+
+        if (query.status() != null) {
+            applicationStream = applicationStream.filter(app -> app.getStatus() == query.status());
+        }
+
+        List<ApplicationDto> applications = applicationStream.map(this::toDto).toList();
 
         // --- 4. Response ---
         return ApiResponse.success(

@@ -6,7 +6,9 @@ import com.iyte_yazilim.proje_pazari.application.commands.withdrawApplication.Wi
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationDto;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectApplications.GetProjectApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserApplications.GetUserApplicationsQuery;
+import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.results.PagedApplicationsResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.SubmitApplicationCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -66,9 +68,11 @@ public class ApplicationController extends BaseController {
                         description = "Project not found")
             })
     public ResponseEntity<ApiResponse<List<ApplicationDto>>> getProjectApplications(
-            @PathVariable String projectId, Authentication auth) {
+            @PathVariable String projectId,
+            @RequestParam(required = false) ApplicationStatus status,
+            Authentication auth) {
         String requesterId = getCurrentUserId(auth);
-        return send(new GetProjectApplicationsQuery(projectId, requesterId));
+        return send(new GetProjectApplicationsQuery(projectId, requesterId, status));
     }
 
     @PatchMapping("/api/v1/applications/{applicationId}/review")
@@ -138,9 +142,12 @@ public class ApplicationController extends BaseController {
                         responseCode = "401",
                         description = "Unauthorized")
             })
-    public ResponseEntity<ApiResponse<List<ApplicationDto>>> getMyApplications(
+    public ResponseEntity<ApiResponse<PagedApplicationsResult>> getMyApplications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) ApplicationStatus status,
             Authentication auth) {
         String userId = getCurrentUserId(auth);
-        return send(new GetUserApplicationsQuery(userId));
+        return send(new GetUserApplicationsQuery(userId, page, size, status));
     }
 }
