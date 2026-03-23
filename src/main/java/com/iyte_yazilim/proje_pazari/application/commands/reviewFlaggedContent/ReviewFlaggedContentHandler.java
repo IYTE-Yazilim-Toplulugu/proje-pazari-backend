@@ -52,6 +52,11 @@ public class ReviewFlaggedContentHandler
             case "BAN_USER":
                 flag.setStatus("REMOVED");
                 if ("USER".equals(flag.getContentType())) {
+                    // Intentional behavior: if the target user does not exist,
+                    // UserNotFoundException
+                    // is thrown and the @Transactional method rolls back entirely — the flag status
+                    // is NOT persisted as "REMOVED". This is correct: banning a non-existent user
+                    // is an error condition that must surface to the caller, not silently succeed.
                     UserEntity user =
                             userRepository
                                     .findById(flag.getContentId())

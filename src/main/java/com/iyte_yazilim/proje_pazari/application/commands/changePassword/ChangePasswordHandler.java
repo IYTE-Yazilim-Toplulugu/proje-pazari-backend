@@ -20,7 +20,7 @@ public class ChangePasswordHandler
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     @Transactional(

@@ -49,6 +49,11 @@ public class BulkApplicationActionHandler
                         result.addFailure(appId, "Unknown action: " + command.action());
                 }
             } catch (Exception e) {
+                // Intentional: domain exceptions (e.g. ApplicationNotFoundException) are caught
+                // here and recorded as per-item failures rather than propagated. This preserves
+                // bulk-operation semantics — a single missing or invalid item must not abort the
+                // entire batch. GlobalExceptionHandler will NOT handle these; failures are surfaced
+                // in BulkActionResult instead.
                 result.addFailure(appId, e.getMessage());
             }
         }

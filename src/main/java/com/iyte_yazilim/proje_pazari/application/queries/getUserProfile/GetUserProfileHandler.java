@@ -21,7 +21,7 @@ public class GetUserProfileHandler
 
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     public ApiResponse<UserProfileDTO> handle(GetUserProfileQuery query) {

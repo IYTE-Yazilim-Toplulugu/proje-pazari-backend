@@ -34,12 +34,6 @@ public class UpdateUserProfileHandler
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
     public ApiResponse<UserDto> handle(UpdateUserProfileCommand command) {
-        try {
-            command.validate();
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.validationError(e.getMessage());
-        }
-
         UserEntity user =
                 userRepository
                         .findById(command.userId())

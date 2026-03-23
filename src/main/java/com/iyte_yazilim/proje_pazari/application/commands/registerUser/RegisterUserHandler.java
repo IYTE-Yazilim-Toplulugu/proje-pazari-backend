@@ -6,7 +6,6 @@ import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenServi
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.IyteEmail;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
@@ -31,7 +30,6 @@ public class RegisterUserHandler
 
     private final UserRepository userRepository;
     private final EmailVerificationRepository emailVerificationRepository;
-    private final IValidator<RegisterUserCommand> validator;
     private final RegisterUserMapper registerUserMapper;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
@@ -58,22 +56,8 @@ public class RegisterUserHandler
             propagation = Propagation.REQUIRED)
     public ApiResponse<RegisterUserResult> handle(RegisterUserCommand command) {
 
-        // --- 1. Validation ---
-        var errors = validator.validate(command);
-        if (errors != null && errors.length > 0) {
-            String errorMessage = String.join(", ", errors);
-            metricsService.incrementUserRegistrationFailure();
-            return ApiResponse.badRequest(errorMessage);
-        }
-
-        // --- 1.5. IYTE Email Validation (Value Object ile) ---
-        IyteEmail iyteEmail;
-        try {
-            iyteEmail = IyteEmail.of(command.email());
-        } catch (IllegalArgumentException e) {
-            metricsService.incrementUserRegistrationFailure();
-            return ApiResponse.badRequest(e.getMessage());
-        }
+        // --- 1. IYTE Email Value Object ---
+        IyteEmail iyteEmail = IyteEmail.of(command.email());
 
         // --- 2. Check if email already exists ---
         if (userRepository.existsByEmail(iyteEmail.getValue())) {
