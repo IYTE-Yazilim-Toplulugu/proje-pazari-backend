@@ -38,6 +38,9 @@ public class ProjectDocument {
     @Field(type = FieldType.Keyword)
     private String status;
 
+    @Field(type = FieldType.Keyword)
+    private String category;
+
     @Field(type = FieldType.Nested)
     private OwnerInfo owner;
 
