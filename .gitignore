@@ -39,3 +39,6 @@ out/
 .vscode/
 
 .env
+
+# Database backup dumps
+backups/
