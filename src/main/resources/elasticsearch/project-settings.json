@@ -4,9 +4,9 @@
     "number_of_replicas": 0,
     "analysis": {
       "analyzer": {
-        "custom_analyzer": {
+        "turkish_search": {
           "type": "custom",
-          "tokenizer": "turkhis_search",
+          "tokenizer": "standard",
           "filter": ["lowercase", "asciifolding"]
         }
       }
