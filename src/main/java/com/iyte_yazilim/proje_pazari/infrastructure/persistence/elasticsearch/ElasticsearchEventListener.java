@@ -4,6 +4,8 @@ import com.iyte_yazilim.proje_pazari.application.services.ElasticsearchSyncServi
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
+import com.iyte_yazilim.proje_pazari.domain.events.UserDeletedEvent;
+import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +69,21 @@ public class ElasticsearchEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
+    public void handleUserRegistered(UserRegisteredEvent event) {
+        try {
+            log.debug("Indexing newly registered user: {}", event.getUserId());
+            syncService.indexUser(event.getUserId().toString());
+        } catch (Exception e) {
+            log.error(
+                    "Failed to index newly registered user {}: {}",
+                    event.getUserId(),
+                    e.getMessage(),
+                    e);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
     public void handleProjectDeleted(ProjectDeletedEvent event) {
         try {
             log.debug("Removing deleted project from index: {}", event.projectId());
@@ -75,6 +92,21 @@ public class ElasticsearchEventListener {
             log.error(
                     "Failed to remove project {} from index: {}",
                     event.projectId(),
+                    e.getMessage(),
+                    e);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
+    public void handleUserDeleted(UserDeletedEvent event) {
+        try {
+            log.debug("Removing deleted user from index: {}", event.getUserId());
+            syncService.deleteUserIndex(event.getUserId().toString());
+        } catch (Exception e) {
+            log.error(
+                    "Failed to remove user {} from index: {}",
+                    event.getUserId(),
                     e.getMessage(),
                     e);
         }
