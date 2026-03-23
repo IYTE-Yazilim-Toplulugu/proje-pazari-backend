@@ -108,14 +108,16 @@ class JwtUtilTest {
     }
 
     @Test
-    void shouldDefaultToUserRoleWhenRoleClaimMissing() {
-        // Given - generate token with old method that doesn't include role
-        String token = jwtUtil.generateToken("test@std.iyte.edu.tr");
+    void generateToken_shouldIncludeAllRequiredClaims() {
+        // Given
+        String token = jwtUtil.generateToken("user-123", "test@std.iyte.edu.tr", "APPLICANT");
 
         // When
-        String role = jwtUtil.extractRole(token);
+        UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
 
         // Then
-        assertEquals("APPLICANT", role);
+        assertEquals("user-123", principal.getUserId());
+        assertEquals("test@std.iyte.edu.tr", principal.getEmail());
+        assertEquals("APPLICANT", principal.getRole());
     }
 }
