@@ -9,6 +9,7 @@ import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllUsers.GetAllUsersQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -19,7 +20,16 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -30,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
                 "User management endpoints. Includes profile management, password change, "
                         + "profile picture upload, and account deactivation. "
                         + "Most endpoints require authentication.")
+@PreAuthorize("isAuthenticated()")
 public class UserController extends BaseController {
 
     @GetMapping
@@ -50,9 +61,10 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("permitAll()")
     @Operation(
             summary = "Get user profile by ID",
-            description = "Retrieves any user's public profile with statistics")
+            description = "Retrieves any user's public profile with statistics. Public access.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -66,8 +78,28 @@ public class UserController extends BaseController {
         return send(new GetUserProfileQuery(userId));
     }
 
+    @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    @PutMapping
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Get current user profile",
+            description = "Retrieves the authenticated user's profile")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Profile retrieved successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "Unauthorized")
+            })
+    public ResponseEntity<ApiResponse<UserProfileDTO>> getCurrentUserProfile(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return send(new GetUserProfileQuery(principal.getUserId()));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/me")
     @Operation(
             summary = "Update user profile",
             description = "Updates the authenticated user's profile information")

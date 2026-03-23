@@ -5,7 +5,6 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectStatusChangedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
@@ -38,7 +37,6 @@ public class UpdateProjectStatusHandler
 
     private final ProjectRepository projectRepository;
     private final ProjectApplicationRepository applicationRepository;
-    private final IValidator<UpdateProjectStatusCommand> validator;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -51,14 +49,7 @@ public class UpdateProjectStatusHandler
     public ApiResponse<UpdateProjectStatusCommandResult> handle(
             UpdateProjectStatusCommand command) {
 
-        // --- 1. Validation ---
-        var errors = validator.validate(command);
-        if (errors != null && errors.length > 0) {
-            String errorMessage = String.join(", ", errors);
-            return ApiResponse.badRequest(errorMessage);
-        }
-
-        // --- 2. Verify Project Exists ---
+        // --- 1. Verify Project Exists ---
         ProjectEntity projectEntity = projectRepository.findById(command.projectId()).orElse(null);
         if (projectEntity == null) {
             return ApiResponse.notFound(

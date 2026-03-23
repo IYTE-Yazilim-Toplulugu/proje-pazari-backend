@@ -1,6 +1,9 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
+import com.iyte_yazilim.proje_pazari.application.queries.getAllProjects.GetAllProjectsQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getProjectById.GetProjectByIdQuery;
+import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +13,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/projects")
+@RequiredArgsConstructor
 @Tag(
         name = "Projects",
         description =
@@ -48,16 +54,16 @@ public class ProjectController extends BaseController {
                                                         name = "Success Response",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "CREATED",
-                                            "message": "Project created successfully",
-                                            "data": {
-                                                "projectId": "01HQXV5KXBW9FYMN8CJZSP2R4H",
-                                                "title": "AI Chatbot Project",
-                                                "status": "DRAFT"
-                                            }
-                                        }
-                                        """))),
+                    {
+                        "code": "CREATED",
+                        "message": "Project created successfully",
+                        "data": {
+                            "projectId": "01HQXV5KXBW9FYMN8CJZSP2R4H",
+                            "title": "AI Chatbot Project",
+                            "status": "DRAFT"
+                        }
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "Invalid request data",
@@ -70,12 +76,12 @@ public class ProjectController extends BaseController {
                                                         name = "Validation Error",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "BAD_REQUEST",
-                                            "message": "Title is required",
-                                            "data": null
-                                        }
-                                        """))),
+                    {
+                        "code": "BAD_REQUEST",
+                        "message": "Title is required",
+                        "data": null
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
                         description = "Unauthorized - authentication required",
@@ -87,12 +93,12 @@ public class ProjectController extends BaseController {
                                                         name = "Unauthorized",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "UNAUTHORIZED",
-                                            "message": "Authentication required",
-                                            "data": null
-                                        }
-                                        """))),
+                    {
+                        "code": "UNAUTHORIZED",
+                        "message": "Authentication required",
+                        "data": null
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "500",
                         description = "Internal server error")
@@ -109,18 +115,76 @@ public class ProjectController extends BaseController {
                                             name = "Create Project Request",
                                             value =
                                                     """
-                        {
-                            "title": "AI Chatbot Project",
-                            "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
-                            "summary": "AI chatbot with NLP capabilities",
-                            "maxTeamSize": 5,
-                            "requiredSkills": ["Python", "NLP", "Machine Learning", "FastAPI"],
-                            "category": "Artificial Intelligence",
-                            "deadline": "2025-06-15T23:59:59"
-                        }
-                        """)))
+            {
+                "title": "AI Chatbot Project",
+                "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                "summary": "AI chatbot with NLP capabilities",
+                "maxTeamSize": 5,
+                "requiredSkills": ["Python", "NLP", "Machine Learning", "FastAPI"],
+                "category": "Artificial Intelligence",
+                "deadline": "2025-06-15T23:59:59"
+            }
+            """)))
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
             @RequestBody CreateProjectCommand command, Authentication auth) {
         return send(CreateProjectCommand.class, null, null, command, auth);
+    }
+
+    @GetMapping
+    @PreAuthorize("permitAll()")
+    @Operation(
+            summary = "Get all projects",
+            description = "Retrieves a list of all projects. Public access.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Projects retrieved successfully",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                    {
+                        "code": "SUCCESS",
+                        "message": "Projects retrieved successfully",
+                        "data": [
+                            {
+                                "id": "1",
+                                "title": "AI Chatbot Project",
+                                "description": "Building an AI-powered chatbot",
+                                "status": "ACTIVE"
+                            }
+                        ]
+                    }
+                    """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "Internal server error")
+            })
+    public ResponseEntity<ApiResponse<List<Project>>> getAllProjects() {
+        return send(new GetAllProjectsQuery());
+    }
+
+    @GetMapping("/{projectId}")
+    @PreAuthorize("permitAll()")
+    @Operation(
+            summary = "Get project by ID",
+            description = "Retrieves a specific project by its ID. Public access.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Project retrieved successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "Project not found")
+            })
+    public ResponseEntity<ApiResponse<Project>> getProject(@PathVariable String projectId) {
+        return send(new GetProjectByIdQuery(projectId));
     }
 }

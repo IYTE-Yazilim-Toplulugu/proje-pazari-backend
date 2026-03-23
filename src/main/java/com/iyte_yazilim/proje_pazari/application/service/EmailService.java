@@ -24,7 +24,7 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
-    @Value("${app.mail.from}")
+    @Value("${app.email.from}")
     private String fromEmail;
 
     /** Send email synchronously (for critical emails) */

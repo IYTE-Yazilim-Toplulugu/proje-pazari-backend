@@ -2,9 +2,11 @@ package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.Mockito.mock;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +60,10 @@ class MinioStorageAdapterIntegrationTest {
                 minioContainer != null && minioContainer.isRunning(),
                 "MinIO container should be running");
         String minioUrl = minioContainer.getS3URL();
-        adapter = new MinioStorageAdapter(minioUrl, ACCESS_KEY, SECRET_KEY, BUCKET_NAME);
+        BusinessMetricsService metricsService = mock(BusinessMetricsService.class);
+        adapter =
+                new MinioStorageAdapter(
+                        minioUrl, ACCESS_KEY, SECRET_KEY, BUCKET_NAME, metricsService);
     }
 
     @Test

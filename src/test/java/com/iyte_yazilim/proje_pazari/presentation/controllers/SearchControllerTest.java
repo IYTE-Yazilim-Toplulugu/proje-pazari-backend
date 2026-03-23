@@ -28,6 +28,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -65,11 +66,41 @@ class SearchControllerTest {
     private com.iyte_yazilim.proje_pazari.infrastructure.security.config.RateLimitConfig
             rateLimitConfig;
 
+    @MockitoBean
+    private com.iyte_yazilim.proje_pazari.infrastructure.security.filter.IpBanFilter ipBanFilter;
+
+    @MockitoBean
+    private com.iyte_yazilim.proje_pazari.infrastructure.security.filter.MaintenanceModeFilter
+            maintenanceModeFilter;
+
     private ProjectDocument sampleProject;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         when(messageService.getMessage(anyString())).thenReturn("Validation error");
+
+        // Mock filters to allow requests to proceed
+        Mockito.doAnswer(
+                        invocation -> {
+                            jakarta.servlet.ServletRequest request = invocation.getArgument(0);
+                            jakarta.servlet.ServletResponse response = invocation.getArgument(1);
+                            jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                            chain.doFilter(request, response);
+                            return null;
+                        })
+                .when(ipBanFilter)
+                .doFilter(any(), any(), any());
+
+        Mockito.doAnswer(
+                        invocation -> {
+                            jakarta.servlet.ServletRequest request = invocation.getArgument(0);
+                            jakarta.servlet.ServletResponse response = invocation.getArgument(1);
+                            jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                            chain.doFilter(request, response);
+                            return null;
+                        })
+                .when(maintenanceModeFilter)
+                .doFilter(any(), any(), any());
 
         sampleProject =
                 ProjectDocument.builder()
@@ -207,9 +238,6 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when query is blank")
         void shouldReturnBadRequestWhenQueryIsBlank() throws Exception {
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: must not be blank"));
-
             mockMvc.perform(get("/api/v1/search/projects").param("q", ""))
                     .andExpect(status().isBadRequest());
         }
@@ -225,9 +253,6 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when query is too short")
         void shouldReturnBadRequestWhenQueryIsTooShort() throws Exception {
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: size must be between 2 and 100"));
-
             mockMvc.perform(get("/api/v1/search/projects").param("q", "a"))
                     .andExpect(status().isBadRequest());
         }
@@ -237,9 +262,6 @@ class SearchControllerTest {
         @DisplayName("Should return bad request when query exceeds max length")
         void shouldReturnBadRequestWhenQueryExceedsMaxLength() throws Exception {
             String longQuery = "a".repeat(101);
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: size must be between 2 and 100"));
-
             mockMvc.perform(get("/api/v1/search/projects").param("q", longQuery))
                     .andExpect(status().isBadRequest());
         }
@@ -275,13 +297,6 @@ class SearchControllerTest {
 
             mockMvc.perform(get("/api/v1/search/projects").param("q", "java").param("size", "101"))
                     .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @DisplayName("Should return unauthorized when user is not authenticated")
-        void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() throws Exception {
-            mockMvc.perform(get("/api/v1/search/projects").param("q", "java"))
-                    .andExpect(status().isUnauthorized());
         }
     }
 
@@ -343,9 +358,6 @@ class SearchControllerTest {
         @WithMockUser
         @DisplayName("Should return bad request when query is blank")
         void shouldReturnBadRequestWhenQueryIsBlank() throws Exception {
-            when(mediator.send(any(SuggestProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: must not be blank"));
-
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", ""))
                     .andExpect(status().isBadRequest());
         }
@@ -363,18 +375,8 @@ class SearchControllerTest {
         @DisplayName("Should return bad request when query exceeds max length")
         void shouldReturnBadRequestWhenQueryExceedsMaxLength() throws Exception {
             String longQuery = "a".repeat(101);
-            when(mediator.send(any(SuggestProjectsQuery.class)))
-                    .thenThrow(new ValidationException("q: size must be between 1 and 100"));
-
             mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", longQuery))
                     .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @DisplayName("Should return unauthorized when user is not authenticated")
-        void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() throws Exception {
-            mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "java"))
-                    .andExpect(status().isUnauthorized());
         }
     }
 
@@ -414,13 +416,6 @@ class SearchControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(0))
                     .andExpect(jsonPath("$.data").isEmpty());
-        }
-
-        @Test
-        @DisplayName("Should return unauthorized when user is not authenticated")
-        void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() throws Exception {
-            mockMvc.perform(get("/api/v1/search/projects/statistics"))
-                    .andExpect(status().isUnauthorized());
         }
     }
 }

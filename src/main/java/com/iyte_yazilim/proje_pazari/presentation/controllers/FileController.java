@@ -1,26 +1,45 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import com.iyte_yazilim.proje_pazari.application.commands.uploadFile.UploadFileCommand;
 import com.iyte_yazilim.proje_pazari.application.queries.downloadFile.DownloadFileQuery;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/files")
-@Tag(name = "Files", description = "File serving endpoints")
+@RequiredArgsConstructor
+@Tag(
+        name = "Files",
+        description =
+                "File management endpoints. Download is public, upload requires authentication.")
+@Slf4j
 public class FileController extends BaseController {
 
+    private static final int DEFAULT_EXPIRY_MINUTES = 60;
+
     @GetMapping("/{*path}")
+    @PreAuthorize("permitAll()")
     @Operation(
             summary = "Download file",
             description =
                     "Redirects to presigned URL for file access. "
-                            + "Supports images, PDFs, and documents.")
+                            + "Supports images, PDFs, and documents. Public access.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -41,5 +60,65 @@ public class FileController extends BaseController {
         }
 
         return ResponseEntity.status(status).body(response);
+    }
+
+    @PostMapping
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Upload file",
+            description = "Uploads a new file. Requires authentication.",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema = @Schema(type = "object"),
+                                            encoding =
+                                                    @io.swagger.v3.oas.annotations.media.Encoding(
+                                                            name = "file",
+                                                            contentType = "*/*"))))
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "File uploaded successfully",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "SUCCESS",
+                                            "message": "File uploaded successfully",
+                                            "data": {
+                                                "filename": "document.pdf",
+                                                "url": "/api/v1/files/document.pdf",
+                                                "size": 1024567
+                                            }
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid file or validation error"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "Unauthorized - authentication required"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "Internal server error")
+            })
+    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadFile(
+            @Parameter(
+                            description = "File to upload",
+                            required = true,
+                            content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+                    @RequestParam("file")
+                    MultipartFile file) {
+        return send(UploadFileCommand.class, null, null, null, null, Map.of("file", file));
     }
 }

@@ -6,9 +6,9 @@ import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
@@ -31,12 +31,12 @@ public class CreateProjectHandler
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-    private final IValidator<CreateProjectCommand> validator;
     private final CreateProjectMapper createProjectMapper;
     private final ProjectMapper projectMapper;
     private final UserMapper userMapper;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final BusinessMetricsService metricsService;
 
     /**
      * Handles project creation command.
@@ -54,22 +54,16 @@ public class CreateProjectHandler
             propagation = Propagation.REQUIRED)
     public ApiResponse<CreateProjectCommandResult> handle(CreateProjectCommand command) {
 
-        // --- 1. Validation ---
-        var errors = validator.validate(command);
-        if (errors != null && errors.length > 0) {
-            String errorMessage = String.join(", ", errors);
-            return ApiResponse.badRequest(errorMessage);
-        }
-
-        // --- 2. Verify Owner Exists ---
+        // --- 1. Verify Owner Exists ---
         UserEntity ownerEntity = userRepository.findById(command.ownerId()).orElse(null);
         if (ownerEntity == null) {
+            metricsService.incrementProjectCreationFailure();
             return ApiResponse.notFound(
                     messageService.getMessage(
                             "project.owner.not.found", new Object[] {command.ownerId()}));
         }
 
-        // --- 3. Mapping (Command -> Domain Entity) ---
+        // --- 2. Mapping (Command -> Domain Entity) ---
         Project domainProject = createProjectMapper.commandToDomain(command);
 
         // --- 4. Set Owner (map from persistence to domain) ---
@@ -99,6 +93,7 @@ public class CreateProjectHandler
                         LocalDateTime.now()));
 
         // --- 10. Response ---
+        metricsService.incrementProjectCreationSuccess();
         return ApiResponse.created(result, messageService.getMessage("project.created.success"));
     }
 }

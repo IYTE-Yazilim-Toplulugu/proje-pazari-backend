@@ -1,6 +1,8 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenResult;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.verifyEmail.VerifyEmailCommand;
@@ -9,10 +11,6 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
-import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -76,22 +74,13 @@ public class AuthController extends BaseController {
             verifyEmailHandler;
     private final IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
             resendVerificationEmailHandler;
-    private final RefreshTokenService refreshTokenService;
-    private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
     public AuthController(
             IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler,
             IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
-                    resendVerificationEmailHandler,
-            RefreshTokenService refreshTokenService,
-            JwtUtil jwtUtil,
-            UserRepository userRepository) {
+                    resendVerificationEmailHandler) {
         this.verifyEmailHandler = verifyEmailHandler;
         this.resendVerificationEmailHandler = resendVerificationEmailHandler;
-        this.refreshTokenService = refreshTokenService;
-        this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
@@ -115,17 +104,17 @@ public class AuthController extends BaseController {
                                                         name = "Success Response",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "CREATED",
-                                            "message": "User registered successfully",
-                                            "data": {
-                                                "userId": "01HQXV5KXBW9FYMN8CJZSP2R4G",
-                                                "email": "student@std.iyte.edu.tr",
-                                                "firstName": "John",
-                                                "lastName": "Doe"
-                                            }
-                                        }
-                                        """))),
+                    {
+                        "code": "CREATED",
+                        "message": "User registered successfully",
+                        "data": {
+                            "userId": "01HQXV5KXBW9FYMN8CJZSP2R4G",
+                            "email": "student@std.iyte.edu.tr",
+                            "firstName": "John",
+                            "lastName": "Doe"
+                        }
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "Invalid request data or email already exists",
@@ -138,12 +127,12 @@ public class AuthController extends BaseController {
                                                         name = "Email Exists",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "BAD_REQUEST",
-                                            "message": "Email already exists",
-                                            "data": null
-                                        }
-                                        """)))
+                    {
+                        "code": "BAD_REQUEST",
+                        "message": "Email already exists",
+                        "data": null
+                    }
+                    """)))
             })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "User registration details",
@@ -157,13 +146,13 @@ public class AuthController extends BaseController {
                                             name = "Registration Request",
                                             value =
                                                     """
-                        {
-                            "email": "student@std.iyte.edu.tr",
-                            "password": "SecurePass123!",
-                            "firstName": "John",
-                            "lastName": "Doe"
-                        }
-                        """)))
+            {
+                "email": "student@std.iyte.edu.tr",
+                "password": "SecurePass123!",
+                "firstName": "John",
+                "lastName": "Doe"
+            }
+            """)))
     public ResponseEntity<ApiResponse<RegisterUserResult>> register(
             @RequestBody RegisterUserCommand command) {
         return send(command);
@@ -190,16 +179,16 @@ public class AuthController extends BaseController {
                                                         name = "Success Response",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "SUCCESS",
-                                            "message": "Login successful",
-                                            "data": {
-                                                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                                                "tokenType": "Bearer",
-                                                "expiresIn": 86400000
-                                                }
-                                                }
-                                        """))),
+                    {
+                        "code": "SUCCESS",
+                        "message": "Login successful",
+                        "data": {
+                            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                            "tokenType": "Bearer",
+                            "expiresIn": 86400000
+                            }
+                            }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "Invalid credentials",
@@ -212,12 +201,12 @@ public class AuthController extends BaseController {
                                                         name = "Invalid Credentials",
                                                         value =
                                                                 """
-                                        {
-                                            "code": "BAD_REQUEST",
-                                            "message": "Invalid email or password",
-                                            "data": null
-                                        }
-                                        """)))
+                    {
+                        "code": "BAD_REQUEST",
+                        "message": "Invalid email or password",
+                        "data": null
+                    }
+                    """)))
             })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "User login credentials",
@@ -231,11 +220,11 @@ public class AuthController extends BaseController {
                                             name = "Login Request",
                                             value =
                                                     """
-                        {
-                            "email": "student@std.iyte.edu.tr",
-                            "password": "SecurePass123!"
-                        }
-                        """)))
+            {
+                "email": "student@std.iyte.edu.tr",
+                "password": "SecurePass123!"
+            }
+            """)))
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
             @RequestBody LoginUserCommand command) {
         return send(command);
@@ -296,48 +285,8 @@ public class AuthController extends BaseController {
     }
 
     @PostMapping("/refresh")
-    @Operation(
-            summary = "Refresh access token",
-            description =
-                    "Exchanges a valid refresh token for a new access token and refresh token")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "Token refreshed successfully"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Invalid or expired refresh token")
-            })
-    public ResponseEntity<ApiResponse<LoginUserResult>> refreshToken(
+    public ResponseEntity<ApiResponse<RefreshTokenResult>> refreshToken(
             @RequestParam String refreshToken) {
-        var userIdOpt = refreshTokenService.validateRefreshToken(refreshToken);
-        if (userIdOpt.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.badRequest("Invalid or expired refresh token"));
-        }
-
-        String userId = userIdOpt.get();
-        UserEntity user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.badRequest().body(ApiResponse.badRequest("User not found"));
-        }
-
-        refreshTokenService.revokeRefreshToken(refreshToken);
-        String newRefreshToken = refreshTokenService.createRefreshToken(userId);
-        String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
-        String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
-
-        var result =
-                new LoginUserResult(
-                        user.getId(),
-                        user.getEmail(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        role,
-                        newAccessToken,
-                        newRefreshToken,
-                        null);
-        return ResponseEntity.ok(ApiResponse.success(result, "Token refreshed successfully"));
+        return send(new RefreshTokenCommand(refreshToken));
     }
 }

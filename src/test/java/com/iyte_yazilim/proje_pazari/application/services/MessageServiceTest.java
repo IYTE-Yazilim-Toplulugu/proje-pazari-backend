@@ -152,12 +152,12 @@ class MessageServiceTest {
     void shouldHandleProjectMessages() {
         // Turkish
         LocaleContextHolder.setLocale(Locale.forLanguageTag("tr"));
-        String turkishMessage = messageService.getMessage("project.created");
+        String turkishMessage = messageService.getMessage("project.created.success");
         assertEquals("Proje başarıyla oluşturuldu", turkishMessage);
 
         // English
         LocaleContextHolder.setLocale(Locale.forLanguageTag("en"));
-        String englishMessage = messageService.getMessage("project.created");
+        String englishMessage = messageService.getMessage("project.created.success");
         assertEquals("Project created successfully", englishMessage);
     }
 
