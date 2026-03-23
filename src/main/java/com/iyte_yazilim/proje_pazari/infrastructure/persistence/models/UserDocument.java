@@ -24,19 +24,19 @@ public class UserDocument {
 
     @Id @EqualsAndHashCode.Include private String id;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String firstName;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String lastName;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String fullName;
 
     @Field(type = FieldType.Keyword)
     private String email;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String description;
 
     @Field(type = FieldType.Date, format = DateFormat.date_time)
