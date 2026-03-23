@@ -296,6 +296,16 @@ management.endpoints.web.exposure.include=health,info,prometheus
 management.endpoint.prometheus.enabled=true
 ```
 
+Start monitoring services with Docker Compose profile:
+
+```bash
+docker compose --profile monitoring up -d prometheus alertmanager grafana
+```
+
+- Prometheus: `http://localhost:9090`
+- Alertmanager: `http://localhost:9093`
+- Grafana: `http://localhost:3030`
+
 ---
 
 ## Backup and Recovery
@@ -312,4 +322,14 @@ docker exec -i proje-pazari-db psql -U yazilim proje_pazari_db < backup.sql
 
 ### Scheduled Backups
 
-Use cron or cloud-native backup solutions for automated backups.
+Use the built-in maintenance scheduler service:
+
+```bash
+docker compose --profile maintenance up -d minio-backup-scheduler
+```
+
+Set interval with:
+
+```bash
+BACKUP_INTERVAL_SECONDS=86400
+```
