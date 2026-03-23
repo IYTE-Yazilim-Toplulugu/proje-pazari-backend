@@ -1,6 +1,8 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutHandler;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenResult;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
@@ -16,7 +18,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -74,13 +78,16 @@ public class AuthController extends BaseController {
             verifyEmailHandler;
     private final IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
             resendVerificationEmailHandler;
+    private final LogoutHandler logoutHandler;
 
     public AuthController(
             IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler,
             IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
-                    resendVerificationEmailHandler) {
+                    resendVerificationEmailHandler,
+            LogoutHandler logoutHandler) {
         this.verifyEmailHandler = verifyEmailHandler;
         this.resendVerificationEmailHandler = resendVerificationEmailHandler;
+        this.logoutHandler = logoutHandler;
     }
 
     @PostMapping("/register")
@@ -288,5 +295,34 @@ public class AuthController extends BaseController {
     public ResponseEntity<ApiResponse<RefreshTokenResult>> refreshToken(
             @RequestParam String refreshToken) {
         return send(new RefreshTokenCommand(refreshToken));
+    }
+
+    @PostMapping("/logout")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Logout user",
+            description =
+                    "Revokes the refresh token and blacklists the access token. "
+                            + "The refresh token is required. "
+                            + "The access token is read from the Authorization header and blacklisted in Redis until it expires naturally.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Logout successful"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Refresh token is missing")
+            })
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @RequestParam String refreshToken, HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        String accessToken =
+                (authHeader != null && authHeader.startsWith("Bearer "))
+                        ? authHeader.substring(7)
+                        : null;
+        ApiResponse<Void> response =
+                logoutHandler.handle(new LogoutCommand(accessToken, refreshToken));
+        return ResponseEntity.ok(response);
     }
 }
