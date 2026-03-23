@@ -61,11 +61,7 @@ public class ElasticsearchEventListener {
             log.debug("Re-indexing updated user: {}", event.userId());
             syncService.indexUser(event.userId());
         } catch (Exception e) {
-            log.error(
-                    "Failed to re-index updated user {}: {}",
-                    event.userId(),
-                    e.getMessage(),
-                    e);
+            log.error("Failed to re-index updated user {}: {}", event.userId(), e.getMessage(), e);
         }
     }
 
