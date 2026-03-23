@@ -26,10 +26,10 @@ public class ProjectDocument {
 
     @Id private String id;
 
-    @Field(type = FieldType.Text, analyzer = "turkhis_search")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String title;
 
-    @Field(type = FieldType.Text, analyzer = "turkhis_search")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String description;
 
     @Field(type = FieldType.Text)
