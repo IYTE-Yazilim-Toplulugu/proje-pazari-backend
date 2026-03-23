@@ -32,7 +32,7 @@ public class ProjectDocument {
     @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String description;
 
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String summary;
 
     @Field(type = FieldType.Keyword)
