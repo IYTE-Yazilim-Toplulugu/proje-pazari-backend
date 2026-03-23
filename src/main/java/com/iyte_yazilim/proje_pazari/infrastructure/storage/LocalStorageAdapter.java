@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -137,5 +138,34 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
         } catch (IOException e) {
             throw new FileStorageException("Failed to retrieve file", e);
         }
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return Files.exists(storageLocation) && Files.isDirectory(storageLocation);
+    }
+
+    @Override
+    public Long getTotalSpaceBytes() {
+        return storageLocation.toFile().getTotalSpace();
+    }
+
+    @Override
+    public Long getUsedSpaceBytes() {
+        long total = storageLocation.toFile().getTotalSpace();
+        long free = storageLocation.toFile().getUsableSpace();
+        if (total <= 0L) {
+            return null;
+        }
+        return Math.max(total - free, 0L);
+    }
+
+    @Override
+    public List<String> listBuckets() {
+        Path name = storageLocation.getFileName();
+        if (name == null) {
+            return List.of(storageLocation.toString());
+        }
+        return List.of(name.toString());
     }
 }

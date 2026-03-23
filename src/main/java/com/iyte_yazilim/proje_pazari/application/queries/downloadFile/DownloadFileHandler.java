@@ -36,11 +36,11 @@ public class DownloadFileHandler
             return ApiResponse.badRequest("Invalid file path");
         }
 
-        if (!fileStorageService.fileExists(path)) {
+        if (!fileStorageService.fileExists(decodedPath)) {
             return ApiResponse.notFound("File not found");
         }
 
-        String presignedUrl = fileStorageService.getFileUrl(path, DEFAULT_EXPIRY_MINUTES);
+        String presignedUrl = fileStorageService.getFileUrl(decodedPath, DEFAULT_EXPIRY_MINUTES);
         return ApiResponse.success(presignedUrl, "File URL generated successfully");
     }
 }

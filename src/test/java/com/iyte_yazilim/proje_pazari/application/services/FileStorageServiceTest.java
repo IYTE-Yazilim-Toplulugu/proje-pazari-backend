@@ -3,17 +3,20 @@ package com.iyte_yazilim.proje_pazari.application.services;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,19 +28,22 @@ class FileStorageServiceTest {
 
     @InjectMocks private FileStorageService fileStorageService;
 
-    private void setDefaultConfig() {
+    @BeforeEach
+    void setUp() {
         ReflectionTestUtils.setField(fileStorageService, "maxFileSize", DataSize.ofMegabytes(10));
         ReflectionTestUtils.setField(
                 fileStorageService,
                 "allowedContentTypesString",
                 "image/jpeg,image/png,image/gif,image/webp,application/pdf");
+        ReflectionTestUtils.setField(fileStorageService, "avatarsBucket", "proje-pazari-avatars");
+        ReflectionTestUtils.setField(
+                fileStorageService, "documentsBucket", "proje-pazari-documents");
     }
 
     @Test
     @DisplayName("Should store file successfully")
     void shouldStoreFile_whenFileIsValid() {
         // Given
-        setDefaultConfig();
         MultipartFile file = mock(MultipartFile.class);
         when(file.getContentType()).thenReturn("image/jpeg");
         when(file.getOriginalFilename()).thenReturn("photo.jpg");
@@ -59,7 +65,6 @@ class FileStorageServiceTest {
     @DisplayName("Should reject empty file")
     void shouldRejectFile_whenEmpty() {
         // Given
-        setDefaultConfig();
         MultipartFile file = mock(MultipartFile.class);
         when(file.isEmpty()).thenReturn(true);
 
@@ -72,7 +77,6 @@ class FileStorageServiceTest {
     @DisplayName("Should reject file exceeding size limit")
     void shouldRejectFile_whenSizeExceedsLimit() {
         // Given
-        setDefaultConfig();
         MultipartFile file = mock(MultipartFile.class);
         when(file.isEmpty()).thenReturn(false);
         when(file.getSize()).thenReturn(20L * 1024 * 1024); // 20MB exceeds 10MB limit
@@ -86,7 +90,6 @@ class FileStorageServiceTest {
     @DisplayName("Should reject file with disallowed content type")
     void shouldRejectFile_whenContentTypeNotAllowed() {
         // Given
-        setDefaultConfig();
         MultipartFile file = mock(MultipartFile.class);
         when(file.isEmpty()).thenReturn(false);
         when(file.getSize()).thenReturn(1024L);
@@ -164,5 +167,43 @@ class FileStorageServiceTest {
         // Then
         assertEquals(expectedUrl, url);
         verify(storageAdapter).generatePresignedUrl(path, 60);
+    }
+
+    @Test
+    void shouldStoreUserAvatarWithOrganizedPath() {
+        MockMultipartFile file =
+                new MockMultipartFile("file", "avatar.png", "image/png", "img".getBytes());
+        String expectedPath = "proje-pazari-avatars/users/user-1/avatar.png";
+
+        when(storageAdapter.store(any(), eq(expectedPath))).thenReturn(expectedPath);
+
+        String storedPath = fileStorageService.storeUserAvatar("user-1", file);
+
+        assertEquals(expectedPath, storedPath);
+        verify(storageAdapter).store(any(), eq(expectedPath));
+    }
+
+    @Test
+    void shouldStoreProjectDocumentWithOrganizedPath() {
+        MockMultipartFile file =
+                new MockMultipartFile("file", "spec.pdf", "application/pdf", "pdf".getBytes());
+        String expectedPath = "proje-pazari-documents/projects/proj-1/doc-1.pdf";
+
+        when(storageAdapter.store(any(), eq(expectedPath))).thenReturn(expectedPath);
+
+        String storedPath = fileStorageService.storeProjectDocument("proj-1", "doc-1", file);
+
+        assertEquals(expectedPath, storedPath);
+        verify(storageAdapter).store(any(), eq(expectedPath));
+    }
+
+    @Test
+    void shouldRejectInvalidUserIdForAvatarPath() {
+        MockMultipartFile file =
+                new MockMultipartFile("file", "avatar.png", "image/png", "img".getBytes());
+
+        assertThrows(
+                FileStorageException.class,
+                () -> fileStorageService.storeUserAvatar("../bad", file));
     }
 }
