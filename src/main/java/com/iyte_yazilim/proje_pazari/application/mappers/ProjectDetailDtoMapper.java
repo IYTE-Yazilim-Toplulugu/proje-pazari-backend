@@ -16,6 +16,9 @@ public interface ProjectDetailDtoMapper {
             target = "ownerEmail",
             expression = "java(project.getOwner() != null ? project.getOwner().getEmail() : null)")
     @Mapping(
+            target = "id",
+            expression = "java(project.getId() != null ? project.getId().toString() : null)")
+    @Mapping(
             target = "applicationCount",
             expression =
                     "java(project.getApplications() != null ? project.getApplications().size() : 0)")
