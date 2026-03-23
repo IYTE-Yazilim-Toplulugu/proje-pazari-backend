@@ -82,6 +82,10 @@ public class ElasticsearchSyncService {
         projectSearchRepository.deleteById(projectId);
     }
 
+    public void deleteUserIndex(String userId) {
+        userSearchRepository.deleteById(userId);
+    }
+
     @Transactional(readOnly = true)
     @Async
     public void reindexAllProjects() {
