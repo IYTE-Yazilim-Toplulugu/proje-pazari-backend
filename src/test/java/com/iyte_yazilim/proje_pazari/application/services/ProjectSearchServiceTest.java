@@ -28,7 +28,7 @@ class ProjectSearchServiceTest {
 
     @Container
     static ElasticsearchContainer elasticsearch =
-            new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:9.2.0")
+            new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:9.2.2")
                     .withEnv("xpack.security.enabled", "false")
                     .withEnv("xpack.security.http.ssl.enabled", "false");
 
