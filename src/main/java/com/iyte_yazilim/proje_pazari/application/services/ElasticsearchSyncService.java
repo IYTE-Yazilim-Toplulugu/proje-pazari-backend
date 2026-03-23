@@ -74,6 +74,7 @@ public class ElasticsearchSyncService {
                                                 "User not found for indexing: " + userId));
 
         UserDocument document = toUserDocument(user);
+        document.setFullName(user.getFirstName() + " " + user.getLastName());
         userSearchRepository.save(document);
     }
 
