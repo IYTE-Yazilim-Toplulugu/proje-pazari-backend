@@ -38,7 +38,7 @@ services:
     restart: always
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
     container_name: proje-pazari-minio
     command: server /data --console-address ":9001"
     environment:
@@ -60,7 +60,7 @@ services:
     restart: always
 
   minio-setup:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-04-08T16-05-16Z
     container_name: proje-pazari-minio-setup
     depends_on:
       minio:
@@ -305,7 +305,7 @@ services:
       - monitoring
 
   minio-backup:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-04-08T16-05-16Z
     container_name: proje-pazari-minio-backup
     depends_on:
       minio:
@@ -327,7 +327,7 @@ services:
       - maintenance
 
   minio-backup-scheduler:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-04-08T16-05-16Z
     container_name: proje-pazari-minio-backup-scheduler
     depends_on:
       minio:

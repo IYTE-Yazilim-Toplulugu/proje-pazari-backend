@@ -25,10 +25,10 @@ public class FileStorageService {
             "${storage.allowed-content-types:image/jpeg,image/png,image/gif,image/webp,application/pdf}")
     private String allowedContentTypesString;
 
-    @Value("${minio.avatars-bucket:proje-pazari-avatars}")
+    @Value("${storage.buckets.avatars:proje-pazari-avatars}")
     private String avatarsBucket;
 
-    @Value("${minio.documents-bucket:proje-pazari-documents}")
+    @Value("${storage.buckets.documents:proje-pazari-documents}")
     private String documentsBucket;
 
     /**
