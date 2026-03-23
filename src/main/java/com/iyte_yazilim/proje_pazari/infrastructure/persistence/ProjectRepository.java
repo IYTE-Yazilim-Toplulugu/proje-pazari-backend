@@ -20,9 +20,6 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, String> 
 
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
-
-
-
     @Query(
             "SELECT p FROM ProjectEntity p WHERE "
                     + "(:status IS NULL OR p.status = :status) AND "

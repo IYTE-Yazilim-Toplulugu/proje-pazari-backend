@@ -4,11 +4,11 @@ import com.iyte_yazilim.proje_pazari.application.commands.reviewApplication.Revi
 import com.iyte_yazilim.proje_pazari.application.commands.submitApplication.SubmitApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.withdrawApplication.WithdrawApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationDto;
+import com.iyte_yazilim.proje_pazari.application.dtos.PagedApplicationsResult;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectApplications.GetProjectApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserApplications.GetUserApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.application.dtos.PagedApplicationsResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.SubmitApplicationCommandResult;
 import io.swagger.v3.oas.annotations.Operation;

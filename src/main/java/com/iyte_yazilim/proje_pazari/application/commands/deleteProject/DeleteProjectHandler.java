@@ -83,13 +83,9 @@ public class DeleteProjectHandler
 
         int rejectedCount = pendingApplications.size();
         List<String> applicantEmails =
-                pendingApplications.stream()
-                        .map(app -> app.getUser().getEmail())
-                        .toList();
+                pendingApplications.stream().map(app -> app.getUser().getEmail()).toList();
         List<String> applicantNames =
-                pendingApplications.stream()
-                        .map(app -> app.getUser().getFirstName())
-                        .toList();
+                pendingApplications.stream().map(app -> app.getUser().getFirstName()).toList();
 
         if (rejectedCount > 0) {
             log.info(
