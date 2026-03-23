@@ -364,7 +364,7 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
     class ResponseCodeMappingTests {
 
         @Test
-        @DisplayName("1. SUCCESS code is 0")
+        @DisplayName("1. SUCCESS code is 2")
         void successCode_is0() throws Exception {
             mockMvc.perform(
                             post("/api/v1/auth/register")
