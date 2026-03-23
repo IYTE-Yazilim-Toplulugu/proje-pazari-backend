@@ -64,9 +64,9 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
             @Value("${minio.access-key}") String accessKey,
             @Value("${minio.secret-key}") String secretKey,
             @Value("${minio.bucket-name}") String bucketName,
-            @Value("${minio.avatars-bucket:" + DEFAULT_AVATARS_BUCKET + "}")
+            @Value("${storage.buckets.avatars:" + DEFAULT_AVATARS_BUCKET + "}")
                     String avatarsBucketName,
-            @Value("${minio.documents-bucket:" + DEFAULT_DOCUMENTS_BUCKET + "}")
+            @Value("${storage.buckets.documents:" + DEFAULT_DOCUMENTS_BUCKET + "}")
                     String documentsBucketName,
             @Value("${minio.backups-bucket:" + DEFAULT_BACKUPS_BUCKET + "}")
                     String backupsBucketName,
