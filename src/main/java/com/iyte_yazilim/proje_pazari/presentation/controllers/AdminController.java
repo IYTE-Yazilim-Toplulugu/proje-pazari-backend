@@ -26,6 +26,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.unbanIp.UnbanIpCommand
 import com.iyte_yazilim.proje_pazari.application.commands.updateFeatureFlag.UpdateFeatureFlagCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
 import com.iyte_yazilim.proje_pazari.application.common.Audited;
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.dtos.ActiveSessionDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.AnalyticsTrendsDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationAdminDTO;
@@ -72,13 +73,13 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -101,7 +102,16 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController extends BaseController {
 
-    @Autowired private StorageHealthService storageHealthService;
+    private final StorageHealthService storageHealthService;
+
+    public AdminController(
+            IMediator mediator,
+            IRequestMapper requestMapper,
+            StorageHealthService storageHealthService) {
+        this.mediator = mediator;
+        this.requestMapper = requestMapper;
+        this.storageHealthService = storageHealthService;
+    }
 
     // ==================== USER MANAGEMENT ====================
 

@@ -88,9 +88,8 @@ This will start:
 - Redis on port 6379
 - MinIO API on port 9002 / Console on port 9003
 - Elasticsearch on port 9200
-- Prometheus on port 9090
-- Grafana on port 3030
 - Application API on port 8080
+- Prometheus on port 9090, Grafana on port 3030, Alertmanager on port 9093 (use `--profile monitoring` flag)
 - PgAdmin on port 5050 (use `--profile tools` flag)
 
 ### 4. Run the Application
@@ -207,7 +206,7 @@ docker compose --profile monitoring up -d prometheus alertmanager grafana
 
 - Prometheus UI: http://localhost:9090
 - Alertmanager UI: http://localhost:9093
-- Grafana UI: http://localhost:3001 (default `admin` / `admin`)
+- Grafana UI: http://localhost:3030 (default `admin` / `admin`)
 
 **Automated MinIO Backups (Daily by default):**
 ```bash

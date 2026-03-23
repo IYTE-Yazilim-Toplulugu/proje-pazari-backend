@@ -214,16 +214,20 @@ services:
     container_name: proje-pazari-prometheus
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./docker/prometheus/rules.yml:/etc/prometheus/rules.yml
+      - ./docker/prometheus/alerts.yml:/etc/prometheus/alerts.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "127.0.0.1:9090:9090"
     networks:
       - proje-pazari-network
     restart: always
+    profiles:
+      - monitoring
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
       interval: 15s
@@ -269,6 +273,8 @@ services:
     networks:
       - proje-pazari-network
     restart: always
+    profiles:
+      - monitoring
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 15s
@@ -280,6 +286,23 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: proje-pazari-alertmanager
+    volumes:
+      - ./docker/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - proje-pazari-network
+    restart: always
+    profiles:
+      - monitoring
 
   minio-backup:
     image: minio/mc:latest

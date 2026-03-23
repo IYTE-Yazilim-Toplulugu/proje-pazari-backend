@@ -304,7 +304,7 @@ docker compose --profile monitoring up -d prometheus alertmanager grafana
 
 - Prometheus: `http://localhost:9090`
 - Alertmanager: `http://localhost:9093`
-- Grafana: `http://localhost:3001`
+- Grafana: `http://localhost:3030`
 
 ---
 
