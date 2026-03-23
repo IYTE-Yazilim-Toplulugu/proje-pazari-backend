@@ -311,6 +311,14 @@ docker compose --profile tools up -d pgadmin
 
 The `pgpass` file at `docker/pgadmin/pgpass` must match the `POSTGRES_PASSWORD` used by the postgres container. If you changed the postgres password, update `docker/pgadmin/pgpass` accordingly.
 
+pgpass also requires restricted file permissions. Run this once after cloning:
+
+```bash
+chmod 600 docker/pgadmin/pgpass
+```
+
+Git does not track permissions on non-executable files, so each developer must do this manually.
+
 ### Direct psql access (without pgAdmin)
 
 ```bash
