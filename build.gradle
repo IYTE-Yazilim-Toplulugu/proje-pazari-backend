@@ -221,7 +221,9 @@ jacocoTestCoverageVerification {
                 '*.queries.getAllProjects.*',
                 '*.queries.getProjectById.*',
                 '*.commands.uploadFile.*',
-                '*.commands.refreshToken.*'
+                '*.commands.refreshToken.*',
+                // Interfaces with default methods only
+                '*.domain.interfaces.*'
             ]
         }
 
@@ -287,13 +289,13 @@ jacocoTestCoverageVerification {
                 '*.presentation.controllers.AdminController*',
                 '*.presentation.controllers.ElasticsearchAdminController',
                 '*.presentation.controllers.BaseController',
-                '*.presentation.controllers.FileController',
-                '*.presentation.controllers.ProjectController',
                 // New queries/commands from merge
                 '*.queries.getAllProjects.*',
                 '*.queries.getProjectById.*',
                 '*.commands.uploadFile.*',
-                '*.commands.refreshToken.*'
+                '*.commands.refreshToken.*',
+                // Interfaces with default methods only
+                '*.domain.interfaces.*'
             ]
         }
     }

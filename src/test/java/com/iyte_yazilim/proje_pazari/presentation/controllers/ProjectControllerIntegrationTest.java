@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -350,6 +351,92 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
             var projects = projectRepository.findByOwnerId(ownerId);
             assertThat(projects).hasSize(2);
+        }
+    }
+
+    // ── 2. Get All Projects Tests ───────────────────────────────────────
+
+    @Nested
+    @DisplayName("GET /api/v1/projects")
+    class GetAllProjectsTests {
+
+        @Test
+        @DisplayName("1. Get all projects returns 200 with empty list when no projects exist")
+        void getAllProjects_noProjects_returns200EmptyList() throws Exception {
+            mockMvc.perform(get(BASE_URL))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray());
+        }
+
+        @Test
+        @DisplayName("2. Get all projects returns 200 with created projects")
+        void getAllProjects_withProjects_returns200WithList() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+
+            mockMvc.perform(
+                            post(BASE_URL)
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(validProjectData())))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(get(BASE_URL))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data.length()").value(1));
+        }
+
+        @Test
+        @DisplayName("3. Get all projects is accessible without authentication")
+        void getAllProjects_noAuth_returns200() throws Exception {
+            mockMvc.perform(get(BASE_URL)).andExpect(status().isOk());
+        }
+    }
+
+    // ── 3. Get Project By ID Tests ──────────────────────────────────────
+
+    @Nested
+    @DisplayName("GET /api/v1/projects/{projectId}")
+    class GetProjectByIdTests {
+
+        @Test
+        @DisplayName("1. Get existing project by ID returns 200")
+        void getProjectById_existingProject_returns200() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+
+            MvcResult result =
+                    mockMvc.perform(
+                                    post(BASE_URL)
+                                            .header("Authorization", "Bearer " + token)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(
+                                                    objectMapper.writeValueAsString(
+                                                            validProjectData())))
+                            .andExpect(status().isCreated())
+                            .andReturn();
+
+            String projectId =
+                    objectMapper
+                            .readTree(result.getResponse().getContentAsString())
+                            .get("data")
+                            .get("projectId")
+                            .asText();
+
+            mockMvc.perform(get(BASE_URL + "/" + projectId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.title").value("AI Chatbot Project"));
+        }
+
+        @Test
+        @DisplayName("2. Get non-existent project by ID returns 404")
+        void getProjectById_nonExistent_returns404() throws Exception {
+            mockMvc.perform(get(BASE_URL + "/nonexistent-id")).andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("3. Get project by ID is accessible without authentication")
+        void getProjectById_noAuth_returns404ForNonExistent() throws Exception {
+            mockMvc.perform(get(BASE_URL + "/nonexistent-id")).andExpect(status().isNotFound());
         }
     }
 }
