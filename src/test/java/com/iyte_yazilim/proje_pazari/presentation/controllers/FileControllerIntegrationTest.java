@@ -195,7 +195,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         void uploadProfilePicture_validJpeg_returns200() throws Exception {
             String token = createVerifiedUserAndGetToken();
             String expectedUrl = "/api/v1/files/profiles/ulid123.jpg";
-            when(fileStorageService.storeFile(any(), anyString())).thenReturn(expectedUrl);
+            when(fileStorageService.storeUserAvatar(anyString(), any())).thenReturn(expectedUrl);
 
             MockMultipartFile file =
                     new MockMultipartFile(
@@ -213,7 +213,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("2. Upload valid PNG image returns 200")
         void uploadProfilePicture_validPng_returns200() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            when(fileStorageService.storeFile(any(), anyString()))
+            when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenReturn("/api/v1/files/profiles/ulid123.png");
 
             MockMultipartFile file =
@@ -231,7 +231,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("3. Upload valid GIF image returns 200")
         void uploadProfilePicture_validGif_returns200() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            when(fileStorageService.storeFile(any(), anyString()))
+            when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenReturn("/api/v1/files/profiles/ulid123.gif");
 
             MockMultipartFile file =
@@ -249,7 +249,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("4. Upload valid WebP image returns 200")
         void uploadProfilePicture_validWebp_returns200() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            when(fileStorageService.storeFile(any(), anyString()))
+            when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenReturn("/api/v1/files/profiles/ulid123.webp");
 
             MockMultipartFile file =
@@ -278,7 +278,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("6. Upload executable file (.exe) is rejected")
         void uploadProfilePicture_executableFile_isRejected() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            when(fileStorageService.storeFile(any(), anyString()))
+            when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenThrow(new FileStorageException("File type not allowed"));
 
             MockMultipartFile file =
@@ -299,7 +299,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("7. Upload shell script (.sh) is rejected")
         void uploadProfilePicture_shellScript_isRejected() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            when(fileStorageService.storeFile(any(), anyString()))
+            when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenThrow(new FileStorageException("File type not allowed"));
 
             MockMultipartFile file =
@@ -320,7 +320,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("8. Upload non-image file (ZIP) is rejected")
         void uploadProfilePicture_zipFile_isRejected() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            when(fileStorageService.storeFile(any(), anyString()))
+            when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenThrow(new FileStorageException("File type not allowed"));
 
             MockMultipartFile file =
@@ -341,7 +341,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("9. Upload oversized file is rejected")
         void uploadProfilePicture_oversizedFile_isRejected() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            when(fileStorageService.storeFile(any(), anyString()))
+            when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenThrow(
                             new FileStorageException("File size exceeds the maximum allowed size"));
 
@@ -379,7 +379,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String firstUrl = "/api/v1/files/profiles/first.jpg";
             String secondUrl = "/api/v1/files/profiles/second.jpg";
 
-            when(fileStorageService.storeFile(any(), anyString()))
+            when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenReturn(firstUrl)
                     .thenReturn(secondUrl);
 
@@ -407,10 +407,10 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("12. Upload stores file in profiles folder")
-        void uploadProfilePicture_storesInProfilesFolder() throws Exception {
+        @DisplayName("12. Upload stores file with userId")
+        void uploadProfilePicture_storesWithUserId() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            when(fileStorageService.storeFile(any(), anyString()))
+            when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenReturn("/api/v1/files/profiles/ulid.jpg");
 
             MockMultipartFile file =
@@ -424,7 +424,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
                     .andExpect(status().isOk());
 
             verify(fileStorageService)
-                    .storeFile(any(), org.mockito.ArgumentMatchers.eq("profiles"));
+                    .storeUserAvatar(anyString(), any());
         }
     }
 }
