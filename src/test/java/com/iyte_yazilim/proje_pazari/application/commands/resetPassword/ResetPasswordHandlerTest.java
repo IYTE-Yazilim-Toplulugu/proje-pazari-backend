@@ -103,7 +103,8 @@ class ResetPasswordHandlerTest {
                 InvalidVerificationTokenException.class,
                 () ->
                         handler.handle(
-                                new ResetPasswordCommand("bad-token", VALID_PASSWORD, VALID_PASSWORD)));
+                                new ResetPasswordCommand(
+                                        "bad-token", VALID_PASSWORD, VALID_PASSWORD)));
     }
 
     @Test
@@ -139,8 +140,7 @@ class ResetPasswordHandlerTest {
     @Test
     @DisplayName("Should return validation error when passwords do not match")
     void shouldReturnValidationError_WhenPasswordsDoNotMatch() {
-        when(passwordResetTokenRepository.findByToken(TOKEN))
-                .thenReturn(Optional.of(validToken()));
+        when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(validToken()));
 
         ApiResponse<Void> response =
                 handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD, "DifferentPass1!"));
@@ -152,8 +152,7 @@ class ResetPasswordHandlerTest {
     @Test
     @DisplayName("Should return validation error when password is too weak")
     void shouldReturnValidationError_WhenPasswordIsWeak() {
-        when(passwordResetTokenRepository.findByToken(TOKEN))
-                .thenReturn(Optional.of(validToken()));
+        when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(validToken()));
 
         ApiResponse<Void> response =
                 handler.handle(new ResetPasswordCommand(TOKEN, "weak", "weak"));
@@ -165,8 +164,7 @@ class ResetPasswordHandlerTest {
     @Test
     @DisplayName("Should throw UserNotFoundException when user no longer exists")
     void shouldThrow_WhenUserNotFound() {
-        when(passwordResetTokenRepository.findByToken(TOKEN))
-                .thenReturn(Optional.of(validToken()));
+        when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(validToken()));
         when(userRepository.findById("user-123")).thenReturn(Optional.empty());
 
         assertThrows(

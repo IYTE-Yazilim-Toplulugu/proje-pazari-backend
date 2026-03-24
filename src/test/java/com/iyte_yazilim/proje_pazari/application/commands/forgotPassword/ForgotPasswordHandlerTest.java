@@ -59,7 +59,9 @@ class ForgotPasswordHandlerTest {
         assertEquals(SUCCESS_MSG, response.getMessage());
         verify(passwordResetTokenRepository).deleteByUserId("user-123");
         verify(passwordResetTokenRepository).save(any());
-        verify(emailService).sendTemplateEmailAsync(eq("student@std.iyte.edu.tr"), eq("password-reset.html"), any());
+        verify(emailService)
+                .sendTemplateEmailAsync(
+                        eq("student@std.iyte.edu.tr"), eq("password-reset.html"), any());
     }
 
     @Test

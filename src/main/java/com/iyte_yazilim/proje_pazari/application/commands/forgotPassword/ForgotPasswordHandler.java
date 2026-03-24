@@ -43,8 +43,7 @@ public class ForgotPasswordHandler
         Optional<UserEntity> userOpt = userRepository.findByEmail(command.email());
 
         if (userOpt.isEmpty()) {
-            log.warn(
-                    "Password reset requested for non-existent email: {}", command.email());
+            log.warn("Password reset requested for non-existent email: {}", command.email());
             return ApiResponse.success(
                     null, messageService.getMessage("auth.password.reset.email.sent"));
         }
@@ -72,9 +71,12 @@ public class ForgotPasswordHandler
                 user.getEmail(),
                 "password-reset.html",
                 Map.of(
-                        "subject", "Şifre Sıfırlama / Password Reset",
-                        "firstName", user.getFirstName(),
-                        "resetLink", resetLink));
+                        "subject",
+                        "Şifre Sıfırlama / Password Reset",
+                        "firstName",
+                        user.getFirstName(),
+                        "resetLink",
+                        resetLink));
 
         log.info("Password reset email sent to user: {}", user.getId());
 
