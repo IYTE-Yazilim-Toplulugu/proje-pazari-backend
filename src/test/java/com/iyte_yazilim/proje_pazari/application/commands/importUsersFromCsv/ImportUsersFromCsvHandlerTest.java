@@ -119,8 +119,7 @@ class ImportUsersFromCsvHandlerTest {
     @Test
     @DisplayName("Should handle blank email in CSV row")
     void shouldHandleBlankEmail() {
-        String csv =
-                "email,firstName,lastName,role,password\n" + " ,John,Doe,USER,password123\n";
+        String csv = "email,firstName,lastName,role,password\n" + " ,John,Doe,USER,password123\n";
 
         ApiResponse<ImportResultDTO> response = handler.handle(new ImportUsersFromCsvCommand(csv));
 

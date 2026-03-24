@@ -30,7 +30,13 @@ public class ExportUsersHandler implements IRequestHandler<ExportUsersQuery, Api
                     .append(",")
                     .append(escapeCsv(user.getLastName()))
                     .append(",")
-                    .append(user.getRoles() != null ? user.getRoles().stream().map(Enum::name).reduce((a, b) -> a + "|" + b).orElse("") : "")
+                    .append(
+                            user.getRoles() != null
+                                    ? user.getRoles().stream()
+                                            .map(Enum::name)
+                                            .reduce((a, b) -> a + "|" + b)
+                                            .orElse("")
+                                    : "")
                     .append(",")
                     .append(user.getIsActive() != null ? user.getIsActive() : "")
                     .append(",")

@@ -79,7 +79,10 @@ public class LoginUserHandler
         }
 
         // --- 6. Generate JWT token with userId, email, and role ---
-        String role = user.getRoles().contains(com.iyte_yazilim.proje_pazari.domain.enums.RoleType.ADMIN) ? "ADMIN" : "USER";
+        String role =
+                user.getRoles().contains(com.iyte_yazilim.proje_pazari.domain.enums.RoleType.ADMIN)
+                        ? "ADMIN"
+                        : "USER";
         String accessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
 
         // --- 7. Generate refresh token ---

@@ -207,8 +207,7 @@ class UserControllerIntegrationTest {
         deactivateUser.setId(UlidCreator.getUlid().toString());
         userRepository.save(deactivateUser);
         String deactivateToken =
-                jwtUtil.generateToken(
-                        deactivateUser.getId(), deactivateUser.getEmail(), "USER");
+                jwtUtil.generateToken(deactivateUser.getId(), deactivateUser.getEmail(), "USER");
 
         mockMvc.perform(
                         delete("/api/v1/users/me")

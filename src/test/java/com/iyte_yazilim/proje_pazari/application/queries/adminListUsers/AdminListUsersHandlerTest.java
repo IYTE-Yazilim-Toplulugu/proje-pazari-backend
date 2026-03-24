@@ -68,8 +68,7 @@ class AdminListUsersHandlerTest {
     @DisplayName("Should filter users by role")
     void shouldFilterByRole() {
         Page<UserEntity> page = new PageImpl<>(List.of(testUser));
-        when(userRepository.findWithFilters(
-                        eq(RoleType.USER), any(), any(), any(Pageable.class)))
+        when(userRepository.findWithFilters(eq(RoleType.USER), any(), any(), any(Pageable.class)))
                 .thenReturn(page);
         when(userRepository.countProjectsByUserId(any())).thenReturn(0);
         when(userRepository.countApplicationsByUserId(any())).thenReturn(0);

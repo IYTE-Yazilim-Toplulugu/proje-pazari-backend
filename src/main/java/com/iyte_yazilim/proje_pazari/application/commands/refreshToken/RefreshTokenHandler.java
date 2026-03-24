@@ -42,7 +42,10 @@ public class RefreshTokenHandler
 
         refreshTokenService.revokeRefreshToken(refreshToken);
         String newRefreshToken = refreshTokenService.createRefreshToken(userId);
-        String role = user.getRoles().contains(com.iyte_yazilim.proje_pazari.domain.enums.RoleType.ADMIN) ? "ADMIN" : "USER";
+        String role =
+                user.getRoles().contains(com.iyte_yazilim.proje_pazari.domain.enums.RoleType.ADMIN)
+                        ? "ADMIN"
+                        : "USER";
         String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
 
         var result =
