@@ -49,7 +49,7 @@ public class ProjectController extends BaseController {
                         description = "Unauthorized")
             })
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
-            @RequestBody CreateProjectCommand command, Authentication auth) {
+            @Valid @RequestBody CreateProjectCommand command, Authentication auth) {
         return send(CreateProjectCommand.class, null, null, command, auth);
     }
 
@@ -174,7 +174,7 @@ public class ProjectController extends BaseController {
             })
     public ResponseEntity<ApiResponse<UpdateProjectStatusCommandResult>> updateProjectStatus(
             @PathVariable String projectId,
-            @RequestBody UpdateProjectStatusCommand command,
+            @Valid @RequestBody UpdateProjectStatusCommand command,
             Authentication auth) {
         return send(
                 UpdateProjectStatusCommand.class,
