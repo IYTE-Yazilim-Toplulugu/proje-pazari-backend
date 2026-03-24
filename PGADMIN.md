@@ -263,7 +263,7 @@ docker exec proje-pazari-db pg_dump \
 
 ```bash
 docker exec -i proje-pazari-db pg_restore \
-  -U yazilim -d proje_pazari_db < backup_20250215.dump
+  -U yazilim -d proje_pazari_db < backups/postgres/proje_pazari_db_20250215_120000.dump
 ```
 
 ---
