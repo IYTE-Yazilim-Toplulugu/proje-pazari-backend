@@ -82,7 +82,7 @@ public class JwtUtil {
     // Add role claim extraction
     public String extractRole(String token) {
         String role = extractClaim(token, claims -> claims.get("role", String.class));
-        return role != null ? role : "APPLICANT"; // Default to APPLICANT if role claim missing
+        return role != null ? role : "USER";
     }
 
     /**
