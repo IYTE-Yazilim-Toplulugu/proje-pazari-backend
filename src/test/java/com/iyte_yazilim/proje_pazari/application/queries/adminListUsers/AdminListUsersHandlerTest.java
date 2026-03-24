@@ -10,7 +10,9 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +40,7 @@ class AdminListUsersHandlerTest {
         testUser.setEmail("test@example.com");
         testUser.setFirstName("Test");
         testUser.setLastName("User");
-        testUser.setRole(RoleType.APPLICANT);
+        testUser.setRoles(new HashSet<>(Set.of(RoleType.USER)));
         testUser.setIsActive(true);
         testUser.setCreatedAt(LocalDateTime.now());
         testUser.setUpdatedAt(LocalDateTime.now());
@@ -67,17 +69,17 @@ class AdminListUsersHandlerTest {
     void shouldFilterByRole() {
         Page<UserEntity> page = new PageImpl<>(List.of(testUser));
         when(userRepository.findWithFilters(
-                        eq(RoleType.APPLICANT), any(), any(), any(Pageable.class)))
+                        eq(RoleType.USER), any(), any(), any(Pageable.class)))
                 .thenReturn(page);
         when(userRepository.countProjectsByUserId(any())).thenReturn(0);
         when(userRepository.countApplicationsByUserId(any())).thenReturn(0);
 
-        AdminListUsersQuery query = new AdminListUsersQuery(0, 50, RoleType.APPLICANT, null, null);
+        AdminListUsersQuery query = new AdminListUsersQuery(0, 50, RoleType.USER, null, null);
         ApiResponse<PagedResponse<UserAdminDTO>> response = handler.handle(query);
 
         assertNotNull(response.getData());
         verify(userRepository)
-                .findWithFilters(eq(RoleType.APPLICANT), any(), any(), any(Pageable.class));
+                .findWithFilters(eq(RoleType.USER), any(), any(), any(Pageable.class));
     }
 
     @Test

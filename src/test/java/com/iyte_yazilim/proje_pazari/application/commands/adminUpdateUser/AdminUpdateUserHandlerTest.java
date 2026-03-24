@@ -8,7 +8,9 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,7 @@ class AdminUpdateUserHandlerTest {
         testUser = new UserEntity();
         testUser.setId("01ABCDEF12345678901234");
         testUser.setEmail("test@example.com");
-        testUser.setRole(RoleType.APPLICANT);
+        testUser.setRoles(new HashSet<>(Set.of(RoleType.USER)));
         testUser.setIsActive(true);
     }
 
@@ -43,12 +45,12 @@ class AdminUpdateUserHandlerTest {
 
         AdminUpdateUserCommand command =
                 new AdminUpdateUserCommand(
-                        "01ABCDEF12345678901234", RoleType.PROJECT_OWNER, null, null, null, null);
+                        "01ABCDEF12345678901234", RoleType.ADMIN, null, null, null, null);
 
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);
-        assertEquals(RoleType.PROJECT_OWNER, testUser.getRole());
+        assertTrue(testUser.getRoles().contains(RoleType.ADMIN));
         verify(userRepository).save(testUser);
     }
 

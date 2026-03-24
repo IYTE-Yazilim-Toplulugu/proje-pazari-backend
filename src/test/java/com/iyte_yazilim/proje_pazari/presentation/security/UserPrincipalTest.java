@@ -8,11 +8,11 @@ import org.springframework.security.core.GrantedAuthority;
 class UserPrincipalTest {
 
     @Test
-    void testApplicantPrincipalCreation() {
+    void testUserPrincipalCreation() {
         // Given
         String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
         String email = "test@example.com";
-        String role = "APPLICANT";
+        String role = "USER";
 
         // When
         UserPrincipal userPrincipal = new UserPrincipal(userId, email, role);
@@ -25,11 +25,11 @@ class UserPrincipalTest {
     }
 
     @Test
-    void testApplicantAuthorities() {
+    void testUserAuthorities() {
         // Given
         String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
         String email = "test@example.com";
-        String role = "APPLICANT";
+        String role = "USER";
         UserPrincipal userPrincipal = new UserPrincipal(userId, email, role);
 
         // When
@@ -38,7 +38,7 @@ class UserPrincipalTest {
         // Then
         assertEquals(1, authorities.size());
         GrantedAuthority authority = authorities.iterator().next();
-        assertEquals("ROLE_APPLICANT", authority.getAuthority());
+        assertEquals("ROLE_USER", authority.getAuthority());
     }
 
     @Test
@@ -56,22 +56,6 @@ class UserPrincipalTest {
         assertEquals(1, authorities.size());
         GrantedAuthority authority = authorities.iterator().next();
         assertEquals("ROLE_ADMIN", authority.getAuthority());
-    }
-
-    void testProjectOwnerAuthorities() {
-        // Given
-        String userId = "01HQZX9K2M3N4P5Q6R7S8T9V0W";
-        String email = "projectowner@example.com";
-        String role = "PROJECT_OWNER";
-        UserPrincipal userPrincipal = new UserPrincipal(userId, email, role);
-
-        // When
-        var authorities = userPrincipal.getAuthorities();
-
-        // Then
-        assertEquals(1, authorities.size());
-        GrantedAuthority authority = authorities.iterator().next();
-        assertEquals("ROLE_PROJECT_OWNER", authority.getAuthority());
     }
 
     @Test

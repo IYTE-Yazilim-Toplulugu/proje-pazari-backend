@@ -71,7 +71,7 @@ class LoginUserHandlerTest {
         when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
         when(emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(userId))
                 .thenReturn(true);
-        when(jwtUtil.generateToken(userId, email, "APPLICANT")).thenReturn(accessToken);
+        when(jwtUtil.generateToken(userId, email, "USER")).thenReturn(accessToken);
         when(refreshTokenService.createRefreshToken(userId)).thenReturn(refreshToken);
         when(messageService.getMessage("auth.login.success")).thenReturn("Login successful");
 
