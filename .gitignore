@@ -43,3 +43,6 @@ out/
 
 ### Local dev overrides ###
 docker-compose.dev.yml
+
+# Database backup dumps
+backups/

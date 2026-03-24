@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.presentation.security.UserPrincipal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,8 @@ class AutoRequestMapperTest {
             implements IRequest<Void> {}
 
     public record FileUploadCommand(String userId, MultipartFile file) implements IRequest<Void> {}
+
+    public record DateCommand(LocalDateTime deadline, String title) implements IRequest<Void> {}
 
     public record EmptyCommand() implements IRequest<Void> {}
 
@@ -59,6 +62,16 @@ class AutoRequestMapperTest {
 
             assertEquals("Alice", result.name());
             assertEquals(25, result.age());
+        }
+
+        @Test
+        @DisplayName("should map LocalDateTime from body")
+        void shouldMapLocalDateTime() {
+            DateCommand body = new DateCommand(LocalDateTime.of(2026, 6, 1, 12, 0), "Test");
+
+            DateCommand result = mapper.map(DateCommand.class, null, null, body, null);
+
+            assertEquals(LocalDateTime.of(2026, 6, 1, 12, 0), result.deadline());
         }
 
         @Test

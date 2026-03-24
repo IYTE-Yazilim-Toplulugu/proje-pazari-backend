@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.domain.interfaces;
 
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -48,4 +49,24 @@ public interface IFileStorageAdapter {
      * @return file metadata
      */
     FileMetadata getMetadata(String path);
+
+    /** Checks whether the storage backend is reachable and operational. */
+    default boolean isAvailable() {
+        return true;
+    }
+
+    /** Returns total storage capacity in bytes if available, otherwise null. */
+    default Long getTotalSpaceBytes() {
+        return null;
+    }
+
+    /** Returns currently used storage size in bytes if available, otherwise null. */
+    default Long getUsedSpaceBytes() {
+        return null;
+    }
+
+    /** Returns available logical buckets/containers for the storage backend. */
+    default List<String> listBuckets() {
+        return List.of();
+    }
 }

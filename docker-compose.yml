@@ -38,12 +38,16 @@ services:
     restart: always
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
     container_name: proje-pazari-minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ADMIN_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ADMIN_PASSWORD:-minioadmin123}
+      MINIO_PROMETHEUS_AUTH_TYPE: ${MINIO_PROMETHEUS_AUTH_TYPE:-public}
+    ports:
+      - "9002:9000"
+      - "9003:9001"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -54,6 +58,29 @@ services:
     networks:
       - proje-pazari-network
     restart: always
+
+  minio-setup:
+    image: minio/mc:RELEASE.2025-04-08T16-05-16Z
+    container_name: proje-pazari-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ADMIN_USER: ${MINIO_ADMIN_USER:-minioadmin}
+      MINIO_ADMIN_PASSWORD: ${MINIO_ADMIN_PASSWORD:-minioadmin123}
+      MINIO_FILES_BUCKET: ${MINIO_FILES_BUCKET:-proje-pazari-files}
+      MINIO_AVATARS_BUCKET: ${MINIO_AVATARS_BUCKET:-proje-pazari-avatars}
+      MINIO_DOCUMENTS_BUCKET: ${MINIO_DOCUMENTS_BUCKET:-proje-pazari-documents}
+      MINIO_BACKUPS_BUCKET: ${MINIO_BACKUPS_BUCKET:-proje-pazari-backups}
+      MINIO_CREATE_BACKEND_USER: ${MINIO_CREATE_BACKEND_USER:-false}
+      MINIO_BACKEND_USER: ${MINIO_APP_ACCESS_KEY:-backend-app}
+      MINIO_BACKEND_PASSWORD: ${MINIO_APP_SECRET_KEY:-backend-app-secret-change-me}
+    volumes:
+      - ./docker/minio/init.sh:/init.sh:ro
+    entrypoint: ["/bin/sh", "/init.sh"]
+    networks:
+      - proje-pazari-network
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
@@ -125,10 +152,13 @@ services:
       SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "false"
       JWT_SECRET: ${JWT_SECRET}
       STORAGE_PROVIDER: minio
-      MINIO_URL: ${MINIO_URL}
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_APP_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_APP_SECRET_KEY:-minioadmin123}
+      MINIO_BUCKET: ${MINIO_FILES_BUCKET:-proje-pazari-files}
+      MINIO_AVATARS_BUCKET: ${MINIO_AVATARS_BUCKET:-proje-pazari-avatars}
+      MINIO_DOCUMENTS_BUCKET: ${MINIO_DOCUMENTS_BUCKET:-proje-pazari-documents}
+      MINIO_BACKUPS_BUCKET: ${MINIO_BACKUPS_BUCKET:-proje-pazari-backups}
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -186,7 +216,7 @@ services:
     container_name: proje-pazari-prometheus
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./docker/prometheus/rules.yml:/etc/prometheus/rules.yml
+      - ./docker/prometheus/alerts.yml:/etc/prometheus/alerts.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -196,9 +226,13 @@ services:
       - '--web.enable-lifecycle'
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:9090:9090"
     networks:
       - proje-pazari-network
     restart: always
+    profiles:
+      - monitoring
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
       interval: 15s
@@ -244,6 +278,8 @@ services:
     networks:
       - proje-pazari-network
     restart: always
+    profiles:
+      - monitoring
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 15s
@@ -256,13 +292,79 @@ services:
           cpus: '0.5'
           memory: 512M
 
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: proje-pazari-alertmanager
+    volumes:
+      - ./docker/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - proje-pazari-network
+    restart: always
+    profiles:
+      - monitoring
+
+  minio-backup:
+    image: minio/mc:RELEASE.2025-04-08T16-05-16Z
+    container_name: proje-pazari-minio-backup
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ADMIN_USER: ${MINIO_ADMIN_USER:-minioadmin}
+      MINIO_ADMIN_PASSWORD: ${MINIO_ADMIN_PASSWORD:-minioadmin123}
+      MINIO_FILES_BUCKET: ${MINIO_FILES_BUCKET:-proje-pazari-files}
+      MINIO_AVATARS_BUCKET: ${MINIO_AVATARS_BUCKET:-proje-pazari-avatars}
+      MINIO_DOCUMENTS_BUCKET: ${MINIO_DOCUMENTS_BUCKET:-proje-pazari-documents}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-minio.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    networks:
+      - proje-pazari-network
+    profiles:
+      - maintenance
+
+  minio-backup-scheduler:
+    image: minio/mc:RELEASE.2025-04-08T16-05-16Z
+    container_name: proje-pazari-minio-backup-scheduler
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ADMIN_USER: ${MINIO_ADMIN_USER:-minioadmin}
+      MINIO_ADMIN_PASSWORD: ${MINIO_ADMIN_PASSWORD:-minioadmin123}
+      MINIO_FILES_BUCKET: ${MINIO_FILES_BUCKET:-proje-pazari-files}
+      MINIO_AVATARS_BUCKET: ${MINIO_AVATARS_BUCKET:-proje-pazari-avatars}
+      MINIO_DOCUMENTS_BUCKET: ${MINIO_DOCUMENTS_BUCKET:-proje-pazari-documents}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-minio.sh:/backup.sh:ro
+      - ./scripts/backup-minio-loop.sh:/backup-loop.sh:ro
+    entrypoint: ["/bin/sh", "/backup-loop.sh"]
+    networks:
+      - proje-pazari-network
+    profiles:
+      - maintenance
+    restart: unless-stopped
+
+  # pgAdmin for database management (optional)
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: proje-pazari-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@proje-pazari.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin123} # Dev default — set PGADMIN_DEFAULT_PASSWORD in .env for other environments
       PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     ports:
       - "127.0.0.1:5050:80"
     volumes:
@@ -270,12 +372,15 @@ services:
       - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
       - ./docker/pgadmin/pgpass:/pgpass:ro
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - proje-pazari-network
     restart: unless-stopped
     profiles:
       - tools
+
+
 
 volumes:
   postgres_data:
@@ -291,6 +396,8 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  alertmanager_data:
     driver: local
 
 networks:
