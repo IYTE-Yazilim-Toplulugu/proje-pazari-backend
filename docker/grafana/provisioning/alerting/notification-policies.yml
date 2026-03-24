@@ -1,5 +1,6 @@
 apiVersion: 1
 
+# Global default receiver — catches anything not matched by a sub-route.
 policies:
   - orgId: 1
     receiver: Default
@@ -7,3 +8,68 @@ policies:
     group_wait: 30s
     group_interval: 5m
     repeat_interval: 4h
+    routes:
+
+      # ── Critical alerts ────────────────────────────────────────────────
+      # Notifies email + Slack + Discord for fastest response
+      - receiver: Email Critical
+        matchers:
+          - severity = critical
+        group_by: ['alertname']
+        group_wait: 10s
+        group_interval: 2m
+        repeat_interval: 1h
+        continue: true
+
+      - receiver: Slack Critical
+        matchers:
+          - severity = critical
+        group_by: ['alertname']
+        group_wait: 10s
+        group_interval: 2m
+        repeat_interval: 1h
+        continue: true
+
+      - receiver: Discord
+        matchers:
+          - severity = critical
+        group_by: ['alertname']
+        group_wait: 10s
+        group_interval: 2m
+        repeat_interval: 1h
+
+      # ── Warning alerts ─────────────────────────────────────────────────
+      # Email + Slack only; longer repeat interval to reduce noise
+      - receiver: Email Warning
+        matchers:
+          - severity = warning
+        group_by: ['alertname']
+        group_wait: 1m
+        group_interval: 10m
+        repeat_interval: 8h
+        continue: true
+
+      - receiver: Slack Warning
+        matchers:
+          - severity = warning
+        group_by: ['alertname']
+        group_wait: 1m
+        group_interval: 10m
+        repeat_interval: 8h
+
+      # ── Service down (any severity) ────────────────────────────────────
+      # Dedicated fast path for availability alerts
+      - receiver: Slack Critical
+        matchers:
+          - alertname =~ "SpringBootAppDown|PrometheusTargetMissing"
+        group_wait: 0s
+        group_interval: 1m
+        repeat_interval: 30m
+        continue: true
+
+      - receiver: Discord
+        matchers:
+          - alertname =~ "SpringBootAppDown|PrometheusTargetMissing"
+        group_wait: 0s
+        group_interval: 1m
+        repeat_interval: 30m

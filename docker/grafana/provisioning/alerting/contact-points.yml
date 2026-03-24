@@ -2,9 +2,119 @@ apiVersion: 1
 
 contactPoints:
 
+  # ── Email — critical alerts ──────────────────────────────────────────────
+  - orgId: 1
+    name: Email Critical
+    receivers:
+      - uid: email-critical
+        type: email
+        disableResolveMessage: false
+        settings:
+          addresses: ${GF_ALERT_EMAIL_TO}
+          subject: >-
+            [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}]
+            {{ .CommonLabels.alertname }} — Proje Pazarı
+          message: |
+            {{ range .Alerts }}
+            **Alert:** {{ .Annotations.summary }}
+            **Severity:** {{ .Labels.severity }}
+            **Description:** {{ .Annotations.description }}
+            **Started at:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+            {{ if .Labels.instance }}**Instance:** {{ .Labels.instance }}{{ end }}
+            ---
+            {{ end }}
+          singleEmail: false
+
+  # ── Email — warning alerts ───────────────────────────────────────────────
+  - orgId: 1
+    name: Email Warning
+    receivers:
+      - uid: email-warning
+        type: email
+        disableResolveMessage: false
+        settings:
+          addresses: ${GF_ALERT_EMAIL_TO}
+          subject: >-
+            [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }} — Proje Pazarı
+          message: |
+            {{ range .Alerts }}
+            **Alert:** {{ .Annotations.summary }}
+            **Severity:** {{ .Labels.severity }}
+            **Description:** {{ .Annotations.description }}
+            **Started at:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+            ---
+            {{ end }}
+          singleEmail: false
+
+  # ── Slack — critical alerts ──────────────────────────────────────────────
+  - orgId: 1
+    name: Slack Critical
+    receivers:
+      - uid: slack-critical
+        type: slack
+        disableResolveMessage: false
+        settings:
+          url: ${GF_SLACK_WEBHOOK_URL}
+          recipient: '#alerts-critical'
+          username: 'Proje Pazarı Grafana'
+          icon_emoji: ':rotating_light:'
+          title: >-
+            [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}
+          text: |
+            {{ range .Alerts }}
+            *Summary:* {{ .Annotations.summary }}
+            *Severity:* {{ .Labels.severity }}
+            *Description:* {{ .Annotations.description }}
+            *Instance:* {{ if .Labels.instance }}{{ .Labels.instance }}{{ else }}N/A{{ end }}
+            *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+            {{ end }}
+          mentionEveryone: false
+
+  # ── Slack — warning alerts ───────────────────────────────────────────────
+  - orgId: 1
+    name: Slack Warning
+    receivers:
+      - uid: slack-warning
+        type: slack
+        disableResolveMessage: false
+        settings:
+          url: ${GF_SLACK_WEBHOOK_URL}
+          recipient: '#alerts-warning'
+          username: 'Proje Pazarı Grafana'
+          icon_emoji: ':warning:'
+          title: >-
+            [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}
+          text: |
+            {{ range .Alerts }}
+            *Summary:* {{ .Annotations.summary }}
+            *Description:* {{ .Annotations.description }}
+            *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+            {{ end }}
+          mentionEveryone: false
+
+  # ── Discord ──────────────────────────────────────────────────────────────
+  - orgId: 1
+    name: Discord
+    receivers:
+      - uid: discord-alerts
+        type: discord
+        disableResolveMessage: false
+        settings:
+          url: ${GF_DISCORD_WEBHOOK_URL}
+          username: 'Proje Pazarı Grafana'
+          avatar_url: 'https://grafana.com/static/img/menu/grafana2.svg'
+          message: |
+            {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }} **{{ .CommonLabels.alertname }}**
+
+            {{ range .Alerts }}
+            **Summary:** {{ .Annotations.summary }}
+            **Severity:** {{ .Labels.severity }}
+            **Description:** {{ .Annotations.description }}
+            **Instance:** {{ if .Labels.instance }}{{ .Labels.instance }}{{ else }}N/A{{ end }}
+            **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+            {{ end }}
+
   # ── Default (catch-all) ──────────────────────────────────────────────────
-  # Slack, Discord, and additional email channels should be configured
-  # manually in Grafana UI once the respective credentials are available.
   - orgId: 1
     name: Default
     receivers:
