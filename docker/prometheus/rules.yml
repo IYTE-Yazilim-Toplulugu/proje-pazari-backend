@@ -299,7 +299,7 @@ groups:
     rules:
 
       - alert: ElasticsearchSyncFailing
-        expr: increase(elasticsearch_sync_total{status="failure"}[10m]) > 3
+        expr: ceil(increase(elasticsearch_sync_total{status="failure"}[10m])) > 3
         for: 2m
         labels:
           severity: warning
