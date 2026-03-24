@@ -90,7 +90,7 @@ This will start:
 - Elasticsearch on port 9200
 - Application API on port 8080
 - Prometheus on port 9090, Grafana on port 3030, Alertmanager on port 9093 (use `--profile monitoring` flag)
-- PgAdmin on port 5050 (use `--profile tools` flag)
+- pgAdmin on port 5050 (use `--profile tools` flag)
 
 ### 4. Run the Application
 
@@ -215,6 +215,24 @@ docker compose --profile maintenance up -d minio-backup-scheduler
 
 - Uses `BACKUP_INTERVAL_SECONDS` (default `86400`)
 - Writes timestamped backups under `./backups/minio/`
+
+**pgAdmin — Database Management UI:**
+```bash
+docker compose --profile tools up -d pgadmin
+```
+
+- pgAdmin UI: http://localhost:5050
+- Email: `admin@proje-pazari.com` (override: `PGADMIN_DEFAULT_EMAIL`)
+- Password: `admin123` (override: `PGADMIN_DEFAULT_PASSWORD`)
+- The "Proje Pazari - Local" server connects automatically — no manual setup required
+
+For query collections, backup/restore procedures, and troubleshooting, see [`PGADMIN.md`](PGADMIN.md).
+
+**PostgreSQL Backup:**
+```bash
+./scripts/backup-database.sh
+# Writes timestamped dumps under ./backups/postgres/ (7-day retention)
+```
 
 ### 6. Access API Documentation
 
