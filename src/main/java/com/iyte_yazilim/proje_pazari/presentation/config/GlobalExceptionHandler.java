@@ -128,8 +128,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<ApiResponse<Void>> handleFileStorageException(FileStorageException ex) {
         log.error("File storage error: {}", ex.getMessage());
-        ApiResponse<Void> response = ApiResponse.internalError(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        ApiResponse<Void> response = ApiResponse.badRequest(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

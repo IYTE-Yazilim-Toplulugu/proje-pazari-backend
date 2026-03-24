@@ -292,7 +292,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
                             multipart(USERS_URL + "/me/profile-picture")
                                     .file(file)
                                     .header("Authorization", "Bearer " + token))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
@@ -313,7 +313,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
                             multipart(USERS_URL + "/me/profile-picture")
                                     .file(file)
                                     .header("Authorization", "Bearer " + token))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
@@ -334,7 +334,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
                             multipart(USERS_URL + "/me/profile-picture")
                                     .file(file)
                                     .header("Authorization", "Bearer " + token))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
@@ -354,7 +354,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
                             multipart(USERS_URL + "/me/profile-picture")
                                     .file(file)
                                     .header("Authorization", "Bearer " + token))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
