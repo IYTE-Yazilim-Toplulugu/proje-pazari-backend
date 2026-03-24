@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -128,7 +129,7 @@ public class ProjectController extends BaseController {
             })
     public ResponseEntity<ApiResponse<ProjectDetailDto>> updateProject(
             @PathVariable String projectId,
-            @RequestBody UpdateProjectCommand command,
+            @Valid @RequestBody UpdateProjectCommand command,
             Authentication auth) {
         return send(
                 UpdateProjectCommand.class, Map.of("projectId", projectId), null, command, auth);
