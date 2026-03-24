@@ -127,6 +127,21 @@ class MinioStorageAdapterUnitTest {
             assertEquals(path, result);
             verify(mockMinioClient, times(1)).putObject(any(PutObjectArgs.class));
         }
+
+        @Test
+        @DisplayName("should store file when explicit bucket prefix is provided")
+        void shouldStoreFileWithBucketPrefixedPath() throws Exception {
+            byte[] content = "avatar".getBytes();
+            when(mockFile.getInputStream()).thenReturn(new ByteArrayInputStream(content));
+            when(mockFile.getContentType()).thenReturn("image/png");
+            when(mockFile.getSize()).thenReturn((long) content.length);
+            String path = "proje-pazari-avatars/users/u1/avatar.png";
+
+            String result = adapter.store(mockFile, path);
+
+            assertEquals(path, result);
+            verify(mockMinioClient, times(1)).putObject(any(PutObjectArgs.class));
+        }
     }
 
     @Nested

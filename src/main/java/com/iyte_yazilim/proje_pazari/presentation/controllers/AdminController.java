@@ -26,6 +26,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.unbanIp.UnbanIpCommand
 import com.iyte_yazilim.proje_pazari.application.commands.updateFeatureFlag.UpdateFeatureFlagCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
 import com.iyte_yazilim.proje_pazari.application.common.Audited;
+import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.dtos.ActiveSessionDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.AnalyticsTrendsDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationAdminDTO;
@@ -40,6 +41,7 @@ import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectStatsDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.ScheduledEmailDTO;
+import com.iyte_yazilim.proje_pazari.application.dtos.StorageHealthDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemConfigDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemHealthDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemOverviewDTO;
@@ -66,10 +68,12 @@ import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSyst
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserStats.GetUserStatsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.listBannedIps.ListBannedIpsQuery;
+import com.iyte_yazilim.proje_pazari.application.services.StorageHealthService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -97,6 +101,17 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "Bearer Authentication")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController extends BaseController {
+
+    private final StorageHealthService storageHealthService;
+
+    public AdminController(
+            IMediator mediator,
+            IRequestMapper requestMapper,
+            StorageHealthService storageHealthService) {
+        this.mediator = mediator;
+        this.requestMapper = requestMapper;
+        this.storageHealthService = storageHealthService;
+    }
 
     // ==================== USER MANAGEMENT ====================
 
@@ -397,6 +412,18 @@ public class AdminController extends BaseController {
             description = "Check health status of all services (database, JVM memory, uptime)")
     public ResponseEntity<ApiResponse<SystemHealthDTO>> getSystemHealth() {
         return send(new GetSystemHealthQuery());
+    }
+
+    // ==================== CONFIGURATION MANAGEMENT ====================
+
+    @GetMapping("/storage/health")
+    @Operation(
+            summary = "Storage health check",
+            description = "Check file storage status, usage, and bucket visibility")
+    public ResponseEntity<ApiResponse<StorageHealthDTO>> getStorageHealth() {
+        StorageHealthDTO health = storageHealthService.getStorageHealth();
+        return ResponseEntity.ok(
+                ApiResponse.success(health, "Storage health retrieved successfully"));
     }
 
     // ==================== CONFIGURATION MANAGEMENT ====================

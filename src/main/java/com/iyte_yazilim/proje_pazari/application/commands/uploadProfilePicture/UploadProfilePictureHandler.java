@@ -20,8 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UploadProfilePictureHandler
         implements IRequestHandler<UploadProfilePictureCommand, ApiResponse<String>> {
 
-    private static final String PROFILES_FOLDER = "profiles";
-
     private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
     private final MessageService messageService;
@@ -55,8 +53,8 @@ public class UploadProfilePictureHandler
             }
         }
 
-        // Store new file in profiles folder - returns presigned URL for MinIO
-        String storedUrl = fileStorageService.storeFile(command.file(), PROFILES_FOLDER);
+        // Store avatar using organized bucket structure.
+        String storedUrl = fileStorageService.storeUserAvatar(command.userId(), command.file());
 
         // Update user profile picture URL
         user.setProfilePictureUrl(storedUrl);
@@ -83,18 +81,13 @@ public class UploadProfilePictureHandler
             return url;
         }
 
-        // Handle presigned URL format: extract bucket-relative path from URL
-        // Example: http://minio:9000/bucket/profiles/filename.jpg?...
-        // Extract everything after the bucket name (third path segment in URL)
+        // Handle presigned URL format and keep bucket + object path.
+        // Example: http://minio:9000/bucket-name/users/user-1/avatar.jpg?...
         try {
             java.net.URI uri = java.net.URI.create(url.split("\\?")[0]);
             String path = uri.getPath();
             if (path != null && path.length() > 1) {
-                // Remove leading slash and bucket name (first segment)
-                String[] segments = path.substring(1).split("/", 2);
-                if (segments.length > 1) {
-                    return segments[1]; // Return path after bucket name
-                }
+                return path.substring(1); // Remove leading slash only
             }
         } catch (IllegalArgumentException e) {
             // Fall back to original behavior if URL parsing fails
