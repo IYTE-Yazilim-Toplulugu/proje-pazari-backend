@@ -20,8 +20,7 @@ class BusinessMetricsServiceTest {
     }
 
     private Counter findEsSyncCounter(String status, String operation) {
-        return registry
-                .find("elasticsearch.sync.total")
+        return registry.find("elasticsearch.sync.total")
                 .tags("status", status, "operation", operation)
                 .counter();
     }

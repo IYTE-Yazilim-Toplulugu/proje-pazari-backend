@@ -31,7 +31,13 @@ class ElasticsearchEventListenerTest {
     void shouldIndexProject_whenProjectCreated() throws Exception {
         // Given
         ProjectCreatedEvent event =
-                new ProjectCreatedEvent("proj-1", "Title", "owner-1", "owner@test.com", "Owner", LocalDateTime.now());
+                new ProjectCreatedEvent(
+                        "proj-1",
+                        "Title",
+                        "owner-1",
+                        "owner@test.com",
+                        "Owner",
+                        LocalDateTime.now());
 
         // When
         listener.handleProjectCreated(event);
@@ -47,7 +53,13 @@ class ElasticsearchEventListenerTest {
     void shouldIncrementIndexFailure_whenProjectCreatedSyncThrows() throws Exception {
         // Given
         ProjectCreatedEvent event =
-                new ProjectCreatedEvent("proj-1", "Title", "owner-1", "owner@test.com", "Owner", LocalDateTime.now());
+                new ProjectCreatedEvent(
+                        "proj-1",
+                        "Title",
+                        "owner-1",
+                        "owner@test.com",
+                        "Owner",
+                        LocalDateTime.now());
         doThrow(new RuntimeException("ES unavailable")).when(syncService).indexProject("proj-1");
 
         // When
