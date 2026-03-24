@@ -83,6 +83,68 @@ class BulkUserActionHandlerTest {
     }
 
     @Test
+    @DisplayName("Should promote user to admin — role set becomes {ADMIN} only")
+    void shouldPromoteUserToAdmin() {
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any())).thenReturn(testUser);
+
+        BulkUserActionCommand command =
+                new BulkUserActionCommand("PROMOTE_TO_ADMIN", List.of("user1"));
+
+        ApiResponse<BulkActionResult> response = handler.handle(command);
+
+        assertEquals(1, response.getData().getSuccessCount());
+        assertEquals(Set.of(RoleType.ADMIN), testUser.getRoles());
+    }
+
+    @Test
+    @DisplayName("Should promote user already having ADMIN — idempotent, still {ADMIN}")
+    void shouldPromoteAlreadyAdminUserIdempotently() {
+        testUser.setRoles(new HashSet<>(Set.of(RoleType.ADMIN)));
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any())).thenReturn(testUser);
+
+        BulkUserActionCommand command =
+                new BulkUserActionCommand("PROMOTE_TO_ADMIN", List.of("user1"));
+
+        ApiResponse<BulkActionResult> response = handler.handle(command);
+
+        assertEquals(1, response.getData().getSuccessCount());
+        assertEquals(Set.of(RoleType.ADMIN), testUser.getRoles());
+    }
+
+    @Test
+    @DisplayName("Should demote admin to user — role set becomes {USER} only")
+    void shouldDemoteAdminToUser() {
+        testUser.setRoles(new HashSet<>(Set.of(RoleType.ADMIN)));
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any())).thenReturn(testUser);
+
+        BulkUserActionCommand command =
+                new BulkUserActionCommand("DEMOTE_TO_USER", List.of("user1"));
+
+        ApiResponse<BulkActionResult> response = handler.handle(command);
+
+        assertEquals(1, response.getData().getSuccessCount());
+        assertEquals(Set.of(RoleType.USER), testUser.getRoles());
+    }
+
+    @Test
+    @DisplayName("Should demote user who already has only USER role — no-op, USER remains")
+    void shouldDemoteUserWithOnlyUserRole() {
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any())).thenReturn(testUser);
+
+        BulkUserActionCommand command =
+                new BulkUserActionCommand("DEMOTE_TO_USER", List.of("user1"));
+
+        ApiResponse<BulkActionResult> response = handler.handle(command);
+
+        assertEquals(1, response.getData().getSuccessCount());
+        assertEquals(Set.of(RoleType.USER), testUser.getRoles());
+    }
+
+    @Test
     @DisplayName("Should return validation error for empty list")
     void shouldReturnValidationErrorForEmptyList() {
         BulkUserActionCommand command = new BulkUserActionCommand("SUSPEND", List.of());
