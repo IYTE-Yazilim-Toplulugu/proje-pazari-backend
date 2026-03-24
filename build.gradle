@@ -217,8 +217,6 @@ jacocoTestCoverageVerification {
                 '*.presentation.controllers.AdminController*',
                 '*.presentation.controllers.ElasticsearchAdminController',
                 '*.presentation.controllers.BaseController',
-                '*.presentation.controllers.FileController',
-                '*.presentation.controllers.ProjectController',
                 // New queries/commands from merge
                 '*.queries.getAllProjects.*',
                 '*.queries.getProjectById.*',
