@@ -40,9 +40,7 @@ class GetAllProjectsQueryHandlerTest {
 
     @BeforeEach
     void setUp() {
-        lenient()
-                .when(messageService.getMessage("projects.listed.success"))
-                .thenReturn("Listed");
+        lenient().when(messageService.getMessage("projects.listed.success")).thenReturn("Listed");
     }
 
     @Test

@@ -89,7 +89,8 @@ class GetProjectApplicationsHandlerTest {
 
         ApiResponse<List<ApplicationDto>> response =
                 handler.handle(
-                        new GetProjectApplicationsQuery(projectId, ownerId, ApplicationStatus.PENDING));
+                        new GetProjectApplicationsQuery(
+                                projectId, ownerId, ApplicationStatus.PENDING));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals(1, response.getData().size());

@@ -43,9 +43,7 @@ class GetUserProjectsHandlerTest {
 
     @BeforeEach
     void setUp() {
-        lenient()
-                .when(messageService.getMessage("projects.listed.success"))
-                .thenReturn("Listed");
+        lenient().when(messageService.getMessage("projects.listed.success")).thenReturn("Listed");
     }
 
     @Test
@@ -94,7 +92,8 @@ class GetUserProjectsHandlerTest {
         String userId = Ulid.fast().toString();
         Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(projectRepository.findWithFilters(isNull(), eq(userId), isNull(), pageableCaptor.capture()))
+        when(projectRepository.findWithFilters(
+                        isNull(), eq(userId), isNull(), pageableCaptor.capture()))
                 .thenReturn(emptyPage);
 
         handler.handle(new GetUserProjectsQuery(userId, 0, 10, "injectedField; DROP TABLE", "ASC"));

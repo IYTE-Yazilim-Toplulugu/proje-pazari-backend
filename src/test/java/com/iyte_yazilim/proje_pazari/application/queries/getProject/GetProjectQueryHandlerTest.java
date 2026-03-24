@@ -42,8 +42,19 @@ class GetProjectQueryHandlerTest {
         Project domain = new Project();
         ProjectDetailDto dto =
                 new ProjectDetailDto(
-                        projectId, "Owner", "owner@test.com", "Title", "Desc", "Summary", 0, null,
-                        5, null, "Cat", null, null);
+                        projectId,
+                        "Owner",
+                        "owner@test.com",
+                        "Title",
+                        "Desc",
+                        "Summary",
+                        0,
+                        null,
+                        5,
+                        null,
+                        "Cat",
+                        null,
+                        null);
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(entity));
         when(projectMapper.entityToDomain(entity)).thenReturn(domain);

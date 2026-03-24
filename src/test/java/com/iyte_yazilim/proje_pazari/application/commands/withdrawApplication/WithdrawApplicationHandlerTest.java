@@ -100,7 +100,8 @@ class WithdrawApplicationHandlerTest {
     void shouldReturnBadRequest_whenApplicationIsNotPending() {
         application.setStatus(ApplicationStatus.APPROVED);
         when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
-        when(messageService.getMessage("application.withdraw.not.pending")).thenReturn("Not pending");
+        when(messageService.getMessage("application.withdraw.not.pending"))
+                .thenReturn("Not pending");
 
         ApiResponse<Void> response =
                 handler.handle(new WithdrawApplicationCommand(applicationId, userId));
@@ -114,7 +115,8 @@ class WithdrawApplicationHandlerTest {
     void shouldReturnBadRequest_whenApplicationIsAlreadyWithdrawn() {
         application.setStatus(ApplicationStatus.WITHDRAWN);
         when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
-        when(messageService.getMessage("application.withdraw.not.pending")).thenReturn("Not pending");
+        when(messageService.getMessage("application.withdraw.not.pending"))
+                .thenReturn("Not pending");
 
         ApiResponse<Void> response =
                 handler.handle(new WithdrawApplicationCommand(applicationId, userId));
@@ -128,7 +130,8 @@ class WithdrawApplicationHandlerTest {
     void shouldReturnBadRequest_whenApplicationIsRejected() {
         application.setStatus(ApplicationStatus.REJECTED);
         when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
-        when(messageService.getMessage("application.withdraw.not.pending")).thenReturn("Not pending");
+        when(messageService.getMessage("application.withdraw.not.pending"))
+                .thenReturn("Not pending");
 
         ApiResponse<Void> response =
                 handler.handle(new WithdrawApplicationCommand(applicationId, userId));

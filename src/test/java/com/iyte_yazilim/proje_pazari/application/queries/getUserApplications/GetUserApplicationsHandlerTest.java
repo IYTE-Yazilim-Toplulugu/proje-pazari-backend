@@ -61,7 +61,8 @@ class GetUserApplicationsHandlerTest {
     void shouldReturnPagedApplications_withoutStatusFilter() {
         ProjectApplicationEntity app = buildApp(ApplicationStatus.PENDING);
         Page<ProjectApplicationEntity> page = new PageImpl<>(List.of(app));
-        when(applicationRepository.findWithFilters(isNull(), isNull(), eq(user.getId()), any(Pageable.class)))
+        when(applicationRepository.findWithFilters(
+                        isNull(), isNull(), eq(user.getId()), any(Pageable.class)))
                 .thenReturn(page);
 
         ApiResponse<PagedApplicationsResult> response =
@@ -77,12 +78,16 @@ class GetUserApplicationsHandlerTest {
     void shouldPassStatusFilter_toRepository() {
         Page<ProjectApplicationEntity> emptyPage = new PageImpl<>(List.of());
         when(applicationRepository.findWithFilters(
-                        eq(ApplicationStatus.APPROVED), isNull(), eq(user.getId()), any(Pageable.class)))
+                        eq(ApplicationStatus.APPROVED),
+                        isNull(),
+                        eq(user.getId()),
+                        any(Pageable.class)))
                 .thenReturn(emptyPage);
 
         ApiResponse<PagedApplicationsResult> response =
                 handler.handle(
-                        new GetUserApplicationsQuery(user.getId(), 0, 10, ApplicationStatus.APPROVED));
+                        new GetUserApplicationsQuery(
+                                user.getId(), 0, 10, ApplicationStatus.APPROVED));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         verify(applicationRepository)
@@ -98,7 +103,8 @@ class GetUserApplicationsHandlerTest {
     void shouldMapEntityToDto_correctly() {
         ProjectApplicationEntity app = buildApp(ApplicationStatus.PENDING);
         Page<ProjectApplicationEntity> page = new PageImpl<>(List.of(app));
-        when(applicationRepository.findWithFilters(isNull(), isNull(), eq(user.getId()), any(Pageable.class)))
+        when(applicationRepository.findWithFilters(
+                        isNull(), isNull(), eq(user.getId()), any(Pageable.class)))
                 .thenReturn(page);
 
         ApiResponse<PagedApplicationsResult> response =

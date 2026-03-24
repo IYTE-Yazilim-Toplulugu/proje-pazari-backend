@@ -41,8 +41,7 @@ class ProjectDeletedEventHandlerTest {
         handler.handle(event);
 
         verify(emailService, times(1))
-                .sendTemplateEmailAsync(
-                        eq("owner@test.com"), eq("project-deleted.html"), any());
+                .sendTemplateEmailAsync(eq("owner@test.com"), eq("project-deleted.html"), any());
     }
 
     @Test
@@ -59,8 +58,11 @@ class ProjectDeletedEventHandlerTest {
 
         // 1 owner email + 2 applicant emails
         verify(emailService, times(3)).sendTemplateEmailAsync(any(), any(), any());
-        verify(emailService).sendTemplateEmailAsync(eq("bob@test.com"), eq("application-rejected.html"), any());
-        verify(emailService).sendTemplateEmailAsync(eq("carol@test.com"), eq("application-rejected.html"), any());
+        verify(emailService)
+                .sendTemplateEmailAsync(eq("bob@test.com"), eq("application-rejected.html"), any());
+        verify(emailService)
+                .sendTemplateEmailAsync(
+                        eq("carol@test.com"), eq("application-rejected.html"), any());
     }
 
     @Test
@@ -76,7 +78,8 @@ class ProjectDeletedEventHandlerTest {
     }
 
     @Test
-    @DisplayName("Should use 'Applicant' as fallback name when applicantNames list is shorter than applicantEmails")
+    @DisplayName(
+            "Should use 'Applicant' as fallback name when applicantNames list is shorter than applicantEmails")
     void shouldUseFallbackName_whenApplicantNamesListIsShorter() {
         // 2 emails but only 1 name — second applicant should use "Applicant"
         ProjectDeletedEvent event =
