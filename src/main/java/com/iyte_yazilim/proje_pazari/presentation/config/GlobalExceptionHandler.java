@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -88,6 +89,15 @@ public class GlobalExceptionHandler {
         log.error("Multipart request error: {}", ex.getMessage());
         ApiResponse<Void> response =
                 ApiResponse.badRequest(messageService.getMessage("error.multipart.invalid"));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex) {
+        log.error("Message not readable: {}", ex.getMessage());
+        ApiResponse<Void> response =
+                ApiResponse.validationError(messageService.getMessage("error.validation"));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
