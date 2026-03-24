@@ -98,7 +98,7 @@ public class ImportUsersFromCsvHandler
                     user.setEmail(email);
                     user.setFirstName(firstName);
                     user.setLastName(lastName);
-                    user.setRole(role);
+                    user.setRoles(new java.util.HashSet<>(java.util.Set.of(role)));
                     user.setPassword(passwordEncoder.encode(password));
 
                     userRepository.save(user);

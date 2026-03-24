@@ -46,8 +46,16 @@ public class BulkUserActionHandler
                         userRepository.save(user);
                         result.incrementSuccess();
                         break;
-                    case "CHANGE_ROLE_TO_PROJECT_OWNER":
-                        user.setRole(RoleType.PROJECT_OWNER);
+                    case "PROMOTE_TO_ADMIN":
+                        user.getRoles().add(RoleType.ADMIN);
+                        userRepository.save(user);
+                        result.incrementSuccess();
+                        break;
+                    case "DEMOTE_TO_USER":
+                        user.getRoles().remove(RoleType.ADMIN);
+                        if (user.getRoles().isEmpty()) {
+                            user.getRoles().add(RoleType.USER);
+                        }
                         userRepository.save(user);
                         result.incrementSuccess();
                         break;
