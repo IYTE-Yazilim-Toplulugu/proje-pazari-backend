@@ -1,22 +1,23 @@
 package com.iyte_yazilim.proje_pazari.application.commands.forgotPassword;
 
-import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
+import com.iyte_yazilim.proje_pazari.domain.events.PasswordResetEmailRequestedEvent;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.PasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PasswordResetTokenEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @Component
@@ -27,13 +28,16 @@ public class ForgotPasswordHandler
     private static final int RESET_TOKEN_EXPIRY_HOURS = 1;
 
     private final UserRepository userRepository;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final IPasswordResetTokenRepository passwordResetTokenRepository;
     private final VerificationTokenService verificationTokenService;
-    private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
     private final MessageService messageService;
 
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
+
+    @Value("${app.frontend.reset-password-path:/reset-password}")
+    private String resetPasswordPath;
 
     @Override
     @Transactional
@@ -64,21 +68,20 @@ public class ForgotPasswordHandler
 
         passwordResetTokenRepository.save(resetToken);
 
-        // --- 4. Send password reset email asynchronously ---
-        String resetLink = frontendUrl + "/reset_password?token=" + token;
+        // --- 4. Publish event — email is dispatched after the transaction commits so the token
+        //        is durably persisted before the user can click the link ---
+        String resetLink =
+                UriComponentsBuilder.fromUriString(frontendUrl)
+                        .path(resetPasswordPath)
+                        .queryParam("token", token)
+                        .build()
+                        .toUriString();
 
-        emailService.sendTemplateEmailAsync(
-                user.getEmail(),
-                "password-reset.html",
-                Map.of(
-                        "subject",
-                        "Şifre Sıfırlama / Password Reset",
-                        "firstName",
-                        user.getFirstName(),
-                        "resetLink",
-                        resetLink));
+        eventPublisher.publishEvent(
+                new PasswordResetEmailRequestedEvent(
+                        user.getId(), user.getEmail(), user.getFirstName(), resetLink));
 
-        log.info("Password reset email sent to user: {}", user.getId());
+        log.info("Password reset token saved for user: {}", user.getId());
 
         return ApiResponse.success(
                 null, messageService.getMessage("auth.password.reset.email.sent"));

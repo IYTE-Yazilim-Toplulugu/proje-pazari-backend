@@ -302,7 +302,10 @@ public class AuthController extends BaseController {
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
-                        description = "Reset email sent if account exists")
+                        description = "Reset email sent if account exists"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid request — email field fails @Email validation")
             })
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
             @Valid @RequestBody ForgotPasswordCommand command) {

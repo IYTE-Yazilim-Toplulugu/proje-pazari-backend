@@ -4,6 +4,7 @@ import com.github.f4b6a3.ulid.Ulid;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -19,7 +20,9 @@ import lombok.Setter;
  * principles. Tokens expire after 1 hour and are invalidated on use.
  */
 @Entity
-@Table(name = "password_reset_tokens")
+@Table(
+        name = "password_reset_tokens",
+        indexes = @Index(name = "idx_prt_user_id", columnList = "userId"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,6 +36,7 @@ public class PasswordResetTokenEntity {
     @Column(nullable = false)
     private String userId;
 
+    /** Stored for audit purposes; not used to look up the user after token creation. */
     @Column(nullable = false)
     private String email;
 

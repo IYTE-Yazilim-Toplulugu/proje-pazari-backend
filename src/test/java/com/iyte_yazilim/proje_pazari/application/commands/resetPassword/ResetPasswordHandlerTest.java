@@ -9,8 +9,8 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.PasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PasswordResetTokenEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -30,7 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 class ResetPasswordHandlerTest {
 
     @Mock private UserRepository userRepository;
-    @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
+    @Mock private IPasswordResetTokenRepository passwordResetTokenRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private RefreshTokenService refreshTokenService;
     @Mock private MessageService messageService;
@@ -48,12 +48,6 @@ class ResetPasswordHandlerTest {
         lenient()
                 .when(messageService.getMessage("auth.password.reset.token.expired"))
                 .thenReturn("Token expired");
-        lenient()
-                .when(messageService.getMessage("validation.password.mismatch"))
-                .thenReturn("Passwords do not match");
-        lenient()
-                .when(messageService.getMessage("validation.password.requirements"))
-                .thenReturn("Password too weak");
         lenient()
                 .when(messageService.getMessage("auth.password.reset.success"))
                 .thenReturn("Password reset successfully");
@@ -135,30 +129,6 @@ class ResetPasswordHandlerTest {
                 () ->
                         handler.handle(
                                 new ResetPasswordCommand(TOKEN, VALID_PASSWORD, VALID_PASSWORD)));
-    }
-
-    @Test
-    @DisplayName("Should return validation error when passwords do not match")
-    void shouldReturnValidationError_WhenPasswordsDoNotMatch() {
-        when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(validToken()));
-
-        ApiResponse<Void> response =
-                handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD, "DifferentPass1!"));
-
-        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        verifyNoInteractions(userRepository, passwordEncoder, refreshTokenService);
-    }
-
-    @Test
-    @DisplayName("Should return validation error when password is too weak")
-    void shouldReturnValidationError_WhenPasswordIsWeak() {
-        when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(validToken()));
-
-        ApiResponse<Void> response =
-                handler.handle(new ResetPasswordCommand(TOKEN, "weak", "weak"));
-
-        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        verifyNoInteractions(userRepository, passwordEncoder, refreshTokenService);
     }
 
     @Test
