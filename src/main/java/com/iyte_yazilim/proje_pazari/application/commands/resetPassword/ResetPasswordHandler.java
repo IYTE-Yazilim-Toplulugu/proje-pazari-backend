@@ -6,8 +6,8 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PasswordResetTokenEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ResetPasswordHandler
         implements IRequestHandler<ResetPasswordCommand, ApiResponse<Void>> {
 
-    private final UserRepository userRepository;
+    private final IUserRepository userRepository;
     private final IPasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;

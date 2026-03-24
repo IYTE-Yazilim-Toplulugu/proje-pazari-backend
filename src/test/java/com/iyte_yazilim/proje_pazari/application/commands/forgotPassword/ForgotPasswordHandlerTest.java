@@ -9,8 +9,8 @@ import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenServi
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.events.PasswordResetEmailRequestedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class ForgotPasswordHandlerTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock private IUserRepository userRepository;
     @Mock private IPasswordResetTokenRepository passwordResetTokenRepository;
     @Mock private VerificationTokenService verificationTokenService;
     @Mock private ApplicationEventPublisher eventPublisher;

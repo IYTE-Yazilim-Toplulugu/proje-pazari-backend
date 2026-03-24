@@ -10,8 +10,8 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenE
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PasswordResetTokenEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
@@ -29,7 +29,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @ExtendWith(MockitoExtension.class)
 class ResetPasswordHandlerTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock private IUserRepository userRepository;
     @Mock private IPasswordResetTokenRepository passwordResetTokenRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private RefreshTokenService refreshTokenService;

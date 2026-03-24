@@ -5,8 +5,8 @@ import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenServi
 import com.iyte_yazilim.proje_pazari.domain.events.PasswordResetEmailRequestedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PasswordResetTokenEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.time.LocalDateTime;
@@ -27,7 +27,7 @@ public class ForgotPasswordHandler
 
     private static final int RESET_TOKEN_EXPIRY_HOURS = 1;
 
-    private final UserRepository userRepository;
+    private final IUserRepository userRepository;
     private final IPasswordResetTokenRepository passwordResetTokenRepository;
     private final VerificationTokenService verificationTokenService;
     private final ApplicationEventPublisher eventPublisher;
