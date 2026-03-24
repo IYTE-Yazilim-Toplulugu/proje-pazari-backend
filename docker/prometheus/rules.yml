@@ -300,7 +300,7 @@ groups:
 
       - alert: ElasticsearchSyncFailing
         expr: increase(elasticsearch_sync_total{status="failure"}[10m]) > 3
-        for: 5m
+        for: 2m
         labels:
           severity: warning
         annotations:
