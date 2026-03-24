@@ -231,7 +231,7 @@ services:
       - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@projepazari.site}
       - GF_SMTP_FROM_NAME=Proje Pazarı Grafana
       - GF_SMTP_STARTTLS_POLICY=MandatoryStartTLS
-      - GF_ALERT_EMAIL_TO=${GF_ALERT_EMAIL_TO:-admin@localhost}
+      - GF_ALERT_EMAIL_TO=${GF_ALERT_EMAIL_TO:-}
       - GF_SLACK_WEBHOOK_URL=${GF_SLACK_WEBHOOK_URL:-}
       - GF_DISCORD_WEBHOOK_URL=${GF_DISCORD_WEBHOOK_URL:-}
     volumes:
