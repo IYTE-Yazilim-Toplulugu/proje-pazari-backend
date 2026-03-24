@@ -18,6 +18,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -158,5 +159,104 @@ class AuthControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ── Logout helpers ────────────────────────────────────────────────────────
+
+    private String registerVerifyAndLogin(String email) throws Exception {
+        Map<String, String> registerRequest =
+                Map.of(
+                        "email", email,
+                        "password", "SecurePassword123!",
+                        "firstName", "Test",
+                        "lastName", "User");
+
+        mockMvc.perform(
+                        post("/api/v1/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isCreated());
+
+        EmailVerificationEntity verification =
+                emailVerificationRepository.findByEmailAndVerifiedAtIsNull(email).orElseThrow();
+        verification.setVerifiedAt(LocalDateTime.now());
+        emailVerificationRepository.save(verification);
+
+        MvcResult loginResult =
+                mockMvc.perform(
+                                post("/api/v1/auth/login")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(
+                                                objectMapper.writeValueAsString(
+                                                        Map.of(
+                                                                "email",
+                                                                email,
+                                                                "password",
+                                                                "SecurePassword123!"))))
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        return loginResult.getResponse().getContentAsString();
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/logout - should logout successfully with valid tokens")
+    void shouldLogoutSuccessfully() throws Exception {
+        String loginJson = registerVerifyAndLogin("logout-success@std.iyte.edu.tr");
+
+        String accessToken = objectMapper.readTree(loginJson).at("/data/accessToken").asText();
+        String refreshToken = objectMapper.readTree(loginJson).at("/data/refreshToken").asText();
+
+        mockMvc.perform(
+                        post("/api/v1/auth/logout")
+                                .header("Authorization", "Bearer " + accessToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                Map.of("refreshToken", refreshToken))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/logout - should fail when refresh token is invalid")
+    void shouldFailLogout_WhenRefreshTokenIsInvalid() throws Exception {
+        String loginJson = registerVerifyAndLogin("logout-invalid-rt@std.iyte.edu.tr");
+
+        String accessToken = objectMapper.readTree(loginJson).at("/data/accessToken").asText();
+
+        mockMvc.perform(
+                        post("/api/v1/auth/logout")
+                                .header("Authorization", "Bearer " + accessToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                Map.of("refreshToken", "not-a-real-token"))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/logout - should fail when request body is missing")
+    void shouldFailLogout_WhenBodyIsMissing() throws Exception {
+        String loginJson = registerVerifyAndLogin("logout-nobody@std.iyte.edu.tr");
+        String accessToken = objectMapper.readTree(loginJson).at("/data/accessToken").asText();
+
+        mockMvc.perform(
+                        post("/api/v1/auth/logout")
+                                .header("Authorization", "Bearer " + accessToken)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/logout - should fail when called without authentication")
+    void shouldFailLogout_WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(
+                        post("/api/v1/auth/logout")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                Map.of("refreshToken", "some-token"))))
+                .andExpect(status().is4xxClientError());
     }
 }

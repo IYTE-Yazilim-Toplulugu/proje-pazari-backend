@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.security;
 
+import com.iyte_yazilim.proje_pazari.domain.interfaces.ITokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -40,7 +41,7 @@ import org.springframework.stereotype.Component;
  * @see JwtAuthenticationFilter
  */
 @Component
-public class JwtUtil {
+public class JwtUtil implements ITokenService {
 
     /** Secret key for JWT signing. Must be at least 256 bits. */
     @Value("${jwt.secret}")

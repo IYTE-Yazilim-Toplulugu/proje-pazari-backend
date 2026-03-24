@@ -4,11 +4,11 @@ import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.ITokenService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
-import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,7 @@ public class RefreshTokenHandler
 
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
+    private final ITokenService tokenService;
     private final MessageService messageService;
 
     @Override
@@ -43,7 +43,7 @@ public class RefreshTokenHandler
         refreshTokenService.revokeRefreshToken(refreshToken);
         String newRefreshToken = refreshTokenService.createRefreshToken(userId);
         String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
-        String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
+        String newAccessToken = tokenService.generateToken(user.getId(), user.getEmail(), role);
 
         var result =
                 new RefreshTokenResult(

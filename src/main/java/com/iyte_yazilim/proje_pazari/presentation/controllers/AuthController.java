@@ -2,7 +2,7 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutCommand;
-import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutHandler;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutRequest;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenResult;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
@@ -25,6 +25,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -78,16 +79,13 @@ public class AuthController extends BaseController {
             verifyEmailHandler;
     private final IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
             resendVerificationEmailHandler;
-    private final LogoutHandler logoutHandler;
 
     public AuthController(
             IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler,
             IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
-                    resendVerificationEmailHandler,
-            LogoutHandler logoutHandler) {
+                    resendVerificationEmailHandler) {
         this.verifyEmailHandler = verifyEmailHandler;
         this.resendVerificationEmailHandler = resendVerificationEmailHandler;
-        this.logoutHandler = logoutHandler;
     }
 
     @PostMapping("/register")
@@ -303,7 +301,7 @@ public class AuthController extends BaseController {
             summary = "Logout user",
             description =
                     "Revokes the refresh token and blacklists the access token. "
-                            + "The refresh token is required. "
+                            + "The refresh token is supplied in the request body. "
                             + "The access token is read from the Authorization header and blacklisted in Redis until it expires naturally.")
     @ApiResponses(
             value = {
@@ -312,17 +310,18 @@ public class AuthController extends BaseController {
                         description = "Logout successful"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "Refresh token is missing")
+                        description = "Refresh token missing, invalid, or does not belong to user")
             })
     public ResponseEntity<ApiResponse<Void>> logout(
-            @RequestParam String refreshToken, HttpServletRequest request) {
+            @Valid @RequestBody LogoutRequest body,
+            Authentication auth,
+            HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         String accessToken =
                 (authHeader != null && authHeader.startsWith("Bearer "))
                         ? authHeader.substring(7)
                         : null;
-        ApiResponse<Void> response =
-                logoutHandler.handle(new LogoutCommand(accessToken, refreshToken));
-        return ResponseEntity.ok(response);
+        String userId = getCurrentUserId(auth);
+        return send(new LogoutCommand(accessToken, body.refreshToken(), userId));
     }
 }
