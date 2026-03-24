@@ -31,8 +31,10 @@ public class BusinessMetricsService {
     private final Counter authLoginFailure;
 
     // ── Elasticsearch sync ───────────────────────────────────────
-    private final Counter esIndexSuccess;
-    private final Counter esIndexFailure;
+    private final Counter esSyncIndexSuccess;
+    private final Counter esSyncIndexFailure;
+    private final Counter esSyncDeleteSuccess;
+    private final Counter esSyncDeleteFailure;
 
     // ── MinIO storage ────────────────────────────────────────────────────────
     private final Counter minioUploadSuccess;
@@ -101,17 +103,35 @@ public class BusinessMetricsService {
                         .tag("layer", "security")
                         .register(registry);
 
-        esIndexSuccess =
-                Counter.builder("elasticsearch.index.total")
+        esSyncIndexSuccess =
+                Counter.builder("elasticsearch.sync.total")
                         .description("Total Elasticsearch sync operations")
                         .tag("status", "success")
+                        .tag("operation", "index")
                         .tag("layer", "infrastructure")
                         .register(registry);
 
-        esIndexFailure =
-                Counter.builder("elasticsearch.index.total")
+        esSyncIndexFailure =
+                Counter.builder("elasticsearch.sync.total")
                         .description("Total Elasticsearch sync operations")
                         .tag("status", "failure")
+                        .tag("operation", "index")
+                        .tag("layer", "infrastructure")
+                        .register(registry);
+
+        esSyncDeleteSuccess =
+                Counter.builder("elasticsearch.sync.total")
+                        .description("Total Elasticsearch sync operations")
+                        .tag("status", "success")
+                        .tag("operation", "delete")
+                        .tag("layer", "infrastructure")
+                        .register(registry);
+
+        esSyncDeleteFailure =
+                Counter.builder("elasticsearch.sync.total")
+                        .description("Total Elasticsearch sync operations")
+                        .tag("status", "failure")
+                        .tag("operation", "delete")
                         .tag("layer", "infrastructure")
                         .register(registry);
 
@@ -237,10 +257,18 @@ public class BusinessMetricsService {
     // ── Elasticsearch sync ───────────────────────────────────────
 
     public void incrementEsIndexSuccess() {
-        esIndexSuccess.increment();
+        esSyncIndexSuccess.increment();
     }
 
     public void incrementEsIndexFailure() {
-        esIndexFailure.increment();
+        esSyncIndexFailure.increment();
+    }
+
+    public void incrementEsDeleteSuccess() {
+        esSyncDeleteSuccess.increment();
+    }
+
+    public void incrementEsDeleteFailure() {
+        esSyncDeleteFailure.increment();
     }
 }

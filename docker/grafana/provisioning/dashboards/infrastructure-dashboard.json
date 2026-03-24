@@ -1378,7 +1378,7 @@
       },
       "targets": [
         {
-          "expr": "100 * sum(rate(elasticsearch_index_total{application=\"$application\", status=\"success\"}[5m])) / sum(rate(elasticsearch_index_total{application=\"$application\"}[5m]))",
+          "expr": "100 * sum(rate(elasticsearch_sync_total{application=\"$application\", status=\"success\"}[5m])) / sum(rate(elasticsearch_sync_total{application=\"$application\"}[5m]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -1416,7 +1416,7 @@
       },
       "targets": [
         {
-          "expr": "sum(elasticsearch_index_total{application=\"$application\", status=\"failure\"})",
+          "expr": "sum(elasticsearch_sync_total{application=\"$application\", status=\"failure\"})",
           "legendFormat": "",
           "refId": "A"
         }
@@ -1439,12 +1439,12 @@
       "options": { "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "rate(elasticsearch_index_total{application=\"$application\", status=\"success\"}[1m])",
+          "expr": "rate(elasticsearch_sync_total{application=\"$application\", status=\"success\"}[1m])",
           "legendFormat": "Success/s",
           "refId": "A"
         },
         {
-          "expr": "rate(elasticsearch_index_total{application=\"$application\", status=\"failure\"}[1m])",
+          "expr": "rate(elasticsearch_sync_total{application=\"$application\", status=\"failure\"}[1m])",
           "legendFormat": "Failure/s",
           "refId": "B"
         }

@@ -65,9 +65,9 @@ public class ElasticsearchEventListener {
         try {
             log.debug("Removing deleted project from index: {}", event.projectId());
             syncService.deleteProjectIndex(event.projectId());
-            metricsService.incrementEsIndexSuccess();
+            metricsService.incrementEsDeleteSuccess();
         } catch (Exception e) {
-            metricsService.incrementEsIndexFailure();
+            metricsService.incrementEsDeleteFailure();
             log.error(
                     "Failed to remove project {} from index: {}",
                     event.projectId(),
