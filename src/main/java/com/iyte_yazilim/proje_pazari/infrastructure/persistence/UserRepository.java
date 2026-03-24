@@ -58,11 +58,13 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
 
     // --- Admin query methods ---
 
-    Page<UserEntity> findByRole(RoleType role, Pageable pageable);
+    @Query("SELECT u FROM UserEntity u JOIN u.roles r WHERE r = :role")
+    Page<UserEntity> findByRole(@Param("role") RoleType role, Pageable pageable);
 
     Page<UserEntity> findByIsActive(Boolean isActive, Pageable pageable);
 
-    long countByRole(RoleType role);
+    @Query("SELECT COUNT(u) FROM UserEntity u JOIN u.roles r WHERE r = :role")
+    long countByRole(@Param("role") RoleType role);
 
     long countByIsActive(Boolean isActive);
 
@@ -71,8 +73,8 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     @Query(
-            "SELECT u FROM UserEntity u WHERE "
-                    + "(:role IS NULL OR u.role = :role) AND "
+            "SELECT DISTINCT u FROM UserEntity u LEFT JOIN u.roles r WHERE "
+                    + "(:role IS NULL OR r = :role) AND "
                     + "(:isActive IS NULL OR u.isActive = :isActive) AND "
                     + "(:search IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) "
                     + "OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) "
