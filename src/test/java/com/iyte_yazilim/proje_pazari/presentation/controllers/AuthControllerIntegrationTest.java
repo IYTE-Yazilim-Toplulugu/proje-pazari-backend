@@ -219,8 +219,11 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.message").exists());
 
         // Confirm the blacklisted access token is rejected on subsequent requests.
+        // GlobalExceptionHandler maps AccessDeniedException to 403 for anonymous users
+        // (token blacklisted → no auth set → @PreAuthorize("isAuthenticated()") throws
+        // AccessDeniedException → handled as 403 Forbidden).
         mockMvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
