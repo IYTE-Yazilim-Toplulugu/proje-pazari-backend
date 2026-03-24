@@ -423,8 +423,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
                                     .header("Authorization", "Bearer " + token))
                     .andExpect(status().isOk());
 
-            verify(fileStorageService)
-                    .storeUserAvatar(anyString(), any());
+            verify(fileStorageService).storeUserAvatar(anyString(), any());
         }
     }
 }
