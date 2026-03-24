@@ -1,10 +1,12 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import com.iyte_yazilim.proje_pazari.application.commands.forgotPassword.ForgotPasswordCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenResult;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.resetPassword.ResetPasswordCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.verifyEmail.VerifyEmailCommand;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -288,5 +290,40 @@ public class AuthController extends BaseController {
     public ResponseEntity<ApiResponse<RefreshTokenResult>> refreshToken(
             @RequestParam String refreshToken) {
         return send(new RefreshTokenCommand(refreshToken));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(
+            summary = "Request password reset",
+            description =
+                    "Sends a password reset link to the provided email address. "
+                            + "Always returns success to prevent user enumeration.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Reset email sent if account exists")
+            })
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordCommand command) {
+        return send(command);
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(
+            summary = "Reset password using token",
+            description = "Resets the user's password using the token received by email.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Password reset successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid or expired token, or weak password")
+            })
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordCommand command) {
+        return send(command);
     }
 }
