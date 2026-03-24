@@ -2,7 +2,16 @@ package com.iyte_yazilim.proje_pazari.presentation.config;
 
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailAlreadyVerifiedException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailSendException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FlaggedContentNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
@@ -116,19 +125,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-    @ExceptionHandler(com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDomainValidationException(
-            com.iyte_yazilim.proje_pazari.domain.exceptions.ValidationException ex) {
-        log.error("Validation error: {}", ex.getMessage());
-        ApiResponse<Void> response = ApiResponse.validationError(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<ApiResponse<Void>> handleFileStorageException(FileStorageException ex) {
-        log.debug("File storage error: {}", ex.getMessage());
-        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        log.error("File storage error: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.internalError(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -137,6 +138,77 @@ public class GlobalExceptionHandler {
         log.error("Illegal argument: {}", ex.getMessage());
         ApiResponse<Void> response = ApiResponse.badRequest(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFoundException(UserNotFoundException ex) {
+        log.warn("User not found: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProjectNotFoundException(
+            ProjectNotFoundException ex) {
+        log.warn("Project not found: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(ApplicationNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleApplicationNotFoundException(
+            ApplicationNotFoundException ex) {
+        log.warn("Application not found: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(FlaggedContentNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFlaggedContentNotFoundException(
+            FlaggedContentNotFoundException ex) {
+        log.warn("Flagged content not found: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.notFound(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmailNotVerifiedException(
+            EmailNotVerifiedException ex) {
+        log.warn("Email not verified: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.forbidden(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    @ExceptionHandler(EmailAlreadyVerifiedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmailAlreadyVerifiedException(
+            EmailAlreadyVerifiedException ex) {
+        log.warn("Email already verified: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.conflict(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(VerificationTokenExpiredException.class)
+    public ResponseEntity<ApiResponse<Void>> handleVerificationTokenExpiredException(
+            VerificationTokenExpiredException ex) {
+        log.warn("Verification token expired: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.badRequest(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(InvalidVerificationTokenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidVerificationTokenException(
+            InvalidVerificationTokenException ex) {
+        log.warn("Invalid verification token: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.badRequest(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(EmailSendException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmailSendException(EmailSendException ex) {
+        log.error("Email send failed: {}", ex.getMessage());
+        ApiResponse<Void> response =
+                ApiResponse.internalError(messageService.getMessage("error.internal"));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     @ExceptionHandler(Exception.class)

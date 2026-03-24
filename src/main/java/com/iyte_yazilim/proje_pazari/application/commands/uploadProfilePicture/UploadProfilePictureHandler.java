@@ -1,8 +1,10 @@
 package com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture;
 
+import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -22,7 +24,7 @@ public class UploadProfilePictureHandler
 
     private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     @Transactional(
@@ -31,43 +33,38 @@ public class UploadProfilePictureHandler
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
     public ApiResponse<String> handle(UploadProfilePictureCommand command) {
-        UserEntity user = userRepository.findById(command.userId()).orElse(null);
+        UserEntity user =
+                userRepository
+                        .findById(command.userId())
+                        .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
-        if (user == null) {
-            return ApiResponse.notFound(messageService.getMessage("user.not.found"));
+        if (command.file() == null || command.file().isEmpty()) {
+            throw new ValidationException("File is required");
         }
 
-        try {
-            // Delete old profile picture if exists
-            String oldUrl = user.getProfilePictureUrl();
-            if (oldUrl != null && !oldUrl.isBlank()) {
-                String oldPath = extractPathFromUrl(oldUrl);
-                if (oldPath != null) {
-                    try {
-                        fileStorageService.deleteFile(oldPath);
-                    } catch (FileStorageException e) {
-                        // Ignore if old file doesn't exist
-                    }
+        // Delete old profile picture if exists
+        String oldUrl = user.getProfilePictureUrl();
+        if (oldUrl != null && !oldUrl.isBlank()) {
+            String oldPath = extractPathFromUrl(oldUrl);
+            if (oldPath != null) {
+                try {
+                    fileStorageService.deleteFile(oldPath);
+                } catch (FileStorageException e) {
+                    // Ignore if old file doesn't exist
                 }
             }
-
-            // Store new file in profiles folder - returns presigned URL for MinIO
-            String storedUrl = fileStorageService.storeFile(command.file(), PROFILES_FOLDER);
-
-            // Update user profile picture URL
-            user.setProfilePictureUrl(storedUrl);
-            userRepository.save(user);
-
-            return ApiResponse.success(
-                    user.getProfilePictureUrl(),
-                    messageService.getMessage("user.profile.picture.uploaded"));
-
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.validationError(e.getMessage());
-        } catch (FileStorageException e) {
-            return ApiResponse.error(
-                    messageService.getMessage("file.upload.failed", new Object[] {e.getMessage()}));
         }
+
+        // Store new file in profiles folder - returns presigned URL for MinIO
+        String storedUrl = fileStorageService.storeFile(command.file(), PROFILES_FOLDER);
+
+        // Update user profile picture URL
+        user.setProfilePictureUrl(storedUrl);
+        userRepository.save(user);
+
+        return ApiResponse.success(
+                user.getProfilePictureUrl(),
+                messageService.getMessage("user.profile.picture.uploaded"));
     }
 
     private String extractPathFromUrl(String url) {
