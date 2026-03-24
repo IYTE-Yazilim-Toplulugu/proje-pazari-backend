@@ -40,3 +40,6 @@ out/
 
 .env
 docker-compose.override.yml
+
+# Database backup dumps
+backups/

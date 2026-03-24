@@ -96,6 +96,17 @@ class AdminControllerIntegrationTest {
         }
 
         @Test
+        @DisplayName("Should return 200 OK for storage health endpoint")
+        void shouldReturn200ForStorageHealth() throws Exception {
+            mockMvc.perform(
+                            get("/api/v1/admin/storage/health")
+                                    .header("Authorization", "Bearer " + adminToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.available").exists());
+        }
+
+        @Test
         @DisplayName("Should return 403 for PROJECT_OWNER role")
         @WithMockUser(username = "owner", roles = "PROJECT_OWNER")
         void shouldReturn403ForProjectOwnerRole() throws Exception {
