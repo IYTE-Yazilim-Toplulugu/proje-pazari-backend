@@ -7,10 +7,10 @@ import static org.mockito.Mockito.*;
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.ITokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Optional;
@@ -25,7 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class LogoutHandlerTest {
 
-    @Mock private RefreshTokenService refreshTokenService;
+    @Mock private IRefreshTokenService refreshTokenService;
     @Mock private TokenBlacklistService tokenBlacklistService;
     @Mock private ITokenService tokenService;
     @Mock private MessageService messageService;
@@ -50,8 +50,7 @@ class LogoutHandlerTest {
         long futureMillis = System.currentTimeMillis() + 60_000;
         Date expiration = new Date(futureMillis);
 
-        when(refreshTokenService.validateRefreshToken(REFRESH_TOKEN))
-                .thenReturn(Optional.of(USER_ID));
+        when(refreshTokenService.validateAndRevoke(REFRESH_TOKEN)).thenReturn(Optional.of(USER_ID));
         when(tokenService.extractExpiration(ACCESS_TOKEN)).thenReturn(expiration);
 
         ApiResponse<Void> response =
@@ -59,21 +58,20 @@ class LogoutHandlerTest {
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals("Logout successful", response.getMessage());
-        verify(refreshTokenService).revokeRefreshToken(REFRESH_TOKEN);
+        verify(refreshTokenService).validateAndRevoke(REFRESH_TOKEN);
         verify(tokenBlacklistService).blacklistToken(eq(ACCESS_TOKEN), any(Duration.class));
     }
 
     @Test
     @DisplayName("Should revoke refresh token even when access token is null")
     void shouldRevokeRefreshToken_WhenAccessTokenIsNull() {
-        when(refreshTokenService.validateRefreshToken(REFRESH_TOKEN))
-                .thenReturn(Optional.of(USER_ID));
+        when(refreshTokenService.validateAndRevoke(REFRESH_TOKEN)).thenReturn(Optional.of(USER_ID));
 
         ApiResponse<Void> response =
                 logoutHandler.handle(new LogoutCommand(null, REFRESH_TOKEN, USER_ID));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        verify(refreshTokenService).revokeRefreshToken(REFRESH_TOKEN);
+        verify(refreshTokenService).validateAndRevoke(REFRESH_TOKEN);
         verify(tokenBlacklistService, never()).blacklistToken(any(), any());
     }
 
@@ -82,23 +80,21 @@ class LogoutHandlerTest {
     void shouldSkipBlacklist_WhenAccessTokenIsExpired() {
         Date pastExpiration = new Date(System.currentTimeMillis() - 60_000);
 
-        when(refreshTokenService.validateRefreshToken(REFRESH_TOKEN))
-                .thenReturn(Optional.of(USER_ID));
+        when(refreshTokenService.validateAndRevoke(REFRESH_TOKEN)).thenReturn(Optional.of(USER_ID));
         when(tokenService.extractExpiration(ACCESS_TOKEN)).thenReturn(pastExpiration);
 
         ApiResponse<Void> response =
                 logoutHandler.handle(new LogoutCommand(ACCESS_TOKEN, REFRESH_TOKEN, USER_ID));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        verify(refreshTokenService).revokeRefreshToken(REFRESH_TOKEN);
+        verify(refreshTokenService).validateAndRevoke(REFRESH_TOKEN);
         verify(tokenBlacklistService, never()).blacklistToken(any(), any());
     }
 
     @Test
     @DisplayName("Should skip Redis blacklisting when access token is malformed")
     void shouldSkipBlacklist_WhenAccessTokenIsMalformed() {
-        when(refreshTokenService.validateRefreshToken(REFRESH_TOKEN))
-                .thenReturn(Optional.of(USER_ID));
+        when(refreshTokenService.validateAndRevoke(REFRESH_TOKEN)).thenReturn(Optional.of(USER_ID));
         when(tokenService.extractExpiration(ACCESS_TOKEN))
                 .thenThrow(new RuntimeException("Malformed JWT"));
 
@@ -106,14 +102,14 @@ class LogoutHandlerTest {
                 logoutHandler.handle(new LogoutCommand(ACCESS_TOKEN, REFRESH_TOKEN, USER_ID));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        verify(refreshTokenService).revokeRefreshToken(REFRESH_TOKEN);
+        verify(refreshTokenService).validateAndRevoke(REFRESH_TOKEN);
         verify(tokenBlacklistService, never()).blacklistToken(any(), any());
     }
 
     @Test
     @DisplayName("Should throw ValidationException when refresh token is not found or expired")
     void shouldThrow_WhenRefreshTokenNotFound() {
-        when(refreshTokenService.validateRefreshToken(REFRESH_TOKEN)).thenReturn(Optional.empty());
+        when(refreshTokenService.validateAndRevoke(REFRESH_TOKEN)).thenReturn(Optional.empty());
 
         assertThrows(
                 ValidationException.class,
@@ -128,7 +124,7 @@ class LogoutHandlerTest {
     @Test
     @DisplayName("Should throw ValidationException when refresh token belongs to a different user")
     void shouldThrow_WhenRefreshTokenOwnershipMismatch() {
-        when(refreshTokenService.validateRefreshToken(REFRESH_TOKEN))
+        when(refreshTokenService.validateAndRevoke(REFRESH_TOKEN))
                 .thenReturn(Optional.of("different-user-456"));
 
         assertThrows(

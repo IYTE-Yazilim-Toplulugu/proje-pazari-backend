@@ -2,11 +2,11 @@ package com.iyte_yazilim.proje_pazari.application.commands.logout;
 
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.ITokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Optional;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LogoutHandler implements IRequestHandler<LogoutCommand, ApiResponse<Void>> {
 
-    private final RefreshTokenService refreshTokenService;
+    private final IRefreshTokenService refreshTokenService;
     private final TokenBlacklistService tokenBlacklistService;
     private final ITokenService tokenService;
     private final MessageService messageService;
@@ -28,10 +28,10 @@ public class LogoutHandler implements IRequestHandler<LogoutCommand, ApiResponse
     public ApiResponse<Void> handle(LogoutCommand command) {
         String refreshToken = command.refreshToken();
 
-        // Validate the refresh token and verify ownership in one step.
-        // validateRefreshToken returns empty if the token does not exist, is expired, or is
-        // already revoked — all cases where we should not silently return 200.
-        Optional<String> ownerIdOpt = refreshTokenService.validateRefreshToken(refreshToken);
+        // Validate and revoke the refresh token in a single transaction.
+        // Returns empty if the token does not exist, is expired, or is already revoked —
+        // all cases where we should not silently return 200.
+        Optional<String> ownerIdOpt = refreshTokenService.validateAndRevoke(refreshToken);
         if (ownerIdOpt.isEmpty()) {
             throw new ValidationException(messageService.getMessage("auth.token.invalid"));
         }
@@ -42,8 +42,6 @@ public class LogoutHandler implements IRequestHandler<LogoutCommand, ApiResponse
             throw new ValidationException(messageService.getMessage("auth.token.invalid"));
         }
 
-        // Revoke the refresh token from DB.
-        refreshTokenService.revokeRefreshToken(refreshToken);
         log.info("Refresh token revoked for user: {}", command.userId());
 
         // Blacklist the access token in Redis so it cannot be reused until it expires naturally.

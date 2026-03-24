@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -216,6 +217,10 @@ class AuthControllerIntegrationTest {
                                                 Map.of("refreshToken", refreshToken))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").exists());
+
+        // Confirm the blacklisted access token is rejected on subsequent requests.
+        mockMvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
