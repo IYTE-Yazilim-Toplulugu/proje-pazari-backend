@@ -63,7 +63,8 @@ class GetProjectApplicationsHandlerTest {
         ProjectApplicationEntity app = buildApp(applicant, ApplicationStatus.PENDING);
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
-        when(applicationRepository.findByProjectId(projectId)).thenReturn(List.of(app));
+        when(applicationRepository.findByProjectIdWithOptionalStatus(projectId, null))
+                .thenReturn(List.of(app));
         when(messageService.getMessage("application.list.retrieved.success")).thenReturn("OK");
 
         ApiResponse<List<ApplicationDto>> response =
@@ -83,8 +84,9 @@ class GetProjectApplicationsHandlerTest {
         ProjectApplicationEntity approved = buildApp(applicant, ApplicationStatus.APPROVED);
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
-        when(applicationRepository.findByProjectId(projectId))
-                .thenReturn(List.of(pending, approved));
+        when(applicationRepository.findByProjectIdWithOptionalStatus(
+                        projectId, ApplicationStatus.PENDING))
+                .thenReturn(List.of(pending));
         when(messageService.getMessage("application.list.retrieved.success")).thenReturn("OK");
 
         ApiResponse<List<ApplicationDto>> response =
@@ -132,7 +134,8 @@ class GetProjectApplicationsHandlerTest {
         ProjectApplicationEntity app = buildApp(applicant, ApplicationStatus.APPROVED);
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
-        when(applicationRepository.findByProjectId(projectId)).thenReturn(List.of(app));
+        when(applicationRepository.findByProjectIdWithOptionalStatus(projectId, null))
+                .thenReturn(List.of(app));
         when(messageService.getMessage("application.list.retrieved.success")).thenReturn("OK");
 
         ApiResponse<List<ApplicationDto>> response =
