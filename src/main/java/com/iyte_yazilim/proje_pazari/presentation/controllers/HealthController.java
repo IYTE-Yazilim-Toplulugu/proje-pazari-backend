@@ -32,12 +32,12 @@ public class HealthController {
                                         mediaType = "application/json",
                                         examples =
                                                 @ExampleObject(
-                                                        name = "Healthy",
+                                                        name = "Healthy (timestamp is dynamic)",
                                                         value =
                                                                 """
                     {
                         "status": "UP",
-                        "timestamp": "2025-03-25T12:00:00",
+                        "timestamp": "2026-01-01T12:00:00",
                         "service": "Proje Pazari API",
                         "version": "1.0.0"
                     }

@@ -40,7 +40,12 @@ public class ProjectController extends BaseController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(summary = "Create a new project")
+    @Operation(
+            summary = "Create a new project",
+            description =
+                    "Creates a new project. The ownerId is resolved server-side from the"
+                            + " authenticated user's bearer token — do not include it in the"
+                            + " request body.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -106,7 +111,7 @@ public class ProjectController extends BaseController {
                 "maxTeamSize": 5,
                 "requiredSkills": ["Python", "NLP", "Machine Learning", "FastAPI"],
                 "category": "Artificial Intelligence",
-                "deadline": "2025-06-15T23:59:59"
+                "deadline": "2026-06-15T23:59:59"
             }
             """)))
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(

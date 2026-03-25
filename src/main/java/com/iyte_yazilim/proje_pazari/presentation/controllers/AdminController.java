@@ -292,7 +292,11 @@ public class AdminController extends BaseController {
             description = "Admin review of any application (approve/reject)")
     @Audited(action = "ADMIN_REVIEW_APPLICATION", entityType = "APPLICATION")
     public ResponseEntity<ApiResponse<Void>> reviewApplication(
-            @Parameter(description = "Application ID", required = true) @PathVariable
+            @Parameter(
+                            description = "Application ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R5A")
+                    @PathVariable
                     String applicationId,
             @Valid @RequestBody ReviewApplicationRequest request) {
         return send(new AdminReviewApplicationCommand(applicationId, request.status()));
@@ -385,7 +389,12 @@ public class AdminController extends BaseController {
             @Parameter(description = "Content type to flag", required = true, example = "PROJECT")
                     @PathVariable
                     String type,
-            @Parameter(description = "Content ID to flag", required = true) @PathVariable String id,
+            @Parameter(
+                            description = "Content ID to flag",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4H")
+                    @PathVariable
+                    String id,
             @Valid @RequestBody FlagContentRequest request) {
         return send(new FlagContentCommand(type, id, request.reason()));
     }
@@ -415,7 +424,11 @@ public class AdminController extends BaseController {
             description = "Review flagged content (APPROVE, REMOVE, BAN_USER)")
     @Audited(action = "REVIEW_FLAGGED_CONTENT", entityType = "CONTENT")
     public ResponseEntity<ApiResponse<Void>> reviewFlaggedContent(
-            @Parameter(description = "Flag ID to review", required = true) @PathVariable
+            @Parameter(
+                            description = "Flag ID to review",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R5B")
+                    @PathVariable
                     String flagId,
             @Valid @RequestBody ReviewFlaggedContentRequest request) {
         return send(
@@ -585,7 +598,10 @@ public class AdminController extends BaseController {
             description = "Revoke all sessions for a specific user")
     @Audited(action = "INVALIDATE_USER_SESSIONS", entityType = "SESSION")
     public ResponseEntity<ApiResponse<Void>> invalidateUserSessions(
-            @Parameter(description = "User ID whose sessions to invalidate", required = true)
+            @Parameter(
+                            description = "User ID whose sessions to invalidate",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4G")
                     @PathVariable
                     String userId) {
         return send(new InvalidateUserSessionsCommand(userId));
@@ -688,7 +704,11 @@ public class AdminController extends BaseController {
             description = "Cancel a pending scheduled email broadcast")
     @Audited(action = "CANCEL_SCHEDULED_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> cancelScheduledEmail(
-            @Parameter(description = "Scheduled email ID to cancel", required = true) @PathVariable
+            @Parameter(
+                            description = "Scheduled email ID to cancel",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R5C")
+                    @PathVariable
                     String id) {
         return send(new CancelScheduledEmailCommand(id));
     }
