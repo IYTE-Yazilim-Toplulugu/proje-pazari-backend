@@ -12,10 +12,6 @@ public interface IRefreshTokenService {
 
     String createRefreshToken(String userId);
 
-    Optional<String> validateRefreshToken(String token);
-
-    void revokeRefreshToken(String token);
-
     /**
      * Validates a refresh token and revokes it in a single transaction.
      *

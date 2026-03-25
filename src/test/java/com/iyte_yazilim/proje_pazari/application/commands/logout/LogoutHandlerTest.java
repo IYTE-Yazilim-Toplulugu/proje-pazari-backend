@@ -117,7 +117,6 @@ class LogoutHandlerTest {
                         logoutHandler.handle(
                                 new LogoutCommand(ACCESS_TOKEN, REFRESH_TOKEN, USER_ID)));
 
-        verify(refreshTokenService, never()).revokeRefreshToken(any());
         verify(tokenBlacklistService, never()).blacklistToken(any(), any());
     }
 
@@ -133,7 +132,6 @@ class LogoutHandlerTest {
                         logoutHandler.handle(
                                 new LogoutCommand(ACCESS_TOKEN, REFRESH_TOKEN, USER_ID)));
 
-        verify(refreshTokenService, never()).revokeRefreshToken(any());
         verify(tokenBlacklistService, never()).blacklistToken(any(), any());
     }
 }

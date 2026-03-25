@@ -265,6 +265,6 @@ class AuthControllerIntegrationTest {
                                 .content(
                                         objectMapper.writeValueAsString(
                                                 Map.of("refreshToken", "some-token"))))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isForbidden());
     }
 }
