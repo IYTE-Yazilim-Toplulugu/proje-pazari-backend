@@ -8,6 +8,7 @@ import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -108,7 +109,17 @@ class ElasticsearchEventListenerTest {
     @DisplayName("Should delete project index and increment delete success on project deleted")
     void shouldDeleteProjectIndex_whenProjectDeleted() throws Exception {
         // Given
-        ProjectDeletedEvent event = new ProjectDeletedEvent("proj-3");
+        ProjectDeletedEvent event =
+                new ProjectDeletedEvent(
+                        "proj-3",
+                        "Test Project",
+                        "owner-1",
+                        "owner@test.com",
+                        "Owner",
+                        0,
+                        List.of(),
+                        List.of(),
+                        LocalDateTime.now());
 
         // When
         listener.handleProjectDeleted(event);
@@ -123,7 +134,17 @@ class ElasticsearchEventListenerTest {
     @DisplayName("Should increment delete failure when project deleted sync throws")
     void shouldIncrementDeleteFailure_whenProjectDeletedSyncThrows() throws Exception {
         // Given
-        ProjectDeletedEvent event = new ProjectDeletedEvent("proj-3");
+        ProjectDeletedEvent event =
+                new ProjectDeletedEvent(
+                        "proj-3",
+                        "Test Project",
+                        "owner-1",
+                        "owner@test.com",
+                        "Owner",
+                        0,
+                        List.of(),
+                        List.of(),
+                        LocalDateTime.now());
         doThrow(new RuntimeException("ES unavailable"))
                 .when(syncService)
                 .deleteProjectIndex("proj-3");
