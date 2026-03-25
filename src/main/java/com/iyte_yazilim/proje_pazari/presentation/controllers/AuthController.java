@@ -110,17 +110,17 @@ public class AuthController extends BaseController {
                                                         name = "Success Response",
                                                         value =
                                                                 """
-                    {
-                        "code": "CREATED",
-                        "message": "User registered successfully",
-                        "data": {
-                            "userId": "01HQXV5KXBW9FYMN8CJZSP2R4G",
-                            "email": "student@std.iyte.edu.tr",
-                            "firstName": "John",
-                            "lastName": "Doe"
-                        }
-                    }
-                    """))),
+                                        {
+                                            "code": "CREATED",
+                                            "message": "User registered successfully",
+                                            "data": {
+                                                "userId": "01HQXV5KXBW9FYMN8CJZSP2R4G",
+                                                "email": "student@std.iyte.edu.tr",
+                                                "firstName": "John",
+                                                "lastName": "Doe"
+                                            }
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "Invalid request data or email already exists",
@@ -133,12 +133,12 @@ public class AuthController extends BaseController {
                                                         name = "Email Exists",
                                                         value =
                                                                 """
-                    {
-                        "code": "BAD_REQUEST",
-                        "message": "Email already exists",
-                        "data": null
-                    }
-                    """)))
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Email already exists",
+                                            "data": null
+                                        }
+                                        """)))
             })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "User registration details",
@@ -152,15 +152,15 @@ public class AuthController extends BaseController {
                                             name = "Registration Request",
                                             value =
                                                     """
-            {
-                "email": "student@std.iyte.edu.tr",
-                "password": "SecurePass123!",
-                "firstName": "John",
-                "lastName": "Doe"
-            }
-            """)))
+                        {
+                            "email": "student@std.iyte.edu.tr",
+                            "password": "SecurePass123!",
+                            "firstName": "John",
+                            "lastName": "Doe"
+                        }
+                        """)))
     public ResponseEntity<ApiResponse<RegisterUserResult>> register(
-            @RequestBody RegisterUserCommand command) {
+            @Valid @RequestBody RegisterUserCommand command) {
         return send(command);
     }
 
@@ -185,16 +185,16 @@ public class AuthController extends BaseController {
                                                         name = "Success Response",
                                                         value =
                                                                 """
-                    {
-                        "code": "SUCCESS",
-                        "message": "Login successful",
-                        "data": {
-                            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                            "tokenType": "Bearer",
-                            "expiresIn": 86400000
-                            }
-                            }
-                    """))),
+                                        {
+                                            "code": "SUCCESS",
+                                            "message": "Login successful",
+                                            "data": {
+                                                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                                "tokenType": "Bearer",
+                                                "expiresIn": 86400000
+                                                }
+                                                }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "Invalid credentials",
@@ -207,12 +207,12 @@ public class AuthController extends BaseController {
                                                         name = "Invalid Credentials",
                                                         value =
                                                                 """
-                    {
-                        "code": "BAD_REQUEST",
-                        "message": "Invalid email or password",
-                        "data": null
-                    }
-                    """)))
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Invalid email or password",
+                                            "data": null
+                                        }
+                                        """)))
             })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "User login credentials",
@@ -226,13 +226,13 @@ public class AuthController extends BaseController {
                                             name = "Login Request",
                                             value =
                                                     """
-            {
-                "email": "student@std.iyte.edu.tr",
-                "password": "SecurePass123!"
-            }
-            """)))
+                        {
+                            "email": "student@std.iyte.edu.tr",
+                            "password": "SecurePass123!"
+                        }
+                        """)))
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
-            @RequestBody LoginUserCommand command) {
+            @Valid @RequestBody LoginUserCommand command) {
         return send(command);
     }
 
