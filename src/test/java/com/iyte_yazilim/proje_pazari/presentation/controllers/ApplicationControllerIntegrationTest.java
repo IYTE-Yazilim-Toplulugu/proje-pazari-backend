@@ -9,10 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -34,19 +32,12 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
 
     // ── Helper Methods ──────────────────────────────────────────────────
 
-    private void promoteToProjectOwner(String email) {
-        UserEntity user = userRepository.findByEmail(email).orElseThrow();
-        user.setRole(RoleType.PROJECT_OWNER);
-        userRepository.save(user);
-    }
-
     private String getUserId(String email) {
         return userRepository.findByEmail(email).orElseThrow().getId();
     }
 
     private String createProjectOwnerAndGetToken() throws Exception {
         registerAndVerifyUser(OWNER_EMAIL, VALID_PASSWORD, "Ali", "Yilmaz");
-        promoteToProjectOwner(OWNER_EMAIL);
         return loginAndGetToken(OWNER_EMAIL, VALID_PASSWORD);
     }
 

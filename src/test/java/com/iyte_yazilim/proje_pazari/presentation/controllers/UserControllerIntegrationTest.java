@@ -4,12 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.github.f4b6a3.ulid.UlidCreator;
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,11 +34,16 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
 
     @Autowired private JwtUtil jwtUtil;
 
+    private String testUserId;
+    private String jwtToken;
+    private String testEmail;
+
     // ── Helper Methods ──────────────────────────────────────────────────
 
     private String createVerifiedUserAndGetToken() throws Exception {
         return createVerifiedUserAndGetToken(
                 VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+    }
 
     @BeforeEach
     void setUp() {
@@ -597,6 +606,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
         void getAllUsers_noAuth_returns403() throws Exception {
             mockMvc.perform(get(BASE_URL)).andExpect(status().isForbidden());
         }
+    }
 
     @Test
     @DisplayName("PUT /api/v1/users/me/password - should require authentication")
@@ -665,6 +675,5 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
     @DisplayName("DELETE /api/v1/users/me - should require authentication")
     void shouldRequireAuthForDeactivateAccount() throws Exception {
         mockMvc.perform(delete("/api/v1/users/me")).andExpect(status().isForbidden());
->>>>>>> c71beda8758c94e3ccc2bb542a2e1e4770ad2158
     }
 }

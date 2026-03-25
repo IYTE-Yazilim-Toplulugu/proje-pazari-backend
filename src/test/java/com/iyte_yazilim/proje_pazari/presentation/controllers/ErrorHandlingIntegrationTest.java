@@ -6,9 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
-import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,9 +36,6 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
 
     private String createProjectOwnerAndGetToken() throws Exception {
         registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
-        UserEntity user = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
-        user.setRole(RoleType.PROJECT_OWNER);
-        userRepository.save(user);
         return loginAndGetToken(VALID_EMAIL, VALID_PASSWORD);
     }
 

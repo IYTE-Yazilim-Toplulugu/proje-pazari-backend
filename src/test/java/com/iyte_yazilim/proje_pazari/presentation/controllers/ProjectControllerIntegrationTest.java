@@ -10,18 +10,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
-import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MvcResult;
 
 class ProjectControllerIntegrationTest extends IntegrationTestBase {
@@ -38,12 +40,12 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
     @Autowired private JwtUtil jwtUtil;
 
-    // ── Helper Methods ──────────────────────────────────────────────────
+    @Autowired private PasswordEncoder passwordEncoder;
 
-    private void promoteToProjectOwner(String email) {
-        UserEntity user = userRepository.findByEmail(email).orElseThrow();
-        user.setRole(RoleType.PROJECT_OWNER);
-        userRepository.save(user);
+    private String testUserId;
+    private String jwtToken;
+
+    // ── Helper Methods ──────────────────────────────────────────────────
 
     @BeforeEach
     void setUp() {
@@ -69,7 +71,6 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
     private String createProjectOwnerAndGetToken() throws Exception {
         registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
-        promoteToProjectOwner(VALID_EMAIL);
         return loginAndGetToken(VALID_EMAIL, VALID_PASSWORD);
     }
 
@@ -480,9 +481,6 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
             // Create a second project owner
             registerAndVerifyUser("owner2@std.iyte.edu.tr", VALID_PASSWORD, "Zeynep", "Sahin");
-            UserEntity owner2 = userRepository.findByEmail("owner2@std.iyte.edu.tr").orElseThrow();
-            owner2.setRole(RoleType.PROJECT_OWNER);
-            userRepository.save(owner2);
             String otherOwnerToken = loginAndGetToken("owner2@std.iyte.edu.tr", VALID_PASSWORD);
 
             mockMvc.perform(
@@ -592,9 +590,6 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
             String projectId = createProjectAndGetId(ownerToken);
 
             registerAndVerifyUser("owner2@std.iyte.edu.tr", VALID_PASSWORD, "Zeynep", "Sahin");
-            UserEntity owner2 = userRepository.findByEmail("owner2@std.iyte.edu.tr").orElseThrow();
-            owner2.setRole(RoleType.PROJECT_OWNER);
-            userRepository.save(owner2);
             String otherOwnerToken = loginAndGetToken("owner2@std.iyte.edu.tr", VALID_PASSWORD);
 
             mockMvc.perform(
