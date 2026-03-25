@@ -193,8 +193,6 @@ public class AdminController extends BaseController {
         return send(new BulkUserActionCommand(request.action(), request.userIds()));
     }
 
-
-
     // ==================== PROJECT MANAGEMENT ====================
 
     @GetMapping("/projects")
