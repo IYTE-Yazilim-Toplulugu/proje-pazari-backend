@@ -1416,7 +1416,7 @@
       },
       "targets": [
         {
-          "expr": "sum(elasticsearch_sync_total{application=\"$application\", status=\"failure\"})",
+          "expr": "sum(increase(elasticsearch_sync_total{application=\"$application\", status=\"failure\"}[$__rate_interval]))",
           "legendFormat": "",
           "refId": "A"
         }
