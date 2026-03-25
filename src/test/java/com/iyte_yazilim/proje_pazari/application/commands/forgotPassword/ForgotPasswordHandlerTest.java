@@ -6,12 +6,12 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.events.PasswordResetEmailRequestedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,10 +51,9 @@ class ForgotPasswordHandlerTest {
     @Test
     @DisplayName("Should return success and publish reset email event when user exists")
     void shouldPublishEventAndReturnSuccess_WhenUserExists() {
-        UserEntity user = new UserEntity();
-        user.setId("user-123");
-        user.setEmail("student@std.iyte.edu.tr");
-        user.setFirstName("Ali");
+        User user = new User("student@std.iyte.edu.tr", "hashed", "Ali", "Test");
+        ReflectionTestUtils.setField(
+                user, "id", com.github.f4b6a3.ulid.Ulid.from("01HRQJ4FPGESQHPKS0MRCYG9M0"));
 
         when(userRepository.findByEmail("student@std.iyte.edu.tr")).thenReturn(Optional.of(user));
         when(verificationTokenService.generateToken()).thenReturn("test-token-uuid");
@@ -65,7 +64,7 @@ class ForgotPasswordHandlerTest {
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals(SUCCESS_MSG, response.getMessage());
-        verify(passwordResetTokenRepository).deleteByUserId("user-123");
+        verify(passwordResetTokenRepository).deleteByUserId("01HRQJ4FPGESQHPKS0MRCYG9M0");
         verify(passwordResetTokenRepository).save(any());
 
         ArgumentCaptor<PasswordResetEmailRequestedEvent> eventCaptor =

@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,7 +23,8 @@ import lombok.Setter;
 @Entity
 @Table(
         name = "password_reset_tokens",
-        indexes = @Index(name = "idx_prt_user_id", columnList = "userId"))
+        indexes = @Index(name = "idx_prt_user_id", columnList = "userId"),
+        uniqueConstraints = @UniqueConstraint(name = "uq_prt_token", columnNames = "token"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,7 +42,7 @@ public class PasswordResetTokenEntity {
     @Column(nullable = false)
     private String email;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String token;
 
     @Column(name = "expires_at", nullable = false)

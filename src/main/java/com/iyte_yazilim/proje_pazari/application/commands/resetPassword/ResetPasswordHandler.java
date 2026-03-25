@@ -1,6 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.resetPassword;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.entities.PasswordResetToken;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
@@ -8,8 +10,6 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenReposi
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PasswordResetTokenEntity;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class ResetPasswordHandler
     public ApiResponse<Void> handle(ResetPasswordCommand command) {
 
         // --- 1. Validate token exists ---
-        PasswordResetTokenEntity resetToken =
+        PasswordResetToken resetToken =
                 passwordResetTokenRepository
                         .findByToken(command.token())
                         .orElseThrow(
@@ -57,7 +57,7 @@ public class ResetPasswordHandler
         }
 
         // --- 4. Load user ---
-        UserEntity user =
+        User user =
                 userRepository
                         .findById(resetToken.getUserId())
                         .orElseThrow(() -> new UserNotFoundException(resetToken.getUserId()));
@@ -71,9 +71,9 @@ public class ResetPasswordHandler
         passwordResetTokenRepository.save(resetToken);
 
         // --- 7. Revoke all refresh tokens — force re-login on all devices ---
-        refreshTokenService.revokeAllUserTokens(user.getId());
+        refreshTokenService.revokeAllUserTokens(resetToken.getUserId());
 
-        log.info("Password reset completed for user: {}", user.getId());
+        log.info("Password reset completed for user: {}", resetToken.getUserId());
 
         return ApiResponse.success(null, messageService.getMessage("auth.password.reset.success"));
     }

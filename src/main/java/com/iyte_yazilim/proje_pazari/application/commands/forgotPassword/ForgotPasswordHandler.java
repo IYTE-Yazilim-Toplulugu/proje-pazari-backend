@@ -2,13 +2,13 @@ package com.iyte_yazilim.proje_pazari.application.commands.forgotPassword;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
+import com.iyte_yazilim.proje_pazari.domain.entities.PasswordResetToken;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.PasswordResetEmailRequestedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PasswordResetTokenEntity;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class ForgotPasswordHandler
     public ApiResponse<Void> handle(ForgotPasswordCommand command) {
 
         // --- 1. Look up user — always return success to prevent user enumeration ---
-        Optional<UserEntity> userOpt = userRepository.findByEmail(command.email());
+        Optional<User> userOpt = userRepository.findByEmail(command.email());
 
         if (userOpt.isEmpty()) {
             log.warn("Password reset requested for non-existent email: {}", command.email());
@@ -52,19 +52,20 @@ public class ForgotPasswordHandler
                     null, messageService.getMessage("auth.password.reset.email.sent"));
         }
 
-        UserEntity user = userOpt.get();
+        User user = userOpt.get();
 
         // --- 2. Delete any existing tokens for this user ---
-        passwordResetTokenRepository.deleteByUserId(user.getId());
+        passwordResetTokenRepository.deleteByUserId(user.getId().toString());
 
         // --- 3. Generate new reset token (1-hour TTL) ---
         String token = verificationTokenService.generateToken();
 
-        PasswordResetTokenEntity resetToken = new PasswordResetTokenEntity();
-        resetToken.setUserId(user.getId());
-        resetToken.setEmail(user.getEmail());
-        resetToken.setToken(token);
-        resetToken.setExpiresAt(LocalDateTime.now().plusHours(RESET_TOKEN_EXPIRY_HOURS));
+        PasswordResetToken resetToken =
+                new PasswordResetToken(
+                        user.getId().toString(),
+                        user.getEmail(),
+                        token,
+                        LocalDateTime.now().plusHours(RESET_TOKEN_EXPIRY_HOURS));
 
         passwordResetTokenRepository.save(resetToken);
 
@@ -79,7 +80,7 @@ public class ForgotPasswordHandler
 
         eventPublisher.publishEvent(
                 new PasswordResetEmailRequestedEvent(
-                        user.getId(), user.getEmail(), user.getFirstName(), resetLink));
+                        user.getId().toString(), user.getEmail(), user.getFirstName(), resetLink));
 
         log.info("Password reset token saved for user: {}", user.getId());
 

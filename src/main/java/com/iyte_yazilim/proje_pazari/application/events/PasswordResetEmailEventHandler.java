@@ -25,15 +25,23 @@ public class PasswordResetEmailEventHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(PasswordResetEmailRequestedEvent event) {
         log.info("Dispatching password reset email for user: {}", event.getUserId());
-        emailService.sendTemplateEmailAsync(
-                event.getEmail(),
-                "password-reset.html",
-                Map.of(
-                        "subject",
-                        "Şifre Sıfırlama / Password Reset",
-                        "firstName",
-                        event.getFirstName(),
-                        "resetLink",
-                        event.getResetLink()));
+        try {
+            emailService.sendTemplateEmailAsync(
+                    event.getEmail(),
+                    "password-reset.html",
+                    Map.of(
+                            "subject",
+                            "Şifre Sıfırlama / Password Reset",
+                            "firstName",
+                            event.getFirstName(),
+                            "resetLink",
+                            event.getResetLink()));
+        } catch (Exception e) {
+            log.error(
+                    "Failed to dispatch password reset email for user {}: {}",
+                    event.getUserId(),
+                    e.getMessage(),
+                    e);
+        }
     }
 }

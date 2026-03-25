@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.entities.PasswordResetToken;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
@@ -12,8 +14,6 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredE
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PasswordResetTokenEntity;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -53,27 +53,28 @@ class ResetPasswordHandlerTest {
                 .thenReturn("Password reset successfully");
     }
 
-    private PasswordResetTokenEntity validToken() {
-        PasswordResetTokenEntity t = new PasswordResetTokenEntity();
-        t.setToken(TOKEN);
-        t.setUserId("user-123");
-        t.setEmail("student@std.iyte.edu.tr");
-        t.setExpiresAt(LocalDateTime.now().plusHours(1));
+    private PasswordResetToken validToken() {
+        PasswordResetToken t =
+                new PasswordResetToken(
+                        "user-123",
+                        "student@std.iyte.edu.tr",
+                        TOKEN,
+                        LocalDateTime.now().plusHours(1));
         return t;
     }
 
-    private UserEntity userWithId(String id) {
-        UserEntity u = new UserEntity();
-        u.setId(id);
-        u.setPassword("old-hashed-password");
+    private User userWithId(String id) {
+        User u = new User("student@std.iyte.edu.tr", "old-hashed-password", "Ali", "Test");
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                u, "id", com.github.f4b6a3.ulid.Ulid.from("01HRQJ4FPGESQHPKS0MRCYG9M0"));
         return u;
     }
 
     @Test
     @DisplayName("Should reset password successfully when token and password are valid")
     void shouldResetPassword_WhenTokenAndPasswordAreValid() {
-        PasswordResetTokenEntity token = validToken();
-        UserEntity user = userWithId("user-123");
+        PasswordResetToken token = validToken();
+        User user = userWithId("user-123");
 
         when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(token));
         when(userRepository.findById("user-123")).thenReturn(Optional.of(user));
@@ -104,7 +105,7 @@ class ResetPasswordHandlerTest {
     @Test
     @DisplayName("Should throw InvalidVerificationTokenException when token already used")
     void shouldThrow_WhenTokenAlreadyUsed() {
-        PasswordResetTokenEntity token = validToken();
+        PasswordResetToken token = validToken();
         token.setUsedAt(LocalDateTime.now().minusMinutes(5));
 
         when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(token));
@@ -119,7 +120,7 @@ class ResetPasswordHandlerTest {
     @Test
     @DisplayName("Should throw VerificationTokenExpiredException when token is expired")
     void shouldThrow_WhenTokenExpired() {
-        PasswordResetTokenEntity token = validToken();
+        PasswordResetToken token = validToken();
         token.setExpiresAt(LocalDateTime.now().minusHours(2));
 
         when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(token));

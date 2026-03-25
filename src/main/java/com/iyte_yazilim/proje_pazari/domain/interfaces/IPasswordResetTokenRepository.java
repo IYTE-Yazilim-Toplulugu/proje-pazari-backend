@@ -1,14 +1,14 @@
 package com.iyte_yazilim.proje_pazari.domain.interfaces;
 
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PasswordResetTokenEntity;
+import com.iyte_yazilim.proje_pazari.domain.entities.PasswordResetToken;
 import java.util.Optional;
 
 /** Domain repository interface for password reset token operations. */
 public interface IPasswordResetTokenRepository {
 
-    Optional<PasswordResetTokenEntity> findByToken(String token);
+    Optional<PasswordResetToken> findByToken(String token);
 
     void deleteByUserId(String userId);
 
-    PasswordResetTokenEntity save(PasswordResetTokenEntity entity);
+    PasswordResetToken save(PasswordResetToken token);
 }

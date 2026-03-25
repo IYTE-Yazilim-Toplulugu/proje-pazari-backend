@@ -1,16 +1,16 @@
 package com.iyte_yazilim.proje_pazari.domain.interfaces;
 
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import java.util.Optional;
 
 /** Domain repository interface for user persistence operations. */
 public interface IUserRepository {
 
-    Optional<UserEntity> findByEmail(String email);
+    Optional<User> findByEmail(String email);
 
-    Optional<UserEntity> findById(String id);
+    Optional<User> findById(String id);
 
     boolean existsByEmail(String email);
 
-    UserEntity save(UserEntity entity);
+    User save(User entity);
 }
