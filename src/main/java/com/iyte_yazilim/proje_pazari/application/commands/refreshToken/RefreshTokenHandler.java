@@ -29,7 +29,7 @@ public class RefreshTokenHandler
             throw new ValidationException("Refresh token is required");
         }
 
-        var userIdOpt = refreshTokenService.validateRefreshToken(refreshToken);
+        var userIdOpt = refreshTokenService.validateAndRevoke(refreshToken);
         if (userIdOpt.isEmpty()) {
             throw new ValidationException("Invalid or expired refresh token");
         }
@@ -39,8 +39,6 @@ public class RefreshTokenHandler
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new UserNotFoundException(userId));
-
-        refreshTokenService.revokeRefreshToken(refreshToken);
         String newRefreshToken = refreshTokenService.createRefreshToken(userId);
         String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
         String newAccessToken = tokenService.generateToken(user.getId(), user.getEmail(), role);

@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException ex) {
-        log.error("Message not readable: {}", ex.getMessage());
+        log.warn("Message not readable: {}", ex.getMessage());
         ApiResponse<Void> response =
                 ApiResponse.validationError(messageService.getMessage("error.validation"));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
