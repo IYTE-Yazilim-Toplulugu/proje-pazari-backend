@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -79,10 +80,7 @@ public class LoginUserHandler
         }
 
         // --- 6. Generate JWT token with userId, email, and role ---
-        String role =
-                user.getRoles().contains(com.iyte_yazilim.proje_pazari.domain.enums.RoleType.ADMIN)
-                        ? "ADMIN"
-                        : "USER";
+        String role = user.getRoles().contains(RoleType.ADMIN) ? "ADMIN" : "USER";
         String accessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
 
         // --- 7. Generate refresh token ---

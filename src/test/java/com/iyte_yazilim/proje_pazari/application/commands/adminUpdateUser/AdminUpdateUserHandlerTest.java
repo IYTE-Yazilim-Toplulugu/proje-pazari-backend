@@ -50,7 +50,7 @@ class AdminUpdateUserHandlerTest {
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);
-        assertTrue(testUser.getRoles().contains(RoleType.ADMIN));
+        assertEquals(Set.of(RoleType.ADMIN), testUser.getRoles());
         verify(userRepository).save(testUser);
     }
 
