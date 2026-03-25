@@ -4,12 +4,14 @@ import com.iyte_yazilim.proje_pazari.application.services.ElasticsearchSyncServi
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
@@ -21,14 +23,17 @@ import org.springframework.stereotype.Component;
 public class ElasticsearchEventListener {
 
     private final ElasticsearchSyncService syncService;
+    private final BusinessMetricsService metricsService;
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleProjectCreated(ProjectCreatedEvent event) {
         try {
             log.debug("Indexing newly created project: {}", event.projectId());
             syncService.indexProject(event.projectId());
+            metricsService.incrementEsIndexSuccess();
         } catch (Exception e) {
+            metricsService.incrementEsIndexFailure();
             log.error(
                     "Failed to index newly created project {}: {}",
                     event.projectId(),
@@ -37,13 +42,15 @@ public class ElasticsearchEventListener {
         }
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleProjectUpdated(ProjectUpdatedEvent event) {
         try {
             log.debug("Re-indexing updated project: {}", event.projectId());
             syncService.indexProject(event.projectId());
+            metricsService.incrementEsIndexSuccess();
         } catch (Exception e) {
+            metricsService.incrementEsIndexFailure();
             log.error(
                     "Failed to re-index updated project {}: {}",
                     event.projectId(),
@@ -52,13 +59,15 @@ public class ElasticsearchEventListener {
         }
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleProjectDeleted(ProjectDeletedEvent event) {
         try {
             log.debug("Removing deleted project from index: {}", event.projectId());
             syncService.deleteProjectIndex(event.projectId());
+            metricsService.incrementEsDeleteSuccess();
         } catch (Exception e) {
+            metricsService.incrementEsDeleteFailure();
             log.error(
                     "Failed to remove project {} from index: {}",
                     event.projectId(),

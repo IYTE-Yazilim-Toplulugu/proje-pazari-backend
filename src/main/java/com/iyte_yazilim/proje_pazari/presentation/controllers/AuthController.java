@@ -2,6 +2,8 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.forgotPassword.ForgotPasswordCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutRequest;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenResult;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
@@ -18,11 +20,15 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -106,17 +112,17 @@ public class AuthController extends BaseController {
                                                         name = "Success Response",
                                                         value =
                                                                 """
-                    {
-                        "code": "CREATED",
-                        "message": "User registered successfully",
-                        "data": {
-                            "userId": "01HQXV5KXBW9FYMN8CJZSP2R4G",
-                            "email": "student@std.iyte.edu.tr",
-                            "firstName": "John",
-                            "lastName": "Doe"
-                        }
-                    }
-                    """))),
+                                        {
+                                            "code": "CREATED",
+                                            "message": "User registered successfully",
+                                            "data": {
+                                                "userId": "01HQXV5KXBW9FYMN8CJZSP2R4G",
+                                                "email": "student@std.iyte.edu.tr",
+                                                "firstName": "John",
+                                                "lastName": "Doe"
+                                            }
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "Invalid request data or email already exists",
@@ -129,12 +135,12 @@ public class AuthController extends BaseController {
                                                         name = "Email Exists",
                                                         value =
                                                                 """
-                    {
-                        "code": "BAD_REQUEST",
-                        "message": "Email already exists",
-                        "data": null
-                    }
-                    """)))
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Email already exists",
+                                            "data": null
+                                        }
+                                        """)))
             })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "User registration details",
@@ -148,15 +154,15 @@ public class AuthController extends BaseController {
                                             name = "Registration Request",
                                             value =
                                                     """
-            {
-                "email": "student@std.iyte.edu.tr",
-                "password": "SecurePass123!",
-                "firstName": "John",
-                "lastName": "Doe"
-            }
-            """)))
+                        {
+                            "email": "student@std.iyte.edu.tr",
+                            "password": "SecurePass123!",
+                            "firstName": "John",
+                            "lastName": "Doe"
+                        }
+                        """)))
     public ResponseEntity<ApiResponse<RegisterUserResult>> register(
-            @RequestBody RegisterUserCommand command) {
+            @Valid @RequestBody RegisterUserCommand command) {
         return send(command);
     }
 
@@ -181,16 +187,16 @@ public class AuthController extends BaseController {
                                                         name = "Success Response",
                                                         value =
                                                                 """
-                    {
-                        "code": "SUCCESS",
-                        "message": "Login successful",
-                        "data": {
-                            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                            "tokenType": "Bearer",
-                            "expiresIn": 86400000
-                            }
-                            }
-                    """))),
+                                        {
+                                            "code": "SUCCESS",
+                                            "message": "Login successful",
+                                            "data": {
+                                                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                                "tokenType": "Bearer",
+                                                "expiresIn": 86400000
+                                                }
+                                                }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "Invalid credentials",
@@ -203,12 +209,12 @@ public class AuthController extends BaseController {
                                                         name = "Invalid Credentials",
                                                         value =
                                                                 """
-                    {
-                        "code": "BAD_REQUEST",
-                        "message": "Invalid email or password",
-                        "data": null
-                    }
-                    """)))
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Invalid email or password",
+                                            "data": null
+                                        }
+                                        """)))
             })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "User login credentials",
@@ -222,13 +228,13 @@ public class AuthController extends BaseController {
                                             name = "Login Request",
                                             value =
                                                     """
-            {
-                "email": "student@std.iyte.edu.tr",
-                "password": "SecurePass123!"
-            }
-            """)))
+                        {
+                            "email": "student@std.iyte.edu.tr",
+                            "password": "SecurePass123!"
+                        }
+                        """)))
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
-            @RequestBody LoginUserCommand command) {
+            @Valid @RequestBody LoginUserCommand command) {
         return send(command);
     }
 
@@ -328,5 +334,36 @@ public class AuthController extends BaseController {
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody ResetPasswordCommand command) {
         return send(command);
+    }
+
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Logout user",
+            description =
+                    "Revokes the refresh token and blacklists the access token. "
+                            + "The refresh token is supplied in the request body. "
+                            + "The access token is read from the Authorization header and blacklisted in Redis until it expires naturally.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Logout successful"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Refresh token missing, invalid, or does not belong to user")
+            })
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @Valid @RequestBody LogoutRequest body,
+            Authentication auth,
+            HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        String accessToken =
+                (authHeader != null && authHeader.startsWith("Bearer "))
+                        ? authHeader.substring(7)
+                        : null;
+        String userId = getCurrentUserId(auth);
+        return send(new LogoutCommand(accessToken, body.refreshToken(), userId));
     }
 }

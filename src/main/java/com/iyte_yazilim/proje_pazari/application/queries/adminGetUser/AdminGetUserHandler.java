@@ -33,7 +33,7 @@ public class AdminGetUserHandler
                         user.getProfilePictureUrl(),
                         user.getLinkedinUrl(),
                         user.getGithubUrl(),
-                        user.getRole(),
+                        user.getRoles(),
                         user.getIsActive(),
                         user.getCreatedAt(),
                         user.getUpdatedAt(),

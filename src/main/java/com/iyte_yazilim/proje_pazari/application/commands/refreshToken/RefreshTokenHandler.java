@@ -2,13 +2,14 @@ package com.iyte_yazilim.proje_pazari.application.commands.refreshToken;
 
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.ITokenService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
-import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,9 +18,9 @@ import org.springframework.stereotype.Component;
 public class RefreshTokenHandler
         implements IRequestHandler<RefreshTokenCommand, ApiResponse<RefreshTokenResult>> {
 
-    private final RefreshTokenService refreshTokenService;
+    private final IRefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
+    private final ITokenService tokenService;
     private final MessageService messageService;
 
     @Override
@@ -29,7 +30,7 @@ public class RefreshTokenHandler
             throw new ValidationException("Refresh token is required");
         }
 
-        var userIdOpt = refreshTokenService.validateRefreshToken(refreshToken);
+        var userIdOpt = refreshTokenService.validateAndRevoke(refreshToken);
         if (userIdOpt.isEmpty()) {
             throw new ValidationException("Invalid or expired refresh token");
         }
@@ -39,11 +40,9 @@ public class RefreshTokenHandler
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new UserNotFoundException(userId));
-
-        refreshTokenService.revokeRefreshToken(refreshToken);
         String newRefreshToken = refreshTokenService.createRefreshToken(userId);
-        String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
-        String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
+        String role = user.getRoles().contains(RoleType.ADMIN) ? "ADMIN" : "USER";
+        String newAccessToken = tokenService.generateToken(user.getId(), user.getEmail(), role);
 
         var result =
                 new RefreshTokenResult(

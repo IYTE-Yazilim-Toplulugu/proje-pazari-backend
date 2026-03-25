@@ -17,7 +17,6 @@ import com.iyte_yazilim.proje_pazari.application.commands.importProjectsFromCsv.
 import com.iyte_yazilim.proje_pazari.application.commands.importUsersFromCsv.ImportUsersFromCsvCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.invalidateAllSessions.InvalidateAllSessionsCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.invalidateUserSessions.InvalidateUserSessionsCommand;
-import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent.ReviewFlaggedContentCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.scheduleEmail.ScheduleEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.sendTargetedEmail.SendTargetedEmailCommand;
@@ -77,6 +76,7 @@ import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -138,7 +138,7 @@ public class AdminController extends BaseController {
     @Operation(summary = "Update user", description = "Update user role, status, or profile")
     @Audited(action = "ADMIN_UPDATE_USER", entityType = "USER")
     public ResponseEntity<ApiResponse<Void>> updateUser(
-            @PathVariable String userId, @RequestBody UpdateUserRequest request) {
+            @PathVariable String userId, @Valid @RequestBody UpdateUserRequest request) {
         return send(
                 new AdminUpdateUserCommand(
                         userId,
@@ -163,17 +163,8 @@ public class AdminController extends BaseController {
                     "Perform bulk operations on users (DELETE, SUSPEND, ACTIVATE, CHANGE_ROLE)")
     @Audited(action = "BULK_USER_ACTION", entityType = "USER")
     public ResponseEntity<ApiResponse<BulkActionResult>> bulkUserAction(
-            @RequestBody BulkUserActionRequest request) {
+            @Valid @RequestBody BulkUserActionRequest request) {
         return send(new BulkUserActionCommand(request.action(), request.userIds()));
-    }
-
-    @PostMapping("/users/{userId}/promote-to-project-owner")
-    @Operation(
-            summary = "Promote user to PROJECT_OWNER",
-            description = "Promotes a user to the PROJECT_OWNER role. Requires ADMIN role.")
-    @Audited(action = "PROMOTE_TO_PROJECT_OWNER", entityType = "USER")
-    public ResponseEntity<ApiResponse<Void>> promoteToProjectOwner(@PathVariable String userId) {
-        return send(new PromoteToProjectOwnerCommand(userId));
     }
 
     // ==================== PROJECT MANAGEMENT ====================
@@ -215,7 +206,7 @@ public class AdminController extends BaseController {
                     "Perform bulk operations on projects (DELETE, FEATURE, UNFEATURE, CANCEL)")
     @Audited(action = "BULK_PROJECT_ACTION", entityType = "PROJECT")
     public ResponseEntity<ApiResponse<BulkActionResult>> bulkProjectAction(
-            @RequestBody BulkProjectActionRequest request) {
+            @Valid @RequestBody BulkProjectActionRequest request) {
         return send(new BulkProjectActionCommand(request.action(), request.projectIds()));
     }
 
@@ -240,7 +231,8 @@ public class AdminController extends BaseController {
             description = "Admin review of any application (approve/reject)")
     @Audited(action = "ADMIN_REVIEW_APPLICATION", entityType = "APPLICATION")
     public ResponseEntity<ApiResponse<Void>> reviewApplication(
-            @PathVariable String applicationId, @RequestBody ReviewApplicationRequest request) {
+            @PathVariable String applicationId,
+            @Valid @RequestBody ReviewApplicationRequest request) {
         return send(new AdminReviewApplicationCommand(applicationId, request.status()));
     }
 
@@ -250,7 +242,7 @@ public class AdminController extends BaseController {
             description = "Bulk approve/reject applications")
     @Audited(action = "BULK_APPLICATION_ACTION", entityType = "APPLICATION")
     public ResponseEntity<ApiResponse<BulkActionResult>> bulkApplicationAction(
-            @RequestBody BulkApplicationActionRequest request) {
+            @Valid @RequestBody BulkApplicationActionRequest request) {
         return send(new BulkApplicationActionCommand(request.action(), request.applicationIds()));
     }
 
@@ -318,7 +310,7 @@ public class AdminController extends BaseController {
     public ResponseEntity<ApiResponse<Void>> flagContent(
             @PathVariable String type,
             @PathVariable String id,
-            @RequestBody FlagContentRequest request) {
+            @Valid @RequestBody FlagContentRequest request) {
         return send(new FlagContentCommand(type, id, request.reason()));
     }
 
@@ -340,7 +332,7 @@ public class AdminController extends BaseController {
             description = "Review flagged content (APPROVE, REMOVE, BAN_USER)")
     @Audited(action = "REVIEW_FLAGGED_CONTENT", entityType = "CONTENT")
     public ResponseEntity<ApiResponse<Void>> reviewFlaggedContent(
-            @PathVariable String flagId, @RequestBody ReviewFlaggedContentRequest request) {
+            @PathVariable String flagId, @Valid @RequestBody ReviewFlaggedContentRequest request) {
         return send(
                 new ReviewFlaggedContentCommand(flagId, request.action(), request.reviewNote()));
     }
@@ -353,7 +345,7 @@ public class AdminController extends BaseController {
             description = "Send email to all users or users with a specific role")
     @Audited(action = "BROADCAST_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> broadcastEmail(
-            @RequestBody BroadcastEmailRequest request) {
+            @Valid @RequestBody BroadcastEmailRequest request) {
         return send(
                 new BroadcastEmailCommand(request.subject(), request.body(), request.targetRole()));
     }
@@ -362,7 +354,7 @@ public class AdminController extends BaseController {
     @Operation(summary = "Send targeted email", description = "Send email to specific users by ID")
     @Audited(action = "TARGETED_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> sendTargetedEmail(
-            @RequestBody SendTargetedEmailRequest request) {
+            @Valid @RequestBody SendTargetedEmailRequest request) {
         return send(
                 new SendTargetedEmailCommand(request.userIds(), request.subject(), request.body()));
     }
@@ -442,7 +434,7 @@ public class AdminController extends BaseController {
             description = "Update system configuration entries (key-value pairs)")
     @Audited(action = "UPDATE_SYSTEM_CONFIG", entityType = "SYSTEM")
     public ResponseEntity<ApiResponse<Void>> updateSystemConfig(
-            @RequestBody UpdateSystemConfigRequest request) {
+            @Valid @RequestBody UpdateSystemConfigRequest request) {
         return send(new UpdateSystemConfigCommand(request.configs()));
     }
 
@@ -462,7 +454,7 @@ public class AdminController extends BaseController {
             description = "Create or update a feature flag by key")
     @Audited(action = "UPDATE_FEATURE_FLAG", entityType = "FEATURE_FLAG")
     public ResponseEntity<ApiResponse<Void>> updateFeatureFlag(
-            @PathVariable String key, @RequestBody UpdateFeatureFlagRequest request) {
+            @PathVariable String key, @Valid @RequestBody UpdateFeatureFlagRequest request) {
         return send(new UpdateFeatureFlagCommand(key, request.enabled(), request.description()));
     }
 
@@ -482,7 +474,7 @@ public class AdminController extends BaseController {
             description = "Enable or disable maintenance mode")
     @Audited(action = "TOGGLE_MAINTENANCE_MODE", entityType = "SYSTEM")
     public ResponseEntity<ApiResponse<Void>> toggleMaintenanceMode(
-            @RequestBody ToggleMaintenanceModeRequest request) {
+            @Valid @RequestBody ToggleMaintenanceModeRequest request) {
         return send(new ToggleMaintenanceModeCommand(request.enabled()));
     }
 
@@ -521,7 +513,7 @@ public class AdminController extends BaseController {
             summary = "Ban IP address",
             description = "Ban a specific IP address from accessing the platform")
     @Audited(action = "BAN_IP", entityType = "IP_BAN")
-    public ResponseEntity<ApiResponse<Void>> banIp(@RequestBody BanIpRequest request) {
+    public ResponseEntity<ApiResponse<Void>> banIp(@Valid @RequestBody BanIpRequest request) {
         return send(new BanIpCommand(request.ipAddress(), request.reason(), request.expiresAt()));
     }
 
@@ -573,7 +565,7 @@ public class AdminController extends BaseController {
             description = "Schedule an email to be sent at a future date/time")
     @Audited(action = "SCHEDULE_EMAIL", entityType = "EMAIL")
     public ResponseEntity<ApiResponse<Void>> scheduleEmail(
-            @RequestBody ScheduleEmailRequest request) {
+            @Valid @RequestBody ScheduleEmailRequest request) {
         return send(
                 new ScheduleEmailCommand(
                         request.subject(),
