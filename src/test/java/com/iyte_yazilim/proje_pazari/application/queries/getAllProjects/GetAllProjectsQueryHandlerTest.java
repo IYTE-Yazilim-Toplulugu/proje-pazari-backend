@@ -54,7 +54,7 @@ class GetAllProjectsQueryHandlerTest {
                         null);
 
         Page<ProjectEntity> page = new PageImpl<>(List.of(entity));
-        when(projectRepository.findAll(any(Pageable.class))).thenReturn(page);
+        when(projectRepository.findAllWithApplications(any(Pageable.class))).thenReturn(page);
         when(projectMapper.entityToDomain(entity)).thenReturn(domain);
         when(projectDtoMapper.domainToDto(domain)).thenReturn(dto);
 
@@ -73,7 +73,7 @@ class GetAllProjectsQueryHandlerTest {
     void shouldDefaultSortById_whenSortByIsInvalid() {
         Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(projectRepository.findAll(pageableCaptor.capture())).thenReturn(emptyPage);
+        when(projectRepository.findAllWithApplications(pageableCaptor.capture())).thenReturn(emptyPage);
 
         handler.handle(new GetAllProjectsQuery(0, 10, "invalidField", "ASC"));
 
@@ -87,7 +87,7 @@ class GetAllProjectsQueryHandlerTest {
     void shouldSortDescending_whenSortDirectionIsDesc() {
         Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(projectRepository.findAll(pageableCaptor.capture())).thenReturn(emptyPage);
+        when(projectRepository.findAllWithApplications(pageableCaptor.capture())).thenReturn(emptyPage);
 
         handler.handle(new GetAllProjectsQuery(0, 10, "title", "DESC"));
 

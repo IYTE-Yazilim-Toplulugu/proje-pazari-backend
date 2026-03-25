@@ -53,7 +53,7 @@ public class ApplicationController extends BaseController {
     }
 
     @GetMapping("/api/v1/projects/{projectId}/applications")
-    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get applications for a project (owner only)")
     @ApiResponses(
@@ -77,7 +77,7 @@ public class ApplicationController extends BaseController {
     }
 
     @PatchMapping("/api/v1/applications/{applicationId}/review")
-    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Approve or reject an application")
     @ApiResponses(

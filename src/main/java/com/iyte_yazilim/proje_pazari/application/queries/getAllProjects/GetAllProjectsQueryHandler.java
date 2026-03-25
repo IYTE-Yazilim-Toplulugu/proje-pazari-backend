@@ -46,7 +46,7 @@ public class GetAllProjectsQueryHandler
         Pageable pageable = PageRequest.of(query.page(), query.size(), Sort.by(direction, sortBy));
 
         // --- 2. Fetch Paged Data from Repository ---
-        Page<ProjectEntity> projectEntityPage = projectRepository.findAll(pageable);
+        Page<ProjectEntity> projectEntityPage = projectRepository.findAllWithApplications(pageable);
 
         // --- 3. Map Entity -> Domain -> DTO ---
         List<ProjectDetailDto> projectDtos =
