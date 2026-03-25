@@ -9,7 +9,6 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepositor
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import java.util.List;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -49,14 +48,12 @@ public class GetProjectApplicationsHandler
         }
 
         // --- 3. Fetch Applications with Optional Status Filter ---
-        Stream<ProjectApplicationEntity> applicationStream =
-                applicationRepository.findByProjectId(query.projectId()).stream();
-
-        if (query.status() != null) {
-            applicationStream = applicationStream.filter(app -> app.getStatus() == query.status());
-        }
-
-        List<ApplicationDto> applications = applicationStream.map(this::toDto).toList();
+        List<ApplicationDto> applications =
+                applicationRepository
+                        .findByProjectIdWithOptionalStatus(query.projectId(), query.status())
+                        .stream()
+                        .map(this::toDto)
+                        .toList();
 
         // --- 4. Response ---
         return ApiResponse.success(

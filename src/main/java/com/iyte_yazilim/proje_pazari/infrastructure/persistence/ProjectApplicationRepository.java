@@ -21,6 +21,15 @@ public interface ProjectApplicationRepository
                     + "WHERE pa.project.id = :projectId")
     List<ProjectApplicationEntity> findByProjectId(@Param("projectId") String projectId);
 
+    @Query(
+            "SELECT pa FROM ProjectApplicationEntity pa "
+                    + "JOIN FETCH pa.project "
+                    + "JOIN FETCH pa.user "
+                    + "WHERE pa.project.id = :projectId "
+                    + "AND (:status IS NULL OR pa.status = :status)")
+    List<ProjectApplicationEntity> findByProjectIdWithOptionalStatus(
+            @Param("projectId") String projectId, @Param("status") ApplicationStatus status);
+
     @Query("SELECT pa FROM ProjectApplicationEntity pa WHERE pa.user.id = :userId")
     List<ProjectApplicationEntity> findByUserId(@Param("userId") String userId);
 

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Project Deleted</title>
+</head>
+<body>
+    <h1>Your Project Has Been Deleted</h1>
+    <p>Hello <span th:text="${firstName}"></span>,</p>
+    <p>Your project <strong th:text="${projectTitle}"></strong> has been successfully deleted.</p>
+    <p th:if="${rejectedApplicationCount > 0}">
+        As a result, <strong th:text="${rejectedApplicationCount}"></strong>
+        pending application(s) were automatically rejected.
+    </p>
+
+    <p>Thank you for using Proje Pazarı!</p>
+</body>
+</html>
