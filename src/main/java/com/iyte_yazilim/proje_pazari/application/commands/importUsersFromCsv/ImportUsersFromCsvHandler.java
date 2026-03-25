@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -98,7 +100,7 @@ public class ImportUsersFromCsvHandler
                     user.setEmail(email);
                     user.setFirstName(firstName);
                     user.setLastName(lastName);
-                    user.setRole(role);
+                    user.setRoles(new HashSet<>(Set.of(role)));
                     user.setPassword(passwordEncoder.encode(password));
 
                     userRepository.save(user);
