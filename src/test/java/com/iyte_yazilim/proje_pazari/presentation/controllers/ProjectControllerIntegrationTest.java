@@ -1,8 +1,11 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -393,7 +396,304 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         }
     }
 
-    // ── 3. Get Project By ID Tests ──────────────────────────────────────
+    // ── 3. Update Project Tests ─────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PUT /api/v1/projects/{projectId}")
+    class UpdateProjectTests {
+
+        private String createProjectAndGetId(String token) throws Exception {
+            MvcResult result =
+                    mockMvc.perform(
+                                    post(BASE_URL)
+                                            .header("Authorization", "Bearer " + token)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(
+                                                    objectMapper.writeValueAsString(
+                                                            validProjectData())))
+                            .andExpect(status().isCreated())
+                            .andReturn();
+            return objectMapper
+                    .readTree(result.getResponse().getContentAsString())
+                    .get("data")
+                    .get("projectId")
+                    .asText();
+        }
+
+        @Test
+        @DisplayName("1. Owner can update project name")
+        void updateProject_asOwner_returns200() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            Map<String, Object> update = new HashMap<>();
+            update.put("projectName", "Updated AI Project Name");
+
+            mockMvc.perform(
+                            put(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(update)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.projectName").value("Updated AI Project Name"));
+        }
+
+        @Test
+        @DisplayName("2. Update without authentication returns 403 FORBIDDEN")
+        void updateProject_noAuth_returns403() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(
+                            put(BASE_URL + "/" + projectId)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"projectName\": \"Some Name\"}"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("3. Non-owner cannot update project returns 403 FORBIDDEN")
+        void updateProject_asNonOwner_returns403() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+
+            // Create a second project owner
+            registerAndVerifyUser("owner2@std.iyte.edu.tr", VALID_PASSWORD, "Zeynep", "Sahin");
+            UserEntity owner2 = userRepository.findByEmail("owner2@std.iyte.edu.tr").orElseThrow();
+            owner2.setRole(RoleType.PROJECT_OWNER);
+            userRepository.save(owner2);
+            String otherOwnerToken = loginAndGetToken("owner2@std.iyte.edu.tr", VALID_PASSWORD);
+
+            mockMvc.perform(
+                            put(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + otherOwnerToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"projectName\": \"Hijacked Name\"}"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("4. Update non-existent project returns 404 NOT_FOUND")
+        void updateProject_nonExistent_returns404() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+
+            mockMvc.perform(
+                            put(BASE_URL + "/01NONEXISTENT0000000000000")
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"projectName\": \"Some Name\"}"))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("5. Update with too-short name returns 400 BAD_REQUEST")
+        void updateProject_shortName_returns400() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(
+                            put(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"projectName\": \"AB\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("6. Updated fields are persisted in database")
+        void updateProject_persistedInDatabase() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(
+                            put(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"projectName\": \"Persisted Name\"}"))
+                    .andExpect(status().isOk());
+
+            var saved = projectRepository.findById(projectId).orElseThrow();
+            assertThat(saved.getTitle()).isEqualTo("Persisted Name");
+        }
+    }
+
+    // ── 4. Delete Project Tests ─────────────────────────────────────────
+
+    @Nested
+    @DisplayName("DELETE /api/v1/projects/{projectId}")
+    class DeleteProjectTests {
+
+        private String createProjectAndGetId(String token) throws Exception {
+            MvcResult result =
+                    mockMvc.perform(
+                                    post(BASE_URL)
+                                            .header("Authorization", "Bearer " + token)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(
+                                                    objectMapper.writeValueAsString(
+                                                            validProjectData())))
+                            .andExpect(status().isCreated())
+                            .andReturn();
+            return objectMapper
+                    .readTree(result.getResponse().getContentAsString())
+                    .get("data")
+                    .get("projectId")
+                    .asText();
+        }
+
+        @Test
+        @DisplayName("1. Owner can delete their project returns 200 OK")
+        void deleteProject_asOwner_returns200() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(
+                            delete(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk());
+
+            assertThat(projectRepository.findById(projectId)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("2. Delete without authentication returns 403 FORBIDDEN")
+        void deleteProject_noAuth_returns403() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(delete(BASE_URL + "/" + projectId)).andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("3. Non-owner cannot delete project returns 403 FORBIDDEN")
+        void deleteProject_asNonOwner_returns403() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+
+            registerAndVerifyUser("owner2@std.iyte.edu.tr", VALID_PASSWORD, "Zeynep", "Sahin");
+            UserEntity owner2 = userRepository.findByEmail("owner2@std.iyte.edu.tr").orElseThrow();
+            owner2.setRole(RoleType.PROJECT_OWNER);
+            userRepository.save(owner2);
+            String otherOwnerToken = loginAndGetToken("owner2@std.iyte.edu.tr", VALID_PASSWORD);
+
+            mockMvc.perform(
+                            delete(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + otherOwnerToken))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("4. Delete non-existent project returns 404 NOT_FOUND")
+        void deleteProject_nonExistent_returns404() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+
+            mockMvc.perform(
+                            delete(BASE_URL + "/01NONEXISTENT0000000000000")
+                                    .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    // ── 5. Update Project Status Tests ──────────────────────────────────
+
+    @Nested
+    @DisplayName("PATCH /api/v1/projects/{projectId}/status")
+    class UpdateProjectStatusTests {
+
+        private String createProjectAndGetId(String token) throws Exception {
+            MvcResult result =
+                    mockMvc.perform(
+                                    post(BASE_URL)
+                                            .header("Authorization", "Bearer " + token)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(
+                                                    objectMapper.writeValueAsString(
+                                                            validProjectData())))
+                            .andExpect(status().isCreated())
+                            .andReturn();
+            return objectMapper
+                    .readTree(result.getResponse().getContentAsString())
+                    .get("data")
+                    .get("projectId")
+                    .asText();
+        }
+
+        @Test
+        @DisplayName("1. Owner can change project status to ACTIVE")
+        void updateStatus_toActive_returns200() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(
+                            patch(BASE_URL + "/" + projectId + "/status")
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"newStatus\": \"ACTIVE\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.newStatus").value("ACTIVE"))
+                    .andExpect(jsonPath("$.data.oldStatus").value("DRAFT"));
+        }
+
+        @Test
+        @DisplayName("2. Status change is persisted in database")
+        void updateStatus_persistedInDatabase() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(
+                            patch(BASE_URL + "/" + projectId + "/status")
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"newStatus\": \"ACTIVE\"}"))
+                    .andExpect(status().isOk());
+
+            var saved = projectRepository.findById(projectId).orElseThrow();
+            assertThat(saved.getStatus().toString()).isEqualTo("ACTIVE");
+        }
+
+        @Test
+        @DisplayName("3. Same status returns 400 BAD_REQUEST")
+        void updateStatus_sameStatus_returns400() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            // Project starts as DRAFT — setting DRAFT again is a no-op
+            mockMvc.perform(
+                            patch(BASE_URL + "/" + projectId + "/status")
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"newStatus\": \"DRAFT\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("4. Update status without authentication returns 403 FORBIDDEN")
+        void updateStatus_noAuth_returns403() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(
+                            patch(BASE_URL + "/" + projectId + "/status")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"newStatus\": \"ACTIVE\"}"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("5. Update status on non-existent project returns 404 NOT_FOUND")
+        void updateStatus_nonExistent_returns404() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+
+            mockMvc.perform(
+                            patch(BASE_URL + "/01NONEXISTENT0000000000000/status")
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"newStatus\": \"ACTIVE\"}"))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    // ── 6. Get Project By ID Tests ──────────────────────────────────────
 
     @Nested
     @DisplayName("GET /api/v1/projects/{projectId}")

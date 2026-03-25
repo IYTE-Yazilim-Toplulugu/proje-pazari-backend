@@ -1,11 +1,16 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreateProjectCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.deleteProject.DeleteProjectCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.updateProject.UpdateProjectCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.updateProjectStatus.UpdateProjectStatusCommand;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllProjects.GetAllProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectById.GetProjectByIdQuery;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
+import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectCommandResult;
+import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -14,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -186,5 +192,49 @@ public class ProjectController extends BaseController {
             })
     public ResponseEntity<ApiResponse<Project>> getProject(@PathVariable String projectId) {
         return send(new GetProjectByIdQuery(projectId));
+    }
+
+    @PutMapping("/{projectId}")
+    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Update a project",
+            description =
+                    "Updates a project's details. Only the project owner can update their project.")
+    public ResponseEntity<ApiResponse<UpdateProjectCommandResult>> updateProject(
+            @PathVariable String projectId,
+            @RequestBody UpdateProjectCommand command,
+            Authentication auth) {
+        return send(
+                UpdateProjectCommand.class, Map.of("projectId", projectId), null, command, auth);
+    }
+
+    @DeleteMapping("/{projectId}")
+    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Delete a project",
+            description = "Deletes a project. Only the project owner can delete their project.")
+    public ResponseEntity<ApiResponse<Void>> deleteProject(
+            @PathVariable String projectId, Authentication auth) {
+        return send(DeleteProjectCommand.class, Map.of("projectId", projectId), null, null, auth);
+    }
+
+    @PatchMapping("/{projectId}/status")
+    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Update project status",
+            description = "Changes the status of a project. Only the project owner can do this.")
+    public ResponseEntity<ApiResponse<UpdateProjectStatusCommandResult>> updateProjectStatus(
+            @PathVariable String projectId,
+            @RequestBody UpdateProjectStatusCommand command,
+            Authentication auth) {
+        return send(
+                UpdateProjectStatusCommand.class,
+                Map.of("projectId", projectId),
+                null,
+                command,
+                auth);
     }
 }
