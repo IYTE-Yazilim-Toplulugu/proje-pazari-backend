@@ -1,6 +1,8 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutRequest;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenResult;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
@@ -16,11 +18,15 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -288,5 +294,36 @@ public class AuthController extends BaseController {
     public ResponseEntity<ApiResponse<RefreshTokenResult>> refreshToken(
             @RequestParam String refreshToken) {
         return send(new RefreshTokenCommand(refreshToken));
+    }
+
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Logout user",
+            description =
+                    "Revokes the refresh token and blacklists the access token. "
+                            + "The refresh token is supplied in the request body. "
+                            + "The access token is read from the Authorization header and blacklisted in Redis until it expires naturally.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Logout successful"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Refresh token missing, invalid, or does not belong to user")
+            })
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @Valid @RequestBody LogoutRequest body,
+            Authentication auth,
+            HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        String accessToken =
+                (authHeader != null && authHeader.startsWith("Bearer "))
+                        ? authHeader.substring(7)
+                        : null;
+        String userId = getCurrentUserId(auth);
+        return send(new LogoutCommand(accessToken, body.refreshToken(), userId));
     }
 }
