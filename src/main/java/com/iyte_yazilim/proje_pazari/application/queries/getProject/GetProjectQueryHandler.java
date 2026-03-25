@@ -11,6 +11,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectM
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class GetProjectQueryHandler
     private final MessageService messageService;
 
     @Override
+    @Transactional(readOnly = true)
     public ApiResponse<ProjectDetailDto> handle(GetProjectQuery query) {
 
         // --- 1. Find project by ID ---

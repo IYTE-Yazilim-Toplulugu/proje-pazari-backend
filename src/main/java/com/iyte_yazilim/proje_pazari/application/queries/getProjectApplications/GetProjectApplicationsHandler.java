@@ -11,6 +11,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEn
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Handles project application queries with optional status filtering.
@@ -32,6 +33,7 @@ public class GetProjectApplicationsHandler
     private final MessageService messageService;
 
     @Override
+    @Transactional(readOnly = true)
     public ApiResponse<List<ApplicationDto>> handle(GetProjectApplicationsQuery query) {
 
         // --- 1. Verify Project Exists ---

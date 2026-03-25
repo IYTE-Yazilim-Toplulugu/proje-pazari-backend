@@ -7,8 +7,9 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Handles ProjectDeletedEvent by sending a notification email to the project owner.
@@ -31,7 +32,7 @@ public class ProjectDeletedEventHandler implements IEventHandler<ProjectDeletedE
     private String baseUrl;
 
     @Override
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ProjectDeletedEvent event) {
         log.info(
                 "Handling ProjectDeletedEvent for project: {} (rejected {} pending applications)",

@@ -101,10 +101,10 @@ public class ApplicationController extends BaseController {
                 auth);
     }
 
-    @DeleteMapping("/api/v1/applications/{applicationId}")
+    @PatchMapping("/api/v1/applications/{applicationId}/withdraw")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(summary = "Withdraw a pending application")
+    @Operation(summary = "Withdraw a pending application (soft status change to WITHDRAWN)")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

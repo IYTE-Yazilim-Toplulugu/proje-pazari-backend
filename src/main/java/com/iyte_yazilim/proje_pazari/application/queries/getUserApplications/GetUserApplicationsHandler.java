@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Handles user application queries with pagination and optional status filtering.
@@ -31,6 +32,7 @@ public class GetUserApplicationsHandler
     private final MessageService messageService;
 
     @Override
+    @Transactional(readOnly = true)
     public ApiResponse<PagedApplicationsResult> handle(GetUserApplicationsQuery query) {
 
         // --- 1. Construct Pageable ---
