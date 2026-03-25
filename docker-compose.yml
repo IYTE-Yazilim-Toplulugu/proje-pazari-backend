@@ -223,7 +223,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-lifecycle'
+      - '--web.enable-lifecycle' # Enables /-/reload and /-/quit endpoints (no auth). Safe: port is bound to 127.0.0.1 only.
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
