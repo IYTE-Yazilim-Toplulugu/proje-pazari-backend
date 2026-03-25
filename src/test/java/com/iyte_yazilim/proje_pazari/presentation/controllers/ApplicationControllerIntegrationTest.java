@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -89,6 +90,12 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
     private String reviewApplicationUrl(String applicationId) {
         return "/api/v1/applications/" + applicationId + "/review";
     }
+
+    private String projectApplicationsUrl(String projectId) {
+        return "/api/v1/projects/" + projectId + "/applications";
+    }
+
+    private static final String MY_APPLICATIONS_URL = "/api/v1/users/me/applications";
 
     // ── 1. Submit Application Tests ─────────────────────────────────────
 
@@ -439,6 +446,191 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                                     .content(reviewBody))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.status").value("APPROVED"));
+        }
+    }
+
+    // ── 3. Get Project Applications Tests ───────────────────────────────
+
+    @Nested
+    @DisplayName("GET /api/v1/projects/{projectId}/applications")
+    class GetProjectApplicationsTests {
+
+        @Test
+        @DisplayName("1. Owner can list applications for their project")
+        void getProjectApplications_asOwner_returns200() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(
+                            get(projectApplicationsUrl(projectId))
+                                    .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].applicationId").isNotEmpty())
+                    .andExpect(jsonPath("$.data[0].applicantEmail").value(APPLICANT_EMAIL))
+                    .andExpect(jsonPath("$.data[0].status").value("PENDING"));
+        }
+
+        @Test
+        @DisplayName("2. Owner sees all applicants when multiple users applied")
+        void getProjectApplications_multipleApplicants_returnsAll() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+
+            String applicant1Token = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicant2Token = createApplicantAndGetToken(APPLICANT2_EMAIL, "Ayse");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicant1Token)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicant2Token)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(
+                            get(projectApplicationsUrl(projectId))
+                                    .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.length()").value(2));
+        }
+
+        @Test
+        @DisplayName("3. Non-owner cannot list applications returns 403 FORBIDDEN")
+        void getProjectApplications_asNonOwner_returns403() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            get(projectApplicationsUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("4. Unauthenticated request returns 403 FORBIDDEN")
+        void getProjectApplications_noAuth_returns403() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+
+            mockMvc.perform(get(projectApplicationsUrl(projectId)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("5. Non-existent project returns 404 NOT_FOUND")
+        void getProjectApplications_nonExistentProject_returns404() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+
+            mockMvc.perform(
+                            get(projectApplicationsUrl("01NONEXISTENT0000000000000"))
+                                    .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("6. Empty list returned when project has no applications")
+        void getProjectApplications_noApplications_returnsEmptyList() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+
+            mockMvc.perform(
+                            get(projectApplicationsUrl(projectId))
+                                    .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data").isEmpty());
+        }
+    }
+
+    // ── 4. Get My Applications Tests ────────────────────────────────────
+
+    @Nested
+    @DisplayName("GET /api/v1/users/me/applications")
+    class GetMyApplicationsTests {
+
+        @Test
+        @DisplayName("1. User can list their own submitted applications")
+        void getMyApplications_returns200WithList() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(
+                            get(MY_APPLICATIONS_URL)
+                                    .header("Authorization", "Bearer " + applicantToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].projectId").value(projectId))
+                    .andExpect(jsonPath("$.data[0].projectTitle").value("AI Chatbot Project"))
+                    .andExpect(jsonPath("$.data[0].status").value("PENDING"));
+        }
+
+        @Test
+        @DisplayName("2. Empty list returned when user has no applications")
+        void getMyApplications_noApplications_returnsEmptyList() throws Exception {
+            createProjectOwnerAndGetToken();
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            get(MY_APPLICATIONS_URL)
+                                    .header("Authorization", "Bearer " + applicantToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data").isEmpty());
+        }
+
+        @Test
+        @DisplayName("3. User sees applications to multiple projects")
+        void getMyApplications_multipleProjects_returnsAll() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId1 = createProjectAndGetId(ownerToken);
+            String projectId2 = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId1))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId2))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(
+                            get(MY_APPLICATIONS_URL)
+                                    .header("Authorization", "Bearer " + applicantToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.length()").value(2));
+        }
+
+        @Test
+        @DisplayName("4. Unauthenticated request returns 403 FORBIDDEN")
+        void getMyApplications_noAuth_returns403() throws Exception {
+            mockMvc.perform(get(MY_APPLICATIONS_URL)).andExpect(status().isForbidden());
         }
     }
 }

@@ -7,8 +7,10 @@ import com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture.U
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllUsers.GetAllUsersQuery;
+import com.iyte_yazilim.proje_pazari.application.queries.getMyApplications.GetMyApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.results.MyApplicationResult;
 import com.iyte_yazilim.proje_pazari.presentation.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -222,5 +224,16 @@ public class UserController extends BaseController {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put("reason", reason);
         return send(DeactivateAccountCommand.class, null, queryParams, null, auth);
+    }
+
+    @GetMapping("/me/applications")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Get my applications",
+            description = "Returns all applications submitted by the authenticated user.")
+    public ResponseEntity<ApiResponse<List<MyApplicationResult>>> getMyApplications(
+            Authentication auth) {
+        return send(GetMyApplicationsQuery.class, null, null, null, auth);
     }
 }
