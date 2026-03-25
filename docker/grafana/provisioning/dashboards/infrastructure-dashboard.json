@@ -1421,7 +1421,7 @@
           "refId": "A"
         }
       ],
-      "title": "ES Sync Failures (total)",
+      "title": "ES Sync Failures (per interval)",
       "type": "stat"
     },
     {
