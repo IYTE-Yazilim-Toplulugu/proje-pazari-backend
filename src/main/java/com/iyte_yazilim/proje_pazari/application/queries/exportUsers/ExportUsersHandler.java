@@ -30,7 +30,14 @@ public class ExportUsersHandler implements IRequestHandler<ExportUsersQuery, Api
                     .append(",")
                     .append(escapeCsv(user.getLastName()))
                     .append(",")
-                    .append(
+                    .append( // Note: HashSet iteration order is not guaranteed; role ordering may
+                            // vary
+                            // across JVM runs (e.g., "USER|ADMIN" vs "ADMIN|USER"). This is
+                            // acceptable
+                            // since the import parser does not handle pipe-delimited multi-role
+                            // values,
+                            // and users are currently restricted to a single role via clear() +
+                            // add() pattern.
                             user.getRoles().stream()
                                     .map(Enum::name)
                                     .reduce((a, b) -> a + "|" + b)
