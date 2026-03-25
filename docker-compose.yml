@@ -90,6 +90,8 @@ services:
       - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
+    ports:
+      - "127.0.0.1:9200:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     healthcheck:
@@ -221,6 +223,9 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle' # Enables /-/reload and /-/quit endpoints (no auth). Safe: port is bound to 127.0.0.1 only.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:9090:9090"
     networks:

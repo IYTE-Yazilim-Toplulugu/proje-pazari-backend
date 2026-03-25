@@ -12,9 +12,8 @@ public interface UserMapper {
     @Mapping(
             target = "id",
             expression = "java(user.getId() != null ? user.getId().toString() : null)")
-    // FIX: Map domain 'active' to entity 'isActive'
     @Mapping(target = "isActive", source = "active")
-    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "roles", source = "roles")
     @Mapping(target = "preferredLanguage", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
@@ -26,9 +25,7 @@ public interface UserMapper {
             expression =
                     "java(userEntity.getId() != null ? com.github.f4b6a3.ulid.Ulid.from(userEntity.getId()) : null)")
     @Mapping(target = "domainEvents", ignore = true)
-    // FIX: Map entity 'isActive' to domain 'active'
     @Mapping(target = "active", source = "isActive")
-    // FIX: Ignore roles if the Domain User doesn't have a matching roles collection yet
-    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "roles", source = "roles")
     User entityToDomain(UserEntity userEntity);
 }
