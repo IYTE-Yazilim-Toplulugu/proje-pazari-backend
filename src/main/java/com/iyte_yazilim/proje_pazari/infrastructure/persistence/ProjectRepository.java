@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,12 @@ import org.springframework.data.repository.query.Param;
 
 /** ProjectRepository - JPA Repository for persistence layer */
 public interface ProjectRepository extends JpaRepository<ProjectEntity, String> {
+    @Query(
+            "SELECT p FROM ProjectEntity p "
+                    + "LEFT JOIN FETCH p.owner "
+                    + "LEFT JOIN FETCH p.applications "
+                    + "WHERE p.id = :id")
+    Optional<ProjectEntity> findByIdForIndexing(@Param("id") String id);
 
     @Query("SELECT p FROM ProjectEntity p WHERE p.owner.id = :ownerId")
     List<ProjectEntity> findByOwnerId(@Param("ownerId") String ownerId);

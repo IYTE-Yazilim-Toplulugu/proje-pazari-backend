@@ -58,7 +58,7 @@ class ProjectControllerIntegrationTest {
         emailVerificationRepository.save(verification);
 
         testUserId = saved.getId();
-        jwtToken = jwtUtil.generateToken(saved.getId(), saved.getEmail(), "PROJECT_OWNER");
+        jwtToken = jwtUtil.generateToken(saved.getId(), saved.getEmail(), "USER");
     }
 
     @Test
