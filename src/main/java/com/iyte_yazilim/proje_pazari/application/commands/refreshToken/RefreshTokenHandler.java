@@ -42,7 +42,7 @@ public class RefreshTokenHandler
                         .orElseThrow(() -> new UserNotFoundException(userId));
         String newRefreshToken = refreshTokenService.createRefreshToken(userId);
         String role = user.getRoles().contains(RoleType.ADMIN) ? "ADMIN" : "USER";
-        String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
+        String newAccessToken = tokenService.generateToken(user.getId(), user.getEmail(), role);
 
         var result =
                 new RefreshTokenResult(
