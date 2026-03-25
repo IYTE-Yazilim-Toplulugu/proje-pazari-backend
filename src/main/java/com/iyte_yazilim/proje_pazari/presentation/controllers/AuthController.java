@@ -12,6 +12,7 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -243,7 +244,10 @@ public class AuthController extends BaseController {
                         responseCode = "400",
                         description = "Invalid or expired token")
             })
-    public ResponseEntity<ApiResponse<VerifyEmailResult>> verifyEmail(@RequestParam String token) {
+    public ResponseEntity<ApiResponse<VerifyEmailResult>> verifyEmail(
+            @Parameter(description = "Email verification token received via email", required = true)
+                    @RequestParam
+                    String token) {
         VerifyEmailCommand command = new VerifyEmailCommand(token);
         ApiResponse<VerifyEmailResult> response = verifyEmailHandler.handle(command);
 
@@ -285,8 +289,24 @@ public class AuthController extends BaseController {
     }
 
     @PostMapping("/refresh")
+    @Operation(
+            summary = "Refresh access token",
+            description =
+                    "Issues a new access token using a valid refresh token. "
+                            + "Use this when the current access token has expired.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Token refreshed successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid or expired refresh token")
+            })
     public ResponseEntity<ApiResponse<RefreshTokenResult>> refreshToken(
-            @RequestParam String refreshToken) {
+            @Parameter(description = "Refresh token obtained during login", required = true)
+                    @RequestParam
+                    String refreshToken) {
         return send(new RefreshTokenCommand(refreshToken));
     }
 }

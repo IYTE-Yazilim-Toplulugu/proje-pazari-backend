@@ -7,6 +7,7 @@ import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -59,8 +60,9 @@ public class ProjectController extends BaseController {
                         "message": "Project created successfully",
                         "data": {
                             "projectId": "01HQXV5KXBW9FYMN8CJZSP2R4H",
-                            "title": "AI Chatbot Project",
-                            "status": "DRAFT"
+                            "projectName": "AI Chatbot Project",
+                            "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                            "ownerId": "01HQXV5KXBW9FYMN8CJZSP2R4G"
                         }
                     }
                     """))),
@@ -78,7 +80,7 @@ public class ProjectController extends BaseController {
                                                                 """
                     {
                         "code": "BAD_REQUEST",
-                        "message": "Title is required",
+                        "message": "Project name is required",
                         "data": null
                     }
                     """))),
@@ -116,9 +118,8 @@ public class ProjectController extends BaseController {
                                             value =
                                                     """
             {
-                "title": "AI Chatbot Project",
+                "projectName": "AI Chatbot Project",
                 "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
-                "summary": "AI chatbot with NLP capabilities",
                 "maxTeamSize": 5,
                 "requiredSkills": ["Python", "NLP", "Machine Learning", "FastAPI"],
                 "category": "Artificial Intelligence",
@@ -184,7 +185,13 @@ public class ProjectController extends BaseController {
                         responseCode = "404",
                         description = "Project not found")
             })
-    public ResponseEntity<ApiResponse<Project>> getProject(@PathVariable String projectId) {
+    public ResponseEntity<ApiResponse<Project>> getProject(
+            @Parameter(
+                            description = "Unique project ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4H")
+                    @PathVariable
+                    String projectId) {
         return send(new GetProjectByIdQuery(projectId));
     }
 }
