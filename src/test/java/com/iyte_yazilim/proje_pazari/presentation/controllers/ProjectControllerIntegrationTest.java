@@ -44,6 +44,27 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         UserEntity user = userRepository.findByEmail(email).orElseThrow();
         user.setRole(RoleType.PROJECT_OWNER);
         userRepository.save(user);
+
+    @BeforeEach
+    void setUp() {
+        UserEntity user = new UserEntity();
+        user.setEmail("projcontroller-" + System.nanoTime() + "@std.iyte.edu.tr");
+        user.setPassword(passwordEncoder.encode("TestPassword123!"));
+        user.setFirstName("Project");
+        user.setLastName("Owner");
+        user.setIsActive(true);
+        UserEntity saved = userRepository.save(user);
+
+        EmailVerificationEntity verification = new EmailVerificationEntity();
+        verification.setUserId(saved.getId());
+        verification.setEmail(saved.getEmail());
+        verification.setToken("dummy-token-" + System.nanoTime());
+        verification.setExpiresAt(LocalDateTime.now().plusHours(24));
+        verification.setVerifiedAt(LocalDateTime.now());
+        emailVerificationRepository.save(verification);
+
+        testUserId = saved.getId();
+        jwtToken = jwtUtil.generateToken(saved.getId(), saved.getEmail(), "USER");
     }
 
     private String createProjectOwnerAndGetToken() throws Exception {

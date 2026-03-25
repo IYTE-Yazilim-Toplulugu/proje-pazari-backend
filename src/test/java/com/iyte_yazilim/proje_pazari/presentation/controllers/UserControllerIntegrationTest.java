@@ -35,6 +35,28 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
     private String createVerifiedUserAndGetToken() throws Exception {
         return createVerifiedUserAndGetToken(
                 VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+
+    @BeforeEach
+    void setUp() {
+        testEmail = "usercontroller-" + System.nanoTime() + "@std.iyte.edu.tr";
+        UserEntity user = new UserEntity();
+        user.setEmail(testEmail);
+        user.setPassword(passwordEncoder.encode("TestPassword123!"));
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setIsActive(true);
+        UserEntity saved = userRepository.save(user);
+
+        EmailVerificationEntity verification = new EmailVerificationEntity();
+        verification.setUserId(saved.getId());
+        verification.setEmail(saved.getEmail());
+        verification.setToken("dummy-token-" + System.nanoTime());
+        verification.setExpiresAt(LocalDateTime.now().plusHours(24));
+        verification.setVerifiedAt(LocalDateTime.now());
+        emailVerificationRepository.save(verification);
+
+        testUserId = saved.getId();
+        jwtToken = jwtUtil.generateToken(saved.getId(), saved.getEmail(), "USER");
     }
 
     private String getUserId(String email) {
@@ -575,5 +597,74 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
         void getAllUsers_noAuth_returns403() throws Exception {
             mockMvc.perform(get(BASE_URL)).andExpect(status().isForbidden());
         }
+
+    @Test
+    @DisplayName("PUT /api/v1/users/me/password - should require authentication")
+    void shouldRequireAuthForChangePassword() throws Exception {
+        Map<String, String> request =
+                Map.of(
+                        "currentPassword", "old",
+                        "newPassword", "new",
+                        "confirmPassword", "new");
+
+        mockMvc.perform(
+                        put("/api/v1/users/me/password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/users/me/profile-picture - should upload profile picture")
+    void shouldUploadProfilePicture() throws Exception {
+        MockMultipartFile file =
+                new MockMultipartFile(
+                        "file", "test-avatar.jpg", "image/jpeg", "fake-image-content".getBytes());
+
+        mockMvc.perform(
+                        multipart("/api/v1/users/me/profile-picture")
+                                .file(file)
+                                .header("Authorization", "Bearer " + jwtToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/users/me/profile-picture - should require authentication")
+    void shouldRequireAuthForUploadProfilePicture() throws Exception {
+        MockMultipartFile file =
+                new MockMultipartFile("file", "test.jpg", "image/jpeg", "fake-image".getBytes());
+
+        mockMvc.perform(multipart("/api/v1/users/me/profile-picture").file(file))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/users/me - should deactivate account when authenticated")
+    void shouldDeactivateAccount() throws Exception {
+        // Create a dedicated user for deactivation test
+        String deactivateEmail = "deactivate-" + System.nanoTime() + "@std.iyte.edu.tr";
+        UserEntity deactivateUser = new UserEntity();
+        deactivateUser.setEmail(deactivateEmail);
+        deactivateUser.setPassword(passwordEncoder.encode("TestPassword123!"));
+        deactivateUser.setFirstName("Deactivate");
+        deactivateUser.setLastName("User");
+        deactivateUser.setIsActive(true);
+        deactivateUser.setId(UlidCreator.getUlid().toString());
+        userRepository.save(deactivateUser);
+        String deactivateToken =
+                jwtUtil.generateToken(deactivateUser.getId(), deactivateUser.getEmail(), "USER");
+
+        mockMvc.perform(
+                        delete("/api/v1/users/me")
+                                .header("Authorization", "Bearer " + deactivateToken)
+                                .param("reason", "Testing deactivation"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/users/me - should require authentication")
+    void shouldRequireAuthForDeactivateAccount() throws Exception {
+        mockMvc.perform(delete("/api/v1/users/me")).andExpect(status().isForbidden());
+>>>>>>> c71beda8758c94e3ccc2bb542a2e1e4770ad2158
     }
 }

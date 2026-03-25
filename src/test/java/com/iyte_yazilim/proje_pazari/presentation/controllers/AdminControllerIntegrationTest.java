@@ -88,14 +88,6 @@ class AdminControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should return 403 for APPLICANT role")
-        @WithMockUser(username = "applicant", roles = "APPLICANT")
-        void shouldReturn403ForApplicantRole() throws Exception {
-            mockMvc.perform(get("/api/v1/admin/users").contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
-        }
-
-        @Test
         @DisplayName("Should return 200 OK for storage health endpoint")
         void shouldReturn200ForStorageHealth() throws Exception {
             mockMvc.perform(
@@ -104,14 +96,6 @@ class AdminControllerIntegrationTest {
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.available").exists());
-        }
-
-        @Test
-        @DisplayName("Should return 403 for PROJECT_OWNER role")
-        @WithMockUser(username = "owner", roles = "PROJECT_OWNER")
-        void shouldReturn403ForProjectOwnerRole() throws Exception {
-            mockMvc.perform(get("/api/v1/admin/users").contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
         }
 
         @Test

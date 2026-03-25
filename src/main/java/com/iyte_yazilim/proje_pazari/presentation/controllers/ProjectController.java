@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProjectController extends BaseController {
 
     @PostMapping
-    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Create a new project",

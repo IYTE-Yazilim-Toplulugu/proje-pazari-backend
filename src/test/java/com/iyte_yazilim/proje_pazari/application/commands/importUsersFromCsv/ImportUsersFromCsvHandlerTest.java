@@ -29,8 +29,8 @@ class ImportUsersFromCsvHandlerTest {
     void shouldImportValidUsers() {
         String csv =
                 "email,firstName,lastName,role,password\n"
-                        + "user1@test.com,John,Doe,APPLICANT,password123\n"
-                        + "user2@test.com,Jane,Smith,PROJECT_OWNER,password456\n";
+                        + "user1@test.com,John,Doe,USER,password123\n"
+                        + "user2@test.com,Jane,Smith,ADMIN,password456\n";
 
         when(userRepository.existsByEmail(any())).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("encoded");
@@ -87,7 +87,7 @@ class ImportUsersFromCsvHandlerTest {
     void shouldSkipDuplicateEmails() {
         String csv =
                 "email,firstName,lastName,role,password\n"
-                        + "existing@test.com,John,Doe,APPLICANT,password123\n";
+                        + "existing@test.com,John,Doe,USER,password123\n";
 
         when(userRepository.existsByEmail("existing@test.com")).thenReturn(true);
 
@@ -119,8 +119,7 @@ class ImportUsersFromCsvHandlerTest {
     @Test
     @DisplayName("Should handle blank email in CSV row")
     void shouldHandleBlankEmail() {
-        String csv =
-                "email,firstName,lastName,role,password\n" + " ,John,Doe,APPLICANT,password123\n";
+        String csv = "email,firstName,lastName,role,password\n" + " ,John,Doe,USER,password123\n";
 
         ApiResponse<ImportResultDTO> response = handler.handle(new ImportUsersFromCsvCommand(csv));
 
