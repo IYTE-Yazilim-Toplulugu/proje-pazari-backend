@@ -62,11 +62,9 @@ class UserJourneyE2ETest {
     @Order(2)
     @DisplayName("E2E: User verifies email, logs in and receives JWT token")
     void step2_login() throws Exception {
-        // Change role to EMPLOYER so they can create projects later
+        // Verify user exists (all authenticated users can create projects now)
         com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity user =
                 userRepository.findByEmail("e2e-journey@std.iyte.edu.tr").orElseThrow();
-        user.setRole(com.iyte_yazilim.proje_pazari.domain.enums.RoleType.PROJECT_OWNER);
-        userRepository.save(user);
 
         EmailVerificationEntity verification =
                 emailVerificationRepository

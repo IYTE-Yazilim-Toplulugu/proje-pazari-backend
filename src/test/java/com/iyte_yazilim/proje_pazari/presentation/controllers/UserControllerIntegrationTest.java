@@ -62,7 +62,7 @@ class UserControllerIntegrationTest {
         emailVerificationRepository.save(verification);
 
         testUserId = saved.getId();
-        jwtToken = jwtUtil.generateToken(saved.getId(), saved.getEmail(), "APPLICANT");
+        jwtToken = jwtUtil.generateToken(saved.getId(), saved.getEmail(), "USER");
     }
 
     @Test
@@ -207,8 +207,7 @@ class UserControllerIntegrationTest {
         deactivateUser.setId(UlidCreator.getUlid().toString());
         userRepository.save(deactivateUser);
         String deactivateToken =
-                jwtUtil.generateToken(
-                        deactivateUser.getId(), deactivateUser.getEmail(), "APPLICANT");
+                jwtUtil.generateToken(deactivateUser.getId(), deactivateUser.getEmail(), "USER");
 
         mockMvc.perform(
                         delete("/api/v1/users/me")

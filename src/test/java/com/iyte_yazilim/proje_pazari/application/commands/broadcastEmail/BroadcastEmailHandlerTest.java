@@ -9,7 +9,9 @@ import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,13 +39,13 @@ class BroadcastEmailHandlerTest {
         activeUser.setId("user-1");
         activeUser.setEmail("active@example.com");
         activeUser.setIsActive(true);
-        activeUser.setRole(RoleType.APPLICANT);
+        activeUser.setRoles(new HashSet<>(Set.of(RoleType.USER)));
 
         inactiveUser = new UserEntity();
         inactiveUser.setId("user-2");
         inactiveUser.setEmail("inactive@example.com");
         inactiveUser.setIsActive(false);
-        inactiveUser.setRole(RoleType.APPLICANT);
+        inactiveUser.setRoles(new HashSet<>(Set.of(RoleType.USER)));
     }
 
     @Test
@@ -64,10 +66,10 @@ class BroadcastEmailHandlerTest {
     @Test
     @DisplayName("Should broadcast email to users with specific role")
     void shouldBroadcastEmailToSpecificRole() {
-        when(userRepository.findByRole(eq(RoleType.APPLICANT), any(Pageable.class)))
+        when(userRepository.findByRole(eq(RoleType.USER), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(activeUser)));
 
-        BroadcastEmailCommand command = new BroadcastEmailCommand("Subject", "Body", "APPLICANT");
+        BroadcastEmailCommand command = new BroadcastEmailCommand("Subject", "Body", "USER");
 
         ApiResponse<Void> response = handler.handle(command);
 

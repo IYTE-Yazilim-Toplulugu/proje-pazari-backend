@@ -17,7 +17,6 @@ import com.iyte_yazilim.proje_pazari.application.commands.importProjectsFromCsv.
 import com.iyte_yazilim.proje_pazari.application.commands.importUsersFromCsv.ImportUsersFromCsvCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.invalidateAllSessions.InvalidateAllSessionsCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.invalidateUserSessions.InvalidateUserSessionsCommand;
-import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent.ReviewFlaggedContentCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.scheduleEmail.ScheduleEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.sendTargetedEmail.SendTargetedEmailCommand;
@@ -194,20 +193,7 @@ public class AdminController extends BaseController {
         return send(new BulkUserActionCommand(request.action(), request.userIds()));
     }
 
-    @PostMapping("/users/{userId}/promote-to-project-owner")
-    @Operation(
-            summary = "Promote user to PROJECT_OWNER",
-            description = "Promotes a user to the PROJECT_OWNER role. Requires ADMIN role.")
-    @Audited(action = "PROMOTE_TO_PROJECT_OWNER", entityType = "USER")
-    public ResponseEntity<ApiResponse<Void>> promoteToProjectOwner(
-            @Parameter(
-                            description = "User ID to promote",
-                            required = true,
-                            example = "01HQXV5KXBW9FYMN8CJZSP2R4G")
-                    @PathVariable
-                    String userId) {
-        return send(new PromoteToProjectOwnerCommand(userId));
-    }
+
 
     // ==================== PROJECT MANAGEMENT ====================
 

@@ -25,7 +25,8 @@ public class AdminUpdateUserHandler
                         .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         if (command.role() != null) {
-            user.setRole(command.role());
+            user.getRoles().clear();
+            user.getRoles().add(command.role());
         }
         if (command.isActive() != null) {
             user.setIsActive(command.isActive());

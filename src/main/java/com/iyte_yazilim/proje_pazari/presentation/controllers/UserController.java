@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
@@ -218,7 +219,7 @@ public class UserController extends BaseController {
                     @RequestParam(required = false)
                     String reason,
             Authentication auth) {
-        Map<String, String> queryParams = new java.util.HashMap<>();
+        Map<String, String> queryParams = new HashMap<>();
         queryParams.put("reason", reason);
         return send(DeactivateAccountCommand.class, null, queryParams, null, auth);
     }

@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.refreshToken;
 
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -42,7 +43,7 @@ public class RefreshTokenHandler
 
         refreshTokenService.revokeRefreshToken(refreshToken);
         String newRefreshToken = refreshTokenService.createRefreshToken(userId);
-        String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
+        String role = user.getRoles().contains(RoleType.ADMIN) ? "ADMIN" : "USER";
         String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
 
         var result =
