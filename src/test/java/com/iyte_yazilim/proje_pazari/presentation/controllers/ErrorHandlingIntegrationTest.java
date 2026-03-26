@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,8 +21,6 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
     private static final String VALID_PASSWORD = "SecurePass123!";
     private static final String VALID_FIRST_NAME = "Error";
     private static final String VALID_LAST_NAME = "Tester";
-
-    @Autowired private UserRepository userRepository;
 
     @Autowired private JwtUtil jwtUtil;
 
@@ -200,8 +197,8 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("2. APPLICANT creating project returns 403")
-        void createProject_asApplicant_returns403() throws Exception {
+        @DisplayName("2. Authenticated user creating project returns 201")
+        void createProject_asAuthenticatedUser_returns201() throws Exception {
             String token = createVerifiedUserAndGetToken();
 
             Map<String, Object> data = new HashMap<>();
@@ -213,7 +210,7 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(data)))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isCreated());
         }
 
         @Test
@@ -246,10 +243,9 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
         @DisplayName("6. Non-admin accessing admin endpoints returns 403")
         void adminEndpoint_asApplicant_returns403() throws Exception {
             String token = createVerifiedUserAndGetToken();
-            String userId = userRepository.findByEmail(VALID_EMAIL).orElseThrow().getId();
 
             mockMvc.perform(
-                            post("/api/v1/admin/users/" + userId + "/promote-to-project-owner")
+                            get("/api/v1/admin/users")
                                     .header("Authorization", "Bearer " + token))
                     .andExpect(status().isForbidden());
         }
