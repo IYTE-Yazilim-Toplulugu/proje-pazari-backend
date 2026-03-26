@@ -13,6 +13,7 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.MyApplicationResult;
 import com.iyte_yazilim.proje_pazari.presentation.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -77,7 +78,13 @@ public class UserController extends BaseController {
                         responseCode = "404",
                         description = "User not found")
             })
-    public ResponseEntity<ApiResponse<UserProfileDTO>> getUserProfile(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<UserProfileDTO>> getUserProfile(
+            @Parameter(
+                            description = "User ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4G")
+                    @PathVariable
+                    String userId) {
         return send(new GetUserProfileQuery(userId));
     }
 
@@ -208,7 +215,12 @@ public class UserController extends BaseController {
                         description = "Unauthorized")
             })
     public ResponseEntity<ApiResponse<Void>> deactivateAccount(
-            @RequestParam(required = false) String reason, Authentication auth) {
+            @Parameter(
+                            description = "Optional reason for account deactivation",
+                            example = "No longer needed")
+                    @RequestParam(required = false)
+                    String reason,
+            Authentication auth) {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put("reason", reason);
         return send(DeactivateAccountCommand.class, null, queryParams, null, auth);

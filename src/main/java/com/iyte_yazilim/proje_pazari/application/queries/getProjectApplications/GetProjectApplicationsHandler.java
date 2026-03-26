@@ -1,56 +1,77 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getProjectApplications;
 
+import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationDto;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.domain.models.results.ApplicationSummaryResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Component
+/**
+ * Handles project application queries with optional status filtering.
+ *
+ * <p>Only the project owner can view applications for their project. When a status filter is
+ * provided, only applications matching that status are returned.
+ *
+ * @author IYTE Yazılım Topluluğu
+ * @version 1.1
+ * @since 2026-03-23
+ */
+@Service
 @RequiredArgsConstructor
 public class GetProjectApplicationsHandler
-        implements IRequestHandler<
-                GetProjectApplicationsQuery, ApiResponse<List<ApplicationSummaryResult>>> {
+        implements IRequestHandler<GetProjectApplicationsQuery, ApiResponse<List<ApplicationDto>>> {
 
     private final ProjectRepository projectRepository;
     private final ProjectApplicationRepository applicationRepository;
     private final MessageService messageService;
 
     @Override
-    public ApiResponse<List<ApplicationSummaryResult>> handle(GetProjectApplicationsQuery query) {
+    @Transactional(readOnly = true)
+    public ApiResponse<List<ApplicationDto>> handle(GetProjectApplicationsQuery query) {
 
-        ProjectEntity project = projectRepository.findById(query.projectId()).orElse(null);
-        if (project == null) {
-            return ApiResponse.notFound(messageService.getMessage("project.not.found"));
+        // --- 1. Verify Project Exists ---
+        ProjectEntity projectEntity = projectRepository.findById(query.projectId()).orElse(null);
+        if (projectEntity == null) {
+            return ApiResponse.notFound(
+                    messageService.getMessage(
+                            "project.not.found", new Object[] {query.projectId()}));
         }
 
-        if (!project.getOwner().getId().equals(query.ownerId())) {
-            return ApiResponse.forbidden(messageService.getMessage("error.forbidden"));
+        // --- 2. Verify Requester is the Project Owner ---
+        if (!projectEntity.getOwner().getId().equals(query.requesterId())) {
+            return ApiResponse.forbidden(messageService.getMessage("project.owner.mismatch"));
         }
 
-        List<ApplicationSummaryResult> results =
-                applicationRepository.findByProjectId(query.projectId()).stream()
-                        .map(this::toSummary)
+        // --- 3. Fetch Applications with Optional Status Filter ---
+        List<ApplicationDto> applications =
+                applicationRepository
+                        .findByProjectIdWithOptionalStatus(query.projectId(), query.status())
+                        .stream()
+                        .map(this::toDto)
                         .toList();
 
+        // --- 4. Response ---
         return ApiResponse.success(
-                results, messageService.getMessage("application.list.retrieved.success"));
+                applications, messageService.getMessage("application.list.retrieved.success"));
     }
 
-    private ApplicationSummaryResult toSummary(ProjectApplicationEntity entity) {
-        return new ApplicationSummaryResult(
+    private ApplicationDto toDto(ProjectApplicationEntity entity) {
+        String applicantName =
+                entity.getUser().getFirstName() + " " + entity.getUser().getLastName();
+        return new ApplicationDto(
                 entity.getId(),
+                entity.getProject().getId(),
+                entity.getProject().getTitle(),
                 entity.getUser().getId(),
-                entity.getUser().getEmail(),
-                entity.getUser().getFirstName(),
-                entity.getUser().getLastName(),
-                entity.getStatus().toString(),
+                applicantName,
+                entity.getStatus(),
                 entity.getCreatedAt());
     }
 }

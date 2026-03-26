@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.security.service;
 
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.RefreshTokenRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.RefreshTokenEntity;
 import java.time.Duration;
@@ -34,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RefreshTokenService {
+public class RefreshTokenService implements IRefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
 
@@ -113,6 +114,41 @@ public class RefreshTokenService {
                             log.debug(
                                     "Revoked refresh token for user: {}", refreshToken.getUserId());
                         });
+    }
+
+    /**
+     * Validates a refresh token and revokes it in a single transaction.
+     *
+     * @param token the refresh token to validate and revoke
+     * @return Optional containing userId if the token was valid, empty otherwise
+     */
+    @Transactional
+    public Optional<String> validateAndRevoke(String token) {
+        Optional<RefreshTokenEntity> refreshToken = refreshTokenRepository.findByToken(token);
+
+        if (refreshToken.isEmpty()) {
+            log.warn("Refresh token not found");
+            return Optional.empty();
+        }
+
+        RefreshTokenEntity tokenEntity = refreshToken.get();
+
+        if (tokenEntity.getRevoked()) {
+            log.warn(
+                    "Attempted use of revoked refresh token for user: {}", tokenEntity.getUserId());
+            return Optional.empty();
+        }
+
+        if (tokenEntity.getExpiresAt().isBefore(Instant.now())) {
+            log.warn("Expired refresh token used for user: {}", tokenEntity.getUserId());
+            return Optional.empty();
+        }
+
+        tokenEntity.setRevoked(true);
+        refreshTokenRepository.save(tokenEntity);
+        log.debug("Validated and revoked refresh token for user: {}", tokenEntity.getUserId());
+
+        return Optional.of(tokenEntity.getUserId());
     }
 
     /**

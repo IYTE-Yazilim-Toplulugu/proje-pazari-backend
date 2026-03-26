@@ -11,10 +11,11 @@ import lombok.Getter;
  * <pre>
  * PENDING → APPROVED
  *        ↘ REJECTED
+ *        ↘ WITHDRAWN
  * </pre>
  *
  * @author IYTE Yazılım Topluluğu
- * @version 1.0
+ * @version 1.1
  * @since 2024-01-01
  * @see com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication
  */
@@ -28,7 +29,10 @@ public enum ApplicationStatus {
     APPROVED("approved"),
 
     /** Application has been rejected by the project owner. */
-    REJECTED("rejected");
+    REJECTED("rejected"),
+
+    /** Application has been withdrawn by the applicant. */
+    WITHDRAWN("withdrawn");
 
     /** String representation of the status for serialization. */
     private final String status;
