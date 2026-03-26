@@ -69,7 +69,7 @@ public class ResetPasswordHandler
         userRepository.save(user);
 
         // --- 6. Mark token as used ---
-        resetToken.setUsedAt(LocalDateTime.now());
+        resetToken.setUsedAt(LocalDateTime.now(clock));
         passwordResetTokenRepository.save(resetToken);
 
         // --- 7. Revoke all refresh tokens — force re-login on all devices ---

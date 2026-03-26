@@ -16,7 +16,9 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +41,11 @@ class ResetPasswordHandlerTest {
 
     private static final String VALID_PASSWORD = "NewSecurePass1!";
     private static final String TOKEN = "valid-reset-token";
+    private static final Instant FIXED_INSTANT = Instant.parse("2025-01-15T12:00:00Z");
+    private static final ZoneId ZONE = ZoneId.of("UTC");
+    private final Clock fixedClock = Clock.fixed(FIXED_INSTANT, ZONE);
+    private static final LocalDateTime FIXED_NOW =
+            LocalDateTime.ofInstant(FIXED_INSTANT, ZoneId.of("UTC"));
 
     @BeforeEach
     void setUp() {
@@ -49,7 +56,7 @@ class ResetPasswordHandlerTest {
                         passwordEncoder,
                         refreshTokenService,
                         messageService,
-                        Clock.systemDefaultZone());
+                        fixedClock);
         lenient()
                 .when(messageService.getMessage("auth.password.reset.token.invalid"))
                 .thenReturn("Invalid token");
@@ -64,14 +71,11 @@ class ResetPasswordHandlerTest {
     private PasswordResetToken validToken() {
         PasswordResetToken t =
                 new PasswordResetToken(
-                        "user-123",
-                        "student@std.iyte.edu.tr",
-                        TOKEN,
-                        LocalDateTime.now().plusHours(1));
+                        "user-123", "student@std.iyte.edu.tr", TOKEN, FIXED_NOW.plusHours(1));
         return t;
     }
 
-    private User userWithId(String id) {
+    private User buildTestUser() {
         User u = new User("student@std.iyte.edu.tr", "old-hashed-password", "Ali", "Test");
         org.springframework.test.util.ReflectionTestUtils.setField(
                 u, "id", com.github.f4b6a3.ulid.Ulid.from("01HRQJ4FPGESQHPKS0MRCYG9M0"));
@@ -82,7 +86,7 @@ class ResetPasswordHandlerTest {
     @DisplayName("Should reset password successfully when token and password are valid")
     void shouldResetPassword_WhenTokenAndPasswordAreValid() {
         PasswordResetToken token = validToken();
-        User user = userWithId("user-123");
+        User user = buildTestUser();
 
         when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(token));
         when(userRepository.findById("user-123")).thenReturn(Optional.of(user));
@@ -93,7 +97,7 @@ class ResetPasswordHandlerTest {
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals("new-hashed-password", user.getPassword());
-        assertNotNull(token.getUsedAt());
+        assertEquals(FIXED_NOW, token.getUsedAt());
         verify(refreshTokenService).revokeAllUserTokens("user-123");
     }
 
@@ -114,7 +118,7 @@ class ResetPasswordHandlerTest {
     @DisplayName("Should throw InvalidVerificationTokenException when token already used")
     void shouldThrow_WhenTokenAlreadyUsed() {
         PasswordResetToken token = validToken();
-        token.setUsedAt(LocalDateTime.now().minusMinutes(5));
+        token.setUsedAt(FIXED_NOW.minusMinutes(5));
 
         when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(token));
 
@@ -129,7 +133,7 @@ class ResetPasswordHandlerTest {
     @DisplayName("Should throw VerificationTokenExpiredException when token is expired")
     void shouldThrow_WhenTokenExpired() {
         PasswordResetToken token = validToken();
-        token.setExpiresAt(LocalDateTime.now().minusHours(2));
+        token.setExpiresAt(FIXED_NOW.minusHours(2));
 
         when(passwordResetTokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(token));
 

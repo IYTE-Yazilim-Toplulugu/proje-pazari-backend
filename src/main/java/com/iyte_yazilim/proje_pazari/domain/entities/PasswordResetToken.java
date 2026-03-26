@@ -35,10 +35,6 @@ public class PasswordResetToken {
         return usedAt != null;
     }
 
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt);
-    }
-
     public boolean isExpired(Clock clock) {
         return LocalDateTime.now(clock).isAfter(expiresAt);
     }
