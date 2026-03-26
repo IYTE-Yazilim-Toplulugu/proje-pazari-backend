@@ -50,6 +50,14 @@ public class ReviewApplicationHandler
                         .orElseThrow(
                                 () -> new ApplicationNotFoundException(command.applicationId()));
 
+        // --- 2. Validate Review Status ---
+        if (command.status()
+                        != com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus.APPROVED
+                && command.status()
+                        != com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus.REJECTED) {
+            return ApiResponse.badRequest(messageService.getMessage("error.bad.request"));
+        }
+
         // --- 3. Update Status ---
         applicationEntity.setStatus(command.status());
 

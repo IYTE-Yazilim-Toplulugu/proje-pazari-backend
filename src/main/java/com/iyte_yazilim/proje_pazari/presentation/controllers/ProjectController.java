@@ -4,12 +4,12 @@ import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreatePr
 import com.iyte_yazilim.proje_pazari.application.commands.deleteProject.DeleteProjectCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateProject.UpdateProjectCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateProjectStatus.UpdateProjectStatusCommand;
+import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
+import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllProjects.GetAllProjectsQuery;
-import com.iyte_yazilim.proje_pazari.application.queries.getProjectById.GetProjectByIdQuery;
-import com.iyte_yazilim.proje_pazari.domain.entities.Project;
+import com.iyte_yazilim.proje_pazari.application.queries.getProject.GetProjectQuery;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
-import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,9 +18,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
+import jakarta.validation.Valid;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/projects")
-@RequiredArgsConstructor
 @Tag(
         name = "Projects",
         description =
@@ -172,8 +170,12 @@ public class ProjectController extends BaseController {
                         responseCode = "500",
                         description = "Internal server error")
             })
-    public ResponseEntity<ApiResponse<List<Project>>> getAllProjects() {
-        return send(new GetAllProjectsQuery());
+    public ResponseEntity<ApiResponse<PagedProjectsResult>> getAllProjects(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection) {
+        return send(new GetAllProjectsQuery(page, size, sortBy, sortDirection));
     }
 
     @GetMapping("/{projectId}")
@@ -190,8 +192,9 @@ public class ProjectController extends BaseController {
                         responseCode = "404",
                         description = "Project not found")
             })
-    public ResponseEntity<ApiResponse<Project>> getProject(@PathVariable String projectId) {
-        return send(new GetProjectByIdQuery(projectId));
+    public ResponseEntity<ApiResponse<ProjectDetailDto>> getProject(
+            @PathVariable String projectId) {
+        return send(new GetProjectQuery(projectId));
     }
 
     @PutMapping("/{projectId}")
@@ -201,9 +204,9 @@ public class ProjectController extends BaseController {
             summary = "Update a project",
             description =
                     "Updates a project's details. Only the project owner can update their project.")
-    public ResponseEntity<ApiResponse<UpdateProjectCommandResult>> updateProject(
+    public ResponseEntity<ApiResponse<ProjectDetailDto>> updateProject(
             @PathVariable String projectId,
-            @RequestBody UpdateProjectCommand command,
+            @Valid @RequestBody UpdateProjectCommand command,
             Authentication auth) {
         return send(
                 UpdateProjectCommand.class, Map.of("projectId", projectId), null, command, auth);
