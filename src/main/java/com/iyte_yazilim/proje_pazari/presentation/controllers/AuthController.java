@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import com.iyte_yazilim.proje_pazari.application.commands.forgotPassword.ForgotPasswordCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutRequest;
@@ -7,6 +8,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTo
 import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenResult;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.resetPassword.ResetPasswordCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.verifyEmail.VerifyEmailCommand;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -317,6 +319,104 @@ public class AuthController extends BaseController {
                     @RequestParam
                     String refreshToken) {
         return send(new RefreshTokenCommand(refreshToken));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(
+            summary = "Request password reset",
+            description =
+                    "Sends a password reset link to the provided email address. "
+                            + "Always returns success to prevent user enumeration.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Reset email sent if account exists",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "SUCCESS",
+                                            "message": "A password reset link has been sent to your email address",
+                                            "data": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid request — email field fails @Email validation",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Invalid Email",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Invalid email format",
+                                            "data": null
+                                        }
+                                        """)))
+            })
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordCommand command) {
+        return send(command);
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(
+            summary = "Reset password using token",
+            description = "Resets the user's password using the token received by email.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Password reset successfully",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "SUCCESS",
+                                            "message": "Your password has been reset successfully",
+                                            "data": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid or expired token, or weak password",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Invalid Token",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Invalid or already used password reset link",
+                                            "data": null
+                                        }
+                                        """)))
+            })
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordCommand command) {
+        return send(command);
     }
 
     @PostMapping("/logout")
