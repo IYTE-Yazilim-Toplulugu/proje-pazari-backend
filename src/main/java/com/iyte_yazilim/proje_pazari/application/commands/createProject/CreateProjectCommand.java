@@ -62,7 +62,11 @@ public record CreateProjectCommand(
                         max = 2000,
                         message = "Description must be between 10 and 2000 characters")
                 String description,
-        @Schema(description = "ID of the project owner", example = "01HQZX...")
+        @Schema(
+                        description =
+                                "ID of the project owner (resolved from authentication, do not send)",
+                        accessMode = Schema.AccessMode.READ_ONLY,
+                        example = "01HQZX...")
                 @NotBlank(message = "Owner ID is required")
                 String ownerId,
         @Schema(
