@@ -12,6 +12,9 @@ import com.iyte_yazilim.proje_pazari.domain.events.PasswordResetEmailRequestedEv
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +35,7 @@ class ForgotPasswordHandlerTest {
     @Mock private VerificationTokenService verificationTokenService;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private MessageService messageService;
+    @Mock private Clock clock;
 
     @InjectMocks private ForgotPasswordHandler handler;
 
@@ -41,6 +45,10 @@ class ForgotPasswordHandlerTest {
 
     @BeforeEach
     void setUp() {
+        Clock fixedClock = Clock.fixed(Instant.parse("2026-01-01T12:00:00Z"), ZoneId.of("UTC"));
+        lenient().when(clock.instant()).thenReturn(fixedClock.instant());
+        lenient().when(clock.getZone()).thenReturn(fixedClock.getZone());
+
         ReflectionTestUtils.setField(handler, "frontendUrl", FRONTEND_URL);
         ReflectionTestUtils.setField(handler, "resetPasswordPath", RESET_PATH);
         lenient()

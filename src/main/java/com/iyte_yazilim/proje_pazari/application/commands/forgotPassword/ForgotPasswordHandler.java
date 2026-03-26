@@ -9,6 +9,7 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenReposi
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class ForgotPasswordHandler
     private final VerificationTokenService verificationTokenService;
     private final ApplicationEventPublisher eventPublisher;
     private final MessageService messageService;
+    private final Clock clock;
 
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
@@ -47,7 +49,7 @@ public class ForgotPasswordHandler
         Optional<User> userOpt = userRepository.findByEmail(command.email());
 
         if (userOpt.isEmpty()) {
-            log.warn("Password reset requested for non-existent email: {}", command.email());
+            log.warn("Password reset requested for non-existent email address");
             return ApiResponse.success(
                     null, messageService.getMessage("auth.password.reset.email.sent"));
         }
@@ -65,7 +67,7 @@ public class ForgotPasswordHandler
                         user.getId().toString(),
                         user.getEmail(),
                         token,
-                        LocalDateTime.now().plusHours(RESET_TOKEN_EXPIRY_HOURS));
+                        LocalDateTime.now(clock).plusHours(RESET_TOKEN_EXPIRY_HOURS));
 
         passwordResetTokenRepository.save(resetToken);
 
