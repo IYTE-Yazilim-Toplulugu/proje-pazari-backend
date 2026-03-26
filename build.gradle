@@ -108,11 +108,12 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // TestContainers for integration tests
-    testImplementation 'org.testcontainers:testcontainers:1.21.3'
-    testImplementation 'org.testcontainers:junit-jupiter:1.21.3'
-    testImplementation 'org.testcontainers:postgresql:1.21.3'
-    testImplementation 'org.testcontainers:elasticsearch:1.21.3'
-    testImplementation 'org.testcontainers:minio:1.21.3'
+    testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:elasticsearch'
+    testImplementation 'org.testcontainers:minio'
     testImplementation 'com.redis:testcontainers-redis:2.2.4'
 
     testAnnotationProcessor 'org.projectlombok:lombok'
