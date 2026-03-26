@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutRequest;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
 class AuthControllerIntegrationTest extends IntegrationTestBase {
@@ -349,6 +351,88 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("3. Missing refreshToken param returns 400 BAD_REQUEST")
         void refresh_missingParam_returns400() throws Exception {
             mockMvc.perform(post(BASE_URL + "/refresh")).andExpect(status().isBadRequest());
+        }
+    }
+
+    // ── 6. Logout Tests ──────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("POST /api/v1/auth/logout")
+    class LogoutTests {
+
+        private String[] loginAndGetTokens(String email, String password) throws Exception {
+            var command = new LoginUserCommand(email, password);
+            MvcResult result =
+                    mockMvc.perform(
+                                    post(BASE_URL + "/login")
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(objectMapper.writeValueAsString(command)))
+                            .andExpect(status().isOk())
+                            .andReturn();
+
+            var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
+            String accessToken = jsonNode.get("data").get("accessToken").asText();
+            String refreshToken = jsonNode.get("data").get("refreshToken").asText();
+            return new String[] {accessToken, refreshToken};
+        }
+
+        @Test
+        @DisplayName("1. Valid logout returns 200 OK")
+        void logout_validTokens_returns200() throws Exception {
+            registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+            String[] tokens = loginAndGetTokens(VALID_EMAIL, VALID_PASSWORD);
+            String accessToken = tokens[0];
+            String refreshToken = tokens[1];
+
+            var body = new LogoutRequest(refreshToken);
+            mockMvc.perform(
+                            post(BASE_URL + "/logout")
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(body)))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("2. Unauthenticated request returns 403 FORBIDDEN")
+        void logout_unauthenticated_returns403() throws Exception {
+            var body = new LogoutRequest("some-refresh-token");
+            mockMvc.perform(
+                            post(BASE_URL + "/logout")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(body)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("3. Missing refresh token in body returns 400 BAD_REQUEST")
+        void logout_missingRefreshToken_returns400() throws Exception {
+            String accessToken =
+                    createVerifiedUserAndGetToken(
+                            VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+
+            mockMvc.perform(
+                            post(BASE_URL + "/logout")
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("4. Invalid refresh token returns 400 BAD_REQUEST")
+        void logout_invalidRefreshToken_returns400() throws Exception {
+            String accessToken =
+                    createVerifiedUserAndGetToken(
+                            VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+
+            var body = new LogoutRequest("invalid-refresh-token");
+            mockMvc.perform(
+                            post(BASE_URL + "/logout")
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(body)))
+                    .andExpect(status().isBadRequest());
         }
     }
 }

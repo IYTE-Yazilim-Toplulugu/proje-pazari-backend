@@ -244,9 +244,7 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
         void adminEndpoint_asApplicant_returns403() throws Exception {
             String token = createVerifiedUserAndGetToken();
 
-            mockMvc.perform(
-                            get("/api/v1/admin/users")
-                                    .header("Authorization", "Bearer " + token))
+            mockMvc.perform(get("/api/v1/admin/users").header("Authorization", "Bearer " + token))
                     .andExpect(status().isForbidden());
         }
     }

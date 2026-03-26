@@ -390,7 +390,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         void getAllProjects_noProjects_returns200EmptyList() throws Exception {
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data").isArray());
+                    .andExpect(jsonPath("$.data.projects").isArray());
         }
 
         @Test
@@ -407,8 +407,8 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data").isArray())
-                    .andExpect(jsonPath("$.data.length()").value(1));
+                    .andExpect(jsonPath("$.data.projects").isArray())
+                    .andExpect(jsonPath("$.data.projects.length()").value(1));
         }
 
         @Test
@@ -457,7 +457,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(update)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.projectName").value("Updated AI Project Name"));
+                    .andExpect(jsonPath("$.data.title").value("Updated AI Project Name"));
         }
 
         @Test

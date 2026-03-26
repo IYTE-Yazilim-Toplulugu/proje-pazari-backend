@@ -570,11 +570,13 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                             get(MY_APPLICATIONS_URL)
                                     .header("Authorization", "Bearer " + applicantToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data").isArray())
-                    .andExpect(jsonPath("$.data.length()").value(1))
-                    .andExpect(jsonPath("$.data[0].projectId").value(projectId))
-                    .andExpect(jsonPath("$.data[0].projectTitle").value("AI Chatbot Project"))
-                    .andExpect(jsonPath("$.data[0].status").value("PENDING"));
+                    .andExpect(jsonPath("$.data.applications").isArray())
+                    .andExpect(jsonPath("$.data.applications.length()").value(1))
+                    .andExpect(jsonPath("$.data.applications[0].projectId").value(projectId))
+                    .andExpect(
+                            jsonPath("$.data.applications[0].projectTitle")
+                                    .value("AI Chatbot Project"))
+                    .andExpect(jsonPath("$.data.applications[0].status").value("PENDING"));
         }
 
         @Test
@@ -587,8 +589,8 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                             get(MY_APPLICATIONS_URL)
                                     .header("Authorization", "Bearer " + applicantToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data").isArray())
-                    .andExpect(jsonPath("$.data").isEmpty());
+                    .andExpect(jsonPath("$.data.applications").isArray())
+                    .andExpect(jsonPath("$.data.applications").isEmpty());
         }
 
         @Test
@@ -615,7 +617,7 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                             get(MY_APPLICATIONS_URL)
                                     .header("Authorization", "Bearer " + applicantToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.length()").value(2));
+                    .andExpect(jsonPath("$.data.applications.length()").value(2));
         }
 
         @Test

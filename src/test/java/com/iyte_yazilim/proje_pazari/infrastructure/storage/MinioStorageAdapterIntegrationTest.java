@@ -63,14 +63,14 @@ class MinioStorageAdapterIntegrationTest {
                 minioContainer != null && minioContainer.isRunning(),
                 "MinIO container should be running");
         String minioUrl = minioContainer.getS3URL();
-        
+
         // Create a real SimpleMeterRegistry for timer metrics
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         Timer uploadTimer = registry.timer("minio.upload");
-        
+
         BusinessMetricsService metricsService = mock(BusinessMetricsService.class);
         when(metricsService.getMinioUploadTimer()).thenReturn(uploadTimer);
-        
+
         adapter =
                 new MinioStorageAdapter(
                         minioUrl, ACCESS_KEY, SECRET_KEY, BUCKET_NAME, metricsService);
