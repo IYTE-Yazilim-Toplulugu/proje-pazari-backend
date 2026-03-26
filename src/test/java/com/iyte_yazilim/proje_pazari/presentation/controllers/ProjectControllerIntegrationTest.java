@@ -131,8 +131,8 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("3. Create project with APPLICANT role returns 403 FORBIDDEN")
-        void createProject_asApplicant_returns403() throws Exception {
+        @DisplayName("3. Create project with any authenticated user returns 201 CREATED")
+        void createProject_asAuthenticatedUser_returns201() throws Exception {
             String token = createApplicantAndGetToken();
 
             mockMvc.perform(
@@ -140,7 +140,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(validProjectData())))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isCreated());
         }
 
         @Test
@@ -635,7 +635,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("1. Owner can change project status to ACTIVE")
+        @DisplayName("1. Owner can change project status to OPEN")
         void updateStatus_toActive_returns200() throws Exception {
             String token = createProjectOwnerAndGetToken();
             String projectId = createProjectAndGetId(token);
@@ -644,9 +644,9 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             patch(BASE_URL + "/" + projectId + "/status")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"newStatus\": \"ACTIVE\"}"))
+                                    .content("{\"newStatus\": \"OPEN\"}"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.newStatus").value("ACTIVE"))
+                    .andExpect(jsonPath("$.data.newStatus").value("OPEN"))
                     .andExpect(jsonPath("$.data.oldStatus").value("DRAFT"));
         }
 
@@ -660,11 +660,11 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             patch(BASE_URL + "/" + projectId + "/status")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"newStatus\": \"ACTIVE\"}"))
+                                    .content("{\"newStatus\": \"OPEN\"}"))
                     .andExpect(status().isOk());
 
             var saved = projectRepository.findById(projectId).orElseThrow();
-            assertThat(saved.getStatus().toString()).isEqualTo("ACTIVE");
+            assertThat(saved.getStatus().toString()).isEqualTo("OPEN");
         }
 
         @Test
@@ -691,7 +691,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(
                             patch(BASE_URL + "/" + projectId + "/status")
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"newStatus\": \"ACTIVE\"}"))
+                                    .content("{\"newStatus\": \"OPEN\"}"))
                     .andExpect(status().isForbidden());
         }
 
@@ -704,7 +704,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             patch(BASE_URL + "/01NONEXISTENT0000000000000/status")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"newStatus\": \"ACTIVE\"}"))
+                                    .content("{\"newStatus\": \"OPEN\"}"))
                     .andExpect(status().isNotFound());
         }
     }
