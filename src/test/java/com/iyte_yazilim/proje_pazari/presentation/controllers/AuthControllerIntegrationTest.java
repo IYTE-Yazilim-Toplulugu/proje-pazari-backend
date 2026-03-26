@@ -189,7 +189,7 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
 
             assertThat(jwtUtil.extractEmail(accessToken)).isEqualTo(VALID_EMAIL);
             assertThat(jwtUtil.extractUserId(accessToken)).isNotBlank();
-            assertThat(jwtUtil.extractRole(accessToken)).isEqualTo("APPLICANT");
+            assertThat(jwtUtil.extractRole(accessToken)).isEqualTo("USER");
         }
     }
 
