@@ -12,16 +12,16 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenE
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,16 +32,24 @@ class ResetPasswordHandlerTest {
     @Mock private IUserRepository userRepository;
     @Mock private IPasswordResetTokenRepository passwordResetTokenRepository;
     @Mock private PasswordEncoder passwordEncoder;
-    @Mock private RefreshTokenService refreshTokenService;
+    @Mock private IRefreshTokenService refreshTokenService;
     @Mock private MessageService messageService;
 
-    @InjectMocks private ResetPasswordHandler handler;
+    private ResetPasswordHandler handler;
 
     private static final String VALID_PASSWORD = "NewSecurePass1!";
     private static final String TOKEN = "valid-reset-token";
 
     @BeforeEach
     void setUp() {
+        handler =
+                new ResetPasswordHandler(
+                        userRepository,
+                        passwordResetTokenRepository,
+                        passwordEncoder,
+                        refreshTokenService,
+                        messageService,
+                        Clock.systemDefaultZone());
         lenient()
                 .when(messageService.getMessage("auth.password.reset.token.invalid"))
                 .thenReturn("Invalid token");

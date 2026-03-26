@@ -41,15 +41,7 @@ public class JpaUserRepository implements IUserRepository {
                     userRepository
                             .findById(domain.getId().toString())
                             .orElseGet(() -> userMapper.domainToEntity(domain));
-            entity.setEmail(domain.getEmail());
-            entity.setPassword(domain.getPassword());
-            entity.setFirstName(domain.getFirstName());
-            entity.setLastName(domain.getLastName());
-            entity.setDescription(domain.getDescription());
-            entity.setProfilePictureUrl(domain.getProfilePictureUrl());
-            entity.setLinkedinUrl(domain.getLinkedinUrl());
-            entity.setGithubUrl(domain.getGithubUrl());
-            entity.setIsActive(domain.isActive());
+            userMapper.applyDomainToEntity(domain, entity);
         } else {
             entity = userMapper.domainToEntity(domain);
         }

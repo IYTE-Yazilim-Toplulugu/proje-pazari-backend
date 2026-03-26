@@ -61,12 +61,4 @@ public class PasswordResetTokenEntity {
         }
         createdAt = LocalDateTime.now();
     }
-
-    public boolean isUsed() {
-        return usedAt != null;
-    }
-
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt);
-    }
 }

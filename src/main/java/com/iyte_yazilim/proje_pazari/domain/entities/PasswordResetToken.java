@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,5 +37,9 @@ public class PasswordResetToken {
 
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);
+    }
+
+    public boolean isExpired(Clock clock) {
+        return LocalDateTime.now(clock).isAfter(expiresAt);
     }
 }

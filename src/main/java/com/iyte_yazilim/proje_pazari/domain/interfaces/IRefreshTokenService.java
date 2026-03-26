@@ -19,4 +19,11 @@ public interface IRefreshTokenService {
      * @return Optional containing the owner userId if the token was valid, empty otherwise
      */
     Optional<String> validateAndRevoke(String token);
+
+    /**
+     * Revokes all refresh tokens for a user (e.g., on password reset).
+     *
+     * @param userId the user's ID
+     */
+    void revokeAllUserTokens(String userId);
 }

@@ -7,10 +7,11 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenE
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +28,9 @@ public class ResetPasswordHandler
     private final IUserRepository userRepository;
     private final IPasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RefreshTokenService refreshTokenService;
+    private final IRefreshTokenService refreshTokenService;
     private final MessageService messageService;
+    private final Clock clock;
 
     @Override
     @Transactional(timeoutString = "${spring.transaction.timeout:30}")
@@ -51,7 +53,7 @@ public class ResetPasswordHandler
         }
 
         // --- 3. Validate token not expired ---
-        if (resetToken.isExpired()) {
+        if (resetToken.isExpired(clock)) {
             throw new VerificationTokenExpiredException(
                     messageService.getMessage("auth.password.reset.token.expired"));
         }

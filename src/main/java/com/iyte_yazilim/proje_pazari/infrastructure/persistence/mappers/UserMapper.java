@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -28,4 +29,15 @@ public interface UserMapper {
     @Mapping(target = "active", source = "isActive")
     @Mapping(target = "roles", source = "roles")
     User entityToDomain(UserEntity userEntity);
+
+    // Update existing Persistence Entity from Domain Entity (for updates)
+    @Mapping(
+            target = "id",
+            expression = "java(user.getId() != null ? user.getId().toString() : null)")
+    @Mapping(target = "isActive", source = "active")
+    @Mapping(target = "roles", source = "roles")
+    @Mapping(target = "preferredLanguage", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    void applyDomainToEntity(User user, @MappingTarget UserEntity entity);
 }
