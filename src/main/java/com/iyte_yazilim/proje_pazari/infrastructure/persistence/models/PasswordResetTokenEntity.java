@@ -23,7 +23,9 @@ import lombok.Setter;
 @Entity
 @Table(
         name = "password_reset_tokens",
+        // idx_prt_user_id  → for deleteByUserId() cleanup queries
         indexes = @Index(name = "idx_prt_user_id", columnList = "userId"),
+        // uq_prt_token → implicit unique index on token for O(log n) findByToken() lookups
         uniqueConstraints = @UniqueConstraint(name = "uq_prt_token", columnNames = "token"))
 @Getter
 @Setter
@@ -38,7 +40,7 @@ public class PasswordResetTokenEntity {
     @Column(nullable = false)
     private String userId;
 
-    /** Stored for audit purposes; not used to look up the user after token creation. */
+    /** Required for audit/compliance. Not used for user lookup after token creation. */
     @Column(nullable = false)
     private String email;
 

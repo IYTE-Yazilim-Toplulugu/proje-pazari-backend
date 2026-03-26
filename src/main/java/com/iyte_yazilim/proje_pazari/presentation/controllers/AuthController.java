@@ -331,10 +331,40 @@ public class AuthController extends BaseController {
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
-                        description = "Reset email sent if account exists"),
+                        description = "Reset email sent if account exists",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "SUCCESS",
+                                            "message": "A password reset link has been sent to your email address",
+                                            "data": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "Invalid request — email field fails @Email validation")
+                        description = "Invalid request — email field fails @Email validation",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Invalid Email",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Invalid email format",
+                                            "data": null
+                                        }
+                                        """)))
             })
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
             @Valid @RequestBody ForgotPasswordCommand command) {
@@ -349,10 +379,40 @@ public class AuthController extends BaseController {
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
-                        description = "Password reset successfully"),
+                        description = "Password reset successfully",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "SUCCESS",
+                                            "message": "Your password has been reset successfully",
+                                            "data": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "Invalid or expired token, or weak password")
+                        description = "Invalid or expired token, or weak password",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Invalid Token",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Invalid or already used password reset link",
+                                            "data": null
+                                        }
+                                        """)))
             })
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody ResetPasswordCommand command) {
