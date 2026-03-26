@@ -195,7 +195,7 @@ public class ProjectController extends BaseController {
     }
 
     @PutMapping("/{projectId}")
-    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Update a project",
@@ -210,7 +210,7 @@ public class ProjectController extends BaseController {
     }
 
     @DeleteMapping("/{projectId}")
-    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Delete a project",
@@ -221,7 +221,7 @@ public class ProjectController extends BaseController {
     }
 
     @PatchMapping("/{projectId}/status")
-    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(
             summary = "Update project status",
