@@ -49,7 +49,13 @@ public class FileController extends BaseController {
                         responseCode = "404",
                         description = "File not found")
             })
-    public ResponseEntity<?> downloadFile(@PathVariable String path) {
+    public ResponseEntity<?> downloadFile(
+            @Parameter(
+                            description = "File path relative to storage root",
+                            required = true,
+                            example = "profile-pictures/avatar.png")
+                    @PathVariable
+                    String path) {
         ApiResponse<String> response = mediator.send(new DownloadFileQuery(path));
         HttpStatus status = resolveHttpStatus(response.getCode());
 

@@ -13,11 +13,16 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.Map;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -35,19 +40,80 @@ public class ProjectController extends BaseController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(summary = "Create a new project")
+    @Operation(
+            summary = "Create a new project",
+            description =
+                    "Creates a new project. The ownerId is resolved server-side from the"
+                            + " authenticated user's bearer token — do not include it in the"
+                            + " request body.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "201",
-                        description = "Project created successfully"),
+                        description = "Project created successfully",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                    {
+                        "code": "CREATED",
+                        "message": "Project created successfully",
+                        "data": {
+                            "projectId": "01HQXV5KXBW9FYMN8CJZSP2R4H",
+                            "projectName": "AI Chatbot Project",
+                            "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                            "ownerId": "01HQXV5KXBW9FYMN8CJZSP2R4G"
+                        }
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "Invalid request data"),
+                        description = "Invalid request data",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Validation Error",
+                                                        value =
+                                                                """
+                    {
+                        "code": "BAD_REQUEST",
+                        "message": "Project name is required",
+                        "data": null
+                    }
+                    """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
                         description = "Unauthorized")
             })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Project creation details",
+            required = true,
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CreateProjectCommand.class),
+                            examples =
+                                    @ExampleObject(
+                                            name = "Create Project Request",
+                                            value =
+                                                    """
+            {
+                "projectName": "AI Chatbot Project",
+                "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                "maxTeamSize": 5,
+                "requiredSkills": ["Python", "NLP", "Machine Learning", "FastAPI"],
+                "category": "Artificial Intelligence",
+                "deadline": "2026-06-15T23:59:59"
+            }
+            """)))
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
             @Valid @RequestBody CreateProjectCommand command, Authentication auth) {
         return send(CreateProjectCommand.class, null, null, command, auth);
@@ -81,7 +147,12 @@ public class ProjectController extends BaseController {
                         description = "Project not found")
             })
     public ResponseEntity<ApiResponse<ProjectDetailDto>> getProject(
-            @PathVariable String projectId) {
+            @Parameter(
+                            description = "Unique project ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4H")
+                    @PathVariable
+                    String projectId) {
         return send(new GetProjectQuery(projectId));
     }
 

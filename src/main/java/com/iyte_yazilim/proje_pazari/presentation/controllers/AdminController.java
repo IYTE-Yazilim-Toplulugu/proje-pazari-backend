@@ -74,6 +74,7 @@ import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -120,17 +121,31 @@ public class AdminController extends BaseController {
             summary = "List all users",
             description = "List all users with pagination and filters")
     public ResponseEntity<ApiResponse<PagedResponse<UserAdminDTO>>> listUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size,
-            @RequestParam(required = false) RoleType role,
-            @RequestParam(required = false) Boolean isActive,
-            @RequestParam(required = false) String search) {
+            @Parameter(description = "Page number (zero-based)", example = "0")
+                    @RequestParam(defaultValue = "0")
+                    int page,
+            @Parameter(description = "Page size", example = "50") @RequestParam(defaultValue = "50")
+                    int size,
+            @Parameter(description = "Filter by role type", example = "STUDENT")
+                    @RequestParam(required = false)
+                    RoleType role,
+            @Parameter(description = "Filter by active status") @RequestParam(required = false)
+                    Boolean isActive,
+            @Parameter(description = "Search by name or email", example = "john")
+                    @RequestParam(required = false)
+                    String search) {
         return send(new AdminListUsersQuery(page, size, role, isActive, search));
     }
 
     @GetMapping("/users/{userId}")
     @Operation(summary = "Get user details", description = "Get detailed user information by ID")
-    public ResponseEntity<ApiResponse<UserAdminDTO>> getUser(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<UserAdminDTO>> getUser(
+            @Parameter(
+                            description = "User ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4G")
+                    @PathVariable
+                    String userId) {
         return send(new AdminGetUserQuery(userId));
     }
 
@@ -138,7 +153,13 @@ public class AdminController extends BaseController {
     @Operation(summary = "Update user", description = "Update user role, status, or profile")
     @Audited(action = "ADMIN_UPDATE_USER", entityType = "USER")
     public ResponseEntity<ApiResponse<Void>> updateUser(
-            @PathVariable String userId, @Valid @RequestBody UpdateUserRequest request) {
+            @Parameter(
+                            description = "User ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4G")
+                    @PathVariable
+                    String userId,
+            @Valid @RequestBody UpdateUserRequest request) {
         return send(
                 new AdminUpdateUserCommand(
                         userId,
@@ -152,7 +173,13 @@ public class AdminController extends BaseController {
     @DeleteMapping("/users/{userId}")
     @Operation(summary = "Delete user", description = "Soft delete user account (deactivate)")
     @Audited(action = "ADMIN_DELETE_USER", entityType = "USER")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+            @Parameter(
+                            description = "User ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4G")
+                    @PathVariable
+                    String userId) {
         return send(new AdminDeleteUserCommand(userId));
     }
 
@@ -174,18 +201,33 @@ public class AdminController extends BaseController {
             summary = "List all projects",
             description = "List all projects with pagination and filters")
     public ResponseEntity<ApiResponse<PagedResponse<ProjectAdminDTO>>> listProjects(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size,
-            @RequestParam(required = false) ProjectStatus status,
-            @RequestParam(required = false) String ownerId,
-            @RequestParam(required = false) String search) {
+            @Parameter(description = "Page number (zero-based)", example = "0")
+                    @RequestParam(defaultValue = "0")
+                    int page,
+            @Parameter(description = "Page size", example = "50") @RequestParam(defaultValue = "50")
+                    int size,
+            @Parameter(description = "Filter by project status", example = "OPEN")
+                    @RequestParam(required = false)
+                    ProjectStatus status,
+            @Parameter(description = "Filter by owner ID", example = "01HQXV5KXBW9FYMN8CJZSP2R4G")
+                    @RequestParam(required = false)
+                    String ownerId,
+            @Parameter(description = "Search by project name", example = "chatbot")
+                    @RequestParam(required = false)
+                    String search) {
         return send(new AdminListProjectsQuery(page, size, status, ownerId, search));
     }
 
     @DeleteMapping("/projects/{projectId}")
     @Operation(summary = "Delete project", description = "Delete any project with cascade")
     @Audited(action = "ADMIN_DELETE_PROJECT", entityType = "PROJECT")
-    public ResponseEntity<ApiResponse<Void>> deleteProject(@PathVariable String projectId) {
+    public ResponseEntity<ApiResponse<Void>> deleteProject(
+            @Parameter(
+                            description = "Project ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4H")
+                    @PathVariable
+                    String projectId) {
         return send(new AdminDeleteProjectCommand(projectId));
     }
 
@@ -195,7 +237,15 @@ public class AdminController extends BaseController {
             description = "Toggle featured status on a project")
     @Audited(action = "ADMIN_FEATURE_PROJECT", entityType = "PROJECT")
     public ResponseEntity<ApiResponse<Void>> featureProject(
-            @PathVariable String projectId, @RequestParam(defaultValue = "true") boolean featured) {
+            @Parameter(
+                            description = "Project ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4H")
+                    @PathVariable
+                    String projectId,
+            @Parameter(description = "Whether to feature or unfeature the project")
+                    @RequestParam(defaultValue = "true")
+                    boolean featured) {
         return send(new AdminFeatureProjectCommand(projectId, featured));
     }
 
@@ -217,11 +267,22 @@ public class AdminController extends BaseController {
             summary = "List all applications",
             description = "List all applications with pagination and filters")
     public ResponseEntity<ApiResponse<PagedResponse<ApplicationAdminDTO>>> listApplications(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size,
-            @RequestParam(required = false) ApplicationStatus status,
-            @RequestParam(required = false) String projectId,
-            @RequestParam(required = false) String userId) {
+            @Parameter(description = "Page number (zero-based)", example = "0")
+                    @RequestParam(defaultValue = "0")
+                    int page,
+            @Parameter(description = "Page size", example = "50") @RequestParam(defaultValue = "50")
+                    int size,
+            @Parameter(description = "Filter by application status", example = "PENDING")
+                    @RequestParam(required = false)
+                    ApplicationStatus status,
+            @Parameter(description = "Filter by project ID", example = "01HQXV5KXBW9FYMN8CJZSP2R4H")
+                    @RequestParam(required = false)
+                    String projectId,
+            @Parameter(
+                            description = "Filter by applicant user ID",
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4G")
+                    @RequestParam(required = false)
+                    String userId) {
         return send(new AdminListApplicationsQuery(page, size, status, projectId, userId));
     }
 
@@ -231,7 +292,12 @@ public class AdminController extends BaseController {
             description = "Admin review of any application (approve/reject)")
     @Audited(action = "ADMIN_REVIEW_APPLICATION", entityType = "APPLICATION")
     public ResponseEntity<ApiResponse<Void>> reviewApplication(
-            @PathVariable String applicationId,
+            @Parameter(
+                            description = "Application ID",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R5A")
+                    @PathVariable
+                    String applicationId,
             @Valid @RequestBody ReviewApplicationRequest request) {
         return send(new AdminReviewApplicationCommand(applicationId, request.status()));
     }
@@ -282,7 +348,9 @@ public class AdminController extends BaseController {
             description =
                     "Get time-series trend data for user growth, project creation, and application activity")
     public ResponseEntity<ApiResponse<AnalyticsTrendsDTO>> getAnalyticsTrends(
-            @RequestParam(defaultValue = "30") int days) {
+            @Parameter(description = "Number of days to look back", example = "30")
+                    @RequestParam(defaultValue = "30")
+                    int days) {
         return send(new GetAnalyticsTrendsQuery(days));
     }
 
@@ -291,12 +359,22 @@ public class AdminController extends BaseController {
     @GetMapping("/audit-logs")
     @Operation(summary = "Query audit logs", description = "Query audit logs with filters")
     public ResponseEntity<ApiResponse<PagedResponse<AuditLogDTO>>> getAuditLogs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size,
-            @RequestParam(required = false) String action,
-            @RequestParam(required = false) String performedBy,
-            @RequestParam(required = false) String entityType,
-            @RequestParam(required = false) String entityId) {
+            @Parameter(description = "Page number (zero-based)", example = "0")
+                    @RequestParam(defaultValue = "0")
+                    int page,
+            @Parameter(description = "Page size", example = "50") @RequestParam(defaultValue = "50")
+                    int size,
+            @Parameter(description = "Filter by action type", example = "ADMIN_UPDATE_USER")
+                    @RequestParam(required = false)
+                    String action,
+            @Parameter(description = "Filter by user who performed the action")
+                    @RequestParam(required = false)
+                    String performedBy,
+            @Parameter(description = "Filter by entity type", example = "USER")
+                    @RequestParam(required = false)
+                    String entityType,
+            @Parameter(description = "Filter by entity ID") @RequestParam(required = false)
+                    String entityId) {
         return send(new GetAuditLogsQuery(page, size, action, performedBy, entityType, entityId));
     }
 
@@ -308,8 +386,15 @@ public class AdminController extends BaseController {
             description = "Flag inappropriate content (USER, PROJECT, APPLICATION)")
     @Audited(action = "FLAG_CONTENT", entityType = "CONTENT")
     public ResponseEntity<ApiResponse<Void>> flagContent(
-            @PathVariable String type,
-            @PathVariable String id,
+            @Parameter(description = "Content type to flag", required = true, example = "PROJECT")
+                    @PathVariable
+                    String type,
+            @Parameter(
+                            description = "Content ID to flag",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4H")
+                    @PathVariable
+                    String id,
             @Valid @RequestBody FlagContentRequest request) {
         return send(new FlagContentCommand(type, id, request.reason()));
     }
@@ -319,10 +404,17 @@ public class AdminController extends BaseController {
             summary = "List flagged content",
             description = "List all flagged content with filters")
     public ResponseEntity<ApiResponse<PagedResponse<FlaggedContentDTO>>> getFlaggedContent(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String contentType) {
+            @Parameter(description = "Page number (zero-based)", example = "0")
+                    @RequestParam(defaultValue = "0")
+                    int page,
+            @Parameter(description = "Page size", example = "50") @RequestParam(defaultValue = "50")
+                    int size,
+            @Parameter(description = "Filter by flag status", example = "PENDING")
+                    @RequestParam(required = false)
+                    String status,
+            @Parameter(description = "Filter by content type", example = "PROJECT")
+                    @RequestParam(required = false)
+                    String contentType) {
         return send(new GetFlaggedContentQuery(page, size, status, contentType));
     }
 
@@ -332,7 +424,13 @@ public class AdminController extends BaseController {
             description = "Review flagged content (APPROVE, REMOVE, BAN_USER)")
     @Audited(action = "REVIEW_FLAGGED_CONTENT", entityType = "CONTENT")
     public ResponseEntity<ApiResponse<Void>> reviewFlaggedContent(
-            @PathVariable String flagId, @Valid @RequestBody ReviewFlaggedContentRequest request) {
+            @Parameter(
+                            description = "Flag ID to review",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R5B")
+                    @PathVariable
+                    String flagId,
+            @Valid @RequestBody ReviewFlaggedContentRequest request) {
         return send(
                 new ReviewFlaggedContentCommand(flagId, request.action(), request.reviewNote()));
     }
@@ -454,7 +552,13 @@ public class AdminController extends BaseController {
             description = "Create or update a feature flag by key")
     @Audited(action = "UPDATE_FEATURE_FLAG", entityType = "FEATURE_FLAG")
     public ResponseEntity<ApiResponse<Void>> updateFeatureFlag(
-            @PathVariable String key, @Valid @RequestBody UpdateFeatureFlagRequest request) {
+            @Parameter(
+                            description = "Feature flag key",
+                            required = true,
+                            example = "ENABLE_NOTIFICATIONS")
+                    @PathVariable
+                    String key,
+            @Valid @RequestBody UpdateFeatureFlagRequest request) {
         return send(new UpdateFeatureFlagCommand(key, request.enabled(), request.description()));
     }
 
@@ -493,7 +597,13 @@ public class AdminController extends BaseController {
             summary = "Invalidate user sessions",
             description = "Revoke all sessions for a specific user")
     @Audited(action = "INVALIDATE_USER_SESSIONS", entityType = "SESSION")
-    public ResponseEntity<ApiResponse<Void>> invalidateUserSessions(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<Void>> invalidateUserSessions(
+            @Parameter(
+                            description = "User ID whose sessions to invalidate",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R4G")
+                    @PathVariable
+                    String userId) {
         return send(new InvalidateUserSessionsCommand(userId));
     }
 
@@ -520,7 +630,13 @@ public class AdminController extends BaseController {
     @DeleteMapping("/ip-bans/{ip}")
     @Operation(summary = "Unban IP address", description = "Remove an IP address from the ban list")
     @Audited(action = "UNBAN_IP", entityType = "IP_BAN")
-    public ResponseEntity<ApiResponse<Void>> unbanIp(@PathVariable String ip) {
+    public ResponseEntity<ApiResponse<Void>> unbanIp(
+            @Parameter(
+                            description = "IP address to unban",
+                            required = true,
+                            example = "192.168.1.100")
+                    @PathVariable
+                    String ip) {
         return send(new UnbanIpCommand(ip));
     }
 
@@ -587,7 +703,13 @@ public class AdminController extends BaseController {
             summary = "Cancel scheduled email",
             description = "Cancel a pending scheduled email broadcast")
     @Audited(action = "CANCEL_SCHEDULED_EMAIL", entityType = "EMAIL")
-    public ResponseEntity<ApiResponse<Void>> cancelScheduledEmail(@PathVariable String id) {
+    public ResponseEntity<ApiResponse<Void>> cancelScheduledEmail(
+            @Parameter(
+                            description = "Scheduled email ID to cancel",
+                            required = true,
+                            example = "01HQXV5KXBW9FYMN8CJZSP2R5C")
+                    @PathVariable
+                    String id) {
         return send(new CancelScheduledEmailCommand(id));
     }
 
