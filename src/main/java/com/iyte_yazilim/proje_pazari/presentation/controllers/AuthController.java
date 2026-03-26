@@ -310,7 +310,10 @@ public class AuthController extends BaseController {
                         description = "Invalid or expired refresh token")
             })
     public ResponseEntity<ApiResponse<RefreshTokenResult>> refreshToken(
-            @Parameter(description = "Refresh token obtained during login", required = true)
+            @Parameter(
+                            description = "Refresh token obtained during login",
+                            required = true,
+                            example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
                     @RequestParam
                     String refreshToken) {
         return send(new RefreshTokenCommand(refreshToken));
