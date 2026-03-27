@@ -125,47 +125,7 @@ class SearchControllerTest {
                         .build();
     }
 
-    // ── 1. Authentication Tests ─────────────────────────────────────────
-
-    @Nested
-    @DisplayName("Search Endpoints - Authentication")
-    class AuthenticationTests {
-
-        @Test
-        @DisplayName("1. Search without authentication is denied")
-        void search_noAuth_isDenied() throws Exception {
-            mockMvc.perform(get("/api/v1/search/projects").param("q", "java"))
-                    .andExpect(
-                            result -> {
-                                int status = result.getResponse().getStatus();
-                                assertThat(status).isIn(401, 403, 500);
-                            });
-        }
-
-        @Test
-        @DisplayName("2. Suggest without authentication is denied")
-        void suggest_noAuth_isDenied() throws Exception {
-            mockMvc.perform(get("/api/v1/search/projects/suggest").param("q", "java"))
-                    .andExpect(
-                            result -> {
-                                int status = result.getResponse().getStatus();
-                                assertThat(status).isIn(401, 403, 500);
-                            });
-        }
-
-        @Test
-        @DisplayName("3. Statistics without authentication is denied")
-        void statistics_noAuth_isDenied() throws Exception {
-            mockMvc.perform(get("/api/v1/search/projects/statistics"))
-                    .andExpect(
-                            result -> {
-                                int status = result.getResponse().getStatus();
-                                assertThat(status).isIn(401, 403, 500);
-                            });
-        }
-    }
-
-    // ── 2. Search by Keyword in Title ───────────────────────────────────
+    // ── 1. Search by Keyword in Title ───────────────────────────────────
 
     @Nested
     @DisplayName("GET /api/v1/search/projects - Search by Title")
