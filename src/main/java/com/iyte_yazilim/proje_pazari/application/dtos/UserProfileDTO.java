@@ -18,4 +18,5 @@ public record UserProfileDTO(
         @Schema(description = "Account creation timestamp") LocalDateTime joinedAt,
         @Schema(description = "Number of projects created by user") int projectsCreated,
         @Schema(description = "Number of applications submitted by user") int applicationsSubmitted,
-        @Schema(description = "List of user's projects") List<ProjectSummaryDTO> projects) {}
+        @Schema(description = "List of user's projects") List<ProjectSummaryDTO> projects,
+        @Schema(description = "User role", example = "USER") String role) {}
