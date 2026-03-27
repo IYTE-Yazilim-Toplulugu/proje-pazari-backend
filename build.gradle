@@ -218,11 +218,6 @@ jacocoTestCoverageVerification {
                 '*.presentation.controllers.AdminController*',
                 '*.presentation.controllers.ElasticsearchAdminController',
                 '*.presentation.controllers.BaseController',
-                // New queries/commands from merge
-                '*.queries.getAllProjects.*',
-                '*.queries.getProjectById.*',
-                '*.commands.uploadFile.*',
-                '*.commands.refreshToken.*',
                 // Interfaces with default methods only
                 '*.domain.interfaces.*'
             ]
@@ -290,11 +285,6 @@ jacocoTestCoverageVerification {
                 '*.presentation.controllers.AdminController*',
                 '*.presentation.controllers.ElasticsearchAdminController',
                 '*.presentation.controllers.BaseController',
-                // New queries/commands from merge
-                '*.queries.getAllProjects.*',
-                '*.queries.getProjectById.*',
-                '*.commands.uploadFile.*',
-                '*.commands.refreshToken.*',
                 // Interfaces with default methods only
                 '*.domain.interfaces.*'
             ]
