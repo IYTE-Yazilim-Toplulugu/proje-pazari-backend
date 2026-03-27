@@ -3,6 +3,7 @@
 HELP.md
 .gradle
 build/
+*.log
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
@@ -39,3 +40,10 @@ out/
 .vscode/
 
 .env
+
+### Local dev overrides ###
+docker-compose.dev.yml
+docker-compose.override.yml
+
+# Database backup dumps
+backups/

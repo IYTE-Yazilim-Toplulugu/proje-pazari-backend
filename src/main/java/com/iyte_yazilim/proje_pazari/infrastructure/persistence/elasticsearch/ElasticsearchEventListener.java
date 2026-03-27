@@ -7,6 +7,7 @@ import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.UserDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,6 +26,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class ElasticsearchEventListener {
 
     private final ElasticsearchSyncService syncService;
+    private final BusinessMetricsService metricsService;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
@@ -32,7 +34,9 @@ public class ElasticsearchEventListener {
         try {
             log.debug("Indexing newly created project: {}", event.projectId());
             syncService.indexProject(event.projectId());
+            metricsService.incrementEsIndexSuccess();
         } catch (Exception e) {
+            metricsService.incrementEsIndexFailure();
             log.error(
                     "Failed to index newly created project {}: {}",
                     event.projectId(),
@@ -47,7 +51,9 @@ public class ElasticsearchEventListener {
         try {
             log.debug("Re-indexing updated project: {}", event.projectId());
             syncService.indexProject(event.projectId());
+            metricsService.incrementEsIndexSuccess();
         } catch (Exception e) {
+            metricsService.incrementEsIndexFailure();
             log.error(
                     "Failed to re-index updated project {}: {}",
                     event.projectId(),
@@ -62,7 +68,9 @@ public class ElasticsearchEventListener {
         try {
             log.debug("Re-indexing updated user: {}", event.userId());
             syncService.indexUser(event.userId());
+            metricsService.incrementEsIndexSuccess();
         } catch (Exception e) {
+            metricsService.incrementEsIndexFailure();
             log.error("Failed to re-index updated user {}: {}", event.userId(), e.getMessage(), e);
         }
     }
@@ -73,7 +81,9 @@ public class ElasticsearchEventListener {
         try {
             log.debug("Indexing newly registered user: {}", event.getUserId());
             syncService.indexUser(event.getUserId().toString());
+            metricsService.incrementEsIndexSuccess();
         } catch (Exception e) {
+            metricsService.incrementEsIndexFailure();
             log.error(
                     "Failed to index newly registered user {}: {}",
                     event.getUserId(),
@@ -88,7 +98,9 @@ public class ElasticsearchEventListener {
         try {
             log.debug("Removing deleted project from index: {}", event.projectId());
             syncService.deleteProjectIndex(event.projectId());
+            metricsService.incrementEsDeleteSuccess();
         } catch (Exception e) {
+            metricsService.incrementEsDeleteFailure();
             log.error(
                     "Failed to remove project {} from index: {}",
                     event.projectId(),

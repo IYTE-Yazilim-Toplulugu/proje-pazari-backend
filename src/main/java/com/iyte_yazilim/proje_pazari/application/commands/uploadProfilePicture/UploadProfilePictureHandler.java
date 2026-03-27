@@ -9,6 +9,7 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -84,7 +85,7 @@ public class UploadProfilePictureHandler
         // Handle presigned URL format and keep bucket + object path.
         // Example: http://minio:9000/bucket-name/users/user-1/avatar.jpg?...
         try {
-            java.net.URI uri = java.net.URI.create(url.split("\\?")[0]);
+            URI uri = URI.create(url.split("\\?")[0]);
             String path = uri.getPath();
             if (path != null && path.length() > 1) {
                 return path.substring(1); // Remove leading slash only

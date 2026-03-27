@@ -14,8 +14,21 @@ import org.springframework.data.repository.query.Param;
 public interface ProjectApplicationRepository
         extends JpaRepository<ProjectApplicationEntity, String> {
 
-    @Query("SELECT pa FROM ProjectApplicationEntity pa WHERE pa.project.id = :projectId")
+    @Query(
+            "SELECT pa FROM ProjectApplicationEntity pa "
+                    + "JOIN FETCH pa.project "
+                    + "JOIN FETCH pa.user "
+                    + "WHERE pa.project.id = :projectId")
     List<ProjectApplicationEntity> findByProjectId(@Param("projectId") String projectId);
+
+    @Query(
+            "SELECT pa FROM ProjectApplicationEntity pa "
+                    + "JOIN FETCH pa.project "
+                    + "JOIN FETCH pa.user "
+                    + "WHERE pa.project.id = :projectId "
+                    + "AND (:status IS NULL OR pa.status = :status)")
+    List<ProjectApplicationEntity> findByProjectIdWithOptionalStatus(
+            @Param("projectId") String projectId, @Param("status") ApplicationStatus status);
 
     @Query("SELECT pa FROM ProjectApplicationEntity pa WHERE pa.user.id = :userId")
     List<ProjectApplicationEntity> findByUserId(@Param("userId") String userId);
@@ -32,10 +45,18 @@ public interface ProjectApplicationRepository
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     @Query(
-            "SELECT pa FROM ProjectApplicationEntity pa WHERE "
-                    + "(:status IS NULL OR pa.status = :status) AND "
-                    + "(:projectId IS NULL OR pa.project.id = :projectId) AND "
-                    + "(:userId IS NULL OR pa.user.id = :userId)")
+            value =
+                    "SELECT pa FROM ProjectApplicationEntity pa "
+                            + "JOIN FETCH pa.project "
+                            + "JOIN FETCH pa.user "
+                            + "WHERE (:status IS NULL OR pa.status = :status) AND "
+                            + "(:projectId IS NULL OR pa.project.id = :projectId) AND "
+                            + "(:userId IS NULL OR pa.user.id = :userId)",
+            countQuery =
+                    "SELECT COUNT(pa) FROM ProjectApplicationEntity pa "
+                            + "WHERE (:status IS NULL OR pa.status = :status) AND "
+                            + "(:projectId IS NULL OR pa.project.id = :projectId) AND "
+                            + "(:userId IS NULL OR pa.user.id = :userId)")
     Page<ProjectApplicationEntity> findWithFilters(
             @Param("status") ApplicationStatus status,
             @Param("projectId") String projectId,
