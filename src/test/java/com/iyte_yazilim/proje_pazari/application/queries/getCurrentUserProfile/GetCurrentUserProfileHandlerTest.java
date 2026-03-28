@@ -48,7 +48,8 @@ class GetCurrentUserProfileHandlerTest {
                         LocalDateTime.now(),
                         0,
                         0,
-                        Collections.emptyList());
+                        Collections.emptyList(),
+                        "USER");
 
         ApiResponse<UserProfileDTO> expectedResponse =
                 ApiResponse.success(expectedProfile, "User profile retrieved successfully");

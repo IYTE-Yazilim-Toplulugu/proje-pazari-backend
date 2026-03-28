@@ -43,6 +43,7 @@ class GetProjectQueryHandlerTest {
         ProjectDetailDto dto =
                 new ProjectDetailDto(
                         projectId,
+                        null,
                         "Owner",
                         "owner@test.com",
                         "Title",
