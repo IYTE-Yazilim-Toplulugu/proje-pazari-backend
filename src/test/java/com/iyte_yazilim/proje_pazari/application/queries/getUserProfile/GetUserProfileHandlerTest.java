@@ -93,6 +93,7 @@ class GetUserProfileHandlerTest {
         assertEquals(2, response.getData().applicationsSubmitted());
         assertEquals(1, response.getData().projects().size());
         assertEquals("Test Project", response.getData().projects().get(0).title());
+        assertEquals("USER", response.getData().role());
     }
 
     @Test
