@@ -1,28 +1,35 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import com.iyte_yazilim.proje_pazari.application.commands.forgotPassword.ForgotPasswordCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutRequest;
+import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.refreshToken.RefreshTokenResult;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.resetPassword.ResetPasswordCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.verifyEmail.VerifyEmailCommand;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
-import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -76,22 +83,13 @@ public class AuthController extends BaseController {
             verifyEmailHandler;
     private final IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
             resendVerificationEmailHandler;
-    private final RefreshTokenService refreshTokenService;
-    private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
     public AuthController(
             IRequestHandler<VerifyEmailCommand, ApiResponse<VerifyEmailResult>> verifyEmailHandler,
             IRequestHandler<ResendVerificationEmailCommand, ApiResponse<Void>>
-                    resendVerificationEmailHandler,
-            RefreshTokenService refreshTokenService,
-            JwtUtil jwtUtil,
-            UserRepository userRepository) {
+                    resendVerificationEmailHandler) {
         this.verifyEmailHandler = verifyEmailHandler;
         this.resendVerificationEmailHandler = resendVerificationEmailHandler;
-        this.refreshTokenService = refreshTokenService;
-        this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
@@ -165,7 +163,7 @@ public class AuthController extends BaseController {
                         }
                         """)))
     public ResponseEntity<ApiResponse<RegisterUserResult>> register(
-            @RequestBody RegisterUserCommand command) {
+            @Valid @RequestBody RegisterUserCommand command) {
         return send(command);
     }
 
@@ -237,7 +235,7 @@ public class AuthController extends BaseController {
                         }
                         """)))
     public ResponseEntity<ApiResponse<LoginUserResult>> login(
-            @RequestBody LoginUserCommand command) {
+            @Valid @RequestBody LoginUserCommand command) {
         return send(command);
     }
 
@@ -254,7 +252,10 @@ public class AuthController extends BaseController {
                         responseCode = "400",
                         description = "Invalid or expired token")
             })
-    public ResponseEntity<ApiResponse<VerifyEmailResult>> verifyEmail(@RequestParam String token) {
+    public ResponseEntity<ApiResponse<VerifyEmailResult>> verifyEmail(
+            @Parameter(description = "Email verification token received via email", required = true)
+                    @RequestParam
+                    String token) {
         VerifyEmailCommand command = new VerifyEmailCommand(token);
         ApiResponse<VerifyEmailResult> response = verifyEmailHandler.handle(command);
 
@@ -299,7 +300,8 @@ public class AuthController extends BaseController {
     @Operation(
             summary = "Refresh access token",
             description =
-                    "Exchanges a valid refresh token for a new access token and refresh token")
+                    "Issues a new access token using a valid refresh token. "
+                            + "Use this when the current access token has expired.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -309,35 +311,142 @@ public class AuthController extends BaseController {
                         responseCode = "400",
                         description = "Invalid or expired refresh token")
             })
-    public ResponseEntity<ApiResponse<LoginUserResult>> refreshToken(
-            @RequestParam String refreshToken) {
-        var userIdOpt = refreshTokenService.validateRefreshToken(refreshToken);
-        if (userIdOpt.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.badRequest("Invalid or expired refresh token"));
-        }
+    public ResponseEntity<ApiResponse<RefreshTokenResult>> refreshToken(
+            @Parameter(
+                            description = "Refresh token obtained during login",
+                            required = true,
+                            example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+                    @RequestParam
+                    String refreshToken) {
+        return send(new RefreshTokenCommand(refreshToken));
+    }
 
-        String userId = userIdOpt.get();
-        UserEntity user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.badRequest().body(ApiResponse.badRequest("User not found"));
-        }
+    @PostMapping("/forgot-password")
+    @Operation(
+            summary = "Request password reset",
+            description =
+                    "Sends a password reset link to the provided email address. "
+                            + "Always returns success to prevent user enumeration.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Reset email sent if account exists",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "SUCCESS",
+                                            "message": "A password reset link has been sent to your email address",
+                                            "data": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid request — email field fails @Email validation",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Invalid Email",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Invalid email format",
+                                            "data": null
+                                        }
+                                        """)))
+            })
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordCommand command) {
+        return send(command);
+    }
 
-        refreshTokenService.revokeRefreshToken(refreshToken);
-        String newRefreshToken = refreshTokenService.createRefreshToken(userId);
-        String role = user.getRole() != null ? user.getRole().toString() : "APPLICANT";
-        String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
+    @PostMapping("/reset-password")
+    @Operation(
+            summary = "Reset password using token",
+            description = "Resets the user's password using the token received by email.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Password reset successfully",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "SUCCESS",
+                                            "message": "Your password has been reset successfully",
+                                            "data": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid or expired token, or weak password",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Invalid Token",
+                                                        value =
+                                                                """
+                                        {
+                                            "code": "BAD_REQUEST",
+                                            "message": "Invalid or already used password reset link",
+                                            "data": null
+                                        }
+                                        """)))
+            })
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordCommand command) {
+        return send(command);
+    }
 
-        var result =
-                new LoginUserResult(
-                        user.getId(),
-                        user.getEmail(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        role,
-                        newAccessToken,
-                        newRefreshToken,
-                        null);
-        return ResponseEntity.ok(ApiResponse.success(result, "Token refreshed successfully"));
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Logout user",
+            description =
+                    "Revokes the refresh token and blacklists the access token. "
+                            + "The refresh token is supplied in the request body. "
+                            + "The access token is read from the Authorization header and blacklisted in Redis until it expires naturally.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Logout successful"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Refresh token missing, invalid, or does not belong to user")
+            })
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @Valid @RequestBody LogoutRequest body,
+            Authentication auth,
+            HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        String accessToken =
+                (authHeader != null && authHeader.startsWith("Bearer "))
+                        ? authHeader.substring(7)
+                        : null;
+        String userId = getCurrentUserId(auth);
+        return send(new LogoutCommand(accessToken, body.refreshToken(), userId));
     }
 }

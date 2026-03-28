@@ -1,12 +1,15 @@
 package com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture;
 
+import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -18,11 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class UploadProfilePictureHandler
         implements IRequestHandler<UploadProfilePictureCommand, ApiResponse<String>> {
 
-    private static final String PROFILES_FOLDER = "profiles";
-
     private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
-    private final MessageService messageService; // EKLENMELI
+    private final MessageService messageService;
 
     @Override
     @Transactional(
@@ -31,43 +32,38 @@ public class UploadProfilePictureHandler
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
     public ApiResponse<String> handle(UploadProfilePictureCommand command) {
-        UserEntity user = userRepository.findById(command.userId()).orElse(null);
+        UserEntity user =
+                userRepository
+                        .findById(command.userId())
+                        .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
-        if (user == null) {
-            return ApiResponse.notFound(messageService.getMessage("user.not.found"));
+        if (command.file() == null || command.file().isEmpty()) {
+            throw new ValidationException("File is required");
         }
 
-        try {
-            // Delete old profile picture if exists
-            String oldUrl = user.getProfilePictureUrl();
-            if (oldUrl != null && !oldUrl.isBlank()) {
-                String oldPath = extractPathFromUrl(oldUrl);
-                if (oldPath != null) {
-                    try {
-                        fileStorageService.deleteFile(oldPath);
-                    } catch (FileStorageException e) {
-                        // Ignore if old file doesn't exist
-                    }
+        // Delete old profile picture if exists
+        String oldUrl = user.getProfilePictureUrl();
+        if (oldUrl != null && !oldUrl.isBlank()) {
+            String oldPath = extractPathFromUrl(oldUrl);
+            if (oldPath != null) {
+                try {
+                    fileStorageService.deleteFile(oldPath);
+                } catch (FileStorageException e) {
+                    // Ignore if old file doesn't exist
                 }
             }
-
-            // Store new file in profiles folder - returns presigned URL for MinIO
-            String storedUrl = fileStorageService.storeFile(command.file(), PROFILES_FOLDER);
-
-            // Update user profile picture URL
-            user.setProfilePictureUrl(storedUrl);
-            userRepository.save(user);
-
-            return ApiResponse.success(
-                    user.getProfilePictureUrl(),
-                    messageService.getMessage("user.profile.picture.uploaded"));
-
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.validationError(e.getMessage());
-        } catch (FileStorageException e) {
-            return ApiResponse.error(
-                    messageService.getMessage("file.upload.failed", new Object[] {e.getMessage()}));
         }
+
+        // Store avatar using organized bucket structure.
+        String storedUrl = fileStorageService.storeUserAvatar(command.userId(), command.file());
+
+        // Update user profile picture URL
+        user.setProfilePictureUrl(storedUrl);
+        userRepository.save(user);
+
+        return ApiResponse.success(
+                user.getProfilePictureUrl(),
+                messageService.getMessage("user.profile.picture.uploaded"));
     }
 
     private String extractPathFromUrl(String url) {
@@ -86,18 +82,13 @@ public class UploadProfilePictureHandler
             return url;
         }
 
-        // Handle presigned URL format: extract bucket-relative path from URL
-        // Example: http://minio:9000/bucket/profiles/filename.jpg?...
-        // Extract everything after the bucket name (third path segment in URL)
+        // Handle presigned URL format and keep bucket + object path.
+        // Example: http://minio:9000/bucket-name/users/user-1/avatar.jpg?...
         try {
-            java.net.URI uri = java.net.URI.create(url.split("\\?")[0]);
+            URI uri = URI.create(url.split("\\?")[0]);
             String path = uri.getPath();
             if (path != null && path.length() > 1) {
-                // Remove leading slash and bucket name (first segment)
-                String[] segments = path.substring(1).split("/", 2);
-                if (segments.length > 1) {
-                    return segments[1]; // Return path after bucket name
-                }
+                return path.substring(1); // Remove leading slash only
             }
         } catch (IllegalArgumentException e) {
             // Fall back to original behavior if URL parsing fails

@@ -18,7 +18,7 @@ public class ApplicationReviewedEventHandler implements IEventHandler<Applicatio
 
     private final EmailService emailService;
 
-    @Value("${app.mail.base-url:http://localhost:3000}")
+    @Value("${app.frontend.url:http://localhost:3000}")
     private String baseUrl;
 
     @Override

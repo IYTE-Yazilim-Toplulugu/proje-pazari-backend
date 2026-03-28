@@ -158,7 +158,7 @@ groups:
           summary: "Slow API response time (p95 > 2 s)"
           description: >
             The 95th-percentile API response time is
-            {{ printf "%.2f" (index .Values 0) }}s (threshold 2 s)
+            {{ printf "%.2f" $value }}s (threshold 2 s)
             over the last 5 minutes.
 
       - alert: CriticalApiResponseTime
@@ -191,7 +191,7 @@ groups:
           summary: "Slow endpoint: {{ $labels.method }} {{ $labels.uri }}"
           description: >
             p95 response time for {{ $labels.method }} {{ $labels.uri }} is
-            {{ printf "%.2f" (index .Values 0) }}s (threshold 2 s).
+            {{ printf "%.2f" $value }}s (threshold 2 s).
 
   - name: service_availability_alerts
     rules:
@@ -294,5 +294,19 @@ groups:
         annotations:
           summary: "Slow MinIO uploads (p95 > 10 s)"
           description: >
-            MinIO upload p95 latency is {{ printf "%.1f" (index .Values 0) }}s
+            MinIO upload p95 latency is {{ printf "%.1f" $value }}s
             (threshold 10 s). Possible storage or network bottleneck.
+
+  - name: elasticsearch_alerts
+    rules:
+
+      - alert: ElasticsearchSyncFailing
+        expr: increase(elasticsearch_sync_total{status="failure"}[10m]) > 3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elasticsearch sync is failing"
+          description: >
+            More than 3 Elasticsearch index/delete sync failures in the last 10 minutes
+            on {{ $labels.instance }}. Projects may be out of sync with the search index.

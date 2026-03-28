@@ -5,6 +5,7 @@ A Spring Boot backend application for IYTE Project Marketplace, where students c
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
+[![CI](https://github.com/IYTE-Yazilim-Toplulugu/proje-pazari-backend/actions/workflows/dev-ci-cd.yml/badge.svg)](https://github.com/IYTE-Yazilim-Toplulugu/proje-pazari-backend/actions/workflows/dev-ci-cd.yml)
 
 ## 📋 Table of Contents
 
@@ -87,9 +88,9 @@ This will start:
 - Redis on port 6379
 - MinIO API on port 9002 / Console on port 9003
 - Elasticsearch on port 9200
-- Prometheus on port 9090
-- Grafana on port 3030
-- PgAdmin on port 5050 (use `--profile tools` flag)
+- Application API on port 8080
+- Prometheus on port 9090, Grafana on port 3030, Alertmanager on port 9093 (use `--profile monitoring` flag)
+- pgAdmin on port 5050 (use `--profile tools` flag)
 
 ### 4. Run the Application
 
@@ -115,22 +116,55 @@ The application uses MinIO for file storage (profile pictures, project attachmen
 - MinIO API: http://localhost:9002
 - MinIO Console: http://localhost:9003
 - Default credentials: `minioadmin` / `minioadmin123`
+- Credentials can be overridden with:
+  - `MINIO_ADMIN_USER`
+  - `MINIO_ADMIN_PASSWORD`
+
+**Auto-created Buckets (via `minio-setup`):**
+- `proje-pazari-files`
+- `proje-pazari-avatars`
+- `proje-pazari-documents`
+- `proje-pazari-backups`
+
+**Default Bucket Policies:**
+- `proje-pazari-avatars`: public read (anonymous download enabled)
+- `proje-pazari-documents`: private
+- `proje-pazari-files`: private
+- `proje-pazari-backups`: private
 
 **Storage Configuration:**
 ```properties
-# In application-dev.properties (default)
+# In application.properties
 storage.provider=minio
 minio.url=http://localhost:9002
 minio.bucket-name=proje-pazari-files
+minio.avatars-bucket=proje-pazari-avatars
+minio.documents-bucket=proje-pazari-documents
+minio.backups-bucket=proje-pazari-backups
+```
+
+**Object Organization:**
+```text
+proje-pazari-avatars/users/{userId}/avatar.{ext}
+proje-pazari-documents/projects/{projectId}/{documentId}.{ext}
+proje-pazari-files/users/{userId}/profile/*
+proje-pazari-files/projects/{projectId}/attachments/*
+proje-pazari-files/temp/uploads/*
 ```
 
 **Production:**
 Set environment variables for your S3-compatible storage:
 ```bash
 MINIO_URL=https://your-storage-endpoint
-MINIO_ACCESS_KEY=your-access-key
-MINIO_SECRET_KEY=your-secret-key
-MINIO_BUCKET=your-bucket-name
+MINIO_ADMIN_USER=your-admin-user
+MINIO_ADMIN_PASSWORD=your-admin-password
+MINIO_APP_ACCESS_KEY=your-app-access-key
+MINIO_APP_SECRET_KEY=your-app-secret-key
+MINIO_CREATE_BACKEND_USER=true
+MINIO_FILES_BUCKET=proje-pazari-files
+MINIO_AVATARS_BUCKET=proje-pazari-avatars
+MINIO_DOCUMENTS_BUCKET=proje-pazari-documents
+MINIO_BACKUPS_BUCKET=proje-pazari-backups
 SPRING_PROFILES_ACTIVE=prod
 ```
 
@@ -143,6 +177,61 @@ chmod +x mc && sudo mv mc /usr/local/bin/
 
 # Run migration
 ./scripts/migrate-to-minio.sh
+```
+
+**Common MinIO `mc` Operations:**
+```bash
+# List buckets
+mc ls myminio
+
+# List files in files bucket
+mc ls myminio/proje-pazari-files
+
+# Upload a file
+mc cp ./myfile.pdf myminio/proje-pazari-files/projects/proj-123/
+
+# Download a file
+mc cp myminio/proje-pazari-files/projects/proj-123/myfile.pdf ./
+
+# Bucket usage
+mc du myminio/proje-pazari-files
+```
+
+For full storage architecture, policies, backup, retention, and troubleshooting, see `STORAGE.md`.
+
+**Monitoring Profile (Prometheus + Grafana):**
+```bash
+docker compose --profile monitoring up -d prometheus alertmanager grafana
+```
+
+- Prometheus UI: http://localhost:9090
+- Alertmanager UI: http://localhost:9093
+- Grafana UI: http://localhost:3030 (default `admin` / `admin`)
+
+**Automated MinIO Backups (Daily by default):**
+```bash
+docker compose --profile maintenance up -d minio-backup-scheduler
+```
+
+- Uses `BACKUP_INTERVAL_SECONDS` (default `86400`)
+- Writes timestamped backups under `./backups/minio/`
+
+**pgAdmin — Database Management UI:**
+```bash
+docker compose --profile tools up -d pgadmin
+```
+
+- pgAdmin UI: http://localhost:5050
+- Email: `admin@proje-pazari.com` (override: `PGADMIN_DEFAULT_EMAIL`)
+- Password: `admin123` (override: `PGADMIN_DEFAULT_PASSWORD`)
+- The "Proje Pazari - Local" server connects automatically — no manual setup required
+
+For query collections, backup/restore procedures, and troubleshooting, see [`PGADMIN.md`](PGADMIN.md).
+
+**PostgreSQL Backup:**
+```bash
+./scripts/backup-database.sh
+# Writes timestamped dumps under ./backups/postgres/ (7-day retention)
 ```
 
 ### 6. Access API Documentation

@@ -1,7 +1,11 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence;
 
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import java.time.LocalDateTime;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -51,4 +55,33 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
      */
     @Query("SELECT COUNT(a) FROM ProjectApplicationEntity a WHERE a.user.id = :userId")
     int countApplicationsByUserId(@Param("userId") String userId);
+
+    // --- Admin query methods ---
+
+    @Query("SELECT u FROM UserEntity u JOIN u.roles r WHERE r = :role")
+    Page<UserEntity> findByRole(@Param("role") RoleType role, Pageable pageable);
+
+    Page<UserEntity> findByIsActive(Boolean isActive, Pageable pageable);
+
+    @Query("SELECT COUNT(u) FROM UserEntity u JOIN u.roles r WHERE r = :role")
+    long countByRole(@Param("role") RoleType role);
+
+    long countByIsActive(Boolean isActive);
+
+    long countByCreatedAtAfter(LocalDateTime dateTime);
+
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    @Query(
+            "SELECT DISTINCT u FROM UserEntity u LEFT JOIN u.roles r WHERE "
+                    + "(:role IS NULL OR r = :role) AND "
+                    + "(:isActive IS NULL OR u.isActive = :isActive) AND "
+                    + "(:search IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) "
+                    + "OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) "
+                    + "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<UserEntity> findWithFilters(
+            @Param("role") RoleType role,
+            @Param("isActive") Boolean isActive,
+            @Param("search") String search,
+            Pageable pageable);
 }

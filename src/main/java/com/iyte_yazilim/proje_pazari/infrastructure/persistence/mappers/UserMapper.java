@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -12,9 +13,8 @@ public interface UserMapper {
     @Mapping(
             target = "id",
             expression = "java(user.getId() != null ? user.getId().toString() : null)")
-    // FIX: Map domain 'active' to entity 'isActive'
     @Mapping(target = "isActive", source = "active")
-    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "roles", source = "roles")
     @Mapping(target = "preferredLanguage", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
@@ -26,9 +26,18 @@ public interface UserMapper {
             expression =
                     "java(userEntity.getId() != null ? com.github.f4b6a3.ulid.Ulid.from(userEntity.getId()) : null)")
     @Mapping(target = "domainEvents", ignore = true)
-    // FIX: Map entity 'isActive' to domain 'active'
     @Mapping(target = "active", source = "isActive")
-    // FIX: Ignore roles if the Domain User doesn't have a matching roles collection yet
-    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "roles", source = "roles")
     User entityToDomain(UserEntity userEntity);
+
+    // Update existing Persistence Entity from Domain Entity (for updates)
+    @Mapping(
+            target = "id",
+            expression = "java(user.getId() != null ? user.getId().toString() : null)")
+    @Mapping(target = "isActive", source = "active")
+    @Mapping(target = "roles", source = "roles")
+    @Mapping(target = "preferredLanguage", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    void applyDomainToEntity(User user, @MappingTarget UserEntity entity);
 }

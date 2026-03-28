@@ -53,10 +53,11 @@ public class ElasticsearchSyncService {
         }
     }
 
+    @Transactional(readOnly = true)
     public void indexProject(String projectId) {
         ProjectEntity project =
                 projectRepository
-                        .findById(projectId)
+                        .findByIdForIndexing(projectId)
                         .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
         ProjectDocument document = mapper.toDocument(project);
