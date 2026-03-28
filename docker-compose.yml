@@ -163,6 +163,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+      FRONTEND_URL: ${FRONTEND_URL:-https://projepazari.site}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
