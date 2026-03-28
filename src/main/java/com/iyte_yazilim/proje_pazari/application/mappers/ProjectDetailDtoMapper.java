@@ -13,6 +13,10 @@ public interface ProjectDetailDtoMapper {
             expression =
                     "java(project.getOwner() != null ? project.getOwner().getFirstName() + \" \" + project.getOwner().getLastName() : null)")
     @Mapping(
+            target = "ownerId",
+            expression =
+                    "java(project.getOwner() != null ? project.getOwner().getId().toString() : null)")
+    @Mapping(
             target = "ownerEmail",
             expression = "java(project.getOwner() != null ? project.getOwner().getEmail() : null)")
     @Mapping(

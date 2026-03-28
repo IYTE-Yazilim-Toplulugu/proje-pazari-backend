@@ -8,6 +8,7 @@ import java.util.List;
 @Schema(description = "Project detail data transfer object")
 public record ProjectDetailDto(
         @Schema(description = "Project ID", example = "01ARZ3NDEKTSV4RRFFQ69G5FAV") String id,
+        @Schema(description = "Owner ID", example = "01ARZ3NDEKTSV4RRFFQ69G5FAV") String ownerId,
         @Schema(description = "Owner name", example = "Jane Smith") String ownerName,
         @Schema(description = "Owner email", example = "janesmith@iyte.edu.tr") String ownerEmail,
         @Schema(description = "Project title", example = "AI-Powered Chatbot") String title,

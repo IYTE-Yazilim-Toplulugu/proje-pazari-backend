@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.queries.getUserProfile;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectSummaryDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
@@ -51,6 +52,8 @@ public class GetUserProfileHandler
                                                 p.getCreatedAt()))
                         .collect(Collectors.toList());
 
+        String role = user.getRoles().contains(RoleType.ADMIN) ? "ADMIN" : "USER";
+
         UserProfileDTO profile =
                 new UserProfileDTO(
                         user.getId(),
@@ -67,7 +70,8 @@ public class GetUserProfileHandler
                         user.getCreatedAt(),
                         projectsCreated,
                         applicationsSubmitted,
-                        projects);
+                        projects,
+                        role);
 
         return ApiResponse.success(profile, messageService.getMessage("user.retrieved.success"));
     }
