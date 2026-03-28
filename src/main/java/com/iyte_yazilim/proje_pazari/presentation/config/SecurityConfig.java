@@ -56,6 +56,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth ->
                                 auth
+                                        // Allow CORS preflight requests through
+                                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                                        .permitAll()
                                         // Swagger/OpenAPI endpoints
                                         .requestMatchers(
                                                 "/swagger-ui/**",
