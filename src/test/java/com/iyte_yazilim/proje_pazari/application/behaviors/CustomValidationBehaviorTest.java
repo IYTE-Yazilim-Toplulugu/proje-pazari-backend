@@ -15,6 +15,7 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import org.junit.jupiter.api.Test;
 
 class CustomValidationBehaviorTest {
@@ -211,7 +212,7 @@ class CustomValidationBehaviorTest {
                 ex.getMessage().contains("Validation failed"),
                 "Exception message should indicate validation failure");
         assertTrue(
-                ex.getMessage().toLowerCase().contains("linkedin"),
+                ex.getMessage().toLowerCase(Locale.ROOT).contains("linkedin"),
                 "Exception message should identify the invalid LinkedIn URL");
     }
 
@@ -233,7 +234,7 @@ class CustomValidationBehaviorTest {
                 assertThrows(ValidationException.class, () -> behavior.handle(command, next));
 
         assertTrue(ex.getMessage().contains("Validation failed"));
-        assertTrue(ex.getMessage().toLowerCase().contains("github"));
+        assertTrue(ex.getMessage().toLowerCase(Locale.ROOT).contains("github"));
     }
 
     @Test

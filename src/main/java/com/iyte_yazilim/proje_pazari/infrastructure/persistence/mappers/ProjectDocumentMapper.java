@@ -20,7 +20,8 @@ public interface ProjectDocumentMapper {
             target = "applicationsCount",
             expression =
                     "java(entity.getApplications() != null ? entity.getApplications().size() : 0)")
-    @Mapping(target = "tags", ignore = true)
+    @Mapping(target = "tags", source = "requiredSkills")
+    @Mapping(target = "category", source = "category")
     ProjectDocument toDocument(ProjectEntity entity);
 
     @Named("toOwnerInfo")

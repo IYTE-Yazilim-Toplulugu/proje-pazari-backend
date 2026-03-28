@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.services;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectSearchRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -66,6 +67,17 @@ public class ElasticsearchSyncService {
 
     public void deleteProjectIndex(String projectId) {
         projectSearchRepository.deleteById(projectId);
+    }
+
+    @Transactional(readOnly = true)
+    public void indexUser(String userId) {
+        UserEntity user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new UserNotFoundException(userId));
+
+        UserDocument document = toUserDocument(user);
+        userSearchRepository.save(document);
     }
 
     @Transactional(readOnly = true)

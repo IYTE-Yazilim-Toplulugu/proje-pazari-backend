@@ -26,13 +26,13 @@ public class ProjectDocument {
 
     @Id private String id;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "custom_analyzer")
     private String title;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "custom_analyzer")
     private String description;
 
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Text, analyzer = "custom_analyzer")
     private String summary;
 
     @Field(type = FieldType.Keyword)
@@ -43,6 +43,9 @@ public class ProjectDocument {
 
     @Field(type = FieldType.Keyword)
     private List<String> tags;
+
+    @Field(type = FieldType.Keyword)
+    private String category;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_fraction)
     private LocalDateTime createdAt;
@@ -58,7 +61,7 @@ public class ProjectDocument {
         @Field(type = FieldType.Keyword)
         private String id;
 
-        @Field(type = FieldType.Text)
+        @Field(type = FieldType.Text, analyzer = "custom_analyzer")
         private String name;
 
         @Field(type = FieldType.Keyword)

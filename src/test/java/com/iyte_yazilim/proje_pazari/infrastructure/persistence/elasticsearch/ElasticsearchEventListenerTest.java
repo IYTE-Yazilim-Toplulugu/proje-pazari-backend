@@ -6,6 +6,7 @@ import com.iyte_yazilim.proje_pazari.application.services.ElasticsearchSyncServi
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
+import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -155,5 +156,35 @@ class ElasticsearchEventListenerTest {
         // Then
         verify(metricsService).incrementEsDeleteFailure();
         verify(metricsService, never()).incrementEsDeleteSuccess();
+    }
+
+    @Test
+    @DisplayName("Should re-index user and increment index success on user updated")
+    void shouldReindexUser_whenUserUpdated() throws Exception {
+        // Given
+        UserUpdatedEvent event = new UserUpdatedEvent("user-1");
+
+        // When
+        listener.handleUserUpdated(event);
+
+        // Then
+        verify(syncService).indexUser("user-1");
+        verify(metricsService).incrementEsIndexSuccess();
+        verify(metricsService, never()).incrementEsIndexFailure();
+    }
+
+    @Test
+    @DisplayName("Should increment index failure when user updated sync throws")
+    void shouldIncrementIndexFailure_whenUserUpdatedSyncThrows() throws Exception {
+        // Given
+        UserUpdatedEvent event = new UserUpdatedEvent("user-1");
+        doThrow(new RuntimeException("ES unavailable")).when(syncService).indexUser("user-1");
+
+        // When
+        listener.handleUserUpdated(event);
+
+        // Then
+        verify(metricsService).incrementEsIndexFailure();
+        verify(metricsService, never()).incrementEsIndexSuccess();
     }
 }

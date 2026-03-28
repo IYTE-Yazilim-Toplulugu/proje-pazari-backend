@@ -8,6 +8,7 @@ import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +32,8 @@ class UpdateUserProfileHandlerTest {
     @Mock private UserDtoMapper userDtoMapper;
 
     @Mock private MessageService messageService;
+
+    @Mock private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks private UpdateUserProfileHandler handler;
 
@@ -95,6 +99,7 @@ class UpdateUserProfileHandlerTest {
         assertEquals("Doe", response.getData().lastName());
         assertEquals("Software Engineer", response.getData().description());
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent(any(UserUpdatedEvent.class));
     }
 
     @Test
@@ -137,6 +142,7 @@ class UpdateUserProfileHandlerTest {
         assertEquals("OldLastName", userEntity.getLastName());
         assertEquals("Old description", userEntity.getDescription());
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent(any(UserUpdatedEvent.class));
     }
 
     @Test
@@ -182,6 +188,7 @@ class UpdateUserProfileHandlerTest {
         assertNull(userEntity.getLinkedinUrl());
         assertNull(userEntity.getGithubUrl());
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent(any(UserUpdatedEvent.class));
     }
 
     @Test

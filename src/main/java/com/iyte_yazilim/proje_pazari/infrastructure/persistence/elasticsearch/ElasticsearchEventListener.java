@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.application.services.ElasticsearchSyncServi
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
+import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +74,19 @@ public class ElasticsearchEventListener {
                     event.projectId(),
                     e.getMessage(),
                     e);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
+    public void handleUserUpdated(UserUpdatedEvent event) {
+        try {
+            log.debug("Re-indexing updated user: {}", event.userId());
+            syncService.indexUser(event.userId());
+            metricsService.incrementEsIndexSuccess();
+        } catch (Exception e) {
+            metricsService.incrementEsIndexFailure();
+            log.error("Failed to re-index updated user {}: {}", event.userId(), e.getMessage(), e);
         }
     }
 }
