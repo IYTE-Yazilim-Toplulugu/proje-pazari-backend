@@ -39,15 +39,19 @@ jobs:
           echo "status=✅ Code formatting is correct" >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      - name: Run tests
+      - name: Run tests with coverage
         id: tests
         run: |
-          ./gradlew test
+          ./gradlew test jacocoTestReport jacocoTestCoverageVerification
           echo "status=✅ All tests passed" >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      - name: Generate coverage
-        run: ./gradlew jacocoTestReport
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/reports/jacoco/
 
       - name: Build application
         id: build
@@ -72,11 +76,11 @@ jobs:
             | Check | Status |
             |-------|--------|
             | Code Formatting | ${formatStatus} |
-            | Tests | ${testStatus} |
+            | Tests & Coverage | ${testStatus} |
             | Build | ${buildStatus} |
 
             ${formatStatus === '❌' ? '⚠️ Please run `make format` to fix formatting issues\n' : ''}
-            ${testStatus === '❌' ? '⚠️ Some tests are failing. Please fix them before merging\n' : ''}
+            ${testStatus === '❌' ? '⚠️ Some tests are failing or coverage is below 70%. Please fix before merging\n' : ''}
             ${buildStatus === '❌' ? '⚠️ Build failed. Please check the logs\n' : ''}
 
             **Commit**: ${context.sha.substring(0, 7)}

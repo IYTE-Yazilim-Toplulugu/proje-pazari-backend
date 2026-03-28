@@ -5,8 +5,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
+@TestPropertySource(
+        properties = {
+            "spring.data.elasticsearch.enabled=false",
+            "spring.data.elasticsearch.repositories.enabled=false",
+            "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration,org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration,org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration"
+        })
 class JwtUtilTest {
 
     @Autowired private JwtUtil jwtUtil;
@@ -85,17 +92,31 @@ class JwtUtilTest {
     }
 
     @Test
-    void shouldHandleModeratorRole() {
+    void shouldHandleUserRole() {
         // Given
-        String token = jwtUtil.generateToken("01HQXYZ123", "mod@std.iyte.edu.tr", "MODERATOR");
+        String token = jwtUtil.generateToken("01HQXYZ123", "user@std.iyte.edu.tr", "USER");
 
         // When
         UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
 
         // Then
-        assertEquals("MODERATOR", principal.getRole());
+        assertEquals("USER", principal.getRole());
         assertTrue(
                 principal.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR")));
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
+    }
+
+    @Test
+    void generateToken_shouldIncludeAllRequiredClaims() {
+        // Given
+        String token = jwtUtil.generateToken("user-123", "test@std.iyte.edu.tr", "USER");
+
+        // When
+        UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
+
+        // Then
+        assertEquals("user-123", principal.getUserId());
+        assertEquals("test@std.iyte.edu.tr", principal.getEmail());
+        assertEquals("USER", principal.getRole());
     }
 }

@@ -1,12 +1,11 @@
 package com.iyte_yazilim.proje_pazari.presentation.security;
 
+import com.iyte_yazilim.proje_pazari.domain.interfaces.ITokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +41,7 @@ import org.springframework.stereotype.Component;
  * @see JwtAuthenticationFilter
  */
 @Component
-public class JwtUtil {
+public class JwtUtil implements ITokenService {
 
     /** Secret key for JWT signing. Must be at least 256 bits. */
     @Value("${jwt.secret}")
@@ -84,7 +83,7 @@ public class JwtUtil {
     // Add role claim extraction
     public String extractRole(String token) {
         String role = extractClaim(token, claims -> claims.get("role", String.class));
-        return role != null ? role : "USER"; // Default to USER if role claim missing
+        return role != null ? role : "USER";
     }
 
     /**
@@ -141,34 +140,6 @@ public class JwtUtil {
                 .claim("userId", userId)
                 .claim("email", email)
                 .claim("role", role)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey())
-                .compact();
-    }
-
-    /**
-     * Generates a new JWT token for a user.
-     *
-     * @param username the username to include as subject
-     * @return signed JWT token string
-     */
-    public String generateToken(String username) {
-        Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
-    }
-
-    /**
-     * Creates a signed JWT token with claims and subject.
-     *
-     * @param claims additional claims to include
-     * @param subject the token subject (username)
-     * @return signed JWT token string
-     */
-    private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder()
-                .claims(claims)
-                .subject(subject)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())

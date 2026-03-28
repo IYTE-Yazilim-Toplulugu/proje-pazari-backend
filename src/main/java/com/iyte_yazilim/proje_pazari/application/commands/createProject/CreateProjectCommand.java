@@ -1,5 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
+import com.iyte_yazilim.proje_pazari.application.common.ICommand;
+import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -59,7 +62,11 @@ public record CreateProjectCommand(
                         max = 2000,
                         message = "Description must be between 10 and 2000 characters")
                 String description,
-        @Schema(description = "ID of the project owner", example = "01HQZX...")
+        @Schema(
+                        description =
+                                "ID of the project owner (resolved from authentication, do not send)",
+                        accessMode = Schema.AccessMode.READ_ONLY,
+                        example = "01HQZX...")
                 @NotBlank(message = "Owner ID is required")
                 String ownerId,
         @Schema(
@@ -70,13 +77,11 @@ public record CreateProjectCommand(
                         description = "Array of project tags",
                         example = "[\"machine-learning\", \"python\", \"research\"]")
                 String[] tags,
-        @Schema(description = "Maximum team size", example = "5")
+        @Schema(description = "Maximum team size for the project", example = "5")
                 @Min(value = 1, message = "Maximum team size must be at least 1")
                 Integer maxTeamSize,
-        @Schema(
-                        description = "Array of required skills",
-                        example = "[\"Python\", \"Machine Learning\", \"TensorFlow\"]")
+        @Schema(description = "Array of required skills", example = "[\"Java\", \"Spring Boot\"]")
                 String[] requiredSkills,
-        @Schema(description = "Project category", example = "Machine Learning") String category,
-        @Schema(description = "Project deadline", example = "2025-12-31T23:59:59")
-                LocalDateTime deadline) {}
+        @Schema(description = "Project category", example = "Software Development") String category,
+        @Schema(description = "Project deadline") LocalDateTime deadline)
+        implements ICommand<ApiResponse<CreateProjectCommandResult>> {}

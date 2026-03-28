@@ -1,64 +1,40 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Handles the {@link LoginUserCommand} to authenticate users.
- *
- * <p>This handler orchestrates the login process:
- *
- * <ol>
- *   <li>Validate command using {@link LoginUserValidator}
- *   <li>Find user by email address
- *   <li>Check if account is active
- *   <li>Verify password using BCrypt
- *   <li>Generate JWT token
- *   <li>Return login result with token
- * </ol>
- *
- * <h2>Error Scenarios:</h2>
- *
- * <ul>
- *   <li>{@code BAD_REQUEST} - Validation failed
- *   <li>{@code BAD_REQUEST} - Invalid email or password
- *   <li>{@code BAD_REQUEST} - Account deactivated
- * </ul>
- *
- * <h2>Security Notes:</h2>
- *
- * <p>Error messages are intentionally vague ("Invalid email or password") to prevent user
- * enumeration attacks.
- *
- * @author IYTE Yazılım Topluluğu
- * @version 1.0
- * @since 2024-01-01
- * @see LoginUserCommand
- * @see LoginUserResult
- * @see JwtUtil
- */
-@Service
+@Component
 @RequiredArgsConstructor
 public class LoginUserHandler
         implements IRequestHandler<LoginUserCommand, ApiResponse<LoginUserResult>> {
 
     private final UserRepository userRepository;
-    private final IValidator<LoginUserCommand> validator;
+    private final EmailVerificationRepository emailVerificationRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final MessageService messageService;
+    private final RefreshTokenService refreshTokenService;
+    private final BusinessMetricsService metricsService;
+
+    @Value("${jwt.expiration}")
+    private Long jwtExpiration;
 
     /**
      * Handles user login command.
@@ -76,34 +52,40 @@ public class LoginUserHandler
             propagation = Propagation.REQUIRED)
     public ApiResponse<LoginUserResult> handle(LoginUserCommand command) {
 
-        // --- 1. Validation ---
-        var errors = validator.validate(command);
-        if (errors != null && errors.length > 0) {
-            String errorMessage = String.join(", ", errors);
-            return ApiResponse.badRequest(errorMessage);
-        }
-
-        // --- 2. Find user by email ---
+        // --- 1. Find user by email ---
         UserEntity user = userRepository.findByEmail(command.email()).orElse(null);
         if (user == null) {
+            metricsService.incrementAuthLoginFailure();
             return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
         }
 
         // --- 3. Check if account is active ---
         if (user.getIsActive() == null || !user.getIsActive()) {
+            metricsService.incrementAuthLoginFailure();
             return ApiResponse.badRequest(messageService.getMessage("auth.account.deactivated"));
         }
 
         // --- 4. Verify password with BCrypt ---
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
+            metricsService.incrementAuthLoginFailure();
             return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
         }
 
-        // --- 5. Generate JWT token with userId, email, and role ---
-        String role = user.getRole() != null ? user.getRole().toString() : "USER";
-        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
+        // --- 5. Check email verification ---
+        boolean isVerified =
+                emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(user.getId());
+        if (!isVerified) {
+            throw new EmailNotVerifiedException(
+                    "Please verify your email before logging in. Check your inbox.");
+        }
 
-        // --- 6. Create result ---
+        // --- 6. Generate JWT token with userId, email, and role ---
+        String role = user.getRoles().contains(RoleType.ADMIN) ? "ADMIN" : "USER";
+        String accessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), role);
+
+        // --- 7. Generate refresh token ---
+        String refreshToken = refreshTokenService.createRefreshToken(user.getId());
+        // --- 7. Create result ---
         var result =
                 new LoginUserResult(
                         user.getId(),
@@ -111,9 +93,12 @@ public class LoginUserHandler
                         user.getFirstName(),
                         user.getLastName(),
                         role,
-                        token);
+                        accessToken,
+                        refreshToken,
+                        jwtExpiration);
 
-        // --- 7. Response with localized message ---
+        // --- 8. Response with localized message ---
+        metricsService.incrementAuthLoginSuccess();
         return ApiResponse.success(result, messageService.getMessage("auth.login.success"));
     }
 }

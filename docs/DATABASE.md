@@ -259,10 +259,12 @@ ORDER BY pending_count DESC;
 
 ### pgAdmin Access
 
-When running with Docker Compose:
+When running with Docker Compose (`--profile tools`):
 - URL: http://localhost:5050
-- Email: admin@proje-pazari.com
-- Password: admin
+- Email: admin@proje-pazari.com (override: `PGADMIN_DEFAULT_EMAIL`)
+- Password: admin123 (override: `PGADMIN_DEFAULT_PASSWORD`)
+
+See [PGADMIN.md](../PGADMIN.md) for the full guide including query collections, backup/restore procedures, and troubleshooting.
 
 ### Direct Connection
 

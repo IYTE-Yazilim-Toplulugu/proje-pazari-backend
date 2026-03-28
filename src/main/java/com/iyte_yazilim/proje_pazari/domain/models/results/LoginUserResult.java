@@ -21,4 +21,6 @@ public record LoginUserResult(
         String firstName,
         String lastName,
         String role,
-        String token) {}
+        String accessToken,
+        String refreshToken,
+        Long expiresIn) {}
