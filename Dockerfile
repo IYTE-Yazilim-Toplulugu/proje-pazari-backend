@@ -1,21 +1,28 @@
 # Multi-stage build for smaller image size
 
 # Stage 1: Build
-FROM gradle:9.2.1-jdk21 AS build
+FROM gradle:9.4.1-jdk21 AS build
+
+# Use the pre-installed Gradle distribution from the base image (avoids re-download)
+ENV GRADLE_USER_HOME=/home/gradle/.gradle
+
 WORKDIR /app
 
 # Copy gradle files first for better layer caching
-COPY build.gradle settings.gradle ./
+COPY gradlew ./
+COPY build.gradle settings.gradle gradle.properties ./
 COPY gradle ./gradle
 
+RUN chmod +x ./gradlew
+
 # Download dependencies (cached layer if build.gradle doesn't change)
-RUN gradle dependencies --no-daemon || true
+RUN ./gradlew dependencies --no-daemon
 
 # Copy source code
 COPY src ./src
 
 # Build the application (skip tests in Docker build, run them separately)
-RUN gradle bootJar --no-daemon -x test
+RUN ./gradlew bootJar --no-daemon -x test
 
 # Stage 2: Runtime
 FROM eclipse-temurin:21-jre-alpine
