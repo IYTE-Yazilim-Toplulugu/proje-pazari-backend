@@ -19,11 +19,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class BanIpHandlerTest {
 
-    @Mock
-    private BannedIpRepository bannedIpRepository;
+    @Mock private BannedIpRepository bannedIpRepository;
 
-    @InjectMocks
-    private BanIpHandler handler;
+    @InjectMocks private BanIpHandler handler;
 
     @Test
     @DisplayName("Should ban IP address successfully")

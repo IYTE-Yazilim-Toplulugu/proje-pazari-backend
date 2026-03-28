@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.ListObjectsArgs;
@@ -203,6 +204,9 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                             .expiry(expirationMinutes, TimeUnit.MINUTES)
                             .build());
         } catch (Exception e) {
+            if (metricsService != null) {
+                metricsService.incrementMinioDownloadFailure();
+            }
             throw new FileStorageException("Failed to generate presigned URL", e);
         }
     }
@@ -218,6 +222,9 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                             .build());
             log.debug("Deleted file from MinIO: {}/{}", location.bucket(), location.objectPath());
         } catch (Exception e) {
+            if (metricsService != null) {
+                metricsService.incrementMinioDeleteFailure();
+            }
             throw new FileStorageException("Failed to delete file from MinIO", e);
         }
     }

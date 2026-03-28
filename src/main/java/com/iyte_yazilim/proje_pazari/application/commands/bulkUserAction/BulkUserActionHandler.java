@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -28,11 +29,10 @@ public class BulkUserActionHandler
 
         for (String userId : command.userIds()) {
             try {
-                UserEntity user = userRepository.findById(userId).orElse(null);
-                if (user == null) {
-                    result.addFailure(userId, "User not found");
-                    continue;
-                }
+                UserEntity user =
+                        userRepository
+                                .findById(userId)
+                                .orElseThrow(() -> new UserNotFoundException(userId));
 
                 switch (command.action().toUpperCase()) {
                     case "DELETE":
@@ -46,8 +46,15 @@ public class BulkUserActionHandler
                         userRepository.save(user);
                         result.incrementSuccess();
                         break;
-                    case "CHANGE_ROLE_TO_PROJECT_OWNER":
-                        user.setRole(RoleType.PROJECT_OWNER);
+                    case "PROMOTE_TO_ADMIN":
+                        user.getRoles().clear();
+                        user.getRoles().add(RoleType.ADMIN);
+                        userRepository.save(user);
+                        result.incrementSuccess();
+                        break;
+                    case "DEMOTE_TO_USER":
+                        user.getRoles().clear();
+                        user.getRoles().add(RoleType.USER);
                         userRepository.save(user);
                         result.incrementSuccess();
                         break;
@@ -55,6 +62,11 @@ public class BulkUserActionHandler
                         result.addFailure(userId, "Unknown action: " + command.action());
                 }
             } catch (Exception e) {
+                // Intentional: domain exceptions (e.g. UserNotFoundException) are caught here
+                // and recorded as per-item failures rather than propagated. This preserves
+                // bulk-operation semantics — a single missing or invalid item must not abort the
+                // entire batch. GlobalExceptionHandler will NOT handle these; failures are surfaced
+                // in BulkActionResult instead.
                 result.addFailure(userId, e.getMessage());
             }
         }

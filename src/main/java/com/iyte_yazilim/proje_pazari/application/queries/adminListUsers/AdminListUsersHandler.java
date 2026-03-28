@@ -54,7 +54,7 @@ public class AdminListUsersHandler
                 entity.getProfilePictureUrl(),
                 entity.getLinkedinUrl(),
                 entity.getGithubUrl(),
-                entity.getRole(),
+                entity.getRoles(),
                 entity.getIsActive(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),

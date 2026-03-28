@@ -8,7 +8,9 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +33,7 @@ class ExportUsersHandlerTest {
         user.setEmail("test@example.com");
         user.setFirstName("Test");
         user.setLastName("User");
-        user.setRole(RoleType.APPLICANT);
+        user.setRoles(new HashSet<>(Set.of(RoleType.USER)));
         user.setIsActive(true);
         user.setCreatedAt(LocalDateTime.of(2026, 1, 1, 0, 0));
         user.setUpdatedAt(LocalDateTime.of(2026, 1, 2, 0, 0));
@@ -50,7 +52,7 @@ class ExportUsersHandlerTest {
         assertTrue(csv.contains("user-1"));
         assertTrue(csv.contains("test@example.com"));
         assertTrue(csv.contains("Test"));
-        assertTrue(csv.contains("APPLICANT"));
+        assertTrue(csv.contains("USER"));
     }
 
     @Test

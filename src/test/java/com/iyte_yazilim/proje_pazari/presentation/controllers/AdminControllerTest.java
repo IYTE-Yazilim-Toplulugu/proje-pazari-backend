@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 import com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser.AdminDeleteUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction.BulkUserActionCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.flagContent.FlagContentCommand;
-import com.iyte_yazilim.proje_pazari.application.commands.promoteToProjectOwner.PromoteToProjectOwnerCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
@@ -31,7 +30,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,91 +46,6 @@ class AdminControllerTest {
     @Mock private StorageHealthService storageHealthService;
 
     @InjectMocks private AdminController adminController;
-
-    @Nested
-    @DisplayName("promoteToProjectOwner() method")
-    class PromoteToProjectOwnerTests {
-
-        @Test
-        @DisplayName("should return 200 OK when promotion succeeds")
-        void shouldReturn200WhenPromotionSucceeds() {
-            String userId = "target-user-id";
-            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
-                    .thenReturn(
-                            ApiResponse.success(
-                                    null, "User promoted to PROJECT_OWNER successfully"));
-
-            ResponseEntity<ApiResponse<Void>> response =
-                    adminController.promoteToProjectOwner(userId);
-
-            assertEquals(HttpStatus.OK, response.getStatusCode());
-            assertEquals(ResponseCode.SUCCESS, response.getBody().getCode());
-            assertEquals(
-                    "User promoted to PROJECT_OWNER successfully", response.getBody().getMessage());
-        }
-
-        @Test
-        @DisplayName("should pass correct userId to handler")
-        void shouldPassCorrectUserIdToHandler() {
-            String userId = "specific-user-id";
-            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
-                    .thenReturn(ApiResponse.success(null, "Success"));
-
-            ArgumentCaptor<PromoteToProjectOwnerCommand> captor =
-                    ArgumentCaptor.forClass(PromoteToProjectOwnerCommand.class);
-
-            adminController.promoteToProjectOwner(userId);
-
-            verify(mediator).send(captor.capture());
-            assertEquals(userId, captor.getValue().userId());
-        }
-
-        @Test
-        @DisplayName("should return 404 NOT_FOUND when user does not exist")
-        void shouldReturn404WhenUserNotFound() {
-            String userId = "nonexistent-user";
-            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
-                    .thenReturn(ApiResponse.notFound("User not found with id: nonexistent-user"));
-
-            ResponseEntity<ApiResponse<Void>> response =
-                    adminController.promoteToProjectOwner(userId);
-
-            assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-            assertEquals(ResponseCode.NOT_FOUND, response.getBody().getCode());
-            assertEquals(
-                    "User not found with id: nonexistent-user", response.getBody().getMessage());
-        }
-
-        @Test
-        @DisplayName("should return 400 BAD_REQUEST when user is already PROJECT_OWNER")
-        void shouldReturn400WhenAlreadyProjectOwner() {
-            String userId = "project-owner-id";
-            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
-                    .thenReturn(ApiResponse.validationError("User is already a PROJECT_OWNER"));
-
-            ResponseEntity<ApiResponse<Void>> response =
-                    adminController.promoteToProjectOwner(userId);
-
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            assertEquals(ResponseCode.VALIDATION_ERROR, response.getBody().getCode());
-            assertEquals("User is already a PROJECT_OWNER", response.getBody().getMessage());
-        }
-
-        @Test
-        @DisplayName("should return 400 BAD_REQUEST when trying to demote ADMIN")
-        void shouldReturn400WhenTryingToDemoteAdmin() {
-            String userId = "admin-user-id";
-            when(mediator.send(any(PromoteToProjectOwnerCommand.class)))
-                    .thenReturn(ApiResponse.validationError("ADMIN users cannot be demoted"));
-
-            ResponseEntity<ApiResponse<Void>> response =
-                    adminController.promoteToProjectOwner(userId);
-
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            assertEquals(ResponseCode.VALIDATION_ERROR, response.getBody().getCode());
-            assertEquals("ADMIN users cannot be demoted", response.getBody().getMessage());
-        }
-    }
 
     @Nested
     @DisplayName("listUsers() method")
@@ -192,10 +105,10 @@ class AdminControllerTest {
             when(mediator.send(any(BulkUserActionCommand.class)))
                     .thenReturn(ApiResponse.success(result, "Bulk action completed"));
 
-            Map<String, Object> request =
-                    Map.of("action", "SUSPEND", "userIds", List.of("user-1", "user-2"));
             ResponseEntity<ApiResponse<BulkActionResult>> response =
-                    adminController.bulkUserAction(request);
+                    adminController.bulkUserAction(
+                            new AdminController.BulkUserActionRequest(
+                                    "SUSPEND", List.of("user-1", "user-2")));
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertEquals(1, response.getBody().getData().getSuccessCount());
@@ -236,7 +149,8 @@ class AdminControllerTest {
                     .thenReturn(ApiResponse.success(null, "Content flagged successfully"));
 
             ResponseEntity<ApiResponse<Void>> response =
-                    adminController.flagContent("PROJECT", "proj-1", Map.of("reason", "SPAM"));
+                    adminController.flagContent(
+                            "PROJECT", "proj-1", new AdminController.FlagContentRequest("SPAM"));
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
         }
@@ -323,7 +237,8 @@ class AdminControllerTest {
                     .thenReturn(ApiResponse.success(null, "Config updated"));
 
             ResponseEntity<ApiResponse<Void>> response =
-                    adminController.updateSystemConfig(Map.of("key", "value"));
+                    adminController.updateSystemConfig(
+                            new AdminController.UpdateSystemConfigRequest(Map.of("key", "value")));
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
         }

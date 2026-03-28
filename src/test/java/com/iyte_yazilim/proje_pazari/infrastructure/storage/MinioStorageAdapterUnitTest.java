@@ -6,6 +6,8 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
+import io.micrometer.core.instrument.Timer;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -14,6 +16,7 @@ import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import java.io.ByteArrayInputStream;
 import java.time.ZonedDateTime;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,12 +35,19 @@ class MinioStorageAdapterUnitTest {
 
     @Mock private MinioClient mockMinioClient;
     @Mock private MultipartFile mockFile;
+    @Mock private BusinessMetricsService metricsService;
+    @Mock private Timer uploadTimer;
+
     private MinioStorageAdapter adapter;
 
     @BeforeEach
     void setUp() throws Exception {
+        lenient().when(metricsService.getMinioUploadTimer()).thenReturn(uploadTimer);
+        lenient()
+                .when(uploadTimer.record(any(Supplier.class)))
+                .thenAnswer(inv -> ((Supplier<?>) inv.getArgument(0)).get());
         // Create adapter using the package-private constructor for testing with mock client
-        adapter = new MinioStorageAdapter(mockMinioClient, "test-bucket");
+        adapter = new MinioStorageAdapter(mockMinioClient, "test-bucket", metricsService);
     }
 
     @Nested

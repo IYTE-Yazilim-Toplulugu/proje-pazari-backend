@@ -20,23 +20,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GetAnalyticsTrendsHandlerTest {
 
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private ProjectRepository projectRepository;
-    @Mock
-    private ProjectApplicationRepository applicationRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private ProjectRepository projectRepository;
+    @Mock private ProjectApplicationRepository applicationRepository;
 
-    @InjectMocks
-    private GetAnalyticsTrendsHandler handler;
+    @InjectMocks private GetAnalyticsTrendsHandler handler;
 
     @Test
     void shouldReturnTrendsForSpecifiedDays() {
-        when(userRepository.countByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(userRepository.countByCreatedAtBetween(
+                        any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(5L);
-        when(projectRepository.countByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(projectRepository.countByCreatedAtBetween(
+                        any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(3L);
-        when(applicationRepository.countByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(applicationRepository.countByCreatedAtBetween(
+                        any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(10L);
 
         ApiResponse<AnalyticsTrendsDTO> response = handler.handle(new GetAnalyticsTrendsQuery(7));
@@ -57,7 +56,10 @@ class GetAnalyticsTrendsHandlerTest {
         // Verify dates are in ascending order
         for (int i = 1; i < response.getData().dataPoints().size(); i++) {
             assertTrue(
-                    response.getData().dataPoints().get(i).date()
+                    response.getData()
+                            .dataPoints()
+                            .get(i)
+                            .date()
                             .isAfter(response.getData().dataPoints().get(i - 1).date()));
         }
     }

@@ -4,9 +4,9 @@ import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationSubmittedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.SubmitApplicationCommandResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -40,10 +40,10 @@ public class SubmitApplicationHandler
     private final ProjectApplicationRepository applicationRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-    private final IValidator<SubmitApplicationCommand> validator;
     private final ProjectApplicationMapper applicationMapper;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final BusinessMetricsService metricsService;
 
     @Override
     @Transactional(
@@ -53,16 +53,10 @@ public class SubmitApplicationHandler
             propagation = Propagation.REQUIRED)
     public ApiResponse<SubmitApplicationCommandResult> handle(SubmitApplicationCommand command) {
 
-        // --- 1. Validation ---
-        var errors = validator.validate(command);
-        if (errors != null && errors.length > 0) {
-            String errorMessage = String.join(", ", errors);
-            return ApiResponse.badRequest(errorMessage);
-        }
-
-        // --- 2. Verify Project Exists ---
+        // --- 1. Verify Project Exists ---
         ProjectEntity projectEntity = projectRepository.findById(command.projectId()).orElse(null);
         if (projectEntity == null) {
+            metricsService.incrementApplicationSubmissionFailure();
             return ApiResponse.notFound(
                     messageService.getMessage(
                             "project.not.found", new Object[] {command.projectId()}));
@@ -71,6 +65,7 @@ public class SubmitApplicationHandler
         // --- 3. Verify User Exists ---
         UserEntity userEntity = userRepository.findById(command.userId()).orElse(null);
         if (userEntity == null) {
+            metricsService.incrementApplicationSubmissionFailure();
             return ApiResponse.notFound(
                     messageService.getMessage("user.not.found", new Object[] {command.userId()}));
         }
@@ -80,6 +75,7 @@ public class SubmitApplicationHandler
                 applicationRepository.existsByProjectIdAndUserId(
                         command.projectId(), command.userId());
         if (alreadyApplied) {
+            metricsService.incrementApplicationSubmissionFailure();
             return ApiResponse.badRequest(messageService.getMessage("application.already.exists"));
         }
 
@@ -113,6 +109,7 @@ public class SubmitApplicationHandler
                         savedApplication.getStatus().toString());
 
         // --- 9. Response ---
+        metricsService.incrementApplicationSubmissionSuccess();
         return ApiResponse.created(
                 result, messageService.getMessage("application.submitted.success"));
     }

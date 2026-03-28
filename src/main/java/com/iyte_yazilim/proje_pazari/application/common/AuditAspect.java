@@ -13,9 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-/**
- * AOP aspect that intercepts @Audited methods and persists audit log entries.
- */
+/** AOP aspect that intercepts @Audited methods and persists audit log entries. */
 @Aspect
 @Component
 @RequiredArgsConstructor
@@ -29,12 +27,13 @@ public class AuditAspect {
     public Object audit(ProceedingJoinPoint joinPoint, Audited audited) throws Throwable {
         String userId = getCurrentUserId();
 
-        AuditLogEntity auditLog = AuditLogEntity.builder()
-                .action(audited.action())
-                .entityType(audited.entityType())
-                .performedBy(userId)
-                .timestamp(LocalDateTime.now())
-                .build();
+        AuditLogEntity auditLog =
+                AuditLogEntity.builder()
+                        .action(audited.action())
+                        .entityType(audited.entityType())
+                        .performedBy(userId)
+                        .timestamp(LocalDateTime.now())
+                        .build();
 
         try {
             Object result = joinPoint.proceed();

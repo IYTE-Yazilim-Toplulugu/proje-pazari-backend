@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
@@ -34,11 +35,13 @@ class MinioStorageAdapterTest {
 
     private MinioStorageAdapter adapter;
     private MinioClient mockMinioClient;
+    private BusinessMetricsService metricsService;
 
     @BeforeEach
     void setUp() throws Exception {
         // Create mock MinioClient first
         mockMinioClient = mock(MinioClient.class);
+        metricsService = mock(BusinessMetricsService.class);
 
         // Mock bucket exists check to avoid connection errors
         when(mockMinioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
@@ -49,7 +52,11 @@ class MinioStorageAdapterTest {
         try {
             adapter =
                     new MinioStorageAdapter(
-                            "http://localhost:9000", "minioadmin", "minioadmin123", "test-bucket");
+                            "http://localhost:9000",
+                            "minioadmin",
+                            "minioadmin123",
+                            "test-bucket",
+                            metricsService);
         } catch (FileStorageException e) {
             // Constructor failed because MinIO isn't running
             // Create adapter using reflection to bypass the connection attempt
@@ -86,7 +93,11 @@ class MinioStorageAdapterTest {
         try {
             tempAdapter =
                     new MinioStorageAdapter(
-                            "http://localhost:9000", "minioadmin", "minioadmin123", "test-bucket");
+                            "http://localhost:9000",
+                            "minioadmin",
+                            "minioadmin123",
+                            "test-bucket",
+                            metricsService);
         } catch (FileStorageException e) {
             // If it still fails, we need to create it differently
             // This is a limitation - the constructor always tries to connect

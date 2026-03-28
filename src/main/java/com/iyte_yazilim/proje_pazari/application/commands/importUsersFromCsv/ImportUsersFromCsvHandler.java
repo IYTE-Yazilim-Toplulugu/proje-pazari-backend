@@ -7,9 +7,13 @@ import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,7 +32,14 @@ public class ImportUsersFromCsvHandler
     @Override
     @Transactional
     public ApiResponse<ImportResultDTO> handle(ImportUsersFromCsvCommand command) {
-        if (command.csvContent() == null || command.csvContent().isBlank()) {
+        String csvContent;
+        try {
+            csvContent = resolveCsvContent(command);
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.validationError(e.getMessage());
+        }
+
+        if (csvContent == null || csvContent.isBlank()) {
             return ApiResponse.validationError("CSV content is empty");
         }
 
@@ -36,7 +47,7 @@ public class ImportUsersFromCsvHandler
         int totalRows = 0;
         int successCount = 0;
 
-        try (BufferedReader reader = new BufferedReader(new StringReader(command.csvContent()))) {
+        try (BufferedReader reader = new BufferedReader(new StringReader(csvContent))) {
             String headerLine = reader.readLine();
             if (headerLine == null) {
                 return ApiResponse.validationError("CSV file is empty");
@@ -89,7 +100,7 @@ public class ImportUsersFromCsvHandler
                     user.setEmail(email);
                     user.setFirstName(firstName);
                     user.setLastName(lastName);
-                    user.setRole(role);
+                    user.setRoles(new HashSet<>(Set.of(role)));
                     user.setPassword(passwordEncoder.encode(password));
 
                     userRepository.save(user);
@@ -106,5 +117,21 @@ public class ImportUsersFromCsvHandler
         int failedCount = totalRows - successCount;
         ImportResultDTO result = new ImportResultDTO(totalRows, successCount, failedCount, errors);
         return ApiResponse.success(result, "Import completed: " + successCount + " users imported");
+    }
+
+    private String resolveCsvContent(ImportUsersFromCsvCommand command) {
+        if (command.csvContent() != null && !command.csvContent().isBlank()) {
+            return command.csvContent();
+        }
+
+        if (command.file() == null || command.file().isEmpty()) {
+            return null;
+        }
+
+        try {
+            return new String(command.file().getBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to read file: " + e.getMessage(), e);
+        }
     }
 }

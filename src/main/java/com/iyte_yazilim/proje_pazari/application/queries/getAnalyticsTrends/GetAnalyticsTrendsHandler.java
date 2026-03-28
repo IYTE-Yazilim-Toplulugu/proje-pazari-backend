@@ -37,7 +37,8 @@ public class GetAnalyticsTrendsHandler
 
             long newUsers = userRepository.countByCreatedAtBetween(startOfDay, endOfDay);
             long newProjects = projectRepository.countByCreatedAtBetween(startOfDay, endOfDay);
-            long newApplications = applicationRepository.countByCreatedAtBetween(startOfDay, endOfDay);
+            long newApplications =
+                    applicationRepository.countByCreatedAtBetween(startOfDay, endOfDay);
 
             dataPoints.add(
                     new AnalyticsTrendsDTO.DailyDataPoint(

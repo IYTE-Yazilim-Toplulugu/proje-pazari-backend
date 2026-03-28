@@ -1,10 +1,31 @@
 services:
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: proje-pazari-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - proje-pazari-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
   redis:
     image: redis:7-alpine
     container_name: proje-pazari-redis
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -14,7 +35,7 @@ services:
       retries: 5
     networks:
       - proje-pazari-network
-    restart: unless-stopped
+    restart: always
 
   minio:
     image: minio/minio:latest
@@ -36,7 +57,7 @@ services:
       retries: 3
     networks:
       - proje-pazari-network
-    restart: unless-stopped
+    restart: always
 
   minio-setup:
     image: minio/mc:latest
@@ -65,21 +86,76 @@ services:
     image: postgres:16-alpine
     container_name: proje-pazari-db
     environment:
-      POSTGRES_DB: proje_pazari_db
-      POSTGRES_USER: yazilim
-      POSTGRES_PASSWORD: yazilim123
-    ports:
-      - "5432:5432"
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ADMIN_USER: ${MINIO_ADMIN_USER:-minioadmin}
+      MINIO_ADMIN_PASSWORD: ${MINIO_ADMIN_PASSWORD:-minioadmin123}
+      MINIO_FILES_BUCKET: ${MINIO_FILES_BUCKET:-proje-pazari-files}
+      MINIO_AVATARS_BUCKET: ${MINIO_AVATARS_BUCKET:-proje-pazari-avatars}
+      MINIO_DOCUMENTS_BUCKET: ${MINIO_DOCUMENTS_BUCKET:-proje-pazari-documents}
+      MINIO_BACKUPS_BUCKET: ${MINIO_BACKUPS_BUCKET:-proje-pazari-backups}
+      MINIO_CREATE_BACKEND_USER: ${MINIO_CREATE_BACKEND_USER:-false}
+      MINIO_BACKEND_USER: ${MINIO_APP_ACCESS_KEY:-backend-app}
+      MINIO_BACKEND_PASSWORD: ${MINIO_APP_SECRET_KEY:-backend-app-secret-change-me}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./docker/minio/init.sh:/init.sh:ro
+    entrypoint: ["/bin/sh", "/init.sh"]
+    networks:
+      - proje-pazari-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    container_name: proje-pazari-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U yazilim -d proje_pazari_db"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
       retries: 5
     networks:
       - proje-pazari-network
-    restart: unless-stopped
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.0.0
+    container_name: proje-pazari-logstash
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "127.0.0.1:5000:5000/tcp"
+      - "127.0.0.1:5000:5000/udp"
+    environment:
+      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+    networks:
+      - proje-pazari-network
+    restart: always
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.0.0
+    container_name: proje-pazari-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - proje-pazari-network
+    restart: always
 
   app:
     build:
@@ -87,14 +163,14 @@ services:
       dockerfile: Dockerfile
     container_name: proje-pazari-app
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/proje_pazari_db
-      SPRING_DATASOURCE_USERNAME: yazilim
-      SPRING_DATASOURCE_PASSWORD: yazilim123
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
-      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
-      JWT_SECRET: "proje-pazari-dev-secret-key-2025-please-change-in-production-this-is-just-for-development"
-      # MinIO Storage Configuration
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "false"
+      JWT_SECRET: ${JWT_SECRET}
       STORAGE_PROVIDER: minio
       MINIO_URL: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_APP_ACCESS_KEY:-minioadmin}
@@ -105,11 +181,12 @@ services:
       MINIO_BACKUPS_BUCKET: ${MINIO_BACKUPS_BUCKET:-proje-pazari-backups}
       # Elasticsearch Configuration
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
-      # Redis Configuration
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+      FRONTEND_URL: ${FRONTEND_URL:-https://projepazari.site}
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -121,6 +198,184 @@ services:
         condition: service_healthy
     networks:
       - proje-pazari-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+  frontend:
+    build:
+      context: ../proje-pazari
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    container_name: proje-pazari-frontend
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - proje-pazari-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: proje-pazari-prometheus
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./docker/prometheus/alerts.yml:/etc/prometheus/alerts.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle' # Enables /-/reload and /-/quit endpoints (no auth). Safe: port is bound to 127.0.0.1 only.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - proje-pazari-network
+    restart: always
+    profiles:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: proje-pazari-grafana
+    ports:
+      - "127.0.0.1:3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_UNIFIED_ALERTING_ENABLED=true
+      - GF_ALERTING_ENABLED=false
+      - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL}
+      - GF_SMTP_ENABLED=${GF_SMTP_ENABLED:-false}
+      - GF_SMTP_HOST=${GF_SMTP_HOST:-smtp.gmail.com:587}
+      - GF_SMTP_USER=${GF_SMTP_USER:-}
+      - GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD:-}
+      - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@projepazari.site}
+      - GF_SMTP_FROM_NAME=Proje Pazarı Grafana
+      - GF_SMTP_STARTTLS_POLICY=MandatoryStartTLS
+      - GF_ALERT_EMAIL_TO=${GF_ALERT_EMAIL_TO:-}
+      - GF_SLACK_WEBHOOK_URL=${GF_SLACK_WEBHOOK_URL:-}
+      - GF_DISCORD_WEBHOOK_URL=${GF_DISCORD_WEBHOOK_URL:-}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/grafana.ini:/etc/grafana/grafana.ini
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    networks:
+      - proje-pazari-network
+    restart: always
+    profiles:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: proje-pazari-alertmanager
+    volumes:
+      - ./docker/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - proje-pazari-network
+    restart: always
+    profiles:
+      - monitoring
+
+  minio-backup:
+    image: minio/mc:latest
+    container_name: proje-pazari-minio-backup
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ADMIN_USER: ${MINIO_ADMIN_USER:-minioadmin}
+      MINIO_ADMIN_PASSWORD: ${MINIO_ADMIN_PASSWORD:-minioadmin123}
+      MINIO_FILES_BUCKET: ${MINIO_FILES_BUCKET:-proje-pazari-files}
+      MINIO_AVATARS_BUCKET: ${MINIO_AVATARS_BUCKET:-proje-pazari-avatars}
+      MINIO_DOCUMENTS_BUCKET: ${MINIO_DOCUMENTS_BUCKET:-proje-pazari-documents}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-minio.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    networks:
+      - proje-pazari-network
+    profiles:
+      - maintenance
+
+  minio-backup-scheduler:
+    image: minio/mc:latest
+    container_name: proje-pazari-minio-backup-scheduler
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ADMIN_USER: ${MINIO_ADMIN_USER:-minioadmin}
+      MINIO_ADMIN_PASSWORD: ${MINIO_ADMIN_PASSWORD:-minioadmin123}
+      MINIO_FILES_BUCKET: ${MINIO_FILES_BUCKET:-proje-pazari-files}
+      MINIO_AVATARS_BUCKET: ${MINIO_AVATARS_BUCKET:-proje-pazari-avatars}
+      MINIO_DOCUMENTS_BUCKET: ${MINIO_DOCUMENTS_BUCKET:-proje-pazari-documents}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-minio.sh:/backup.sh:ro
+      - ./scripts/backup-minio-loop.sh:/backup-loop.sh:ro
+    entrypoint: ["/bin/sh", "/backup-loop.sh"]
+    networks:
+      - proje-pazari-network
+    profiles:
+      - maintenance
     restart: unless-stopped
 
   minio-backup:
@@ -175,76 +430,26 @@ services:
     image: dpage/pgadmin4:latest
     container_name: proje-pazari-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@proje-pazari.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@proje-pazari.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin123} # Dev default — set PGADMIN_DEFAULT_PASSWORD in .env for other environments
       PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
       - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
       - ./docker/pgadmin/pgpass:/pgpass:ro
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - proje-pazari-network
     restart: unless-stopped
     profiles:
       - tools
 
-  # Elasticsearch stack for logging and monitoring
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
-    container_name: proje_pazari_elasticsearch
-    environment:
-      - discovery.type=single-node
-      # Default heap size set to 1GB; adjust -Xms / -Xmx based on your data volume and workload.
-      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
-      - xpack.security.enabled=false
-      - xpack.security.http.ssl.enabled=false
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - proje-pazari-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:9.0.0
-    container_name: proje_pazari_kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - xpack.security.enabled=false
-    ports:
-      - "5601:5601"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - proje-pazari-network
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:9.0.0
-    container_name: proje_pazari_logstash
-    volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
-      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
-    ports:
-      - "5000:5000/tcp"
-      - "5000:5000/udp"
-      - "9600:9600"
-    environment:
-      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
-    depends_on:
-      - elasticsearch
-    networks:
-      - proje-pazari-network
 
   prometheus:
     image: prom/prometheus:latest

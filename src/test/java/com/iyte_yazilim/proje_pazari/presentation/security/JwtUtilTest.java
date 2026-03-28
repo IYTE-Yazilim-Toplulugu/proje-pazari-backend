@@ -92,30 +92,31 @@ class JwtUtilTest {
     }
 
     @Test
-    void shouldHandleProjectOwnerRole() {
+    void shouldHandleUserRole() {
         // Given
-        String token =
-                jwtUtil.generateToken("01HQXYZ123", "owner@std.iyte.edu.tr", "PROJECT_OWNER");
+        String token = jwtUtil.generateToken("01HQXYZ123", "user@std.iyte.edu.tr", "USER");
 
         // When
         UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
 
         // Then
-        assertEquals("PROJECT_OWNER", principal.getRole());
+        assertEquals("USER", principal.getRole());
         assertTrue(
                 principal.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_PROJECT_OWNER")));
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
     }
 
     @Test
-    void shouldDefaultToUserRoleWhenRoleClaimMissing() {
-        // Given - generate token with old method that doesn't include role
-        String token = jwtUtil.generateToken("test@std.iyte.edu.tr");
+    void generateToken_shouldIncludeAllRequiredClaims() {
+        // Given
+        String token = jwtUtil.generateToken("user-123", "test@std.iyte.edu.tr", "USER");
 
         // When
-        String role = jwtUtil.extractRole(token);
+        UserPrincipal principal = jwtUtil.extractUserPrincipal(token);
 
         // Then
-        assertEquals("APPLICANT", role);
+        assertEquals("user-123", principal.getUserId());
+        assertEquals("test@std.iyte.edu.tr", principal.getEmail());
+        assertEquals("USER", principal.getRole());
     }
 }

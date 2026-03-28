@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,21 +13,46 @@ import org.springframework.data.repository.query.Param;
 
 /** ProjectRepository - JPA Repository for persistence layer */
 public interface ProjectRepository extends JpaRepository<ProjectEntity, String> {
-        @Query("SELECT p FROM ProjectEntity p WHERE p.owner.id = :ownerId")
-        List<ProjectEntity> findByOwnerId(@Param("ownerId") String ownerId);
+    @Query(
+            "SELECT p FROM ProjectEntity p "
+                    + "LEFT JOIN FETCH p.owner "
+                    + "LEFT JOIN FETCH p.applications "
+                    + "WHERE p.id = :id")
+    Optional<ProjectEntity> findByIdForIndexing(@Param("id") String id);
 
-        long countByStatus(ProjectStatus status);
+    @Query("SELECT p FROM ProjectEntity p WHERE p.owner.id = :ownerId")
+    List<ProjectEntity> findByOwnerId(@Param("ownerId") String ownerId);
 
-        long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    long countByStatus(ProjectStatus status);
 
-        @Query("SELECT p FROM ProjectEntity p WHERE "
-                        + "(:status IS NULL OR p.status = :status) AND "
-                        + "(:ownerId IS NULL OR p.owner.id = :ownerId) AND "
-                        + "(:search IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) "
-                        + "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
-        Page<ProjectEntity> findWithFilters(
-                        @Param("status") ProjectStatus status,
-                        @Param("ownerId") String ownerId,
-                        @Param("search") String search,
-                        Pageable pageable);
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    @Query(
+            value =
+                    "SELECT p FROM ProjectEntity p "
+                            + "LEFT JOIN FETCH p.owner "
+                            + "LEFT JOIN FETCH p.applications "
+                            + "WHERE (:status IS NULL OR p.status = :status) AND "
+                            + "(:ownerId IS NULL OR p.owner.id = :ownerId) AND "
+                            + "(:search IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) "
+                            + "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))",
+            countQuery =
+                    "SELECT COUNT(p) FROM ProjectEntity p "
+                            + "WHERE (:status IS NULL OR p.status = :status) AND "
+                            + "(:ownerId IS NULL OR p.owner.id = :ownerId) AND "
+                            + "(:search IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) "
+                            + "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<ProjectEntity> findWithFilters(
+            @Param("status") ProjectStatus status,
+            @Param("ownerId") String ownerId,
+            @Param("search") String search,
+            Pageable pageable);
+
+    @Query(
+            value =
+                    "SELECT p FROM ProjectEntity p "
+                            + "LEFT JOIN FETCH p.owner "
+                            + "LEFT JOIN FETCH p.applications",
+            countQuery = "SELECT COUNT(p) FROM ProjectEntity p")
+    Page<ProjectEntity> findAllWithApplications(Pageable pageable);
 }

@@ -7,8 +7,7 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 /**
- * WebSocket configuration for real-time admin activity dashboard. Configures
- * STOMP over SockJS with
+ * WebSocket configuration for real-time admin activity dashboard. Configures STOMP over SockJS with
  * a simple in-memory message broker.
  */
 @Configuration
