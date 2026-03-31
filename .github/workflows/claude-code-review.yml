@@ -1,0 +1,47 @@
+name: Claude Code Review
+
+# Disabled — no ANTHROPIC_API_KEY configured yet.
+# To enable: add the secret to GitHub Secrets, then restore the pull_request trigger below.
+#
+# on:
+#   pull_request:
+#     types: [opened, synchronize, ready_for_review, reopened]
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  review:
+    name: Code Review
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@beta
+        with:
+          # Add ANTHROPIC_API_KEY to GitHub repository secrets to enable this workflow.
+          # Settings → Secrets and variables → Actions → New repository secret
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          direct_prompt: |
+            Review this pull request. Be concise and actionable — only flag real problems.
+
+            Focus on:
+            - Correctness and logic errors
+            - Security vulnerabilities (auth bypass, injection, missing input validation)
+            - Performance concerns (N+1 queries, missing indexes, unnecessary blocking calls)
+            - Java 21 / Spring Boot 4 best practices (dependency injection, transaction management, bean lifecycle)
+            - Clean Architecture violations (domain layer purity, dependency direction)
+            - CQRS pattern adherence (commands vs queries separation)
+            - Missing test coverage for new or changed business logic
+
+            Skip style issues already enforced by Spotless (Google Java Format AOSP).
