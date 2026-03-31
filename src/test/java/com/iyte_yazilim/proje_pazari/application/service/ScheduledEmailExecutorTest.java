@@ -103,18 +103,18 @@ class ScheduledEmailExecutorTest {
 
     @Test
     @DisplayName("Should filter users by role when a valid role is specified")
-    void processScheduledEmails_targetRoleStudent_queriesByRole() {
-        ScheduledEmailEntity email = pendingEmail("STUDENT");
-        UserEntity user = activeUser("student@test.com");
+    void processScheduledEmails_targetRoleUser_queriesByRole() {
+        ScheduledEmailEntity email = pendingEmail("USER");
+        UserEntity user = activeUser("user@test.com");
         Page<UserEntity> page = new PageImpl<>(List.of(user));
 
         when(scheduledEmailRepository.findByStatusAndScheduledAtBefore(eq("PENDING"), any()))
                 .thenReturn(List.of(email));
-        when(userRepository.findByRole(eq(RoleType.STUDENT), any(Pageable.class))).thenReturn(page);
+        when(userRepository.findByRole(eq(RoleType.USER), any(Pageable.class))).thenReturn(page);
 
         executor.processScheduledEmails();
 
-        verify(userRepository).findByRole(eq(RoleType.STUDENT), any(Pageable.class));
+        verify(userRepository).findByRole(eq(RoleType.USER), any(Pageable.class));
         verify(userRepository, never()).findAll();
         verify(emailService).sendEmailAsync(any(EmailDto.class));
     }
