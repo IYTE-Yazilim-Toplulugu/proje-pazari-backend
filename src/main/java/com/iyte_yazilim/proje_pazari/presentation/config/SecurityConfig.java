@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.IpBanFilter;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.MaintenanceModeFilter;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.RateLimitFilter;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtAuthenticationFilter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,8 +23,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
