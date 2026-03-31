@@ -1,0 +1,147 @@
+name: PR Conflict Check
+
+on:
+  pull_request:
+    # Check for merge conflicts when:
+    # - PR is opened or reopened
+    # - New commits are pushed
+    # - Draft is converted to ready (to re-check if conflicts were resolved)
+    # Note: This also runs when base branch changes trigger a webhook
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conflict_check:
+    name: Check for Merge Conflicts
+    runs-on: ubuntu-latest
+    # Only check non-draft PRs (drafts are allowed to have conflicts)
+    if: github.event.pull_request.draft == false
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          # GH_PAT: fine-grained PAT with Pull requests: Read and write
+          # Required for convertPullRequestToDraft mutation
+          # Settings → Secrets and variables → Actions → New repository secret → GH_PAT
+          github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.issue.number;
+            const prNodeId = context.payload.pull_request.node_id;
+
+            // Get PR details including mergeable state
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            console.log(`PR #${prNumber} mergeable state: ${pr.mergeable_state}`);
+            console.log(`PR #${prNumber} mergeable: ${pr.mergeable}`);
+
+            // mergeable_state can be:
+            // - "clean": No conflicts, ready to merge
+            // - "dirty": Has merge conflicts
+            // - "unstable": Failing CI checks
+            // - "blocked": Blocked by branch protection
+            // - "unknown": GitHub is still calculating (rare)
+
+            const hasConflicts = pr.mergeable === false || pr.mergeable_state === 'dirty';
+
+            if (hasConflicts) {
+              console.log('⚠️  Merge conflicts detected!');
+
+              // Convert to draft
+              try {
+                await github.graphql(`
+                  mutation($id: ID!) {
+                    convertPullRequestToDraft(input: { pullRequestId: $id }) {
+                      pullRequest { isDraft }
+                    }
+                  }
+                `, { id: prNodeId });
+                console.log('✅ Converted PR to draft due to merge conflicts');
+              } catch (e) {
+                console.log(`⚠️  Could not convert to draft: ${e.message}`);
+              }
+
+              // Post or update conflict warning comment
+              const conflictBody = [
+                '<!-- merge-conflict-warning -->',
+                '## ⚠️ Merge Conflicts Detected',
+                '',
+                'This PR has merge conflicts with the base branch and cannot be merged.',
+                '',
+                '**Action required:**',
+                '1. Sync your branch with the base branch:',
+                '   ```bash',
+                `   git fetch origin`,
+                `   git merge origin/${pr.base.ref}`,
+                '   # or',
+                `   git rebase origin/${pr.base.ref}`,
+                '   ```',
+                '2. Resolve the conflicts in your local editor',
+                '3. Commit and push the changes',
+                '4. Mark this PR as ready for review when done',
+                '',
+                'This PR has been automatically converted to draft until conflicts are resolved.',
+                '',
+                `_Base branch: \`${pr.base.ref}\` | Head branch: \`${pr.head.ref}\`_`,
+              ].join('\n');
+
+              // Check for existing conflict comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+              });
+
+              const existingConflictComment = comments.find(c =>
+                c.body.includes('<!-- merge-conflict-warning -->')
+              );
+
+              if (existingConflictComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingConflictComment.id,
+                  body: conflictBody,
+                });
+                console.log('✅ Updated existing conflict warning comment');
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: conflictBody,
+                });
+                console.log('✅ Posted conflict warning comment');
+              }
+            } else {
+              console.log('✅ No merge conflicts detected');
+
+              // If conflicts were resolved, delete the warning comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+              });
+
+              const existingConflictComment = comments.find(c =>
+                c.body.includes('<!-- merge-conflict-warning -->')
+              );
+
+              if (existingConflictComment) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingConflictComment.id,
+                });
+                console.log('✅ Deleted resolved conflict warning comment');
+              }
+            }
