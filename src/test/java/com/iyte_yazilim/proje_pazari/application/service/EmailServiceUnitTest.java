@@ -62,7 +62,8 @@ class EmailServiceUnitTest {
         when(templateEngine.process(eq("emails/myTemplate"), any(Context.class)))
                 .thenReturn("<html>content</html>");
 
-        emailService.sendTemplateEmail("to@test.com", "myTemplate", Map.of("subject", "My Subject"));
+        emailService.sendTemplateEmail(
+                "to@test.com", "myTemplate", Map.of("subject", "My Subject"));
 
         verify(templateEngine).process(eq("emails/myTemplate"), any(Context.class));
         verify(mailSender).send(mimeMessage);
@@ -73,8 +74,7 @@ class EmailServiceUnitTest {
     void sendTemplateEmail_noSubjectInVars_usesDefaultSubject() {
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("<html/>");
 
-        assertDoesNotThrow(
-                () -> emailService.sendTemplateEmail("to@test.com", "tmpl", Map.of()));
+        assertDoesNotThrow(() -> emailService.sendTemplateEmail("to@test.com", "tmpl", Map.of()));
 
         verify(mailSender).send(mimeMessage);
     }
