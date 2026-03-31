@@ -24,15 +24,13 @@ jobs:
       pull-requests: write
 
     steps:
+      # Step 1: Check for conflicts and post/delete warning comment
       - uses: actions/github-script@v7
+        id: conflict-check
         with:
-          # GH_PAT: fine-grained PAT with Pull requests: Read and write
-          # Required for convertPullRequestToDraft mutation
-          # Settings → Secrets and variables → Actions → New repository secret → GH_PAT
-          github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prNumber = context.issue.number;
-            const prNodeId = context.payload.pull_request.node_id;
 
             // Get PR details including mergeable state
             const { data: pr } = await github.rest.pulls.get({
@@ -52,23 +50,10 @@ jobs:
             // - "unknown": GitHub is still calculating (rare)
 
             const hasConflicts = pr.mergeable === false || pr.mergeable_state === 'dirty';
+            core.setOutput('has_conflicts', hasConflicts ? 'true' : 'false');
 
             if (hasConflicts) {
               console.log('⚠️  Merge conflicts detected!');
-
-              // Convert to draft
-              try {
-                await github.graphql(`
-                  mutation($id: ID!) {
-                    convertPullRequestToDraft(input: { pullRequestId: $id }) {
-                      pullRequest { isDraft }
-                    }
-                  }
-                `, { id: prNodeId });
-                console.log('✅ Converted PR to draft due to merge conflicts');
-              } catch (e) {
-                console.log(`⚠️  Could not convert to draft: ${e.message}`);
-              }
 
               // Post or update conflict warning comment
               const conflictBody = [
@@ -94,22 +79,21 @@ jobs:
                 `_Base branch: \`${pr.base.ref}\` | Head branch: \`${pr.head.ref}\`_`,
               ].join('\n');
 
-              // Check for existing conflict comment
               const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
               });
 
-              const existingConflictComment = comments.find(c =>
+              const existing = comments.find(c =>
                 c.body.includes('<!-- merge-conflict-warning -->')
               );
 
-              if (existingConflictComment) {
+              if (existing) {
                 await github.rest.issues.updateComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  comment_id: existingConflictComment.id,
+                  comment_id: existing.id,
                   body: conflictBody,
                 });
                 console.log('✅ Updated existing conflict warning comment');
@@ -132,16 +116,39 @@ jobs:
                 issue_number: prNumber,
               });
 
-              const existingConflictComment = comments.find(c =>
+              const existing = comments.find(c =>
                 c.body.includes('<!-- merge-conflict-warning -->')
               );
 
-              if (existingConflictComment) {
+              if (existing) {
                 await github.rest.issues.deleteComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  comment_id: existingConflictComment.id,
+                  comment_id: existing.id,
                 });
                 console.log('✅ Deleted resolved conflict warning comment');
               }
             }
+
+      # Step 2: Convert PR to draft if conflicts found (best-effort, needs GH_PAT)
+      - uses: actions/github-script@v7
+        if: steps.conflict-check.outputs.has_conflicts == 'true'
+        continue-on-error: true
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        with:
+          github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            if (!process.env.GH_PAT) {
+              console.log('⚠️  GH_PAT not configured — skipping auto-draft');
+              return;
+            }
+            const prNodeId = context.payload.pull_request.node_id;
+            await github.graphql(`
+              mutation($id: ID!) {
+                convertPullRequestToDraft(input: { pullRequestId: $id }) {
+                  pullRequest { isDraft }
+                }
+              }
+            `, { id: prNodeId });
+            console.log('✅ Converted PR to draft due to merge conflicts');

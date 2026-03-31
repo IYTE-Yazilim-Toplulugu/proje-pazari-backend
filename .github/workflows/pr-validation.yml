@@ -81,12 +81,10 @@ jobs:
       pull-requests: write
 
     steps:
+      # Step 1: Post PR summary comment (uses GITHUB_TOKEN — always available)
       - uses: actions/github-script@v7
         with:
-          # GH_PAT: fine-grained PAT with Pull requests: Read and write
-          # Required for convertPullRequestToDraft mutation
-          # Settings → Secrets and variables → Actions → New repository secret → GH_PAT
-          github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const results = {
               format: '${{ needs.format.result }}',
@@ -95,8 +93,6 @@ jobs:
 
             const icon = (r) => ({ success: '✅', failure: '❌', cancelled: '⏹️', skipped: '⏭️' }[r] ?? '❓');
             const allPassed = Object.values(results).every(r => r === 'success');
-            const isDraft = context.payload.pull_request.draft;
-            const prNodeId = context.payload.pull_request.node_id;
 
             const rows = [
               `| Code Formatting (Spotless) | ${icon(results.format)} \`${results.format}\` |`,
@@ -143,18 +139,32 @@ jobs:
               });
             }
 
-            // Auto-convert PR to draft if checks fail (best-effort)
-            if (!allPassed && !isDraft) {
-              try {
-                await github.graphql(`
-                  mutation($id: ID!) {
-                    convertPullRequestToDraft(input: { pullRequestId: $id }) {
-                      pullRequest { isDraft }
-                    }
-                  }
-                `, { id: prNodeId });
-                console.log('✅ Converted PR to draft due to failing checks');
-              } catch (e) {
-                console.log(`⚠️  Could not convert to draft: ${e.message}`);
-              }
+      # Step 2: Auto-convert PR to draft if checks fail (best-effort)
+      # Uses GH_PAT because GITHUB_TOKEN cannot call convertPullRequestToDraft.
+      # If GH_PAT is not configured, this step is skipped gracefully.
+      - uses: actions/github-script@v7
+        if: needs.format.result != 'success' || needs.build-and-test.result != 'success'
+        continue-on-error: true
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        with:
+          github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            if (!process.env.GH_PAT) {
+              console.log('⚠️  GH_PAT not configured — skipping auto-draft');
+              return;
             }
+            const isDraft = context.payload.pull_request.draft;
+            if (isDraft) {
+              console.log('PR is already a draft — nothing to do');
+              return;
+            }
+            const prNodeId = context.payload.pull_request.node_id;
+            await github.graphql(`
+              mutation($id: ID!) {
+                convertPullRequestToDraft(input: { pullRequestId: $id }) {
+                  pullRequest { isDraft }
+                }
+              }
+            `, { id: prNodeId });
+            console.log('✅ Converted PR to draft due to failing checks');
