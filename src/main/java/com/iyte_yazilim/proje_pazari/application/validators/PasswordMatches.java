@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.validators;
 
+import com.iyte_yazilim.proje_pazari.domain.interfaces.PasswordMatchable;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.ElementType;
