@@ -159,12 +159,16 @@ jobs:
               console.log('PR is already a draft — nothing to do');
               return;
             }
-            const prNodeId = context.payload.pull_request.node_id;
-            await github.graphql(`
-              mutation($id: ID!) {
-                convertPullRequestToDraft(input: { pullRequestId: $id }) {
-                  pullRequest { isDraft }
+            try {
+              const prNodeId = context.payload.pull_request.node_id;
+              await github.graphql(`
+                mutation($id: ID!) {
+                  convertPullRequestToDraft(input: { pullRequestId: $id }) {
+                    pullRequest { isDraft }
+                  }
                 }
-              }
-            `, { id: prNodeId });
-            console.log('✅ Converted PR to draft due to failing checks');
+              `, { id: prNodeId });
+              console.log('✅ Converted PR to draft due to failing checks');
+            } catch (e) {
+              console.log(`⚠️  Could not convert to draft: ${e.message}`);
+            }

@@ -143,12 +143,16 @@ jobs:
               console.log('⚠️  GH_PAT not configured — skipping auto-draft');
               return;
             }
-            const prNodeId = context.payload.pull_request.node_id;
-            await github.graphql(`
-              mutation($id: ID!) {
-                convertPullRequestToDraft(input: { pullRequestId: $id }) {
-                  pullRequest { isDraft }
+            try {
+              const prNodeId = context.payload.pull_request.node_id;
+              await github.graphql(`
+                mutation($id: ID!) {
+                  convertPullRequestToDraft(input: { pullRequestId: $id }) {
+                    pullRequest { isDraft }
+                  }
                 }
-              }
-            `, { id: prNodeId });
-            console.log('✅ Converted PR to draft due to merge conflicts');
+              `, { id: prNodeId });
+              console.log('✅ Converted PR to draft due to merge conflicts');
+            } catch (e) {
+              console.log(`⚠️  Could not convert to draft: ${e.message}`);
+            }
