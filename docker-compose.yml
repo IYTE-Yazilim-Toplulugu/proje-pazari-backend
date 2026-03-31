@@ -38,7 +38,7 @@ services:
     restart: always
 
   minio:
-    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
+    image: minio/minio:latest
     container_name: proje-pazari-minio
     command: server /data --console-address ":9001"
     environment:
@@ -60,7 +60,7 @@ services:
     restart: always
 
   minio-setup:
-    image: minio/mc:RELEASE.2025-04-08T16-05-16Z
+    image: minio/mc:latest
     container_name: proje-pazari-minio-setup
     depends_on:
       minio:
@@ -147,7 +147,7 @@ services:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
       SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "false"
       JWT_SECRET: ${JWT_SECRET}
@@ -163,6 +163,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+      FRONTEND_URL: ${FRONTEND_URL:-https://projepazari.site}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
@@ -205,7 +206,7 @@ services:
       - proje-pazari-network
     restart: always
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -310,7 +311,7 @@ services:
       - monitoring
 
   minio-backup:
-    image: minio/mc:RELEASE.2025-04-08T16-05-16Z
+    image: minio/mc:latest
     container_name: proje-pazari-minio-backup
     depends_on:
       minio:
@@ -332,7 +333,7 @@ services:
       - maintenance
 
   minio-backup-scheduler:
-    image: minio/mc:RELEASE.2025-04-08T16-05-16Z
+    image: minio/mc:latest
     container_name: proje-pazari-minio-backup-scheduler
     depends_on:
       minio:

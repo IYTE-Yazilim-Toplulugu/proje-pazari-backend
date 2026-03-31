@@ -54,8 +54,8 @@ class GetUserProjectsHandlerTest {
         Project domain = new Project();
         ProjectDetailDto dto =
                 new ProjectDetailDto(
-                        "id1", null, null, "Title", null, null, 0, null, null, null, null, null,
-                        null);
+                        "id1", null, null, null, "Title", null, null, 0, null, null, null, null,
+                        null, null);
 
         Page<ProjectEntity> page = new PageImpl<>(List.of(entity));
         when(projectRepository.findWithFilters(isNull(), eq(userId), isNull(), any(Pageable.class)))
