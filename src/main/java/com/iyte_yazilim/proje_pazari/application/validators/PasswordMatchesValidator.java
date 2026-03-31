@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.domain.validators;
+package com.iyte_yazilim.proje_pazari.application.validators;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
