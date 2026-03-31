@@ -28,7 +28,7 @@ jobs:
 
     steps:
       # Step 1: Check for conflicts and post/delete warning comment
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         id: conflict-check
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -134,7 +134,7 @@ jobs:
             }
 
       # Step 2: Convert PR to draft if conflicts found (best-effort, needs GH_PAT)
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         if: steps.conflict-check.outputs.has_conflicts == 'true'
         continue-on-error: true
         env:
