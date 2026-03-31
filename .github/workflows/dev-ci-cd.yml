@@ -11,6 +11,7 @@ concurrency:
 
 env:
   JAVA_VERSION: '21'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # Run the same checks as PR validation on push to dev

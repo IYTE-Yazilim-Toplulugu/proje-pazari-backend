@@ -9,6 +9,9 @@ name: Claude Code Review
 on:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   review:
     name: Code Review

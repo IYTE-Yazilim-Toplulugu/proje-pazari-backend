@@ -15,6 +15,7 @@ concurrency:
 
 env:
   JAVA_VERSION: '21'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   format:
