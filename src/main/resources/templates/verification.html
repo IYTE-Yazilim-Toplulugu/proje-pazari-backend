@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Verification - Proje Pazarı</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #007bff;">Welcome to Proje Pazarı, <span th:text="${userName}"></span>!</h1>
+        
+        <p>Thank you for registering with your IYTE email address.</p>
+        
+        <p>Please verify your email address by clicking the button below:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a th:href="${verificationLink}" 
+               style="background-color: #007bff; color: white; padding: 12px 30px; 
+                      text-decoration: none; border-radius: 5px; display: inline-block;">
+                Verify Email Address
+            </a>
+        </div>
+        
+        <p>Or copy and paste this link in your browser:</p>
+        <p style="word-break: break-all; color: #007bff;" th:text="${verificationLink}"></p>
+        
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+            This verification link will expire in 24 hours.<br>
+            If you didn't create an account, you can safely ignore this email.
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Application Reviewed</title>
+</head>
+<body>
+    <h1>Application Reviewed</h1>
+    <p>Hello <span th:text="${firstName}"></span>,</p>
+    <p>Your application for <strong th:text="${projectTitle}"></strong> has been reviewed.</p>
+
+    <div th:if="${reviewMessage != null and !reviewMessage.isEmpty()}">
+        <p><strong>Message from the project owner:</strong></p>
+        <blockquote th:text="${reviewMessage}"></blockquote>
+    </div>
+
+    <p>Please check your dashboard for more details about the status of your application.</p>
+
+    <a href="https://projepazari.com/dashboard/applications">View My Applications</a>
+</body>
+</html>
+

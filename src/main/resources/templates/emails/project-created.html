@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Project Created</title>
+</head>
+<body>
+    <h1>Project Created Successfully!</h1>
+    <p>Hello <span th:text="${firstName}"></span>,</p>
+    <p>Your project <strong th:text="${projectTitle}"></strong> has been created successfully.</p>
+    <p>You can now start managing your project and reviewing applications from interested collaborators.</p>
+
+    <a th:href="${baseUrl + '/projects/' + projectId}">View Your Project</a>
+
+    <p>Thank you for using Proje Pazarı!</p>
+</body>
+</html>

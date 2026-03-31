@@ -1,0 +1,310 @@
+groups:
+
+  - name: jvm_alerts
+    rules:
+
+      - alert: HighHeapMemoryUsage
+        expr: |
+          sum(jvm_memory_used_bytes{area="heap"})
+          /
+          sum(jvm_memory_max_bytes{area="heap"}) > 0.80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM heap memory usage"
+          description: >
+            JVM heap usage is {{ humanizePercentage $value }}
+            (threshold 80%) for more than 2 minutes.
+
+      - alert: CriticalHeapMemoryUsage
+        expr: |
+          sum(jvm_memory_used_bytes{area="heap"})
+          /
+          sum(jvm_memory_max_bytes{area="heap"}) > 0.95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical JVM heap memory usage"
+          description: >
+            JVM heap usage has exceeded 95%. OutOfMemoryError is imminent.
+
+  - name: cpu_alerts
+    rules:
+
+      - alert: HighProcessCpuUsage
+        expr: process_cpu_usage > 0.70
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High process CPU usage"
+          description: >
+            Process CPU usage is {{ humanizePercentage $value }}
+            (threshold 70%) for more than 3 minutes on instance {{ $labels.instance }}.
+
+      - alert: HighSystemCpuUsage
+        expr: system_cpu_usage > 0.85
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system CPU usage"
+          description: >
+            System CPU usage is {{ humanizePercentage $value }}
+            (threshold 85%) for more than 3 minutes on instance {{ $labels.instance }}.
+
+  - name: http_error_alerts
+    rules:
+
+      - alert: HighHttpErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: >
+            HTTP 5xx error rate is {{ humanizePercentage $value }}
+            (threshold 5%) over the last 5 minutes.
+
+      - alert: CriticalHttpErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) > 0.20
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical HTTP 5xx error rate"
+          description: >
+            HTTP 5xx error rate has exceeded 20%. Immediate investigation required.
+
+      - alert: HighHttp4xxRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"4.."}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP 4xx rate"
+          description: >
+            HTTP 4xx rate is {{ humanizePercentage $value }}
+            (threshold 10%) over the last 5 minutes — may indicate bad client requests
+            or a misconfiguration.
+
+  - name: database_alerts
+    rules:
+
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: |
+          hikaricp_connections_pending > 0
+          and
+          hikaricp_connections_active >= hikaricp_connections_max
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool exhausted"
+          description: >
+            HikariCP connection pool is full (active={{ $value }}) and
+            {{ $labels.pool }} has pending waiters. Queries will start timing out.
+
+      - alert: DatabaseConnectionPoolHighUsage
+        expr: |
+          hikaricp_connections_active
+          /
+          hikaricp_connections_max > 0.80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool usage above 80%"
+          description: >
+            HikariCP pool usage is {{ humanizePercentage $value }}
+            for pool {{ $labels.pool }}. Consider increasing maximum pool size.
+
+      - alert: DatabaseConnectionAcquireTimeout
+        expr: increase(hikaricp_connections_timeout_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection acquire timeout detected"
+          description: >
+            {{ $value }} connection timeout(s) occurred in the last 5 minutes
+            for pool {{ $labels.pool }}.
+
+  - name: response_time_alerts
+    rules:
+
+      - alert: SlowApiResponseTime
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (le)
+          ) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow API response time (p95 > 2 s)"
+          description: >
+            The 95th-percentile API response time is
+            {{ printf "%.2f" $value }}s (threshold 2 s)
+            over the last 5 minutes.
+
+      - alert: CriticalApiResponseTime
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (le)
+          ) > 5.0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical API response time (p95 > 5 s)"
+          description: >
+            The 95th-percentile API response time has exceeded 5 s.
+            Immediate investigation required.
+
+      - alert: SlowApiEndpoint
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le, uri, method) (
+              rate(http_server_requests_seconds_bucket[5m])
+            )
+          ) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow endpoint: {{ $labels.method }} {{ $labels.uri }}"
+          description: >
+            p95 response time for {{ $labels.method }} {{ $labels.uri }} is
+            {{ printf "%.2f" $value }}s (threshold 2 s).
+
+  - name: service_availability_alerts
+    rules:
+
+      - alert: SpringBootAppDown
+        expr: up{job="spring-boot-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Spring Boot application is down"
+          description: >
+            The Spring Boot application on {{ $labels.instance }} has been
+            unreachable for more than 1 minute.
+
+      - alert: SpringBootAppHighRestartRate
+        expr: |
+          increase(process_uptime_seconds[10m]) < 0
+          or
+          (process_uptime_seconds < 300
+          and time() - process_start_time_seconds < 300)
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Spring Boot application restarted recently"
+          description: >
+            The application on {{ $labels.instance }} appears to have restarted
+            (uptime < 5 minutes).
+
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus scrape target is down"
+          description: >
+            Prometheus cannot reach target {{ $labels.instance }}
+            (job={{ $labels.job }}) for more than 2 minutes.
+
+  - name: authentication_alerts
+    rules:
+
+      - alert: HighAuthenticationFailureRate
+        expr: |
+          sum(rate(auth_login_total{status="failure"}[5m]))
+          /
+          (sum(rate(auth_login_total{status="success"}[5m])) + sum(rate(auth_login_total{status="failure"}[5m])))
+          > 0.30
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High authentication failure rate (>30%)"
+          description: >
+            Authentication failure rate is {{ humanizePercentage $value }}
+            over the last 5 minutes. Possible brute-force attack.
+
+      - alert: AuthenticationFailureSurge
+        expr: rate(auth_login_total{status="failure"}[1m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Authentication failure surge detected"
+          description: >
+            More than 5 failed login attempts per second detected on
+            {{ $labels.instance }}. Possible brute-force or credential-stuffing attack.
+
+  - name: minio_alerts
+    rules:
+
+      - alert: MinioUploadFailureRateHigh
+        expr: |
+          sum(rate(minio_upload_total{status="failure"}[5m]))
+          /
+          (sum(rate(minio_upload_total{status="success"}[5m])) + sum(rate(minio_upload_total{status="failure"}[5m])))
+          > 0.05
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High MinIO upload failure rate (>5%)"
+          description: >
+            MinIO upload failure rate is {{ humanizePercentage $value }}
+            over the last 5 minutes. Check MinIO connectivity.
+
+      - alert: SlowMinioUpload
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(minio_upload_duration_seconds_bucket[5m])) by (le)
+          ) > 10.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow MinIO uploads (p95 > 10 s)"
+          description: >
+            MinIO upload p95 latency is {{ printf "%.1f" $value }}s
+            (threshold 10 s). Possible storage or network bottleneck.
+
+  - name: elasticsearch_alerts
+    rules:
+
+      - alert: ElasticsearchSyncFailing
+        expr: increase(elasticsearch_sync_total{status="failure"}[10m]) > 3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elasticsearch sync is failing"
+          description: >
+            More than 3 Elasticsearch index/delete sync failures in the last 10 minutes
+            on {{ $labels.instance }}. Projects may be out of sync with the search index.
