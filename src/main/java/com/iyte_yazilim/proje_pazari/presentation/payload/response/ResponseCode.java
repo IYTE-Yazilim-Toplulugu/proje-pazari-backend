@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.domain.enums;
+package com.iyte_yazilim.proje_pazari.presentation.payload.response;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
- * @see com.iyte_yazilim.proje_pazari.domain.models.ApiResponse
+ * @see ApiResponse
  * @since 2024-01-01
  */
 @SuppressWarnings("unused")

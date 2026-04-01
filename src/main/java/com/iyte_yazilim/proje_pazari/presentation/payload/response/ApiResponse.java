@@ -1,7 +1,6 @@
-package com.iyte_yazilim.proje_pazari.domain.models;
+package com.iyte_yazilim.proje_pazari.presentation.payload.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import java.time.LocalDateTime;
 
 /**

@@ -6,7 +6,7 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.ITokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Optional;

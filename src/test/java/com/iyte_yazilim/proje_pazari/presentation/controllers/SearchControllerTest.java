@@ -14,10 +14,10 @@ import com.iyte_yazilim.proje_pazari.application.queries.getProjectStatistics.Ge
 import com.iyte_yazilim.proje_pazari.application.queries.searchProjects.SearchProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.suggestProjects.SuggestProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.time.LocalDateTime;
 import java.util.Collections;

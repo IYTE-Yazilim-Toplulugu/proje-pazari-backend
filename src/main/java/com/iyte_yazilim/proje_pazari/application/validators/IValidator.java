@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.domain.interfaces;
+package com.iyte_yazilim.proje_pazari.application.validators;
 
 /**
  * Interface for validating commands before processing.

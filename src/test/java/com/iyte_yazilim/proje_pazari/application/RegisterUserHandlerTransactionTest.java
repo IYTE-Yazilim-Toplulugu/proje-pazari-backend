@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserHandler;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ResponseCode;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -2,7 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.adminUpdateUser;
 
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 
 public record AdminUpdateUserCommand(
         String userId,

@@ -5,9 +5,9 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;

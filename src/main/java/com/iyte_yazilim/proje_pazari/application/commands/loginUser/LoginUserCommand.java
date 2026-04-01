@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

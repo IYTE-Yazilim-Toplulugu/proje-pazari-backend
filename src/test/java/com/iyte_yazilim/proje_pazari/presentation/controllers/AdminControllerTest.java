@@ -21,8 +21,8 @@ import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSyst
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSystemHealthQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.services.StorageHealthService;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;

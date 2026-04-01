@@ -148,9 +148,7 @@ class MinioStorageAdapterIntegrationTest {
     @Test
     void shouldThrowExceptionForNonExistentFileMetadata() {
         // When/Then
-        assertThrows(
-                FileStorageException.class,
-                () -> adapter.getMetadata("nonexistent/file.txt"));
+        assertThrows(FileStorageException.class, () -> adapter.getMetadata("nonexistent/file.txt"));
     }
 
     @Test

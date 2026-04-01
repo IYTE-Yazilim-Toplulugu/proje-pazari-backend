@@ -12,7 +12,7 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenE
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;

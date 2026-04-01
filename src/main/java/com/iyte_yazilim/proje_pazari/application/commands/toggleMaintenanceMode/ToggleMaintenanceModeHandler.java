@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.commands.toggleMaintenanceMode;
 
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.SystemConfigRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.SystemConfigEntity;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

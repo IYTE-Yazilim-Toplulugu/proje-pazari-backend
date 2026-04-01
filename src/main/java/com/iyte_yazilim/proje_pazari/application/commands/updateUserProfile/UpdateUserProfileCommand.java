@@ -2,7 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile;
 
 import com.iyte_yazilim.proje_pazari.application.common.ICommand;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
 

@@ -4,7 +4,7 @@ import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationAdminDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 
 public record AdminListApplicationsQuery(
         int page, int size, ApplicationStatus status, String projectId, String userId)

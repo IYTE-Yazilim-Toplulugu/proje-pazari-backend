@@ -8,7 +8,7 @@ import com.iyte_yazilim.proje_pazari.domain.events.PasswordResetEmailRequestedEv
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;

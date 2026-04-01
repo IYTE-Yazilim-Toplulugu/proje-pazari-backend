@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.SystemConfigRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.SystemConfigEntity;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ResponseCode;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

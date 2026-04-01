@@ -3,7 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.queries.getCurrentUserProfile;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

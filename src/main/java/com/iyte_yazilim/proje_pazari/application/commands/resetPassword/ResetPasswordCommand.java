@@ -4,7 +4,7 @@ import com.iyte_yazilim.proje_pazari.application.common.ICommand;
 import com.iyte_yazilim.proje_pazari.application.validators.PasswordMatches;
 import com.iyte_yazilim.proje_pazari.application.validators.ValidPassword;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.PasswordMatchable;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 

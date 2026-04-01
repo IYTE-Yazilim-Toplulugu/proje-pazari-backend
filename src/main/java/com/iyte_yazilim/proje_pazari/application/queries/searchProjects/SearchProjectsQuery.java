@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.queries.searchProjects;
 
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

@@ -1,7 +1,7 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ResponseCode;
 import org.junit.jupiter.api.Test;
 
 public class ApiResponseSerializationTest {
