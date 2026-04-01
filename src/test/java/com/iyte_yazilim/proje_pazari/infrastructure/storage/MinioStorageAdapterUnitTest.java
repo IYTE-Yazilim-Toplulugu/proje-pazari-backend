@@ -41,7 +41,7 @@ class MinioStorageAdapterUnitTest {
     private MinioStorageAdapter adapter;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         lenient().when(metricsService.getMinioUploadTimer()).thenReturn(uploadTimer);
         lenient()
                 .when(uploadTimer.record(any(Supplier.class)))
@@ -277,11 +277,11 @@ class MinioStorageAdapterUnitTest {
 
             // Then
             assertNotNull(metadata);
-            assertEquals(path, metadata.getPath());
-            assertEquals(100L, metadata.getSize());
-            assertEquals("text/plain", metadata.getContentType());
-            assertEquals("abc123", metadata.getEtag());
-            assertEquals("metadata-test.txt", metadata.getFileName());
+            assertEquals(path, metadata.path());
+            assertEquals(100L, metadata.size());
+            assertEquals("text/plain", metadata.contentType());
+            assertEquals("abc123", metadata.etag());
+            assertEquals("metadata-test.txt", metadata.fileName());
         }
 
         @Test
@@ -317,7 +317,7 @@ class MinioStorageAdapterUnitTest {
             FileMetadata metadata = adapter.getMetadata(path);
 
             // Then
-            assertEquals("deep-file.txt", metadata.getFileName());
+            assertEquals("deep-file.txt", metadata.fileName());
         }
     }
 }
