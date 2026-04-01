@@ -71,7 +71,8 @@ class FileStorageServiceTest {
 
         // When & Then
         assertThrows(
-                FileValidationException.class, () -> fileStorageService.storeFile(file, "profiles"));
+                FileValidationException.class,
+                () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
@@ -84,7 +85,8 @@ class FileStorageServiceTest {
 
         // When & Then
         assertThrows(
-                FileValidationException.class, () -> fileStorageService.storeFile(file, "profiles"));
+                FileValidationException.class,
+                () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
@@ -98,7 +100,8 @@ class FileStorageServiceTest {
 
         // When & Then
         assertThrows(
-                FileValidationException.class, () -> fileStorageService.storeFile(file, "profiles"));
+                FileValidationException.class,
+                () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
@@ -151,7 +154,8 @@ class FileStorageServiceTest {
     void shouldRejectInvalidPath() {
         // When & Then
         assertThrows(
-                FileValidationException.class, () -> fileStorageService.deleteFile("../etc/passwd"));
+                FileValidationException.class,
+                () -> fileStorageService.deleteFile("../etc/passwd"));
     }
 
     @Test
@@ -229,7 +233,8 @@ class FileStorageServiceTest {
 
         // When & Then
         assertThrows(
-                FileValidationException.class, () -> fileStorageService.storeFile(file, "profiles"));
+                FileValidationException.class,
+                () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test

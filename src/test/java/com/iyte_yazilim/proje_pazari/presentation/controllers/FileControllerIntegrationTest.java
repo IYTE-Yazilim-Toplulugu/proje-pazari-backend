@@ -343,7 +343,8 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String token = createVerifiedUserAndGetToken();
             when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenThrow(
-                            new FileValidationException("File size exceeds the maximum allowed size"));
+                            new FileValidationException(
+                                    "File size exceeds the maximum allowed size"));
 
             byte[] oversizedContent = new byte[1024];
             MockMultipartFile file =
