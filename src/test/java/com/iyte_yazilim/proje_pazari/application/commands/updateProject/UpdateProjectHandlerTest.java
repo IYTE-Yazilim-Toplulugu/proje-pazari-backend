@@ -12,6 +12,7 @@ import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -26,14 +27,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class UpdateProjectHandlerTest {
 
     @Mock private ProjectRepository projectRepository;
+    @Mock private ProjectApplicationRepository applicationRepository;
     @Mock private ProjectMapper projectMapper;
     @Mock private ProjectDetailDtoMapper projectDetailDtoMapper;
     @Mock private MessageService messageService;
+    @Mock private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks private UpdateProjectHandler handler;
 
@@ -51,6 +55,8 @@ class UpdateProjectHandlerTest {
 
         ownerEntity = new UserEntity();
         ownerEntity.setId(ownerId);
+        ownerEntity.setEmail("owner@test.com");
+        ownerEntity.setFirstName("Owner");
 
         projectEntity = new ProjectEntity();
         projectEntity.setId(projectId);
@@ -70,6 +76,7 @@ class UpdateProjectHandlerTest {
     void shouldUpdateProject_withAllFields() {
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
         when(projectRepository.save(any())).thenReturn(projectEntity);
+        when(applicationRepository.findByProjectId(any())).thenReturn(List.of());
         when(projectMapper.entityToDomain(any())).thenReturn(domainProject);
         when(projectDetailDtoMapper.domainToDto(any())).thenReturn(projectDetailDto);
         when(messageService.getMessage("project.updated.success")).thenReturn("Updated");
@@ -103,6 +110,7 @@ class UpdateProjectHandlerTest {
     void shouldPreserveExistingValues_whenFieldsAreNull() {
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
         when(projectRepository.save(any())).thenReturn(projectEntity);
+        when(applicationRepository.findByProjectId(any())).thenReturn(List.of());
         when(projectMapper.entityToDomain(any())).thenReturn(domainProject);
         when(projectDetailDtoMapper.domainToDto(any())).thenReturn(projectDetailDto);
         when(messageService.getMessage("project.updated.success")).thenReturn("Updated");
@@ -131,6 +139,7 @@ class UpdateProjectHandlerTest {
     void shouldClearSkills_whenEmptyArrayProvided() {
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
         when(projectRepository.save(any())).thenReturn(projectEntity);
+        when(applicationRepository.findByProjectId(any())).thenReturn(List.of());
         when(projectMapper.entityToDomain(any())).thenReturn(domainProject);
         when(projectDetailDtoMapper.domainToDto(any())).thenReturn(projectDetailDto);
         when(messageService.getMessage("project.updated.success")).thenReturn("Updated");

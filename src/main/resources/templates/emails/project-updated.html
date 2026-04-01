@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Project Updated</title>
+</head>
+<body>
+    <h1>Project Updated</h1>
+    <p>Hello <span th:text="${firstName}"></span>,</p>
+    <p>The project <strong th:text="${projectTitle}"></strong> has been updated.</p>
+    <p>You can view the latest details of the project by clicking the link below.</p>
+
+    <a th:href="${baseUrl + '/projects/' + projectId}">View Project</a>
+
+    <p>Thank you for using Proje Pazarı!</p>
+</body>
+</html>
