@@ -1,6 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile;
 
-import com.iyte_yazilim.proje_pazari.application.validators.IValidator;
+import com.iyte_yazilim.proje_pazari.domain.validators.IValidator;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;

@@ -1,6 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.createProject;
 
-import com.iyte_yazilim.proje_pazari.application.validators.IValidator;
+import com.iyte_yazilim.proje_pazari.domain.validators.IValidator;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import org.springframework.stereotype.Component;
