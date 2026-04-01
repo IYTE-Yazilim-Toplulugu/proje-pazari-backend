@@ -4,11 +4,12 @@ import com.iyte_yazilim.proje_pazari.application.commands.createProject.CreatePr
 import com.iyte_yazilim.proje_pazari.application.commands.deleteProject.DeleteProjectCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateProject.UpdateProjectCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateProjectStatus.UpdateProjectStatusCommand;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllProjects.GetAllProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getProject.GetProjectQuery;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.queries.getUserProjects.GetUserProjectsQuery;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import io.swagger.v3.oas.annotations.Operation;

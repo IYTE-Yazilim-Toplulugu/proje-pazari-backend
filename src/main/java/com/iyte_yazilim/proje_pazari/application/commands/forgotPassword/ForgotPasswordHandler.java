@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.forgotPassword;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.domain.entities.PasswordResetToken;
@@ -8,7 +9,6 @@ import com.iyte_yazilim.proje_pazari.domain.events.PasswordResetEmailRequestedEv
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;

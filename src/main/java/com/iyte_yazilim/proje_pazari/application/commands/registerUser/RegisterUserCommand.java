@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.registerUser;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ICommand;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.domain.validators.ValidPassword;
 import io.swagger.v3.oas.annotations.media.Schema;
