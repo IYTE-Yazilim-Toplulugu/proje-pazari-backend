@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,7 +71,7 @@ class FileStorageServiceTest {
 
         // When & Then
         assertThrows(
-                FileStorageException.class, () -> fileStorageService.storeFile(file, "profiles"));
+                FileValidationException.class, () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
@@ -84,7 +84,7 @@ class FileStorageServiceTest {
 
         // When & Then
         assertThrows(
-                FileStorageException.class, () -> fileStorageService.storeFile(file, "profiles"));
+                FileValidationException.class, () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
@@ -98,7 +98,7 @@ class FileStorageServiceTest {
 
         // When & Then
         assertThrows(
-                FileStorageException.class, () -> fileStorageService.storeFile(file, "profiles"));
+                FileValidationException.class, () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
@@ -151,7 +151,7 @@ class FileStorageServiceTest {
     void shouldRejectInvalidPath() {
         // When & Then
         assertThrows(
-                FileStorageException.class, () -> fileStorageService.deleteFile("../etc/passwd"));
+                FileValidationException.class, () -> fileStorageService.deleteFile("../etc/passwd"));
     }
 
     @Test
@@ -180,9 +180,9 @@ class FileStorageServiceTest {
         when(file.getContentType()).thenReturn("application/x-msdownload");
 
         // When & Then
-        FileStorageException exception =
+        FileValidationException exception =
                 assertThrows(
-                        FileStorageException.class,
+                        FileValidationException.class,
                         () -> fileStorageService.storeFile(file, "profiles"));
         assertTrue(exception.getMessage().contains("File type not allowed"));
     }
@@ -197,9 +197,9 @@ class FileStorageServiceTest {
         when(file.getContentType()).thenReturn("application/x-sh");
 
         // When & Then
-        FileStorageException exception =
+        FileValidationException exception =
                 assertThrows(
-                        FileStorageException.class,
+                        FileValidationException.class,
                         () -> fileStorageService.storeFile(file, "profiles"));
         assertTrue(exception.getMessage().contains("File type not allowed"));
     }
@@ -215,7 +215,7 @@ class FileStorageServiceTest {
 
         // When & Then
         assertThrows(
-                FileStorageException.class, () -> fileStorageService.storeFile(file, "uploads"));
+                FileValidationException.class, () -> fileStorageService.storeFile(file, "uploads"));
     }
 
     @Test
@@ -229,7 +229,7 @@ class FileStorageServiceTest {
 
         // When & Then
         assertThrows(
-                FileStorageException.class, () -> fileStorageService.storeFile(file, "profiles"));
+                FileValidationException.class, () -> fileStorageService.storeFile(file, "profiles"));
     }
 
     @Test
@@ -241,9 +241,9 @@ class FileStorageServiceTest {
         when(file.getSize()).thenReturn(10L * 1024 * 1024 + 1); // 10MB + 1 byte
 
         // When & Then
-        FileStorageException exception =
+        FileValidationException exception =
                 assertThrows(
-                        FileStorageException.class,
+                        FileValidationException.class,
                         () -> fileStorageService.storeFile(file, "profiles"));
         assertTrue(exception.getMessage().contains("exceeds the maximum allowed size"));
     }
@@ -333,7 +333,7 @@ class FileStorageServiceTest {
     @DisplayName("Should reject path with leading slash")
     void shouldRejectPath_whenStartsWithSlash() {
         assertThrows(
-                FileStorageException.class,
+                FileValidationException.class,
                 () -> fileStorageService.deleteFile("/profiles/photo.jpg"));
     }
 
@@ -341,20 +341,20 @@ class FileStorageServiceTest {
     @DisplayName("Should reject path with backslash traversal")
     void shouldRejectPath_whenContainsBackslashTraversal() {
         assertThrows(
-                FileStorageException.class,
+                FileValidationException.class,
                 () -> fileStorageService.deleteFile("\\profiles\\photo.jpg"));
     }
 
     @Test
     @DisplayName("Should reject blank path")
     void shouldRejectPath_whenBlank() {
-        assertThrows(FileStorageException.class, () -> fileStorageService.deleteFile("   "));
+        assertThrows(FileValidationException.class, () -> fileStorageService.deleteFile("   "));
     }
 
     @Test
     @DisplayName("Should reject null path")
     void shouldRejectPath_whenNull() {
-        assertThrows(FileStorageException.class, () -> fileStorageService.deleteFile(null));
+        assertThrows(FileValidationException.class, () -> fileStorageService.deleteFile(null));
     }
 
     @Test
@@ -407,7 +407,7 @@ class FileStorageServiceTest {
                 new MockMultipartFile("file", "avatar.png", "image/png", "img".getBytes());
 
         assertThrows(
-                FileStorageException.class,
+                FileValidationException.class,
                 () -> fileStorageService.storeUserAvatar("../bad", file));
     }
 }

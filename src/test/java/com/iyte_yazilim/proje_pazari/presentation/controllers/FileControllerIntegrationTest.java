@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -279,7 +279,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         void uploadProfilePicture_executableFile_isRejected() throws Exception {
             String token = createVerifiedUserAndGetToken();
             when(fileStorageService.storeUserAvatar(anyString(), any()))
-                    .thenThrow(new FileStorageException("File type not allowed"));
+                    .thenThrow(new FileValidationException("File type not allowed"));
 
             MockMultipartFile file =
                     new MockMultipartFile(
@@ -300,7 +300,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         void uploadProfilePicture_shellScript_isRejected() throws Exception {
             String token = createVerifiedUserAndGetToken();
             when(fileStorageService.storeUserAvatar(anyString(), any()))
-                    .thenThrow(new FileStorageException("File type not allowed"));
+                    .thenThrow(new FileValidationException("File type not allowed"));
 
             MockMultipartFile file =
                     new MockMultipartFile(
@@ -321,7 +321,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
         void uploadProfilePicture_zipFile_isRejected() throws Exception {
             String token = createVerifiedUserAndGetToken();
             when(fileStorageService.storeUserAvatar(anyString(), any()))
-                    .thenThrow(new FileStorageException("File type not allowed"));
+                    .thenThrow(new FileValidationException("File type not allowed"));
 
             MockMultipartFile file =
                     new MockMultipartFile(
@@ -343,7 +343,7 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String token = createVerifiedUserAndGetToken();
             when(fileStorageService.storeUserAvatar(anyString(), any()))
                     .thenThrow(
-                            new FileStorageException("File size exceeds the maximum allowed size"));
+                            new FileValidationException("File size exceeds the maximum allowed size"));
 
             byte[] oversizedContent = new byte[1024];
             MockMultipartFile file =
