@@ -1,0 +1,24 @@
+# Local development overrides — copy to docker-compose.override.yml (gitignored).
+# Docker Compose merges this automatically with docker-compose.yml.
+#
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+#   docker compose up -d postgres redis minio elasticsearch
+#   ./gradlew bootRun
+
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  minio:
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+
+  elasticsearch:
+    ports:
+      - "127.0.0.1:9200:9200"

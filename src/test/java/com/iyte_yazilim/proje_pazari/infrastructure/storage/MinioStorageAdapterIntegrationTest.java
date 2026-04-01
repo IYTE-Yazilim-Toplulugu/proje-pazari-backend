@@ -3,10 +3,13 @@ package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,7 +63,14 @@ class MinioStorageAdapterIntegrationTest {
                 minioContainer != null && minioContainer.isRunning(),
                 "MinIO container should be running");
         String minioUrl = minioContainer.getS3URL();
+
+        // Create a real SimpleMeterRegistry for timer metrics
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        Timer uploadTimer = registry.timer("minio.upload");
+
         BusinessMetricsService metricsService = mock(BusinessMetricsService.class);
+        when(metricsService.getMinioUploadTimer()).thenReturn(uploadTimer);
+
         adapter =
                 new MinioStorageAdapter(
                         minioUrl, ACCESS_KEY, SECRET_KEY, BUCKET_NAME, metricsService);

@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import java.io.IOException;
@@ -48,7 +49,7 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
 
             // Security: Verify path is within storage location
             if (!targetLocation.startsWith(storageLocation)) {
-                throw new FileStorageException("Invalid file path - path traversal detected");
+                throw new FileValidationException("Invalid file path - path traversal detected");
             }
 
             // Create parent directories if they don't exist
@@ -76,7 +77,7 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
             Path filePath = storageLocation.resolve(path).normalize();
 
             if (!filePath.startsWith(storageLocation)) {
-                throw new FileStorageException("Invalid file path - path traversal detected");
+                throw new FileValidationException("Invalid file path - path traversal detected");
             }
 
             Files.deleteIfExists(filePath);
@@ -98,7 +99,7 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
             Path filePath = storageLocation.resolve(path).normalize();
 
             if (!filePath.startsWith(storageLocation)) {
-                throw new FileStorageException("Invalid file path - path traversal detected");
+                throw new FileValidationException("Invalid file path - path traversal detected");
             }
 
             if (!Files.exists(filePath)) {
@@ -127,7 +128,7 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
             Path filePath = storageLocation.resolve(path).normalize();
 
             if (!filePath.startsWith(storageLocation)) {
-                throw new FileStorageException("Invalid file path - path traversal detected");
+                throw new FileValidationException("Invalid file path - path traversal detected");
             }
 
             if (!Files.exists(filePath)) {

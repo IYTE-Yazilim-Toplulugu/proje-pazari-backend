@@ -1,0 +1,10 @@
+# Test profile overrides.
+# Datasource is injected dynamically by Testcontainers PostgreSQL in IntegrationTestBase.
+# All other shared test properties live in application.properties.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    defer-datasource-initialization: true
+  elasticsearch:
+    uris: http://localhost:9200
