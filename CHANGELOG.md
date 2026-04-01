@@ -56,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Upgraded to Spring Boot 4.0.0
 - Using Java 21 features
+- **[BREAKING]** `POST /api/v1/applications/{applicationId}/review` → `PUT /api/v1/applications/{applicationId}/review`
+  - HTTP method changed from `POST` to `PUT` for semantic correctness (update operation)
+  - Existing clients using `POST` will receive `405 Method Not Allowed`
 
 ### Fixed
 
@@ -94,7 +97,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### From 0.1.0 to Unreleased
 
-No breaking changes. New features are additive.
+#### Breaking Changes
+
+- **Review Application endpoint method changed**
+  - Before: `POST /api/v1/applications/{applicationId}/review`
+  - After: `PUT /api/v1/applications/{applicationId}/review`
+  - Update all API clients to use `PUT` for this endpoint.
 
 ---
 

@@ -7,6 +7,7 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailAlreadyVerifiedExcep
 import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailNotVerifiedException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.EmailSendException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FlaggedContentNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
@@ -135,11 +136,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-    @ExceptionHandler(FileStorageException.class)
-    public ResponseEntity<ApiResponse<Void>> handleFileStorageException(FileStorageException ex) {
-        log.error("File storage error: {}", ex.getMessage());
+    @ExceptionHandler(FileValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFileValidationException(
+            FileValidationException ex) {
+        log.warn("File validation error: {}", ex.getMessage());
         ApiResponse<Void> response = ApiResponse.badRequest(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFileStorageException(FileStorageException ex) {
+        log.error("File storage error: {}", ex.getMessage(), ex.getCause());
+        ApiResponse<Void> response =
+                ApiResponse.internalError(messageService.getMessage("error.internal"));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -55,7 +55,7 @@ public class ReviewApplicationHandler
                         != com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus.APPROVED
                 && command.status()
                         != com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus.REJECTED) {
-            return ApiResponse.badRequest(messageService.getMessage("error.bad.request"));
+            return ApiResponse.badRequest(messageService.getMessage("error.invalid.review.status"));
         }
 
         // --- 3. Update Status ---

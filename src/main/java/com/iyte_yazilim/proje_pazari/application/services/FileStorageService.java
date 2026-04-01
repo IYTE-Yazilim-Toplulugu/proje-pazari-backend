@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.services;
 
 import com.github.f4b6a3.ulid.UlidCreator;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import java.util.Arrays;
@@ -142,7 +142,7 @@ public class FileStorageService {
                 || value.contains("/")
                 || value.contains("\\")
                 || value.contains("..")) {
-            throw new FileStorageException("Invalid " + fieldName);
+            throw new FileValidationException("Invalid " + fieldName);
         }
     }
 
@@ -152,7 +152,7 @@ public class FileStorageService {
                 || path.contains("..")
                 || path.startsWith("/")
                 || path.startsWith("\\")) {
-            throw new FileStorageException("Invalid file path");
+            throw new FileValidationException("Invalid file path");
         }
     }
 
@@ -163,18 +163,18 @@ public class FileStorageService {
      */
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new FileStorageException("File is empty");
+            throw new FileValidationException("File is empty");
         }
 
         if (file.getSize() > maxFileSize.toBytes()) {
-            throw new FileStorageException(
+            throw new FileValidationException(
                     String.format("File size exceeds the maximum allowed size of %s", maxFileSize));
         }
 
         String contentType = file.getContentType();
         List<String> allowedContentTypes = getAllowedContentTypes();
         if (contentType == null || !allowedContentTypes.contains(contentType)) {
-            throw new FileStorageException(
+            throw new FileValidationException(
                     "File type not allowed. Allowed types: " + allowedContentTypes);
         }
     }
