@@ -11,5 +11,6 @@ public record ApplicationDto(
         @Schema(description = "Project title") String projectTitle,
         @Schema(description = "Applicant user ID") String applicantId,
         @Schema(description = "Applicant name") String applicantName,
+        @Schema(description = "Applicant email") String applicantEmail,
         @Schema(description = "Application status") ApplicationStatus status,
         @Schema(description = "Submission date") LocalDateTime createdAt) {}

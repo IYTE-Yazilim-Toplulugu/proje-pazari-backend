@@ -20,7 +20,6 @@ public record UpdateProjectCommand(
                         message = "Project name must be between 3 and 100 characters")
                 String projectName,
         @Schema(description = "Updated project description")
-                @NotBlank(message = "Description is required")
                 @Size(
                         min = 10,
                         max = 2000,

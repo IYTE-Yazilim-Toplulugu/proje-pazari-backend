@@ -82,8 +82,12 @@ public class UpdateProjectHandler
         }
 
         // --- 4. Apply Updates (null = skip, empty = clear, non-empty = replace) ---
-        projectEntity.setTitle(command.projectName());
-        projectEntity.setDescription(command.description());
+        if (command.projectName() != null) {
+            projectEntity.setTitle(command.projectName());
+        }
+        if (command.description() != null) {
+            projectEntity.setDescription(command.description());
+        }
 
         if (command.summary() != null) {
             projectEntity.setSummary(command.summary());
