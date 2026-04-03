@@ -280,7 +280,7 @@ class TurkishSearchIntegrationTest {
         List<ProjectDocument> results = projectSearchService.searchProjects("istanbul projesi");
 
         assertThat(results).isNotEmpty();
-        assertThat(results.get(0).getTitle()).containsIgnoringCase("ISTANBUL");
+        assertThat(results.get(0).getTitle()).contains("İSTANBUL");
     }
 
     @Test
