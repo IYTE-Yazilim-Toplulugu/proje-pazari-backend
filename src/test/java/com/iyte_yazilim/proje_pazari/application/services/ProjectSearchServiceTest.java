@@ -22,8 +22,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
 @Testcontainers
-@Disabled(
-        "Elasticsearch testcontainer configuration needs to be fixed - client/server version compatibility issue")
 class ProjectSearchServiceTest {
 
     @Container
