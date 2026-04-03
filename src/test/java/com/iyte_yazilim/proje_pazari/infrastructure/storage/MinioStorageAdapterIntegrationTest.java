@@ -71,6 +71,8 @@ class MinioStorageAdapterIntegrationTest {
 
         BusinessMetricsService metricsService = mock(BusinessMetricsService.class);
         when(metricsService.getMinioUploadTimer()).thenReturn(uploadTimer);
+
+
         adapter =
                 new MinioStorageAdapter(
                         minioUrl, ACCESS_KEY, SECRET_KEY, BUCKET_NAME, metricsService);
