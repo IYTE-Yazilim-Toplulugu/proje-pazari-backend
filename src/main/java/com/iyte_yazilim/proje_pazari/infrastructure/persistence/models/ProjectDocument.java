@@ -15,7 +15,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 
-@Document(indexName = "#{@environment.getProperty('app.elasticsearch.project-index')}")
+@Document(indexName = "projects")
 @Setting(settingPath = "elasticsearch/project-settings.json")
 @Getter
 @Setter

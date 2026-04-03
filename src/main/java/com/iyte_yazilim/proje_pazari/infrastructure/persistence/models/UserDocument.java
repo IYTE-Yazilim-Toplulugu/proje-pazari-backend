@@ -18,7 +18,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Document(indexName = "#{@environment.getProperty('app.elasticsearch.user-index')}")
+@Document(indexName = "users")
 @Setting(settingPath = "elasticsearch/user-settings.json")
 public class UserDocument {
 
@@ -39,6 +39,6 @@ public class UserDocument {
     @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String description;
 
-    @Field(type = FieldType.Date, format = DateFormat.date_time)
+    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_fraction)
     private LocalDateTime joinedAt;
 }
