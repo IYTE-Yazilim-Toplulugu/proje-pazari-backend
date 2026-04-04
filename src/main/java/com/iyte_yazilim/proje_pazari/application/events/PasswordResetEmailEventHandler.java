@@ -5,6 +5,7 @@ import com.iyte_yazilim.proje_pazari.domain.events.PasswordResetEmailRequestedEv
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -21,10 +22,22 @@ public class PasswordResetEmailEventHandler {
 
     private final EmailService emailService;
 
+    @Value("${app.email.enabled:false}")
+    private boolean emailEnabled;
+
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(PasswordResetEmailRequestedEvent event) {
         log.info("Dispatching password reset email for user: {}", event.getUserId());
+
+        if (!emailEnabled) {
+            log.warn(
+                    "[DEV] Email sending is disabled. Password reset link for {}: {}",
+                    event.getEmail(),
+                    event.getResetLink());
+            return;
+        }
+
         try {
             emailService.sendTemplateEmailAsync(
                     event.getEmail(),

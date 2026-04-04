@@ -31,9 +31,19 @@ public class EmailVerificationEventHandler {
     @Value("${app.email.from:noreply@projepazari.com}")
     private String fromEmail;
 
+    @Value("${app.email.enabled:false}")
+    private boolean emailEnabled;
+
     @Async
     @EventListener
     public void handleUserRegistered(UserRegisteredEvent event) {
+        if (!emailEnabled) {
+            log.warn(
+                    "[DEV] Email sending is disabled. Verification token for {}: {}",
+                    event.getEmail(),
+                    event.getVerificationToken());
+            return;
+        }
         log.info("Sending verification email to: {}", event.getEmail());
         sendVerificationEmail(event.getEmail(), event.getFirstName(), event.getVerificationToken());
     }
@@ -41,6 +51,13 @@ public class EmailVerificationEventHandler {
     @Async
     @EventListener
     public void handleVerificationEmailRequested(VerificationEmailRequestedEvent event) {
+        if (!emailEnabled) {
+            log.warn(
+                    "[DEV] Email sending is disabled. Verification token for {}: {}",
+                    event.getEmail(),
+                    event.getVerificationToken());
+            return;
+        }
         log.info("Resending verification email to: {}", event.getEmail());
         sendVerificationEmail(event.getEmail(), event.getFirstName(), event.getVerificationToken());
     }

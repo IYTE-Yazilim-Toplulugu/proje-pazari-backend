@@ -31,11 +31,22 @@ public class UserRegisteredEventHandler implements IEventHandler<UserRegisteredE
     @Value("${app.frontend.url:http://localhost:3000}")
     private String baseUrl = "http://localhost:3000";
 
+    @Value("${app.email.enabled:false}")
+    private boolean emailEnabled;
+
     @Override
     @Async // ← Email gönderme async olmalı
     @EventListener
     public void handle(UserRegisteredEvent event) {
         log.info("Handling UserRegisteredEvent for user: {}", event.getEmail());
+
+        if (!emailEnabled) {
+            log.warn(
+                    "[DEV] Email sending is disabled. Verification token for {}: {}",
+                    event.getEmail(),
+                    event.getVerificationToken());
+            return;
+        }
 
         try {
             Map<String, Object> variables =
