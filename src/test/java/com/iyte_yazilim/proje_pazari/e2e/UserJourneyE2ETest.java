@@ -10,8 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iyte_yazilim.proje_pazari.TestRateLimitConfig;
-import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.TestRedisConfig;
+import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;

@@ -8,8 +8,8 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.TeamMemberInfo;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.TeamMemberInfo;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
@@ -117,8 +117,11 @@ public class UpdateProjectHandler
         List<TeamMemberInfo> teamMembers =
                 applicationRepository.findByProjectId(saved.getId()).stream()
                         .filter(app -> app.getStatus() == ApplicationStatus.APPROVED)
-                        .map(app -> new TeamMemberInfo(
-                                app.getUser().getEmail(), app.getUser().getFirstName()))
+                        .map(
+                                app ->
+                                        new TeamMemberInfo(
+                                                app.getUser().getEmail(),
+                                                app.getUser().getFirstName()))
                         .toList();
 
         // --- 7. Publish event ---
