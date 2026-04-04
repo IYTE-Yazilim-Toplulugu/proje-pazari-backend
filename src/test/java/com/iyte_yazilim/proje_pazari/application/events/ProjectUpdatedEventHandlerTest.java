@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
+import com.iyte_yazilim.proje_pazari.domain.models.TeamMemberInfo;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -108,7 +109,10 @@ class ProjectUpdatedEventHandlerTest {
     @DisplayName("Should send emails to both owner and team members")
     void shouldSendEmailsToBothOwnerAndTeamMembers() {
         // Given
-        List<String> teamMemberEmails = Arrays.asList("member1@example.com", "member2@example.com");
+        List<TeamMemberInfo> teamMembers =
+                Arrays.asList(
+                        new TeamMemberInfo("member1@example.com", "Alice"),
+                        new TeamMemberInfo("member2@example.com", "Bob"));
 
         ProjectUpdatedEvent event =
                 new ProjectUpdatedEvent(
@@ -117,7 +121,7 @@ class ProjectUpdatedEventHandlerTest {
                         "owner-123",
                         "owner@example.com",
                         "Jane",
-                        teamMemberEmails,
+                        teamMembers,
                         LocalDateTime.now());
 
         // When

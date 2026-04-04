@@ -8,6 +8,7 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.domain.models.TeamMemberInfo;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
@@ -112,11 +113,12 @@ public class UpdateProjectHandler
         // --- 5. Persist ---
         ProjectEntity saved = projectRepository.save(projectEntity);
 
-        // --- 6. Collect approved team member emails for notifications ---
-        List<String> teamMemberEmails =
+        // --- 6. Collect approved team members for notifications ---
+        List<TeamMemberInfo> teamMembers =
                 applicationRepository.findByProjectId(saved.getId()).stream()
                         .filter(app -> app.getStatus() == ApplicationStatus.APPROVED)
-                        .map(app -> app.getUser().getEmail())
+                        .map(app -> new TeamMemberInfo(
+                                app.getUser().getEmail(), app.getUser().getFirstName()))
                         .toList();
 
         // --- 7. Publish event ---
@@ -127,7 +129,7 @@ public class UpdateProjectHandler
                         saved.getOwner().getId(),
                         saved.getOwner().getEmail(),
                         saved.getOwner().getFirstName(),
-                        teamMemberEmails,
+                        teamMembers,
                         LocalDateTime.now()));
 
         // --- 8. Map to DTO ---

@@ -3,12 +3,15 @@ package com.iyte_yazilim.proje_pazari.application.events;
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IEventHandler;
+import com.iyte_yazilim.proje_pazari.domain.models.TeamMemberInfo;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Handles ProjectUpdatedEvent by sending notification emails to the project owner and approved team
@@ -31,14 +34,15 @@ public class ProjectUpdatedEventHandler implements IEventHandler<ProjectUpdatedE
     @Value("${app.frontend.url:http://localhost:3000}")
     private String baseUrl;
 
+    @Async
     @Override
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ProjectUpdatedEvent event) {
         log.info("Handling ProjectUpdatedEvent for project: {}", event.projectId());
 
         sendOwnerNotification(event);
 
-        if (event.teamMemberEmails() != null && !event.teamMemberEmails().isEmpty()) {
+        if (event.teamMembers() != null && !event.teamMembers().isEmpty()) {
             sendTeamMemberNotifications(event);
         }
     }
@@ -61,21 +65,21 @@ public class ProjectUpdatedEventHandler implements IEventHandler<ProjectUpdatedE
     }
 
     private void sendTeamMemberNotifications(ProjectUpdatedEvent event) {
-        Map<String, Object> variables =
-                Map.of(
-                        "subject",
-                        "Project Updated - " + event.projectTitle(),
-                        "firstName",
-                        "Team Member",
-                        "projectTitle",
-                        event.projectTitle(),
-                        "projectId",
-                        event.projectId(),
-                        "baseUrl",
-                        baseUrl);
+        for (TeamMemberInfo member : event.teamMembers()) {
+            Map<String, Object> variables =
+                    Map.of(
+                            "subject",
+                            "Project Updated - " + event.projectTitle(),
+                            "firstName",
+                            member.firstName(),
+                            "projectTitle",
+                            event.projectTitle(),
+                            "projectId",
+                            event.projectId(),
+                            "baseUrl",
+                            baseUrl);
 
-        for (String memberEmail : event.teamMemberEmails()) {
-            emailService.sendTemplateEmailAsync(memberEmail, "project-updated.html", variables);
+            emailService.sendTemplateEmailAsync(member.email(), "project-updated.html", variables);
         }
     }
 }
