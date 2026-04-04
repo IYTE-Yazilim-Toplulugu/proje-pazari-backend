@@ -1,11 +1,13 @@
 package com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction;
 
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ public class BulkUserActionHandler
         implements IRequestHandler<BulkUserActionCommand, ApiResponse<BulkActionResult>> {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -29,43 +32,47 @@ public class BulkUserActionHandler
 
         for (String userId : command.userIds()) {
             try {
-                UserEntity user =
+                UserEntity userEntity =
                         userRepository
                                 .findById(userId)
                                 .orElseThrow(() -> new UserNotFoundException(userId));
 
+                // Map to domain aggregate for guarded mutations
+                User user = userMapper.entityToDomain(userEntity);
+
                 switch (command.action().toUpperCase()) {
                     case "DELETE":
                     case "SUSPEND":
-                        user.setIsActive(false);
-                        userRepository.save(user);
-                        result.incrementSuccess();
+                        if (user.isActive()) {
+                            user.deactivate();
+                        }
                         break;
                     case "ACTIVATE":
-                        user.setIsActive(true);
-                        userRepository.save(user);
-                        result.incrementSuccess();
+                        if (!user.isActive()) {
+                            user.activate();
+                        }
                         break;
                     case "PROMOTE_TO_ADMIN":
-                        user.getRoles().clear();
-                        user.getRoles().add(RoleType.ADMIN);
-                        userRepository.save(user);
-                        result.incrementSuccess();
+                        user.assignRole(RoleType.ADMIN);
                         break;
                     case "DEMOTE_TO_USER":
-                        user.getRoles().clear();
-                        user.getRoles().add(RoleType.USER);
-                        userRepository.save(user);
-                        result.incrementSuccess();
+                        user.assignRole(RoleType.USER);
                         break;
                     default:
                         result.addFailure(userId, "Unknown action: " + command.action());
+                        continue;
                 }
+
+                // Apply domain state back to persistence entity
+                userMapper.applyDomainToEntity(user, userEntity);
+                userRepository.save(userEntity);
+                result.incrementSuccess();
             } catch (Exception e) {
-                // Intentional: domain exceptions (e.g. UserNotFoundException) are caught here
-                // and recorded as per-item failures rather than propagated. This preserves
-                // bulk-operation semantics — a single missing or invalid item must not abort the
-                // entire batch. GlobalExceptionHandler will NOT handle these; failures are surfaced
+                // Intentional: domain exceptions (e.g. UserNotFoundException,
+                // IllegalUserStateException) are caught here and recorded as per-item failures
+                // rather than propagated. This preserves bulk-operation semantics — a single
+                // missing or invalid item must not abort the entire batch.
+                // GlobalExceptionHandler will NOT handle these; failures are surfaced
                 // in BulkActionResult instead.
                 result.addFailure(userId, e.getMessage());
             }

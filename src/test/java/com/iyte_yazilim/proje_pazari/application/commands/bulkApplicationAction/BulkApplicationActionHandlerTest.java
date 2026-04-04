@@ -1,14 +1,17 @@
 package com.iyte_yazilim.proje_pazari.application.commands.bulkApplicationAction;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
+import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectApplicationMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BulkApplicationActionHandlerTest {
 
     @Mock private ProjectApplicationRepository applicationRepository;
+    @Mock private ProjectApplicationMapper applicationMapper;
 
     @InjectMocks private BulkApplicationActionHandler handler;
 
@@ -41,7 +45,10 @@ class BulkApplicationActionHandlerTest {
     @Test
     @DisplayName("Should approve applications in bulk")
     void shouldApproveApplicationsInBulk() {
+        ProjectApplication domainApp = new ProjectApplication();
+
         when(applicationRepository.findById(appId)).thenReturn(Optional.of(applicationEntity));
+        when(applicationMapper.entityToDomain(applicationEntity)).thenReturn(domainApp);
         when(applicationRepository.save(any())).thenReturn(applicationEntity);
 
         ApiResponse<BulkActionResult> response =
@@ -56,7 +63,10 @@ class BulkApplicationActionHandlerTest {
     @Test
     @DisplayName("Should reject applications in bulk")
     void shouldRejectApplicationsInBulk() {
+        ProjectApplication domainApp = new ProjectApplication();
+
         when(applicationRepository.findById(appId)).thenReturn(Optional.of(applicationEntity));
+        when(applicationMapper.entityToDomain(applicationEntity)).thenReturn(domainApp);
         when(applicationRepository.save(any())).thenReturn(applicationEntity);
 
         ApiResponse<BulkActionResult> response =
@@ -87,13 +97,16 @@ class BulkApplicationActionHandlerTest {
         String foundId = Ulid.fast().toString();
         String missingId = Ulid.fast().toString();
 
-        ProjectApplicationEntity foundApp = new ProjectApplicationEntity();
-        foundApp.setId(foundId);
-        foundApp.setStatus(ApplicationStatus.PENDING);
+        ProjectApplicationEntity foundEntity = new ProjectApplicationEntity();
+        foundEntity.setId(foundId);
+        foundEntity.setStatus(ApplicationStatus.PENDING);
 
-        when(applicationRepository.findById(foundId)).thenReturn(Optional.of(foundApp));
+        ProjectApplication domainApp = new ProjectApplication();
+
+        when(applicationRepository.findById(foundId)).thenReturn(Optional.of(foundEntity));
+        when(applicationMapper.entityToDomain(foundEntity)).thenReturn(domainApp);
         when(applicationRepository.findById(missingId)).thenReturn(Optional.empty());
-        when(applicationRepository.save(any())).thenReturn(foundApp);
+        when(applicationRepository.save(any())).thenReturn(foundEntity);
 
         ApiResponse<BulkActionResult> response =
                 handler.handle(
