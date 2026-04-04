@@ -27,4 +27,11 @@ public interface ProjectMapper {
     @Mapping(target = "owner", source = "owner")
     @Mapping(target = "applications", source = "applications")
     Project entityToDomain(ProjectEntity projectEntity);
+
+    @org.mapstruct.AfterMapping
+    default void hydrateDomain(ProjectEntity entity, @org.mapstruct.MappingTarget Project domain) {
+        if (entity != null && domain != null) {
+            domain.reconstitute(entity.getStatus(), entity.getCurrentTeamSize());
+        }
+    }
 }

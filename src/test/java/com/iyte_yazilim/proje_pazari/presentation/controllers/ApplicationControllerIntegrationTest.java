@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import java.util.HashMap;
@@ -71,7 +72,15 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                         .andReturn();
 
         var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
-        return jsonNode.get("data").get("projectId").asText();
+        String projectId = jsonNode.get("data").get("projectId").asText();
+
+        // --- FIX: Force the project to OPEN so our new domain rules allow applications! ---
+        var project = projectRepository.findById(projectId).orElseThrow();
+        project.setStatus(ProjectStatus.OPEN);
+        projectRepository.save(project);
+        // ----------------------------------------------------------------------------------
+
+        return projectId;
     }
 
     private String submitApplicationUrl(String projectId) {
