@@ -81,13 +81,7 @@ public class Project extends BaseEntity<Ulid> {
      */
     private List<ProjectApplication> applications;
 
-    /**
-     * Sets the owner of this project.
-     *
-     * @param owner the user to set as project owner
-     */
     private Integer maxTeamSize;
-
     private Integer currentTeamSize = 0;
     private List<String> requiredSkills;
     private String category;

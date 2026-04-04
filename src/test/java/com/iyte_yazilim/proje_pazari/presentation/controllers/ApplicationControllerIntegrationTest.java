@@ -136,8 +136,8 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
 
             var applications = applicationRepository.findByProjectId(projectId);
             assertThat(applications).hasSize(1);
-            assertThat(applications.get(0).getStatus()).isEqualTo(ApplicationStatus.PENDING);
-            assertThat(applications.get(0).getUser().getEmail()).isEqualTo(APPLICANT_EMAIL);
+            assertThat(applications.getFirst().getStatus()).isEqualTo(ApplicationStatus.PENDING);
+            assertThat(applications.getFirst().getUser().getEmail()).isEqualTo(APPLICANT_EMAIL);
         }
 
         @Test
