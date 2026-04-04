@@ -76,7 +76,7 @@ public class ApplicationController extends BaseController {
         return send(new GetProjectApplicationsQuery(projectId, requesterId, status));
     }
 
-    @PatchMapping("/api/v1/applications/{applicationId}/review")
+    @PutMapping("/api/v1/applications/{applicationId}/review")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Approve or reject an application")

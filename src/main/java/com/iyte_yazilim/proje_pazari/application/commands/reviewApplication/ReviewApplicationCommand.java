@@ -5,7 +5,6 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -30,9 +29,7 @@ import jakarta.validation.constraints.NotNull;
  */
 @Schema(description = "Command to review a project application")
 public record ReviewApplicationCommand(
-        @Schema(description = "ID of the application to review", example = "01HQZX...")
-                @NotBlank(message = "Application ID is required")
-                String applicationId,
+        @Schema(hidden = true) String applicationId,
         @Schema(description = "New status for the application (APPROVED or REJECTED)")
                 @NotNull(message = "Status is required")
                 ApplicationStatus status,

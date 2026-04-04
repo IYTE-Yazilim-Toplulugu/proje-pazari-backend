@@ -71,6 +71,7 @@ public class GetProjectApplicationsHandler
                 entity.getProject().getTitle(),
                 entity.getUser().getId(),
                 applicantName,
+                entity.getUser().getEmail(),
                 entity.getStatus(),
                 entity.getCreatedAt());
     }

@@ -13,7 +13,6 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandR
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,9 +42,9 @@ public class ProjectController extends BaseController {
     @Operation(
             summary = "Create a new project",
             description =
-                    "Creates a new project. The ownerId is resolved server-side from the"
-                            + " authenticated user's bearer token — do not include it in the"
-                            + " request body.")
+                    "Creates a new project with the provided details. "
+                            + "The authenticated user becomes the project owner. "
+                            + "Requires authentication.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -65,9 +64,8 @@ public class ProjectController extends BaseController {
                         "message": "Project created successfully",
                         "data": {
                             "projectId": "01HQXV5KXBW9FYMN8CJZSP2R4H",
-                            "projectName": "AI Chatbot Project",
-                            "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
-                            "ownerId": "01HQXV5KXBW9FYMN8CJZSP2R4G"
+                            "title": "AI Chatbot Project",
+                            "status": "DRAFT"
                         }
                     }
                     """))),
@@ -85,13 +83,30 @@ public class ProjectController extends BaseController {
                                                                 """
                     {
                         "code": "BAD_REQUEST",
-                        "message": "Project name is required",
+                        "message": "Title is required",
                         "data": null
                     }
                     """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
-                        description = "Unauthorized")
+                        description = "Unauthorized - authentication required",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Unauthorized",
+                                                        value =
+                                                                """
+                    {
+                        "code": "UNAUTHORIZED",
+                        "message": "Authentication required",
+                        "data": null
+                    }
+                    """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "Internal server error")
             })
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "Project creation details",
@@ -106,26 +121,55 @@ public class ProjectController extends BaseController {
                                             value =
                                                     """
             {
-                "projectName": "AI Chatbot Project",
+                "title": "AI Chatbot Project",
                 "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                "summary": "AI chatbot with NLP capabilities",
                 "maxTeamSize": 5,
                 "requiredSkills": ["Python", "NLP", "Machine Learning", "FastAPI"],
                 "category": "Artificial Intelligence",
-                "deadline": "2026-06-15T23:59:59"
+                "deadline": "2025-06-15T23:59:59"
             }
             """)))
     public ResponseEntity<ApiResponse<CreateProjectCommandResult>> createProject(
-            @Valid @RequestBody CreateProjectCommand command, Authentication auth) {
+            @RequestBody CreateProjectCommand command, Authentication auth) {
         return send(CreateProjectCommand.class, null, null, command, auth);
     }
 
     @GetMapping
-    @Operation(summary = "Get all projects with pagination")
+    @PreAuthorize("permitAll()")
+    @Operation(
+            summary = "Get all projects",
+            description = "Retrieves a list of all projects. Public access.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
-                        description = "Projects retrieved successfully")
+                        description = "Projects retrieved successfully",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
+                    {
+                        "code": "SUCCESS",
+                        "message": "Projects retrieved successfully",
+                        "data": [
+                            {
+                                "id": "1",
+                                "title": "AI Chatbot Project",
+                                "description": "Building an AI-powered chatbot",
+                                "status": "ACTIVE"
+                            }
+                        ]
+                    }
+                    """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "Internal server error")
             })
     public ResponseEntity<ApiResponse<PagedProjectsResult>> getAllProjects(
             @RequestParam(defaultValue = "0") int page,
@@ -136,7 +180,10 @@ public class ProjectController extends BaseController {
     }
 
     @GetMapping("/{projectId}")
-    @Operation(summary = "Get a project by ID")
+    @PreAuthorize("permitAll()")
+    @Operation(
+            summary = "Get project by ID",
+            description = "Retrieves a specific project by its ID. Public access.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -147,57 +194,17 @@ public class ProjectController extends BaseController {
                         description = "Project not found")
             })
     public ResponseEntity<ApiResponse<ProjectDetailDto>> getProject(
-            @Parameter(
-                            description = "Unique project ID",
-                            required = true,
-                            example = "01HQXV5KXBW9FYMN8CJZSP2R4H")
-                    @PathVariable
-                    String projectId) {
+            @PathVariable String projectId) {
         return send(new GetProjectQuery(projectId));
     }
 
-    @GetMapping("/mine")
+    @PutMapping("/{projectId}")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(summary = "Get projects owned by the authenticated user")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "Projects retrieved successfully"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "401",
-                        description = "Unauthorized")
-            })
-    public ResponseEntity<ApiResponse<PagedProjectsResult>> getMyProjects(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDirection,
-            Authentication auth) {
-        String userId = getCurrentUserId(auth);
-        return send(new GetUserProjectsQuery(userId, page, size, sortBy, sortDirection));
-    }
-
-    @PutMapping("/{projectId}")
-    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
-    @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(summary = "Update a project")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "Project updated successfully"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Invalid request data"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "Not the project owner"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "Project not found")
-            })
+    @Operation(
+            summary = "Update a project",
+            description =
+                    "Updates a project's details. Only the project owner can update their project.")
     public ResponseEntity<ApiResponse<ProjectDetailDto>> updateProject(
             @PathVariable String projectId,
             @Valid @RequestBody UpdateProjectCommand command,
@@ -207,45 +214,25 @@ public class ProjectController extends BaseController {
     }
 
     @DeleteMapping("/{projectId}")
-    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(summary = "Delete a project")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "Project deleted successfully"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "Not the project owner"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "Project not found")
-            })
+    @Operation(
+            summary = "Delete a project",
+            description = "Deletes a project. Only the project owner can delete their project.")
     public ResponseEntity<ApiResponse<Void>> deleteProject(
             @PathVariable String projectId, Authentication auth) {
         return send(DeleteProjectCommand.class, Map.of("projectId", projectId), null, null, auth);
     }
 
     @PatchMapping("/{projectId}/status")
-    @PreAuthorize("isAuthenticated() and hasRole('PROJECT_OWNER')")
+    @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
-    @Operation(summary = "Update a project's status")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "Status updated successfully"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Invalid status transition"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "Project not found")
-            })
+    @Operation(
+            summary = "Update project status",
+            description = "Changes the status of a project. Only the project owner can do this.")
     public ResponseEntity<ApiResponse<UpdateProjectStatusCommandResult>> updateProjectStatus(
             @PathVariable String projectId,
-            @Valid @RequestBody UpdateProjectStatusCommand command,
+            @RequestBody UpdateProjectStatusCommand command,
             Authentication auth) {
         return send(
                 UpdateProjectStatusCommand.class,

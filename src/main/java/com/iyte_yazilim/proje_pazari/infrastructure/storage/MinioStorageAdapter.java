@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
@@ -516,7 +517,7 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
             String remainder = normalizedPath.substring(firstSlashIndex + 1);
             if (configuredBuckets.contains(firstSegment)) {
                 if (remainder.isBlank()) {
-                    throw new FileStorageException("Invalid file path");
+                    throw new FileValidationException("Invalid file path");
                 }
                 return new StorageLocation(firstSegment, remainder, true);
             }
@@ -527,7 +528,7 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
 
     private String normalizePath(String path) {
         if (path == null) {
-            throw new FileStorageException("Invalid file path");
+            throw new FileValidationException("Invalid file path");
         }
 
         String normalized = path.trim();
@@ -536,7 +537,7 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
         }
 
         if (normalized.isBlank()) {
-            throw new FileStorageException("Invalid file path");
+            throw new FileValidationException("Invalid file path");
         }
 
         return normalized;
