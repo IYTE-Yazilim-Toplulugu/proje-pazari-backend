@@ -87,7 +87,7 @@ services:
     container_name: proje-pazari-elasticsearch
     environment:
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
     ports:
@@ -123,6 +123,8 @@ services:
     networks:
       - proje-pazari-network
     restart: always
+    profiles:
+      - monitoring
 
   kibana:
     image: docker.elastic.co/kibana/kibana:9.0.0
@@ -136,6 +138,8 @@ services:
     networks:
       - proje-pazari-network
     restart: always
+    profiles:
+      - monitoring
 
   app:
     build:
