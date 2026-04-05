@@ -294,4 +294,151 @@ class MinioStorageAdapterUnitTest {
             assertEquals("deep-file.txt", metadata.getFileName());
         }
     }
+    @Nested
+    @DisplayName("isAvailable() method")
+    class IsAvailableTests {
+
+        @Test
+        @DisplayName("should return true when storage is available")
+        void shouldReturnTrueWhenAvailable() throws Exception {
+            when(mockMinioClient.bucketExists(any(io.minio.BucketExistsArgs.class))).thenReturn(true);
+            when(mockMinioClient.listBuckets()).thenReturn(java.util.List.of());
+
+            assertTrue(adapter.isAvailable());
+        }
+
+        @Test
+        @DisplayName("should return false when bucket does not exist")
+        void shouldReturnFalseWhenBucketNotExist() throws Exception {
+            when(mockMinioClient.bucketExists(any(io.minio.BucketExistsArgs.class))).thenReturn(false);
+
+            assertFalse(adapter.isAvailable());
+        }
+
+        @Test
+        @DisplayName("should return false when exception thrown")
+        void shouldReturnFalseWhenExceptionThrown() throws Exception {
+            when(mockMinioClient.bucketExists(any(io.minio.BucketExistsArgs.class)))
+                    .thenThrow(new RuntimeException("Connection failed"));
+
+            assertFalse(adapter.isAvailable());
+        }
+    }
+
+    @Nested
+    @DisplayName("listBuckets() method")
+    class ListBucketsTests {
+
+        @Test
+        @DisplayName("should return bucket names")
+        void shouldReturnBucketNames() throws Exception {
+            io.minio.messages.Bucket mockBucket = mock(io.minio.messages.Bucket.class);
+            when(mockBucket.name()).thenReturn("test-bucket");
+            when(mockMinioClient.listBuckets()).thenReturn(java.util.List.of(mockBucket));
+
+            java.util.List<String> buckets = adapter.listBuckets();
+
+            assertEquals(1, buckets.size());
+            assertEquals("test-bucket", buckets.get(0));
+        }
+
+        @Test
+        @DisplayName("should return empty list when exception thrown")
+        void shouldReturnEmptyListWhenExceptionThrown() throws Exception {
+            when(mockMinioClient.listBuckets()).thenThrow(new RuntimeException("Connection failed"));
+
+            java.util.List<String> buckets = adapter.listBuckets();
+
+            assertTrue(buckets.isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("path validation")
+    class PathValidationTests {
+
+        @Test
+        @DisplayName("should throw FileStorageException when path is null")
+        void shouldThrowWhenPathIsNull() {
+            byte[] content = "content".getBytes();
+            FileUpload file = new FileUpload("test.txt", "text/plain", content, content.length);
+
+            assertThrows(FileStorageException.class, () -> adapter.store(file, null));
+        }
+
+        @Test
+        @DisplayName("should throw FileStorageException when path is blank")
+        void shouldThrowWhenPathIsBlank() {
+            byte[] content = "content".getBytes();
+            FileUpload file = new FileUpload("test.txt", "text/plain", content, content.length);
+
+            assertThrows(FileStorageException.class, () -> adapter.store(file, "   "));
+        }
+
+        @Test
+        @DisplayName("should strip leading slashes from path")
+        void shouldStripLeadingSlashes() throws Exception {
+            byte[] content = "content".getBytes();
+            FileUpload file = new FileUpload("test.txt", "text/plain", content, content.length);
+
+            String result = adapter.store(file, "/test/test.txt");
+
+            assertEquals("test/test.txt", result);
+            verify(mockMinioClient, times(1)).putObject(any(io.minio.PutObjectArgs.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("delete() with metrics")
+    class DeleteWithMetricsTests {
+
+        @Test
+        @DisplayName("should increment delete success metric")
+        void shouldIncrementDeleteSuccessMetric() throws Exception {
+            adapter.delete("test/file.txt");
+
+            verify(metricsService, times(1)).incrementMinioDeleteSuccess();
+        }
+
+        @Test
+        @DisplayName("should increment delete failure metric when delete fails")
+        void shouldIncrementDeleteFailureMetric() throws Exception {
+            doThrow(new RuntimeException("Delete failed"))
+                    .when(mockMinioClient)
+                    .removeObject(any(io.minio.RemoveObjectArgs.class));
+
+            assertThrows(FileStorageException.class, () -> adapter.delete("test/file.txt"));
+
+            verify(metricsService, times(1)).incrementMinioDeleteFailure();
+        }
+    }
+
+    @Nested
+    @DisplayName("generatePresignedUrl() with metrics")
+    class PresignedUrlWithMetricsTests {
+
+        @Test
+        @DisplayName("should increment download success metric")
+        void shouldIncrementDownloadSuccessMetric() throws Exception {
+            when(mockMinioClient.getPresignedObjectUrl(any(io.minio.GetPresignedObjectUrlArgs.class)))
+                    .thenReturn("http://example.com/file");
+
+            adapter.generatePresignedUrl("test/file.txt", 60);
+
+            verify(metricsService, times(1)).incrementMinioDownloadSuccess();
+        }
+
+        @Test
+        @DisplayName("should increment download failure metric when URL generation fails")
+        void shouldIncrementDownloadFailureMetric() throws Exception {
+            when(mockMinioClient.getPresignedObjectUrl(any(io.minio.GetPresignedObjectUrlArgs.class)))
+                    .thenThrow(new RuntimeException("Failed"));
+
+            assertThrows(
+                    FileStorageException.class,
+                    () -> adapter.generatePresignedUrl("test/file.txt", 60));
+
+            verify(metricsService, times(1)).incrementMinioDownloadFailure();
+        }
+    }
 }
