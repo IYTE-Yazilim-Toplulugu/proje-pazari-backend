@@ -1,9 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.services;
 
+import aj.org.objectweb.asm.commons.InstructionAdapter;
 import com.github.f4b6a3.ulid.UlidCreator;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,16 @@ public class FileStorageService {
 
     @Value("${storage.buckets.documents:proje-pazari-documents}")
     private String documentsBucket;
+
+    public String store(MultipartFile multipartFile, String path) throws IOException {
+        FileUpload fileUpload = new FileUpload(
+                multipartFile.getOriginalFilename(),
+                multipartFile.getContentType(),
+                multipartFile.getBytes(),
+                multipartFile.getSize()
+        );
+        return fileStorageAdapter.store(fileUpload, path);
+    }
 
     /**
      * Stores a file in cloud storage.
