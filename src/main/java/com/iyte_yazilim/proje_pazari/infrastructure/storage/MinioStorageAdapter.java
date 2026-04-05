@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
@@ -260,6 +261,11 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
         } catch (Exception e) {
             throw new FileStorageException("Failed to upload file to MinIO", e);
         }
+    }
+
+    @Override
+    public String store(FileUpload file, String path) {
+        return "";
     }
 
     @Override
