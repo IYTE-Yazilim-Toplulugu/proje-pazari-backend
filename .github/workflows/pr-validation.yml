@@ -72,10 +72,35 @@ jobs:
           name: coverage-report
           path: build/reports/jacoco/
 
+  # Single job set as Required Status Check in branch protection.
+  # Fails explicitly when any upstream job fails — prevents merging
+  # even if GH_PAT is absent and auto-draft didn't trigger.
+  ci-gate:
+    name: CI Gate
+    needs: [format, build-and-test]
+    if: always() && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Evaluate gate
+        env:
+          FORMAT_RESULT: ${{ needs.format.result }}
+          BUILD_RESULT: ${{ needs.build-and-test.result }}
+        run: |
+          echo "format:         $FORMAT_RESULT"
+          echo "build-and-test: $BUILD_RESULT"
+          if [[ "$FORMAT_RESULT" != "success" || "$BUILD_RESULT" != "success" ]]; then
+            echo "❌ One or more CI checks did not pass — gate blocked"
+            exit 1
+          fi
+          echo "✅ All CI checks passed — gate open"
+
   pr_summary:
     name: Post PR Summary
     needs: [format, build-and-test]
-    if: always() && github.event_name == 'pull_request'
+    # Only run for non-draft PRs — draft PRs have both jobs skipped,
+    # posting a comment with two "skipped" rows is noise.
+    if: always() && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     permissions:
@@ -83,7 +108,8 @@ jobs:
 
     steps:
       # Step 1: Post PR summary comment (uses GITHUB_TOKEN — always available)
-      - uses: actions/github-script@v8
+      - name: Post validation summary comment
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -102,7 +128,7 @@ jobs:
 
             const actionNote = allPassed
               ? '> ✅ **All checks passed!** To request code review, manually assign reviewers or mention team members in a comment.'
-              : '> **Action required:** Fix the failing checks and push your changes. This PR has been converted to draft until all checks pass.';
+              : '> ❌ **Action required:** Fix the failing checks and push your changes. Once resolved, mark this PR as Ready for Review to re-trigger CI.';
 
             const body = [
               '<!-- pr-validation-summary -->',
@@ -142,8 +168,10 @@ jobs:
 
       # Step 2: Auto-convert PR to draft if checks fail (best-effort)
       # Uses GH_PAT because GITHUB_TOKEN cannot call convertPullRequestToDraft.
-      # If GH_PAT is not configured, this step is skipped gracefully.
-      - uses: actions/github-script@v8
+      # If GH_PAT is not configured, the CI Gate job still blocks the merge via
+      # branch protection Required Status Checks — auto-draft is a UX convenience on top.
+      - name: Convert PR to draft on failure
+        uses: actions/github-script@v8
         if: needs.format.result != 'success' || needs.build-and-test.result != 'success'
         continue-on-error: true
         env:
@@ -152,7 +180,7 @@ jobs:
           github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           script: |
             if (!process.env.GH_PAT) {
-              console.log('⚠️  GH_PAT not configured — skipping auto-draft');
+              console.log('⚠️  GH_PAT not configured — skipping auto-draft (CI Gate blocks merge via branch protection)');
               return;
             }
             const isDraft = context.payload.pull_request.draft;
