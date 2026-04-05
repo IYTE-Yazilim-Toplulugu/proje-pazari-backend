@@ -140,7 +140,7 @@ jobs:
               '',
               actionNote,
               '',
-              `_Commit: \`${context.sha.slice(0, 7)}\`_`,
+              `_Commit: \`${context.payload.pull_request.head.sha.slice(0, 7)}\`_`,
             ].join('\n');
 
             // Update existing comment or create new one (no duplicates)
