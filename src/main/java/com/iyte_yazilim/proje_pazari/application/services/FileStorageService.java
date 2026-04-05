@@ -2,11 +2,11 @@ package com.iyte_yazilim.proje_pazari.application.services;
 
 import aj.org.objectweb.asm.commons.InstructionAdapter;
 import com.github.f4b6a3.ulid.UlidCreator;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,16 +34,6 @@ public class FileStorageService {
     @Value("${storage.buckets.documents:proje-pazari-documents}")
     private String documentsBucket;
 
-    public String store(MultipartFile multipartFile, String path) throws IOException {
-        FileUpload fileUpload = new FileUpload(
-                multipartFile.getOriginalFilename(),
-                multipartFile.getContentType(),
-                multipartFile.getBytes(),
-                multipartFile.getSize()
-        );
-        return fileStorageAdapter.store(fileUpload, path);
-    }
-
     /**
      * Stores a file in cloud storage.
      *
@@ -52,13 +42,12 @@ public class FileStorageService {
      * @return the file URL
      */
     public String storeFile(MultipartFile file, String directory) {
-        // Validate file type
         validateFile(file);
 
         String fileName = generateUniqueFileName(file.getOriginalFilename());
         String path = directory + "/" + fileName;
 
-        return storageAdapter.store(file, path);
+        return storageAdapter.store(toFileUpload(file), path);
     }
 
     /**
@@ -72,7 +61,7 @@ public class FileStorageService {
 
         String extension = getFileExtension(file.getOriginalFilename());
         String objectName = "users/" + userId + "/avatar" + extension;
-        return storageAdapter.store(file, avatarsBucket + "/" + objectName);
+        return storageAdapter.store(toFileUpload(file), avatarsBucket + "/" + objectName);
     }
 
     /**
@@ -87,7 +76,7 @@ public class FileStorageService {
 
         String extension = getFileExtension(file.getOriginalFilename());
         String objectName = "projects/" + projectId + "/" + documentId + extension;
-        return storageAdapter.store(file, documentsBucket + "/" + objectName);
+        return storageAdapter.store(toFileUpload(file), documentsBucket + "/" + objectName);
     }
 
     public String getFileUrl(String filePath, int expirationMinutes) {
@@ -128,6 +117,23 @@ public class FileStorageService {
     public FileMetadata getFileMetadata(String path) {
         validatePath(path);
         return storageAdapter.getMetadata(path);
+    }
+
+    /**
+     * Converts a Spring MultipartFile to a domain FileUpload value object.
+     * This is the boundary point where the Spring web type is translated
+     * into a framework-independent domain type.
+     */
+    private FileUpload toFileUpload(MultipartFile file) {
+        try {
+            return new FileUpload(
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getBytes(),
+                    file.getSize());
+        } catch (java.io.IOException e) {
+            throw new FileStorageException("Failed to read file content", e);
+        }
     }
 
     /**
@@ -176,18 +182,16 @@ public class FileStorageService {
      */
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new FileValidationException("File is empty");
+            throw new FileStorageException("File is empty");
         }
-
         if (file.getSize() > maxFileSize.toBytes()) {
-            throw new FileValidationException(
+            throw new FileStorageException(
                     String.format("File size exceeds the maximum allowed size of %s", maxFileSize));
         }
-
         String contentType = file.getContentType();
         List<String> allowedContentTypes = getAllowedContentTypes();
         if (contentType == null || !allowedContentTypes.contains(contentType)) {
-            throw new FileValidationException(
+            throw new FileStorageException(
                     "File type not allowed. Allowed types: " + allowedContentTypes);
         }
     }
