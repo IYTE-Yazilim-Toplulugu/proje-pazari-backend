@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
@@ -71,7 +70,6 @@ class MinioStorageAdapterIntegrationTest {
 
         BusinessMetricsService metricsService = mock(BusinessMetricsService.class);
         when(metricsService.getMinioUploadTimer()).thenReturn(uploadTimer);
-
 
         adapter =
                 new MinioStorageAdapter(
