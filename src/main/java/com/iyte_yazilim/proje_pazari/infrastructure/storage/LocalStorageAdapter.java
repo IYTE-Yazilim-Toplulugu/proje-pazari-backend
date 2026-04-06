@@ -131,12 +131,12 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
             }
 
             if (!Files.exists(filePath)) {
-                throw new FileStorageException("File not found: " + path);
+                throw new FileValidationException("File not found: " + path);
             }
 
             return Files.readAllBytes(filePath);
         } catch (IOException e) {
-            throw new FileStorageException("Failed to retrieve file", e);
+            throw new FileValidationException("Failed to retrieve file", e);
         }
     }
 
