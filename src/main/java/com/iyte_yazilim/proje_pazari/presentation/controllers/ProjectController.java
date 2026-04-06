@@ -8,7 +8,6 @@ import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllProjects.GetAllProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getProject.GetProjectQuery;
-import com.iyte_yazilim.proje_pazari.application.queries.getUserProjects.GetUserProjectsQuery;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
