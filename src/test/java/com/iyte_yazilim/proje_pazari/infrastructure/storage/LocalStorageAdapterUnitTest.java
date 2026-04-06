@@ -151,7 +151,8 @@ class LocalStorageAdapterUnitTest {
         @Test
         @DisplayName("should throw when file not found")
         void shouldThrowWhenFileNotFound() {
-            assertThrows(FileValidationException.class, () -> adapter.getMetadata("nonexistent.txt"));
+            assertThrows(
+                    FileValidationException.class, () -> adapter.getMetadata("nonexistent.txt"));
         }
 
         @Test
