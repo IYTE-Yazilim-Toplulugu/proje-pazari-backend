@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -71,7 +72,16 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                         .andReturn();
 
         var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
-        return jsonNode.get("data").get("projectId").asText();
+        String projectId = jsonNode.get("data").get("projectId").asText();
+
+        mockMvc.perform(
+                        patch("/api/v1/projects/" + projectId + "/status")
+                                .header("Authorization", "Bearer " + ownerToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"newStatus\": \"OPEN\"}"))
+                .andExpect(status().isOk());
+
+        return projectId;
     }
 
     private String submitApplicationUrl(String projectId) {
