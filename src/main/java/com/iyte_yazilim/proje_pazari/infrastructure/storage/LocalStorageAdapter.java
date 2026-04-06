@@ -102,7 +102,7 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
             }
 
             if (!Files.exists(filePath)) {
-                throw new FileStorageException("File not found: " + path);
+                throw new FileValidationException("File not found: " + path);
             }
 
             BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
