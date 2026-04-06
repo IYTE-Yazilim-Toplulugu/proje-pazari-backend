@@ -157,7 +157,8 @@ class LocalStorageAdapterUnitTest {
         @Test
         @DisplayName("should throw when path traversal detected")
         void shouldThrowOnPathTraversal() {
-            assertThrows(FileValidationException.class, () -> adapter.getMetadata("../outside.txt"));
+            assertThrows(
+                    FileValidationException.class, () -> adapter.getMetadata("../outside.txt"));
         }
     }
 
@@ -180,7 +181,8 @@ class LocalStorageAdapterUnitTest {
         @DisplayName("should throw when file not found")
         void shouldThrowWhenFileNotFound() {
             assertThrows(
-                    FileValidationException.class, () -> adapter.retrieveAsBytes("nonexistent.txt"));
+                    FileValidationException.class,
+                    () -> adapter.retrieveAsBytes("nonexistent.txt"));
         }
 
         @Test
