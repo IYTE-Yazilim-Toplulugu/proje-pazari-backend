@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
@@ -367,7 +368,7 @@ class MinioStorageAdapterUnitTest {
             byte[] content = "content".getBytes();
             FileUpload file = new FileUpload("test.txt", "text/plain", content, content.length);
 
-            assertThrows(FileStorageException.class, () -> adapter.store(file, null));
+            assertThrows(FileValidationException.class, () -> adapter.store(file, null));
         }
 
         @Test
@@ -376,7 +377,7 @@ class MinioStorageAdapterUnitTest {
             byte[] content = "content".getBytes();
             FileUpload file = new FileUpload("test.txt", "text/plain", content, content.length);
 
-            assertThrows(FileStorageException.class, () -> adapter.store(file, "   "));
+            assertThrows(FileValidationException.class, () -> adapter.store(file, "   "));
         }
 
         @Test

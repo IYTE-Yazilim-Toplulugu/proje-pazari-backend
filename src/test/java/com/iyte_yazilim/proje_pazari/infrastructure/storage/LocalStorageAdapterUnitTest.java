@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import java.nio.file.Files;
@@ -125,7 +126,7 @@ class LocalStorageAdapterUnitTest {
         @Test
         @DisplayName("should throw when path traversal detected")
         void shouldThrowOnPathTraversal() {
-            assertThrows(FileStorageException.class, () -> adapter.delete("../outside.txt"));
+            assertThrows(FileValidationException.class, () -> adapter.delete("../outside.txt"));
         }
     }
 
@@ -156,7 +157,7 @@ class LocalStorageAdapterUnitTest {
         @Test
         @DisplayName("should throw when path traversal detected")
         void shouldThrowOnPathTraversal() {
-            assertThrows(FileStorageException.class, () -> adapter.getMetadata("../outside.txt"));
+            assertThrows(FileValidationException.class, () -> adapter.getMetadata("../outside.txt"));
         }
     }
 
@@ -179,14 +180,14 @@ class LocalStorageAdapterUnitTest {
         @DisplayName("should throw when file not found")
         void shouldThrowWhenFileNotFound() {
             assertThrows(
-                    FileStorageException.class, () -> adapter.retrieveAsBytes("nonexistent.txt"));
+                    FileValidationException.class, () -> adapter.retrieveAsBytes("nonexistent.txt"));
         }
 
         @Test
         @DisplayName("should throw when path traversal detected")
         void shouldThrowOnPathTraversal() {
             assertThrows(
-                    FileStorageException.class, () -> adapter.retrieveAsBytes("../outside.txt"));
+                    FileValidationException.class, () -> adapter.retrieveAsBytes("../outside.txt"));
         }
     }
 
