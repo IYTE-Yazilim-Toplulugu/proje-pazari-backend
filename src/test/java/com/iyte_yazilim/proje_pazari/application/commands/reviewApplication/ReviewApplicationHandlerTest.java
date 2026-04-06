@@ -93,6 +93,8 @@ class ReviewApplicationHandlerTest {
 
         when(applicationRepository.findById(applicationId))
                 .thenReturn(Optional.of(applicationEntity));
+        when(projectRepository.findByIdWithLock(applicationEntity.getProject().getId()))
+                .thenReturn(Optional.of(applicationEntity.getProject()));
         when(applicationRepository.save(applicationEntity)).thenReturn(applicationEntity);
 
         ApiResponse<ReviewApplicationCommandResult> response = handler.handle(command);

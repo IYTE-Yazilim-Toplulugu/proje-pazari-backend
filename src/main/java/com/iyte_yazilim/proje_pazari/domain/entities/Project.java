@@ -93,10 +93,6 @@ public class Project extends BaseEntity<Ulid> {
             throw new IllegalArgumentException("New status cannot be null.");
         }
 
-        if (this.status == newStatus) {
-            return; // Ignore redundant transitions
-        }
-
         boolean isValidTransition =
                 switch (this.status) {
                     case DRAFT ->
@@ -156,8 +152,14 @@ public class Project extends BaseEntity<Ulid> {
         return this.status != ProjectStatus.COMPLETED && this.status != ProjectStatus.CANCELLED;
     }
 
-    // --- INFRASTRUCTURE/MAPPING ONLY ---
-    // Safely reconstitutes the domain object from the database without firing state machine rules
+    /**
+     * INFRASTRUCTURE USE ONLY. Called by {@link
+     * com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper} to hydrate
+     * this object from persistence without triggering state machine validation.
+     *
+     * <p>Do NOT call this from business logic or application services. For status transitions, use
+     * {@link #transitionTo(ProjectStatus)}.
+     */
     public void reconstitute(ProjectStatus status, Integer currentTeamSize) {
         this.status = status;
         this.currentTeamSize = currentTeamSize != null ? currentTeamSize : 0;

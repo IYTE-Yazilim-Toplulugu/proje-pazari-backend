@@ -41,7 +41,7 @@ public class UpdateProjectStatusHandler
     private final ProjectApplicationRepository applicationRepository;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final ProjectMapper projectMapper; // <-- Added mapper injection
+    private final ProjectMapper projectMapper;
 
     @Override
     @Transactional(

@@ -5,6 +5,7 @@ import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationReviewedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
@@ -37,11 +38,10 @@ public class ReviewApplicationHandler
                 ReviewApplicationCommand, ApiResponse<ReviewApplicationCommandResult>> {
 
     private final ProjectApplicationRepository applicationRepository;
-    private final ProjectRepository
-            projectRepository; // <-- Added to persist the incremented team size
+    private final ProjectRepository projectRepository;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final ProjectMapper projectMapper; // <-- Added mapper injection
+    private final ProjectMapper projectMapper;
 
     @Override
     @Transactional(
@@ -66,7 +66,11 @@ public class ReviewApplicationHandler
 
         // --- 3. Enforce Domain Rules for Approvals ---
         if (command.status() == ApplicationStatus.APPROVED) {
-            ProjectEntity projectEntity = applicationEntity.getProject();
+            String projectId = applicationEntity.getProject().getId();
+            ProjectEntity projectEntity =
+                    projectRepository
+                            .findByIdWithLock(projectId)
+                            .orElseThrow(() -> new ProjectNotFoundException(projectId));
             Project projectDomain = projectMapper.entityToDomain(projectEntity);
 
             // Check if project is OPEN and not full
