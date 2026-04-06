@@ -180,16 +180,16 @@ public class FileStorageService {
      */
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new FileStorageException("File is empty");
+            throw new FileValidationException("File is empty");
         }
         if (file.getSize() > maxFileSize.toBytes()) {
-            throw new FileStorageException(
+            throw new FileValidationException(
                     String.format("File size exceeds the maximum allowed size of %s", maxFileSize));
         }
         String contentType = file.getContentType();
         List<String> allowedContentTypes = getAllowedContentTypes();
         if (contentType == null || !allowedContentTypes.contains(contentType)) {
-            throw new FileStorageException(
+            throw new FileValidationException(
                     "File type not allowed. Allowed types: " + allowedContentTypes);
         }
     }
