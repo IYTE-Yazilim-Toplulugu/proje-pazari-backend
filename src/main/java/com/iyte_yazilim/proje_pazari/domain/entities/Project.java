@@ -99,4 +99,18 @@ public class Project extends BaseEntity<Ulid> {
     public void setOwner(User owner) {
         this.owner = owner;
     }
+
+    public boolean canAcceptApplications() {
+        return status == ProjectStatus.OPEN
+                && (maxTeamSize == null
+                        || currentTeamSize == null
+                        || currentTeamSize < maxTeamSize);
+    }
+
+    public void incrementTeamSize() {
+        if (maxTeamSize != null && currentTeamSize != null && currentTeamSize >= maxTeamSize) {
+            throw new IllegalStateException("Project has reached its maximum team size.");
+        }
+        currentTeamSize = (currentTeamSize == null ? 0 : currentTeamSize) + 1;
+    }
 }
