@@ -294,6 +294,7 @@ class MinioStorageAdapterUnitTest {
             assertEquals("deep-file.txt", metadata.getFileName());
         }
     }
+
     @Nested
     @DisplayName("isAvailable() method")
     class IsAvailableTests {
@@ -301,7 +302,8 @@ class MinioStorageAdapterUnitTest {
         @Test
         @DisplayName("should return true when storage is available")
         void shouldReturnTrueWhenAvailable() throws Exception {
-            when(mockMinioClient.bucketExists(any(io.minio.BucketExistsArgs.class))).thenReturn(true);
+            when(mockMinioClient.bucketExists(any(io.minio.BucketExistsArgs.class)))
+                    .thenReturn(true);
             when(mockMinioClient.listBuckets()).thenReturn(java.util.List.of());
 
             assertTrue(adapter.isAvailable());
@@ -310,7 +312,8 @@ class MinioStorageAdapterUnitTest {
         @Test
         @DisplayName("should return false when bucket does not exist")
         void shouldReturnFalseWhenBucketNotExist() throws Exception {
-            when(mockMinioClient.bucketExists(any(io.minio.BucketExistsArgs.class))).thenReturn(false);
+            when(mockMinioClient.bucketExists(any(io.minio.BucketExistsArgs.class)))
+                    .thenReturn(false);
 
             assertFalse(adapter.isAvailable());
         }
@@ -345,7 +348,8 @@ class MinioStorageAdapterUnitTest {
         @Test
         @DisplayName("should return empty list when exception thrown")
         void shouldReturnEmptyListWhenExceptionThrown() throws Exception {
-            when(mockMinioClient.listBuckets()).thenThrow(new RuntimeException("Connection failed"));
+            when(mockMinioClient.listBuckets())
+                    .thenThrow(new RuntimeException("Connection failed"));
 
             java.util.List<String> buckets = adapter.listBuckets();
 
@@ -420,7 +424,8 @@ class MinioStorageAdapterUnitTest {
         @Test
         @DisplayName("should increment download success metric")
         void shouldIncrementDownloadSuccessMetric() throws Exception {
-            when(mockMinioClient.getPresignedObjectUrl(any(io.minio.GetPresignedObjectUrlArgs.class)))
+            when(mockMinioClient.getPresignedObjectUrl(
+                            any(io.minio.GetPresignedObjectUrlArgs.class)))
                     .thenReturn("http://example.com/file");
 
             adapter.generatePresignedUrl("test/file.txt", 60);
@@ -431,7 +436,8 @@ class MinioStorageAdapterUnitTest {
         @Test
         @DisplayName("should increment download failure metric when URL generation fails")
         void shouldIncrementDownloadFailureMetric() throws Exception {
-            when(mockMinioClient.getPresignedObjectUrl(any(io.minio.GetPresignedObjectUrlArgs.class)))
+            when(mockMinioClient.getPresignedObjectUrl(
+                            any(io.minio.GetPresignedObjectUrlArgs.class)))
                     .thenThrow(new RuntimeException("Failed"));
 
             assertThrows(

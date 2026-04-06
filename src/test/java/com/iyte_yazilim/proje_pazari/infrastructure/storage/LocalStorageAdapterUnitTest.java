@@ -46,7 +46,8 @@ class LocalStorageAdapterUnitTest {
             byte[] original = "original".getBytes();
             byte[] updated = "updated content".getBytes();
 
-            adapter.store(new FileUpload("f.txt", "text/plain", original, original.length), "f.txt");
+            adapter.store(
+                    new FileUpload("f.txt", "text/plain", original, original.length), "f.txt");
             adapter.store(new FileUpload("f.txt", "text/plain", updated, updated.length), "f.txt");
 
             assertTrue(adapter.exists("f.txt"));
@@ -58,8 +59,7 @@ class LocalStorageAdapterUnitTest {
             byte[] content = "content".getBytes();
             FileUpload file = new FileUpload("test.txt", "text/plain", content, content.length);
 
-            assertThrows(FileStorageException.class,
-                    () -> adapter.store(file, "../outside.txt"));
+            assertThrows(FileStorageException.class, () -> adapter.store(file, "../outside.txt"));
         }
 
         @Test
@@ -125,8 +125,7 @@ class LocalStorageAdapterUnitTest {
         @Test
         @DisplayName("should throw when path traversal detected")
         void shouldThrowOnPathTraversal() {
-            assertThrows(FileStorageException.class,
-                    () -> adapter.delete("../outside.txt"));
+            assertThrows(FileStorageException.class, () -> adapter.delete("../outside.txt"));
         }
     }
 
@@ -138,7 +137,8 @@ class LocalStorageAdapterUnitTest {
         @DisplayName("should return metadata for existing file")
         void shouldReturnMetadataForExistingFile() {
             byte[] content = "metadata content".getBytes();
-            adapter.store(new FileUpload("meta.txt", "text/plain", content, content.length), "meta.txt");
+            adapter.store(
+                    new FileUpload("meta.txt", "text/plain", content, content.length), "meta.txt");
 
             FileMetadata metadata = adapter.getMetadata("meta.txt");
 
@@ -150,15 +150,13 @@ class LocalStorageAdapterUnitTest {
         @Test
         @DisplayName("should throw when file not found")
         void shouldThrowWhenFileNotFound() {
-            assertThrows(FileStorageException.class,
-                    () -> adapter.getMetadata("nonexistent.txt"));
+            assertThrows(FileStorageException.class, () -> adapter.getMetadata("nonexistent.txt"));
         }
 
         @Test
         @DisplayName("should throw when path traversal detected")
         void shouldThrowOnPathTraversal() {
-            assertThrows(FileStorageException.class,
-                    () -> adapter.getMetadata("../outside.txt"));
+            assertThrows(FileStorageException.class, () -> adapter.getMetadata("../outside.txt"));
         }
     }
 
@@ -180,15 +178,15 @@ class LocalStorageAdapterUnitTest {
         @Test
         @DisplayName("should throw when file not found")
         void shouldThrowWhenFileNotFound() {
-            assertThrows(FileStorageException.class,
-                    () -> adapter.retrieveAsBytes("nonexistent.txt"));
+            assertThrows(
+                    FileStorageException.class, () -> adapter.retrieveAsBytes("nonexistent.txt"));
         }
 
         @Test
         @DisplayName("should throw when path traversal detected")
         void shouldThrowOnPathTraversal() {
-            assertThrows(FileStorageException.class,
-                    () -> adapter.retrieveAsBytes("../outside.txt"));
+            assertThrows(
+                    FileStorageException.class, () -> adapter.retrieveAsBytes("../outside.txt"));
         }
     }
 

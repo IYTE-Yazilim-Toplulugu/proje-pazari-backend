@@ -7,8 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
-import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
+import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeAll;
@@ -96,7 +96,8 @@ class MinioStorageAdapterIntegrationTest {
     void shouldGeneratePresignedUrl() {
         // Given
         byte[] content = "Test content".getBytes();
-        FileUpload file = new FileUpload("presigned-test.txt", "text/plain", content, content.length);
+        FileUpload file =
+                new FileUpload("presigned-test.txt", "text/plain", content, content.length);
         String path = "test/presigned-test.txt";
         adapter.store(file, path);
 
@@ -137,7 +138,8 @@ class MinioStorageAdapterIntegrationTest {
     void shouldGetFileMetadata() {
         // Given
         byte[] content = "Metadata test content".getBytes();
-        FileUpload file = new FileUpload("metadata-test.txt", "text/plain", content, content.length);
+        FileUpload file =
+                new FileUpload("metadata-test.txt", "text/plain", content, content.length);
         String path = "test/metadata-test.txt";
         adapter.store(file, path);
 
@@ -166,7 +168,8 @@ class MinioStorageAdapterIntegrationTest {
     void shouldStoreFileWithDifferentContentTypes() {
         // Given - Image file
         byte[] imageContent = new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47}; // PNG header
-        FileUpload imageFile = new FileUpload("image.png", "image/png", imageContent, imageContent.length);
+        FileUpload imageFile =
+                new FileUpload("image.png", "image/png", imageContent, imageContent.length);
         String imagePath = "profiles/user123.png";
 
         // When
