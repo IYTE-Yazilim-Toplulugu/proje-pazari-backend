@@ -110,8 +110,10 @@ public class ElasticsearchEventListener {
     public void handleUserDeleted(UserDeletedEvent event) {
         try {
             log.debug("Removing deleted user from index: {}", event.getUserId());
-            syncService.deleteUserIndex(event.getUserId().toString());
+            syncService.deleteUserIndex(event.getUserId());
+            metricsService.incrementEsDeleteSuccess();
         } catch (Exception e) {
+            metricsService.incrementEsDeleteFailure();
             log.error(
                     "Failed to remove user {} from index: {}",
                     event.getUserId(),

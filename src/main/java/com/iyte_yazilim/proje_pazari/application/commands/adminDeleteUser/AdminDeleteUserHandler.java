@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser;
 
-import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.events.UserDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
@@ -33,7 +32,7 @@ public class AdminDeleteUserHandler
         userRepository.save(user);
 
         // Publish user deleted event for Elasticsearch indexing
-        applicationEventPublisher.publishEvent(new UserDeletedEvent(Ulid.from(command.userId())));
+        applicationEventPublisher.publishEvent(new UserDeletedEvent(command.userId()));
 
         return ApiResponse.success(null, "User deleted (deactivated) successfully");
     }
