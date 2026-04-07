@@ -18,7 +18,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Document(indexName = "users")
+@Document(indexName = "#{@environment.getProperty('app.elasticsearch.user-index', 'users')}")
 @Setting(settingPath = "elasticsearch/user-settings.json")
 public class UserDocument {
 
