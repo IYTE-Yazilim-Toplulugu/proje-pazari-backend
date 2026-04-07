@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.commands.importProjectsFromCsv;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.ImportResultDTO;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;

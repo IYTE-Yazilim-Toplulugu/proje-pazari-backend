@@ -1,10 +1,10 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getUser;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;

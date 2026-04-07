@@ -1,11 +1,11 @@
 package com.iyte_yazilim.proje_pazari.application.commands.refreshToken;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.ITokenService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
