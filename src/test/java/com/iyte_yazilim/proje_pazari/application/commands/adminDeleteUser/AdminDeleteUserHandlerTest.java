@@ -1,10 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.events.UserDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -17,11 +19,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class AdminDeleteUserHandlerTest {
 
     @Mock private UserRepository userRepository;
+
+    @Mock private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks private AdminDeleteUserHandler handler;
 
@@ -47,6 +52,7 @@ class AdminDeleteUserHandlerTest {
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertFalse(userEntity.getIsActive());
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent(any(UserDeletedEvent.class));
     }
 
     @Test
