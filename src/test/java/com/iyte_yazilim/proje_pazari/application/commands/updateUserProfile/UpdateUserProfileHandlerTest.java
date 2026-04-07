@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
+
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
@@ -98,6 +100,7 @@ class UpdateUserProfileHandlerTest {
         assertEquals("Doe", response.getData().lastName());
         assertEquals("Software Engineer", response.getData().description());
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent(any(UserUpdatedEvent.class));
     }
 
     @Test

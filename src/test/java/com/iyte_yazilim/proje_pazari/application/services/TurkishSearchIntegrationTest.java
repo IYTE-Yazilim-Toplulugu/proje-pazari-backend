@@ -6,6 +6,8 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDo
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserDocument;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,7 @@ class TurkishSearchIntegrationTest {
         registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
         registry.add("spring.data.elasticsearch.enabled", () -> "true");
         registry.add("spring.data.elasticsearch.repositories.enabled", () -> "true");
+        registry.add("spring.autoconfigure.exclude", () -> "");
     }
 
     @Autowired private ProjectSearchService projectSearchService;
@@ -51,12 +54,9 @@ class TurkishSearchIntegrationTest {
         elasticsearchOperations.indexOps(ProjectDocument.class).delete();
         elasticsearchOperations.indexOps(UserDocument.class).delete();
 
-        // Create fresh indices with mappings
-        elasticsearchOperations.indexOps(ProjectDocument.class).create();
-        elasticsearchOperations.indexOps(ProjectDocument.class).putMapping();
-
-        elasticsearchOperations.indexOps(UserDocument.class).create();
-        elasticsearchOperations.indexOps(UserDocument.class).putMapping();
+        // Create fresh indices with settings (analyzer) and mappings
+        elasticsearchOperations.indexOps(ProjectDocument.class).createWithMapping();
+        elasticsearchOperations.indexOps(UserDocument.class).createWithMapping();
     }
 
     // ========== PROJECT TITLE TESTS ==========
@@ -217,7 +217,7 @@ class TurkishSearchIntegrationTest {
     // ========== USER DOCUMENT TESTS ==========
 
     @Test
-    @DisplayName("Should match Turkish characters in user fullName")
+    @DisplayName("Should match 'c' with 'ç' and 'g' with 'ğ' in user fullName")
     void shouldMatchTurkishCharactersInUserFullName() {
         UserDocument user = new UserDocument();
         user.setId("user1");
@@ -230,16 +230,20 @@ class TurkishSearchIntegrationTest {
         elasticsearchOperations.save(user);
         elasticsearchOperations.indexOps(UserDocument.class).refresh();
 
-        // Note: We need a user search service to test this properly
-        // For now, we can verify the document was indexed with correct analyzer
-        UserDocument indexed = elasticsearchOperations.get("user1", UserDocument.class);
+        // Search without diacritics to verify the turkish_search analyzer is applied
+        NativeQuery query =
+                NativeQuery.builder()
+                        .withQuery(q -> q.match(m -> m.field("fullName").query("cagri ozturk")))
+                        .build();
+        SearchHits<UserDocument> hits = elasticsearchOperations.search(query, UserDocument.class);
 
-        assertThat(indexed).isNotNull();
-        assertThat(indexed.getFullName()).isEqualTo("Çağrı Öztürk");
+        assertThat(hits.getTotalHits()).isGreaterThan(0);
+        assertThat(hits.getSearchHits().get(0).getContent().getFullName())
+                .isEqualTo("Çağrı Öztürk");
     }
 
     @Test
-    @DisplayName("Should match Turkish characters in user description")
+    @DisplayName("Should match 'i' with 'ı' and 's' with 'ş' in user description")
     void shouldMatchTurkishCharactersInUserDescription() {
         UserDocument user = new UserDocument();
         user.setId("user2");
@@ -253,10 +257,16 @@ class TurkishSearchIntegrationTest {
         elasticsearchOperations.save(user);
         elasticsearchOperations.indexOps(UserDocument.class).refresh();
 
-        UserDocument indexed = elasticsearchOperations.get("user2", UserDocument.class);
+        // Search without diacritics to verify the turkish_search analyzer is applied
+        NativeQuery query =
+                NativeQuery.builder()
+                        .withQuery(q -> q.match(m -> m.field("description").query("yazilim")))
+                        .build();
+        SearchHits<UserDocument> hits = elasticsearchOperations.search(query, UserDocument.class);
 
-        assertThat(indexed).isNotNull();
-        assertThat(indexed.getDescription()).contains("Yazılım");
+        assertThat(hits.getTotalHits()).isGreaterThan(0);
+        assertThat(hits.getSearchHits().get(0).getContent().getDescription())
+                .contains("Yazılım");
     }
 
     // ========== MIXED CASE AND COMPLEX TESTS ==========
