@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,7 +51,7 @@ class FileStorageServiceTest {
         when(file.getOriginalFilename()).thenReturn("photo.jpg");
         when(file.getSize()).thenReturn(1024L);
         when(file.isEmpty()).thenReturn(false);
-        when(storageAdapter.store(any(MultipartFile.class), anyString()))
+        when(storageAdapter.store(any(FileUpload.class), anyString()))
                 .thenReturn("https://storage.example.com/profiles/photo.jpg");
 
         // When
@@ -59,7 +60,7 @@ class FileStorageServiceTest {
         // Then
         assertNotNull(url);
         assertTrue(url.contains("storage.example.com"));
-        verify(storageAdapter).store(any(MultipartFile.class), anyString());
+        verify(storageAdapter).store(any(FileUpload.class), anyString());
     }
 
     @Test
@@ -262,7 +263,7 @@ class FileStorageServiceTest {
         when(file.getOriginalFilename()).thenReturn("document.pdf");
         when(file.getSize()).thenReturn(5000L);
         when(file.isEmpty()).thenReturn(false);
-        when(storageAdapter.store(any(MultipartFile.class), anyString()))
+        when(storageAdapter.store(any(FileUpload.class), anyString()))
                 .thenReturn("https://storage.example.com/docs/document.pdf");
 
         // When
@@ -270,7 +271,7 @@ class FileStorageServiceTest {
 
         // Then
         assertNotNull(url);
-        verify(storageAdapter).store(any(MultipartFile.class), anyString());
+        verify(storageAdapter).store(any(FileUpload.class), anyString());
     }
 
     @Test
@@ -282,7 +283,7 @@ class FileStorageServiceTest {
         when(file.getOriginalFilename()).thenReturn("image.webp");
         when(file.getSize()).thenReturn(2048L);
         when(file.isEmpty()).thenReturn(false);
-        when(storageAdapter.store(any(MultipartFile.class), anyString()))
+        when(storageAdapter.store(any(FileUpload.class), anyString()))
                 .thenReturn("https://storage.example.com/profiles/image.webp");
 
         // When
@@ -290,7 +291,7 @@ class FileStorageServiceTest {
 
         // Then
         assertNotNull(url);
-        verify(storageAdapter).store(any(MultipartFile.class), anyString());
+        verify(storageAdapter).store(any(FileUpload.class), anyString());
     }
 
     @Test
@@ -302,7 +303,7 @@ class FileStorageServiceTest {
         when(file.getOriginalFilename()).thenReturn("animation.gif");
         when(file.getSize()).thenReturn(3072L);
         when(file.isEmpty()).thenReturn(false);
-        when(storageAdapter.store(any(MultipartFile.class), anyString()))
+        when(storageAdapter.store(any(FileUpload.class), anyString()))
                 .thenReturn("https://storage.example.com/profiles/animation.gif");
 
         // When
@@ -310,7 +311,7 @@ class FileStorageServiceTest {
 
         // Then
         assertNotNull(url);
-        verify(storageAdapter).store(any(MultipartFile.class), anyString());
+        verify(storageAdapter).store(any(FileUpload.class), anyString());
     }
 
     @Test
@@ -322,14 +323,14 @@ class FileStorageServiceTest {
         when(file.getOriginalFilename()).thenReturn("photo.jpg");
         when(file.getSize()).thenReturn(1024L);
         when(file.isEmpty()).thenReturn(false);
-        when(storageAdapter.store(any(MultipartFile.class), anyString())).thenReturn("stored-url");
+        when(storageAdapter.store(any(FileUpload.class), anyString())).thenReturn("stored-url");
 
         // When
         fileStorageService.storeFile(file, "projects/user123");
 
         // Then
         ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
-        verify(storageAdapter).store(any(MultipartFile.class), pathCaptor.capture());
+        verify(storageAdapter).store(any(FileUpload.class), pathCaptor.capture());
         assertTrue(pathCaptor.getValue().startsWith("projects/user123/"));
         assertTrue(pathCaptor.getValue().endsWith(".jpg"));
     }

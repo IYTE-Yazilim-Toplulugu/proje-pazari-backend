@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.commands.logout;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.ITokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;

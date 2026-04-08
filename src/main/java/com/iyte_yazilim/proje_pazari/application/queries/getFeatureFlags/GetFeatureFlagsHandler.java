@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getFeatureFlags;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.FeatureFlagDTO;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.FeatureFlagRepository;
 import java.util.List;
