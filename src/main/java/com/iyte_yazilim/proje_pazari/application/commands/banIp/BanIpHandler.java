@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.banIp;
 
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.BannedIpRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.BannedIpEntity;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;

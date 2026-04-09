@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getUserApplications;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationDto;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedApplicationsResult;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;

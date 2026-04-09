@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getFlaggedContent;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.FlaggedContentDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.FlaggedContentRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.FlaggedContentEntity;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;

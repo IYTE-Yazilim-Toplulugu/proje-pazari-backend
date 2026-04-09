@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.queries.searchProjects;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.ProjectSearchService;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.util.List;

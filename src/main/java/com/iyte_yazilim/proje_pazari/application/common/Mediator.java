@@ -1,7 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.common;
 
 import com.iyte_yazilim.proje_pazari.application.behaviors.IPipelineBehavior;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;

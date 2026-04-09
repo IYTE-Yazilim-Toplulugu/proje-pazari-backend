@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.domain.interfaces;
 
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import java.util.List;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Interface for file storage operations. Implementations can use Azure Blob, AWS S3, MinIO, etc.
@@ -16,7 +16,7 @@ public interface IFileStorageAdapter {
      * @param path the storage path (e.g., "profiles/user123.jpg")
      * @return the storage URL or identifier
      */
-    String store(MultipartFile file, String path);
+    String store(FileUpload file, String path);
 
     /**
      * Generates a pre-signed URL for secure file access.

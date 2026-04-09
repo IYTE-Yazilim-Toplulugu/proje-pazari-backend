@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.queries.exportProjects;
 
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;

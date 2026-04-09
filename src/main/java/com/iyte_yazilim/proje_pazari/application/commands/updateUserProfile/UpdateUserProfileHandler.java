@@ -1,14 +1,13 @@
 package com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -22,6 +21,7 @@ public class UpdateUserProfileHandler
     private final UserRepository userRepository;
     private final UserDtoMapper userDtoMapper;
     private final MessageService messageService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional(
@@ -54,6 +54,13 @@ public class UpdateUserProfileHandler
 
         UserEntity savedUser = userRepository.save(user);
         UserDto userDto = userDtoMapper.toDto(savedUser);
+
+        applicationEventPublisher.publishEvent(
+                new UserUpdatedEvent(
+                        savedUser.getId().toString(),
+                        savedUser.getEmail(),
+                        savedUser.getFirstName(),
+                        LocalDateTime.now()));
 
         return ApiResponse.success(userDto, messageService.getMessage("user.profile.updated"));
     }

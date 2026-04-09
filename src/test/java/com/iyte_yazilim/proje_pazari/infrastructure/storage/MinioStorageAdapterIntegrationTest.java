@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
-import org.springframework.mock.web.MockMultipartFile;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -80,7 +80,7 @@ class MinioStorageAdapterIntegrationTest {
     void shouldStoreAndRetrieveFile() {
         // Given
         byte[] content = "Hello, MinIO!".getBytes();
-        MockMultipartFile file = new MockMultipartFile("file", "test.txt", "text/plain", content);
+        FileUpload file = new FileUpload("test.txt", "text/plain", content, content.length);
         String path = "test/hello.txt";
 
         // When
@@ -96,8 +96,8 @@ class MinioStorageAdapterIntegrationTest {
     void shouldGeneratePresignedUrl() {
         // Given
         byte[] content = "Test content".getBytes();
-        MockMultipartFile file =
-                new MockMultipartFile("file", "presigned-test.txt", "text/plain", content);
+        FileUpload file =
+                new FileUpload("presigned-test.txt", "text/plain", content, content.length);
         String path = "test/presigned-test.txt";
         adapter.store(file, path);
 
@@ -113,8 +113,7 @@ class MinioStorageAdapterIntegrationTest {
     void shouldDeleteFile() {
         // Given
         byte[] content = "To be deleted".getBytes();
-        MockMultipartFile file =
-                new MockMultipartFile("file", "delete-test.txt", "text/plain", content);
+        FileUpload file = new FileUpload("delete-test.txt", "text/plain", content, content.length);
         String path = "test/delete-test.txt";
         adapter.store(file, path);
         assertTrue(adapter.exists(path));
@@ -139,8 +138,8 @@ class MinioStorageAdapterIntegrationTest {
     void shouldGetFileMetadata() {
         // Given
         byte[] content = "Metadata test content".getBytes();
-        MockMultipartFile file =
-                new MockMultipartFile("file", "metadata-test.txt", "text/plain", content);
+        FileUpload file =
+                new FileUpload("metadata-test.txt", "text/plain", content, content.length);
         String path = "test/metadata-test.txt";
         adapter.store(file, path);
 
@@ -165,8 +164,8 @@ class MinioStorageAdapterIntegrationTest {
     void shouldStoreFileWithDifferentContentTypes() {
         // Given - Image file
         byte[] imageContent = new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47}; // PNG header
-        MockMultipartFile imageFile =
-                new MockMultipartFile("file", "image.png", "image/png", imageContent);
+        FileUpload imageFile =
+                new FileUpload("image.png", "image/png", imageContent, imageContent.length);
         String imagePath = "profiles/user123.png";
 
         // When
@@ -184,7 +183,7 @@ class MinioStorageAdapterIntegrationTest {
     void shouldHandleNestedPaths() {
         // Given
         byte[] content = "Nested content".getBytes();
-        MockMultipartFile file = new MockMultipartFile("file", "deep.txt", "text/plain", content);
+        FileUpload file = new FileUpload("deep.txt", "text/plain", content, content.length);
         String path = "level1/level2/level3/deep.txt";
 
         // When

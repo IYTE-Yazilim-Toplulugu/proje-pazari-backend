@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.updateFeatureFlag;
 
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.FeatureFlagRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.FeatureFlagEntity;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;

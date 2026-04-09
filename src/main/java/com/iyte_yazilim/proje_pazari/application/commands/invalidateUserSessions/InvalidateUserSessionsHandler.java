@@ -1,6 +1,5 @@
 package com.iyte_yazilim.proje_pazari.application.commands.invalidateUserSessions;
 
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.RefreshTokenRepository;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
