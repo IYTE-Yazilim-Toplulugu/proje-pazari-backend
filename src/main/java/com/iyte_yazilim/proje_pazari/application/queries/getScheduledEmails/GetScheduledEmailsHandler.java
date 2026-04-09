@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getScheduledEmails;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.ScheduledEmailDTO;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ScheduledEmailRepository;
 import java.util.List;

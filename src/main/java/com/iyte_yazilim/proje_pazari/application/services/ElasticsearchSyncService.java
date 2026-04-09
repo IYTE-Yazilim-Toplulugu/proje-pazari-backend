@@ -11,7 +11,6 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEn
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserDocument;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.utils.NameUtils;
-import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -39,20 +38,6 @@ public class ElasticsearchSyncService {
     private final ProjectDocumentMapper mapper;
     private final ElasticsearchOperations elasticsearchOperations;
 
-    @PostConstruct
-    public void initializeIndexes() {
-        // Create indexes if they don't exist
-        IndexOperations projectIndexOps = elasticsearchOperations.indexOps(ProjectDocument.class);
-        if (!projectIndexOps.exists()) {
-            projectIndexOps.createWithMapping();
-        }
-
-        IndexOperations userIndexOps = elasticsearchOperations.indexOps(UserDocument.class);
-        if (!userIndexOps.exists()) {
-            userIndexOps.createWithMapping();
-        }
-    }
-
     @Transactional(readOnly = true)
     public void indexProject(String projectId) {
         ProjectEntity project =
@@ -64,8 +49,26 @@ public class ElasticsearchSyncService {
         projectSearchRepository.save(document);
     }
 
+    @Transactional(readOnly = true)
+    public void indexUser(String userId) {
+        UserEntity user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(
+                                () ->
+                                        new RuntimeException(
+                                                "User not found for indexing: " + userId));
+
+        UserDocument document = toUserDocument(user);
+        userSearchRepository.save(document);
+    }
+
     public void deleteProjectIndex(String projectId) {
         projectSearchRepository.deleteById(projectId);
+    }
+
+    public void deleteUserIndex(String userId) {
+        userSearchRepository.deleteById(userId);
     }
 
     @Transactional(readOnly = true)
