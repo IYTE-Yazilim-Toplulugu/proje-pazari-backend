@@ -144,8 +144,8 @@ class LocalStorageAdapterUnitTest {
             FileMetadata metadata = adapter.getMetadata("meta.txt");
 
             assertNotNull(metadata);
-            assertEquals(content.length, metadata.getSize());
-            assertNotNull(metadata.getLastModified());
+            assertEquals(content.length, metadata.size());
+            assertNotNull(metadata.lastModified());
         }
 
         @Test

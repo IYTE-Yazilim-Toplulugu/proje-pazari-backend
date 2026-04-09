@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig;
 
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.SystemConfigRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.SystemConfigEntity;
 import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;

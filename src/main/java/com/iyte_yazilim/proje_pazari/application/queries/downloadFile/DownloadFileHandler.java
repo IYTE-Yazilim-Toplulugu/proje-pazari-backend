@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.queries.downloadFile;
 
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;

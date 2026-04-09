@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.queries.suggestProjects;
 
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.ProjectSearchService;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

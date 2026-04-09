@@ -10,6 +10,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterU
 import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.resetPassword.ResetPasswordCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.verifyEmail.VerifyEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;

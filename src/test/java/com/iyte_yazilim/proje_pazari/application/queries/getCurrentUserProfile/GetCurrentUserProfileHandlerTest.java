@@ -7,6 +7,8 @@ import static org.mockito.Mockito.*;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
+import com.iyte_yazilim.proje_pazari.presentation.payload.response.ResponseCode;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import org.junit.jupiter.api.DisplayName;
