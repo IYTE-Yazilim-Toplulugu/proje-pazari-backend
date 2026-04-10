@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getActiveSessions;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
-import com.iyte_yazilim.proje_pazari.application.dtos.ActiveSessionDTO;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.dtos.ActiveSessionDTO;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.RefreshTokenRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.RefreshTokenEntity;

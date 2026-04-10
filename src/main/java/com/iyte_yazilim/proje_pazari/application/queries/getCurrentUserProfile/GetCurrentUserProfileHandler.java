@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getCurrentUserProfile;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
-import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

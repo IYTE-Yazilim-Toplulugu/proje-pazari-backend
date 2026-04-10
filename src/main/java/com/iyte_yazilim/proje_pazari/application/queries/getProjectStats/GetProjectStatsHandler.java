@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getProjectStats;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectStatsDTO;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
-import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;

@@ -5,10 +5,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
-import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import org.junit.jupiter.api.DisplayName;
