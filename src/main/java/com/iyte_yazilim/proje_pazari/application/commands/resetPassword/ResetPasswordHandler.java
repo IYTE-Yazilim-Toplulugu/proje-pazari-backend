@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.resetPassword;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.PasswordResetToken;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
@@ -9,7 +10,6 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;

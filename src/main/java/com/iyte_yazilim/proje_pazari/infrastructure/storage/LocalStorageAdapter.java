@@ -4,18 +4,17 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Local file system storage implementation for development without external storage. Active when
@@ -43,19 +42,19 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
     }
 
     @Override
-    public String store(MultipartFile file, String path) {
+    public String store(FileUpload file, String path) {
         try {
             Path targetLocation = storageLocation.resolve(path).normalize();
 
             // Security: Verify path is within storage location
             if (!targetLocation.startsWith(storageLocation)) {
-                throw new FileValidationException("Invalid file path - path traversal detected");
+                throw new FileStorageException("Invalid file path - path traversal detected");
             }
 
             // Create parent directories if they don't exist
             Files.createDirectories(targetLocation.getParent());
 
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            Files.write(targetLocation, file.bytes());
             log.debug("Stored file locally: {}", path);
 
             // Return API path for local storage
@@ -103,7 +102,7 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
             }
 
             if (!Files.exists(filePath)) {
-                throw new FileStorageException("File not found: " + path);
+                throw new FileValidationException("File not found: " + path);
             }
 
             BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
@@ -132,12 +131,12 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
             }
 
             if (!Files.exists(filePath)) {
-                throw new FileStorageException("File not found: " + path);
+                throw new FileValidationException("File not found: " + path);
             }
 
             return Files.readAllBytes(filePath);
         } catch (IOException e) {
-            throw new FileStorageException("Failed to retrieve file", e);
+            throw new FileValidationException("Failed to retrieve file", e);
         }
     }
 

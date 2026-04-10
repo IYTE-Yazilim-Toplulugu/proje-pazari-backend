@@ -19,6 +19,6 @@ package com.iyte_yazilim.proje_pazari.domain.interfaces;
  * @author IYTE Yazılım Proje Pazarı Team
  * @version 1.0
  * @since 2024-01-01
- * @see IRequestHandler
+ * @see com.iyte_yazilim.proje_pazari.application.common.IRequestHandler
  */
 public interface IRequest<TResponse> {}

@@ -2,7 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemConfigDTO;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.SystemConfigRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.SystemConfigEntity;
 import java.util.LinkedHashMap;
