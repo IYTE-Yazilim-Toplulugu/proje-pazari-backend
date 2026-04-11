@@ -12,17 +12,20 @@ public class JwtSecretValidator {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    private static final String DEFAULT_SECRET =
-            "your-256-bit-secret-key-change-this-in-production-please-make-it-long-enough-for-hs256";
+    private static final String PLACEHOLDER_INDICATOR = "change-this-in-production";
 
     @PostConstruct
     public void validateJwtSecret() {
-        if (jwtSecret.equals(DEFAULT_SECRET)) {
+        if (jwtSecret.contains(PLACEHOLDER_INDICATOR)
+                || jwtSecret.matches(".*(.)\\1{2,}.*")
+                || jwtSecret.matches(".*123.*|.*abc.*|.*qwerty.*|.*asdf.*|.*zxcv.*")) {
             String errorMessage =
-                    "CRITICAL SECURITY ERROR: JWT secret is using the default value. "
+                    "CRITICAL SECURITY ERROR: JWT secret contains a known insecure placeholder or suspicious pattern."
                             + "This is a severe security vulnerability. "
-                            + "Please set the 'jwt.secret' property to a secure random value via environment variable JWT_SECRET. "
-                            + "Application startup blocked.";
+                            + "Please set the JWT_SECRET environment variable to a secure random value "
+                            + "(minimum 32 characters, must not contain placeholder substrings). "
+                            + "Application startup blocked."
+                            + "(use: openssl rand -base64 32)";
             log.error(errorMessage);
             throw new IllegalStateException(errorMessage);
         }
