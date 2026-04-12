@@ -1,19 +1,24 @@
 package com.iyte_yazilim.proje_pazari.application.behaviors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
 import com.iyte_yazilim.proje_pazari.application.common.ICommand;
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.application.common.RequestHandlerDelegate;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionBehaviorTest {
@@ -76,9 +81,9 @@ class TransactionBehaviorTest {
     @Test
     void handle_shouldIdentifyCommandByClassName() {
         // Arrange
-        record CreateUserCommand(String name) implements IRequest<String> {}
+        record CreateUserCommand(String name) implements ICommand<String> {}
 
-        record UpdateProfileCommand(String data) implements IRequest<String> {}
+        record UpdateProfileCommand(String data) implements ICommand<String> {}
 
         CreateUserCommand createCommand = new CreateUserCommand("John");
         UpdateProfileCommand updateCommand = new UpdateProfileCommand("data");
