@@ -3,8 +3,8 @@ package com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.SystemHealthDTO;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;

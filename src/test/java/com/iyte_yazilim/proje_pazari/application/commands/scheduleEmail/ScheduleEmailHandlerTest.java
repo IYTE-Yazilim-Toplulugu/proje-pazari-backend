@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ScheduledEmailRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ScheduledEmailEntity;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ResponseCode;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

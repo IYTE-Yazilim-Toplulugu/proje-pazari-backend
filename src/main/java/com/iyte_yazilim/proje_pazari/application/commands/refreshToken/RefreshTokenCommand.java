@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.refreshToken;
 
-import com.iyte_yazilim.proje_pazari.application.common.IRequest;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ICommand;
 
 public record RefreshTokenCommand(String refreshToken)
-        implements IRequest<ApiResponse<RefreshTokenResult>> {}
+        implements ICommand<ApiResponse<RefreshTokenResult>> {}

@@ -1,11 +1,11 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getAuditLogs;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.AuditLogDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.AuditLogRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.AuditLogEntity;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

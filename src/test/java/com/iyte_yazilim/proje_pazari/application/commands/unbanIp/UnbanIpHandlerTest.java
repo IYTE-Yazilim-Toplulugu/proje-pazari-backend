@@ -3,9 +3,9 @@ package com.iyte_yazilim.proje_pazari.application.commands.unbanIp;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.BannedIpRepository;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

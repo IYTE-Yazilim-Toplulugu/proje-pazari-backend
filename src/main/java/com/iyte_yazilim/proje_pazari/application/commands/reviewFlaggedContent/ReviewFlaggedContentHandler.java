@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FlaggedContentNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
@@ -7,7 +8,6 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.FlaggedContentRe
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.FlaggedContentEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

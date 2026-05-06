@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.commands.cancelScheduledEmail;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ScheduledEmailRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ScheduledEmailEntity;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

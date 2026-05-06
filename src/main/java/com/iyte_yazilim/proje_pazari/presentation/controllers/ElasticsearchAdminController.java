@@ -3,7 +3,7 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 import com.iyte_yazilim.proje_pazari.application.commands.deleteAllIndexes.DeleteAllIndexesCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reindexProjects.ReindexProjectsCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reindexUsers.ReindexUsersCommand;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

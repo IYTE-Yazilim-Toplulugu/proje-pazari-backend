@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.commands.updateProjectStatus;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
@@ -9,7 +10,6 @@ import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCo
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

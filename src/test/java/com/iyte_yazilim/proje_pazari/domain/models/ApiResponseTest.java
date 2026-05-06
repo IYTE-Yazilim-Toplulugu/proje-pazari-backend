@@ -2,8 +2,8 @@ package com.iyte_yazilim.proje_pazari.domain.models;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ResponseCode;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.config;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
@@ -13,7 +14,6 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenE
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.Map;

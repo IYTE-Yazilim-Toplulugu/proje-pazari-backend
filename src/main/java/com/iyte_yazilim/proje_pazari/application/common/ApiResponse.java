@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.presentation.payload.response;
+package com.iyte_yazilim.proje_pazari.application.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;

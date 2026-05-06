@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent;
 
-import com.iyte_yazilim.proje_pazari.application.common.IRequest;
-import com.iyte_yazilim.proje_pazari.presentation.payload.response.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ICommand;
 
 public record ReviewFlaggedContentCommand(String flagId, String action, String reviewNote)
-        implements IRequest<ApiResponse<Void>> {}
+        implements ICommand<ApiResponse<Void>> {}
