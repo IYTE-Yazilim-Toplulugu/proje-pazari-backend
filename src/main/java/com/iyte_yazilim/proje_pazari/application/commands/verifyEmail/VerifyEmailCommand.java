@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.verifyEmail;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ICommand;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.domain.models.results.VerifyEmailResult;
 import jakarta.validation.constraints.NotBlank;
 

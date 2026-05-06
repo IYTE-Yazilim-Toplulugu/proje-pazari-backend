@@ -4,8 +4,6 @@ import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import java.util.HashSet;
 import java.util.Set;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Represents a user in the Proje Pazarı system.
@@ -29,12 +27,10 @@ import lombok.Setter;
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
- * @since 2024-01-01
  * @see Project
  * @see BaseEntity
+ * @since 2024-01-01
  */
-@Getter
-@Setter
 public class User extends BaseEntity<Ulid> {
 
     /** User's email address used for authentication. Must be unique across the system. */
@@ -99,5 +95,85 @@ public class User extends BaseEntity<Ulid> {
      */
     public String getFullName() {
         return firstName + " " + lastName;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+
+    public String getPassword() {
+        return this.password;
+    }
+
+    public String getFirstName() {
+        return this.firstName;
+    }
+
+    public String getLastName() {
+        return this.lastName;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public String getProfilePictureUrl() {
+        return this.profilePictureUrl;
+    }
+
+    public String getLinkedinUrl() {
+        return this.linkedinUrl;
+    }
+
+    public String getGithubUrl() {
+        return this.githubUrl;
+    }
+
+    public boolean isActive() {
+        return this.isActive;
+    }
+
+    public Set<RoleType> getRoles() {
+        return this.roles;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setProfilePictureUrl(String profilePictureUrl) {
+        this.profilePictureUrl = profilePictureUrl;
+    }
+
+    public void setLinkedinUrl(String linkedinUrl) {
+        this.linkedinUrl = linkedinUrl;
+    }
+
+    public void setGithubUrl(String githubUrl) {
+        this.githubUrl = githubUrl;
+    }
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public void setRoles(Set<RoleType> roles) {
+        this.roles = roles;
     }
 }

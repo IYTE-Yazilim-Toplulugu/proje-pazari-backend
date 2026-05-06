@@ -31,7 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * challenges. The {@link MinioStorageAdapterUnitTest} provides comprehensive coverage using mocks.
  *
  * <p>On some systems (e.g., Docker Desktop on Linux), you may need to configure Testcontainers.
- * See: https://java.testcontainers.org/supported_docker_environment/
+ * See: <a href="https://java.testcontainers.org/supported_docker_environment/">...</a>
  */
 @Testcontainers(disabledWithoutDocker = true)
 @DisabledIfEnvironmentVariable(named = "CI", matches = "true")
@@ -148,20 +148,16 @@ class MinioStorageAdapterIntegrationTest {
 
         // Then
         assertNotNull(metadata);
-        assertEquals(path, metadata.getPath());
-        assertEquals(content.length, metadata.getSize());
-        assertEquals("text/plain", metadata.getContentType());
-        assertNotNull(metadata.getLastModified());
+        assertEquals(path, metadata.path());
+        assertEquals(content.length, metadata.size());
+        assertEquals("text/plain", metadata.contentType());
+        assertNotNull(metadata.lastModified());
     }
 
     @Test
     void shouldThrowExceptionForNonExistentFileMetadata() {
         // When/Then
-        assertThrows(
-                FileStorageException.class,
-                () -> {
-                    adapter.getMetadata("nonexistent/file.txt");
-                });
+        assertThrows(FileStorageException.class, () -> adapter.getMetadata("nonexistent/file.txt"));
     }
 
     @Test
@@ -180,7 +176,7 @@ class MinioStorageAdapterIntegrationTest {
         assertTrue(adapter.exists(imagePath));
 
         FileMetadata metadata = adapter.getMetadata(imagePath);
-        assertEquals("image/png", metadata.getContentType());
+        assertEquals("image/png", metadata.contentType());
     }
 
     @Test

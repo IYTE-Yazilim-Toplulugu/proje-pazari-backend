@@ -4,10 +4,6 @@ import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * Represents a project in the Proje Pazarı marketplace.
@@ -42,15 +38,11 @@ import lombok.Setter;
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
- * @since 2024-01-01
  * @see User
  * @see ProjectApplication
  * @see ProjectStatus
+ * @since 2024-01-01
  */
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @SuppressWarnings("unused")
 public class Project extends BaseEntity<Ulid> {
 
@@ -96,7 +88,118 @@ public class Project extends BaseEntity<Ulid> {
     private String category;
     private LocalDateTime deadline;
 
+    public Project(
+            String title,
+            String description,
+            String summary,
+            ProjectStatus status,
+            User owner,
+            List<ProjectApplication> applications,
+            Integer maxTeamSize,
+            Integer currentTeamSize,
+            List<String> requiredSkills,
+            String category,
+            LocalDateTime deadline) {
+        this.title = title;
+        this.description = description;
+        this.summary = summary;
+        this.status = status;
+        this.owner = owner;
+        this.applications = applications;
+        this.maxTeamSize = maxTeamSize;
+        this.currentTeamSize = currentTeamSize;
+        this.requiredSkills = requiredSkills;
+        this.category = category;
+        this.deadline = deadline;
+    }
+
+    public Project() {}
+
     public void setOwner(User owner) {
         this.owner = owner;
+    }
+
+    public String getTitle() {
+        return this.title;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public String getSummary() {
+        return this.summary;
+    }
+
+    public ProjectStatus getStatus() {
+        return this.status;
+    }
+
+    public User getOwner() {
+        return this.owner;
+    }
+
+    public List<ProjectApplication> getApplications() {
+        return this.applications;
+    }
+
+    public Integer getMaxTeamSize() {
+        return this.maxTeamSize;
+    }
+
+    public Integer getCurrentTeamSize() {
+        return this.currentTeamSize;
+    }
+
+    public List<String> getRequiredSkills() {
+        return this.requiredSkills;
+    }
+
+    public String getCategory() {
+        return this.category;
+    }
+
+    public LocalDateTime getDeadline() {
+        return this.deadline;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public void setStatus(ProjectStatus status) {
+        this.status = status;
+    }
+
+    public void setApplications(List<ProjectApplication> applications) {
+        this.applications = applications;
+    }
+
+    public void setMaxTeamSize(Integer maxTeamSize) {
+        this.maxTeamSize = maxTeamSize;
+    }
+
+    public void setCurrentTeamSize(Integer currentTeamSize) {
+        this.currentTeamSize = currentTeamSize;
+    }
+
+    public void setRequiredSkills(List<String> requiredSkills) {
+        this.requiredSkills = requiredSkills;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
     }
 }

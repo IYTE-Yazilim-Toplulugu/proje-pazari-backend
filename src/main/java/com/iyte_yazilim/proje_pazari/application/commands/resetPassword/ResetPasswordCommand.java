@@ -1,10 +1,10 @@
 package com.iyte_yazilim.proje_pazari.application.commands.resetPassword;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ICommand;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.domain.validators.PasswordMatchable;
-import com.iyte_yazilim.proje_pazari.domain.validators.PasswordMatches;
-import com.iyte_yazilim.proje_pazari.domain.validators.ValidPassword;
+import com.iyte_yazilim.proje_pazari.application.validators.PasswordMatches;
+import com.iyte_yazilim.proje_pazari.application.validators.ValidPassword;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.PasswordMatchable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
