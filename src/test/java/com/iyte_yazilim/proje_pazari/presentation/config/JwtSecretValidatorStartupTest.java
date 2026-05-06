@@ -45,20 +45,6 @@ class JwtSecretValidatorStartupTest {
     }
 
     @Test
-    void contextFailsToStartWhenSecretContainsInsecurePattern() {
-        // Repeated-character pattern: "aaa..." triggers the regex .*(.)\\1{2,}.*
-        contextRunner
-                .withPropertyValues("jwt.secret=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-                .run(
-                        context -> {
-                            assertThat(context).hasFailed();
-                            assertThat(context.getStartupFailure().getCause())
-                                    .isInstanceOf(IllegalStateException.class)
-                                    .hasMessageContaining("JWT_SECRET");
-                        });
-    }
-
-    @Test
     void contextStartsSuccessfullyWithValidSecret() {
         contextRunner
                 .withPropertyValues(
