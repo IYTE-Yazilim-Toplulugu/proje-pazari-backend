@@ -4,19 +4,31 @@ This document covers deployment options for the Proje Pazarı Backend.
 
 ## Environment Variables
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `JWT_SECRET` | Secret key for JWT signing (min 256 bits) | Yes | - |
-| `JWT_EXPIRATION` | Token expiration in milliseconds | No | `86400000` (24h) |
-| `SPRING_DATASOURCE_URL` | PostgreSQL JDBC URL | Yes | - |
-| `SPRING_DATASOURCE_USERNAME` | Database username | Yes | - |
-| `SPRING_DATASOURCE_PASSWORD` | Database password | Yes | - |
-| `SPRING_JPA_HIBERNATE_DDL_AUTO` | DDL handling strategy | No | `update` |
-| `SPRING_JPA_SHOW_SQL` | Log SQL statements | No | `false` |
-| `APP_UPLOAD_DIR` | File upload directory | No | `./uploads` |
+| Variable | Description | Required | Default | Startup if missing |
+|----------|-------------|----------|---------|-------------------|
+| `JWT_SECRET` | Secret key for JWT signing (min 32 chars, no placeholder substrings) | **Yes** | — | `IllegalStateException`, non-zero exit |
+| `JWT_EXPIRATION` | Token expiration in milliseconds | No | `86400000` (24h) | — |
+| `SPRING_DATASOURCE_URL` | PostgreSQL JDBC URL | Yes | — | — |
+| `SPRING_DATASOURCE_USERNAME` | Database username | Yes | — | — |
+| `SPRING_DATASOURCE_PASSWORD` | Database password | Yes | — | — |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | DDL handling strategy | No | `update` | — |
+| `SPRING_JPA_SHOW_SQL` | Log SQL statements | No | `false` | — |
+| `APP_UPLOAD_DIR` | File upload directory | No | `./uploads` | — |
 
 > [!CAUTION]
-> **Never use default JWT secrets in production!** Generate a secure random string of at least 32 characters.
+> **`JWT_SECRET` is enforced at startup.** The application contains a fail-fast validator
+> (`JwtSecretValidator`) that runs on every startup via `@PostConstruct`. It will throw an
+> `IllegalStateException` and abort with a non-zero exit code if:
+>
+> - `JWT_SECRET` is not set (the built-in fallback deliberately contains `"change-this-in-production"` and is rejected), or
+> - The secret contains the known placeholder substring `"change-this-in-production"`, or
+> - The secret is shorter than 32 characters.
+>
+> **Generate a compliant secret:**
+> ```bash
+> openssl rand -base64 64
+> ```
+> The output is ~88 characters of random base64 — well above the 32-character minimum.
 
 ---
 
