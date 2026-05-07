@@ -165,7 +165,6 @@ public class Project extends BaseEntity<Ulid> {
         this.currentTeamSize = currentTeamSize != null ? currentTeamSize : 0;
     }
 
-
     public void setOwner(User owner) {
         this.owner = owner;
     }
