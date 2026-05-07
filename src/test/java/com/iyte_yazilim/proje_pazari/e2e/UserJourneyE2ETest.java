@@ -169,7 +169,7 @@ class UserJourneyE2ETest {
 
         String projectResponse = projectResult.getResponse().getContentAsString();
         JsonNode projectBody = objectMapper.readTree(projectResponse);
-        projectId = projectBody.get("data").get("id").asText();
+        projectId = projectBody.get("data").get("projectId").asText();
     }
 
     @Test
@@ -225,14 +225,10 @@ class UserJourneyE2ETest {
     @Order(9)
     @DisplayName("E2E: Submitting an application triggers owner notification email")
     void step9_submitApplicationTriggersOwnerNotification() throws Exception {
-        Map<String, String> applicationRequest =
-                Map.of("projectId", projectId, "coverLetter", "I am interested in this project.");
-
         mockMvc.perform(
-                        post("/api/v1/applications")
+                        post("/api/v1/projects/{projectId}/applications", projectId)
                                 .header("Authorization", "Bearer " + applicantToken)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(applicationRequest)))
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
         verify(emailService, timeout(5000))
