@@ -8,6 +8,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser.AdminD
 import com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction.BulkUserActionCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.flagContent.FlagContentCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
@@ -21,7 +22,6 @@ import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSyst
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSystemHealthQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.services.StorageHealthService;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import java.util.List;
 import java.util.Map;

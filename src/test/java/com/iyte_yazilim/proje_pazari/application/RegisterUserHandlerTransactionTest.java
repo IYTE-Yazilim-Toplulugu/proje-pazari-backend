@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserHandler;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import java.util.UUID;

@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import com.iyte_yazilim.proje_pazari.presentation.security.UserPrincipal;
 import java.util.Map;

@@ -4,8 +4,6 @@ import com.iyte_yazilim.proje_pazari.domain.events.DomainEvent;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Base entity class that provides common fields for all entities.
@@ -15,8 +13,6 @@ import lombok.Setter;
  *
  * <p>All entities should extend this class to inherit these common fields.
  */
-@Getter
-@Setter
 public abstract class BaseEntity<TId> {
 
     protected TId id;
@@ -56,5 +52,37 @@ public abstract class BaseEntity<TId> {
 
     public void clearDomainEvents() {
         domainEvents.clear();
+    }
+
+    public TId getId() {
+        return this.id;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return this.createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return this.updatedAt;
+    }
+
+    public List<DomainEvent> getDomainEvents() {
+        return this.domainEvents;
+    }
+
+    public void setId(TId id) {
+        this.id = id;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public void setDomainEvents(List<DomainEvent> domainEvents) {
+        this.domainEvents = domainEvents;
     }
 }

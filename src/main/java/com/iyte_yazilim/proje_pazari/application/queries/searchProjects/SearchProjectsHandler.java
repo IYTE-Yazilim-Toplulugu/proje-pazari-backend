@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.queries.searchProjects;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.ProjectSearchService;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

@@ -2,10 +2,6 @@ package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * Represents an application submitted by a user to join a project.
@@ -24,15 +20,11 @@ import lombok.Setter;
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
- * @since 2024-01-01
  * @see Project
  * @see User
  * @see com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus
+ * @since 2024-01-01
  */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @SuppressWarnings("unused")
 public class ProjectApplication extends BaseEntity<Ulid> {
 
@@ -44,4 +36,36 @@ public class ProjectApplication extends BaseEntity<Ulid> {
 
     /** The current status of the application. Defaults to PENDING. */
     private ApplicationStatus status = ApplicationStatus.PENDING;
+
+    public ProjectApplication(Project project, User user, ApplicationStatus status) {
+        this.project = project;
+        this.user = user;
+        this.status = status;
+    }
+
+    public ProjectApplication() {}
+
+    public Project getProject() {
+        return this.project;
+    }
+
+    public User getUser() {
+        return this.user;
+    }
+
+    public ApplicationStatus getStatus() {
+        return this.status;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public void setStatus(ApplicationStatus status) {
+        this.status = status;
+    }
 }
