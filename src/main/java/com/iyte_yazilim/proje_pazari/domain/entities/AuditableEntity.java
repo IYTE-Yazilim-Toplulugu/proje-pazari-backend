@@ -1,8 +1,5 @@
 package com.iyte_yazilim.proje_pazari.domain.entities;
 
-import lombok.Getter;
-import lombok.Setter;
-
 /**
  * Abstract base class that extends {@link BaseEntity} with audit trail fields.
  *
@@ -20,11 +17,9 @@ import lombok.Setter;
  * @param <TId> the type of the entity identifier
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
- * @since 2024-01-01
  * @see BaseEntity
+ * @since 2024-01-01
  */
-@Getter
-@Setter
 @SuppressWarnings("unused")
 public abstract class AuditableEntity<TId> extends BaseEntity<TId> {
 
@@ -33,4 +28,20 @@ public abstract class AuditableEntity<TId> extends BaseEntity<TId> {
 
     /** Identifier of the user who last updated this entity. */
     private String updatedBy;
+
+    public String getCreatedBy() {
+        return this.createdBy;
+    }
+
+    public String getUpdatedBy() {
+        return this.updatedBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
+    }
 }
