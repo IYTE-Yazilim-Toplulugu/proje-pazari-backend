@@ -137,8 +137,16 @@ public class Project extends BaseEntity<Ulid> {
         return this.currentTeamSize >= this.maxTeamSize;
     }
 
+    public boolean isOpen() {
+        return this.status == ProjectStatus.OPEN;
+    }
+
+    public boolean isExpired() {
+        return this.deadline != null && this.deadline.isBefore(LocalDateTime.now());
+    }
+
     public boolean canAcceptApplications() {
-        return this.status == ProjectStatus.OPEN && !isFull();
+        return isOpen() && !isFull() && !isExpired();
     }
 
     // --- 3. LIFECYCLE GUARDS ---

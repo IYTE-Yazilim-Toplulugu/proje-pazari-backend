@@ -42,7 +42,7 @@ class DeactivateAccountHandlerTest {
 
     private User createDomainUser(boolean active) {
         User user = new User("test@std.iyte.edu.tr", "pw", "Test", "User");
-        user.setActive(active);
+        user.reconstituteActive(active);
         return user;
     }
 

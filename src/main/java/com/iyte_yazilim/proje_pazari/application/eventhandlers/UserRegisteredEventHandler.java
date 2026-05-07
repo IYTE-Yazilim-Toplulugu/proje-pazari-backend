@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.application.events;
+package com.iyte_yazilim.proje_pazari.application.eventhandlers;
 
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
@@ -52,7 +52,6 @@ public class UserRegisteredEventHandler implements IEventHandler<UserRegisteredE
             log.info("Verification email sent successfully to: {}", event.getEmail());
         } catch (Exception e) {
             log.error("Failed to send verification email to: {}", event.getEmail(), e);
-            // TODO: Consider implementing retry mechanism or dead letter queue
         }
     }
 }

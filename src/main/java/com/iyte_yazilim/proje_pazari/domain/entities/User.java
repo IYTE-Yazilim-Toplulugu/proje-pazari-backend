@@ -51,11 +51,7 @@ public class User extends BaseEntity<Ulid> {
     /** User's email address used for authentication. Must be unique across the system. */
     private String email;
 
-    /**
-     * User's encrypted password. Never stored in plain text; encrypted using BCrypt algorithm.
-     *
-     * @see org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-     */
+    /** User's encrypted password. Never stored in plain text; stored as a BCrypt-style hash. */
     private String password;
 
     /** User's first name. Required field. */
@@ -207,6 +203,19 @@ public class User extends BaseEntity<Ulid> {
         this.roles.remove(role);
     }
 
+    /**
+     * Adds a role to this user without clearing existing roles.
+     *
+     * @param role the role to add
+     * @throws IllegalArgumentException if role is null
+     */
+    public void addRole(RoleType role) {
+        if (role == null) {
+            throw new IllegalArgumentException("Role cannot be null");
+        }
+        this.roles.add(role);
+    }
+
     // ---------------------------------------------------------------------------
     //  Profile Setters — simple data fields, no invariants
     // ---------------------------------------------------------------------------
@@ -251,10 +260,11 @@ public class User extends BaseEntity<Ulid> {
      * Reconstitutes the active state from persistence without triggering lifecycle guards.
      *
      * <p><strong>Infrastructure-only</strong> — must not be called from domain or application code.
+     * Use {@link #activate()} or {@link #deactivate()} in all application-layer code.
      *
      * @param active the persisted active flag
      */
-    public void setActive(boolean active) {
+    public void reconstituteActive(boolean active) {
         this.isActive = active;
     }
 
@@ -262,10 +272,12 @@ public class User extends BaseEntity<Ulid> {
      * Reconstitutes roles from persistence without triggering role management guards.
      *
      * <p><strong>Infrastructure-only</strong> — must not be called from domain or application code.
+     * Use {@link #addRole(RoleType)}, {@link #assignRole(RoleType)}, or {@link
+     * #removeRole(RoleType)} in all application-layer code.
      *
      * @param roles the persisted roles
      */
-    public void setRoles(Set<RoleType> roles) {
+    public void reconstituteRoles(Set<RoleType> roles) {
         this.roles = roles != null ? new HashSet<>(roles) : new HashSet<>();
     }
 }

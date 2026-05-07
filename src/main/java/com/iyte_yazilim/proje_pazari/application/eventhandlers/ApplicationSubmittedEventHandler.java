@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.application.events;
+package com.iyte_yazilim.proje_pazari.application.eventhandlers;
 
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationSubmittedEvent;
@@ -6,9 +6,10 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IEventHandler;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
@@ -19,12 +20,20 @@ public class ApplicationSubmittedEventHandler implements IEventHandler<Applicati
 
     @Async
     @Override
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ApplicationSubmittedEvent event) {
         log.info("Handling ApplicationSubmittedEvent for application: {}", event.applicationId());
 
-        sendApplicantConfirmation(event);
-        sendOwnerNotification(event);
+        try {
+            sendApplicantConfirmation(event);
+            sendOwnerNotification(event);
+        } catch (Exception e) {
+            log.error(
+                    "Failed to send notification for ApplicationSubmittedEvent [applicationId={}]: {}",
+                    event.applicationId(),
+                    e.getMessage(),
+                    e);
+        }
     }
 
     private void sendApplicantConfirmation(ApplicationSubmittedEvent event) {

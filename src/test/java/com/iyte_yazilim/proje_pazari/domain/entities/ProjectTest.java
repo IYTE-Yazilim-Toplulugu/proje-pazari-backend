@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -256,6 +257,83 @@ class ProjectTest {
             Project project = new Project();
             project.reconstitute(ProjectStatus.CANCELLED, 0);
             assertThat(project.canBeUpdated()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("Query Method Tests — isOpen() and isExpired()")
+    class QueryMethodTests {
+
+        @Test
+        @DisplayName("isOpen() returns true when status is OPEN")
+        void isOpen_openStatus_returnsTrue() {
+            Project project = new Project();
+            project.reconstitute(ProjectStatus.OPEN, 0);
+            assertThat(project.isOpen()).isTrue();
+        }
+
+        @Test
+        @DisplayName("isOpen() returns false when status is DRAFT")
+        void isOpen_draftStatus_returnsFalse() {
+            Project project = new Project();
+            assertThat(project.isOpen()).isFalse();
+        }
+
+        @Test
+        @DisplayName("isOpen() returns false when status is IN_PROGRESS")
+        void isOpen_inProgressStatus_returnsFalse() {
+            Project project = new Project();
+            project.reconstitute(ProjectStatus.IN_PROGRESS, 0);
+            assertThat(project.isOpen()).isFalse();
+        }
+
+        @Test
+        @DisplayName("isOpen() returns false when status is COMPLETED")
+        void isOpen_completedStatus_returnsFalse() {
+            Project project = new Project();
+            project.reconstitute(ProjectStatus.COMPLETED, 0);
+            assertThat(project.isOpen()).isFalse();
+        }
+
+        @Test
+        @DisplayName("isOpen() returns false when status is CANCELLED")
+        void isOpen_cancelledStatus_returnsFalse() {
+            Project project = new Project();
+            project.reconstitute(ProjectStatus.CANCELLED, 0);
+            assertThat(project.isOpen()).isFalse();
+        }
+
+        @Test
+        @DisplayName("isExpired() returns false when deadline is null")
+        void isExpired_nullDeadline_returnsFalse() {
+            Project project = new Project();
+            assertThat(project.isExpired()).isFalse();
+        }
+
+        @Test
+        @DisplayName("isExpired() returns false when deadline is in the future")
+        void isExpired_futureDeadline_returnsFalse() {
+            Project project = new Project();
+            project.setDeadline(LocalDateTime.now().plusDays(1));
+            assertThat(project.isExpired()).isFalse();
+        }
+
+        @Test
+        @DisplayName("isExpired() returns true when deadline is in the past")
+        void isExpired_pastDeadline_returnsTrue() {
+            Project project = new Project();
+            project.setDeadline(LocalDateTime.now().minusDays(1));
+            assertThat(project.isExpired()).isTrue();
+        }
+
+        @Test
+        @DisplayName("canAcceptApplications() returns false when OPEN but deadline has passed")
+        void canAcceptApplications_openButExpired_returnsFalse() {
+            Project project = new Project();
+            project.reconstitute(ProjectStatus.OPEN, 0);
+            project.setMaxTeamSize(5);
+            project.setDeadline(LocalDateTime.now().minusDays(1));
+            assertThat(project.canAcceptApplications()).isFalse();
         }
     }
 
