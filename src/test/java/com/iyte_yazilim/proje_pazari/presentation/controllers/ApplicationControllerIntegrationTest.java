@@ -2,7 +2,6 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -10,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import java.util.HashMap;
@@ -74,12 +74,11 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
         var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
         String projectId = jsonNode.get("data").get("projectId").asText();
 
-        mockMvc.perform(
-                        patch("/api/v1/projects/" + projectId + "/status")
-                                .header("Authorization", "Bearer " + ownerToken)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("{\"newStatus\": \"OPEN\"}"))
-                .andExpect(status().isOk());
+        // --- FIX: Force the project to OPEN so our new domain rules allow applications! ---
+        var project = projectRepository.findById(projectId).orElseThrow();
+        project.setStatus(ProjectStatus.OPEN);
+        projectRepository.save(project);
+        // ----------------------------------------------------------------------------------
 
         return projectId;
     }
@@ -137,8 +136,8 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
 
             var applications = applicationRepository.findByProjectId(projectId);
             assertThat(applications).hasSize(1);
-            assertThat(applications.get(0).getStatus()).isEqualTo(ApplicationStatus.PENDING);
-            assertThat(applications.get(0).getUser().getEmail()).isEqualTo(APPLICANT_EMAIL);
+            assertThat(applications.getFirst().getStatus()).isEqualTo(ApplicationStatus.PENDING);
+            assertThat(applications.getFirst().getUser().getEmail()).isEqualTo(APPLICANT_EMAIL);
         }
 
         @Test

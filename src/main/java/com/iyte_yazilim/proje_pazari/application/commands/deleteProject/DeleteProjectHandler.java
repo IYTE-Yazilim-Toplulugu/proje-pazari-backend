@@ -3,11 +3,13 @@ package com.iyte_yazilim.proje_pazari.application.commands.deleteProject;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import java.time.LocalDateTime;
@@ -47,6 +49,7 @@ public class DeleteProjectHandler
     private final ProjectApplicationRepository applicationRepository;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final ProjectMapper projectMapper;
 
     @Override
     @Transactional(
@@ -69,8 +72,10 @@ public class DeleteProjectHandler
             return ApiResponse.forbidden(messageService.getMessage("project.owner.mismatch"));
         }
 
-        // --- 3. Verify Project Status Allows Deletion ---
-        if (projectEntity.getStatus() == ProjectStatus.IN_PROGRESS) {
+        // --- 3. Verify Project Status Allows Deletion (DELEGATED TO DOMAIN) ---
+        Project projectDomain = projectMapper.entityToDomain(projectEntity);
+
+        if (!projectDomain.canBeDeleted()) {
             return ApiResponse.forbidden(
                     messageService.getMessage("project.delete.has.active.work"));
         }

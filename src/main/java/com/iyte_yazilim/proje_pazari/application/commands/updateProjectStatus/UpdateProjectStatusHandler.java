@@ -3,12 +3,14 @@ package com.iyte_yazilim.proje_pazari.application.commands.updateProjectStatus;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectStatusChangedEvent;
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +41,7 @@ public class UpdateProjectStatusHandler
     private final ProjectApplicationRepository applicationRepository;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final ProjectMapper projectMapper;
 
     @Override
     @Transactional(
@@ -57,16 +60,27 @@ public class UpdateProjectStatusHandler
                             "project.not.found", new Object[] {command.projectId()}));
         }
 
-        // --- 3. Store Old Status ---
+        // --- 2. Store Old Status ---
         ProjectStatus oldStatus = projectEntity.getStatus();
 
-        // --- 4. Check if status is actually changing ---
+        // --- 3. Check if status is actually changing ---
         if (oldStatus == command.newStatus()) {
             return ApiResponse.badRequest(messageService.getMessage("project.status.unchanged"));
         }
 
-        // --- 5. Update Status ---
-        projectEntity.setStatus(command.newStatus());
+        // --- 4. Validate and Apply Transition via Domain Model ---
+        Project projectDomain = projectMapper.entityToDomain(projectEntity);
+        try {
+            // The domain dictates if this is legal!
+            projectDomain.transitionTo(command.newStatus());
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            // Catch the domain exception and return it as a clean API response
+            return ApiResponse.badRequest(e.getMessage());
+        }
+
+        // --- 5. Update Entity Status ---
+        // We sync the DB entity with the newly validated domain state
+        projectEntity.setStatus(projectDomain.getStatus());
 
         // --- 6. Persistence ---
         ProjectEntity savedProject = projectRepository.save(projectEntity);

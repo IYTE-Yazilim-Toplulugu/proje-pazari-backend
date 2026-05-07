@@ -88,8 +88,7 @@ class ReviewApplicationHandlerTest {
 
         // --- DOMAIN MOCK BEHAVIOR ---
         Project mockDomainProject = new Project();
-        mockDomainProject.setStatus(ProjectStatus.OPEN);
-        mockDomainProject.setCurrentTeamSize(0);
+        mockDomainProject.reconstitute(ProjectStatus.OPEN, 0);
         mockDomainProject.setMaxTeamSize(5);
         when(projectMapper.entityToDomain(any())).thenReturn(mockDomainProject);
 
