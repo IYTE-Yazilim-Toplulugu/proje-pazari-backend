@@ -26,25 +26,28 @@ public class AdminListUsersHandler
                 PageRequest.of(
                         query.page(), query.size(), Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<UserEntity> userPage =
-                userRepository.findWithFilters(
+        Page<Object[]> rowPage =
+                userRepository.findWithFiltersAndCounts(
                         query.role(), query.isActive(), query.search(), pageRequest);
 
-        List<UserAdminDTO> users = userPage.getContent().stream().map(this::mapToAdminDTO).toList();
+        List<UserAdminDTO> users = rowPage.getContent().stream().map(this::mapFromRow).toList();
 
         PagedResponse<UserAdminDTO> pagedResponse =
                 PagedResponse.<UserAdminDTO>builder()
                         .content(users)
-                        .page(userPage.getNumber())
-                        .size(userPage.getSize())
-                        .totalElements(userPage.getTotalElements())
-                        .totalPages(userPage.getTotalPages())
+                        .page(rowPage.getNumber())
+                        .size(rowPage.getSize())
+                        .totalElements(rowPage.getTotalElements())
+                        .totalPages(rowPage.getTotalPages())
                         .build();
 
         return ApiResponse.success(pagedResponse, "Users retrieved successfully");
     }
 
-    private UserAdminDTO mapToAdminDTO(UserEntity entity) {
+    private UserAdminDTO mapFromRow(Object[] row) {
+        UserEntity entity = (UserEntity) row[0];
+        int projectCount = ((Number) row[1]).intValue();
+        int applicationCount = ((Number) row[2]).intValue();
         return new UserAdminDTO(
                 entity.getId(),
                 entity.getEmail(),
@@ -58,7 +61,7 @@ public class AdminListUsersHandler
                 entity.getIsActive(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
-                userRepository.countProjectsByUserId(entity.getId()),
-                userRepository.countApplicationsByUserId(entity.getId()));
+                projectCount,
+                applicationCount);
     }
 }

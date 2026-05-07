@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
+import com.iyte_yazilim.proje_pazari.application.services.BanCheckService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.BannedIpRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.BannedIpEntity;
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BanIpHandlerTest {
 
     @Mock private BannedIpRepository bannedIpRepository;
+    @Mock private BanCheckService banCheckService;
 
     @InjectMocks private BanIpHandler handler;
 
@@ -35,6 +37,7 @@ class BanIpHandlerTest {
         assertNotNull(response);
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         verify(bannedIpRepository).save(any(BannedIpEntity.class));
+        verify(banCheckService).evict("192.168.1.100");
     }
 
     @Test
@@ -50,6 +53,7 @@ class BanIpHandlerTest {
         assertNotNull(response);
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         verify(bannedIpRepository).save(any(BannedIpEntity.class));
+        verify(banCheckService).evict("10.0.0.1");
     }
 
     @Test

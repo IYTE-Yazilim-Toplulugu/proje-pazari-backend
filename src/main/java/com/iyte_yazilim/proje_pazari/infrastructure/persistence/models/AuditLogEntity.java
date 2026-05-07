@@ -4,6 +4,7 @@ import com.github.f4b6a3.ulid.Ulid;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -14,7 +15,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "audit_logs")
+@Table(
+        name = "audit_logs",
+        indexes = {
+            @Index(name = "idx_audit_logs_performed_by", columnList = "performed_by"),
+            @Index(name = "idx_audit_logs_timestamp", columnList = "timestamp")
+        })
 @Getter
 @Setter
 @NoArgsConstructor

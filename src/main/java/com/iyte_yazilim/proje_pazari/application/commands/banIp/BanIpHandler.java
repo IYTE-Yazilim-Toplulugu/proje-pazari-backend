@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.banIp;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.services.BanCheckService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.BannedIpRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.BannedIpEntity;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 public class BanIpHandler implements IRequestHandler<BanIpCommand, ApiResponse<Void>> {
 
     private final BannedIpRepository bannedIpRepository;
+    private final BanCheckService banCheckService;
 
     @Override
     public ApiResponse<Void> handle(BanIpCommand command) {
@@ -43,6 +45,7 @@ public class BanIpHandler implements IRequestHandler<BanIpCommand, ApiResponse<V
                         .build();
 
         bannedIpRepository.save(ban);
+        banCheckService.evict(command.ipAddress());
         return ApiResponse.success(null, "IP address banned: " + command.ipAddress());
     }
 }
