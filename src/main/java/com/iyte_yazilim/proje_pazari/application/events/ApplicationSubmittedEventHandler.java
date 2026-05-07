@@ -7,6 +7,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -16,6 +17,7 @@ public class ApplicationSubmittedEventHandler implements IEventHandler<Applicati
 
     private final EmailService emailService;
 
+    @Async
     @Override
     @EventListener
     public void handle(ApplicationSubmittedEvent event) {

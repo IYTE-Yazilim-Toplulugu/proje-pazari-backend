@@ -138,6 +138,8 @@ jacocoTestReport {
     }
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
+            // Exclude all config classes broadly, then re-include JwtSecretValidator
+            // so its coverage is visible in the report.
             fileTree(dir: it, exclude: [
                 '**/config/**',
                 '**/dto/**',
@@ -145,7 +147,7 @@ jacocoTestReport {
                 '**/models/**',
                 '**/*Application.class',
                 '**/infrastructure/persistence/models/**'
-            ])
+            ]).plus(fileTree(dir: it, include: ['**/config/JwtSecretValidator.class']))
         }))
     }
 }
@@ -155,6 +157,17 @@ jacocoTestCoverageVerification {
     mustRunAfter test
 
     violationRules {
+        // Dedicated rule: JwtSecretValidator must have 100% line coverage.
+        rule {
+            element = 'CLASS'
+            includes = ['*.presentation.config.JwtSecretValidator']
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 1.0
+            }
+        }
+
         rule {
             element = 'CLASS'
             limit {
@@ -298,6 +311,8 @@ jacocoTestCoverageVerification {
 
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
+            // Exclude all config classes broadly, then re-include JwtSecretValidator
+            // so its coverage is measured and enforced by the dedicated 100% rule above.
             fileTree(dir: it, exclude: [
                 '**/config/**',
                 '**/dto/**',
@@ -305,7 +320,7 @@ jacocoTestCoverageVerification {
                 '**/models/**',
                 '**/*Application.class',
                 '**/infrastructure/persistence/models/**'
-            ])
+            ]).plus(fileTree(dir: it, include: ['**/config/JwtSecretValidator.class']))
         }))
     }
 }

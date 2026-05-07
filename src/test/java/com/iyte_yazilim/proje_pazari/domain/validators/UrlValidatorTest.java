@@ -3,6 +3,8 @@ package com.iyte_yazilim.proje_pazari.domain.validators;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.application.validators.UrlValidator;
+import com.iyte_yazilim.proje_pazari.application.validators.ValidUrl;
 import jakarta.validation.ConstraintValidatorContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

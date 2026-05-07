@@ -7,7 +7,6 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * Represents a project in the Proje Pazarı marketplace.
@@ -37,18 +36,16 @@ import lombok.Setter;
  * project.setTitle("Mobile App Development");
  * project.setDescription("Looking for Flutter developers");
  * project.setOwner(currentUser);
- * project.setStatus(ProjectStatus.OPEN);
  * }</pre>
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
- * @since 2024-01-01
  * @see User
  * @see ProjectApplication
  * @see ProjectStatus
+ * @since 2024-01-01
  */
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @SuppressWarnings("unused")
@@ -84,19 +81,123 @@ public class Project extends BaseEntity<Ulid> {
      */
     private List<ProjectApplication> applications;
 
-    /**
-     * Sets the owner of this project.
-     *
-     * @param owner the user to set as project owner
-     */
     private Integer maxTeamSize;
-
-    private Integer currentTeamSize;
+    private Integer currentTeamSize = 0;
     private List<String> requiredSkills;
     private String category;
     private LocalDateTime deadline;
 
+    // --- 1. STATE MACHINE ---
+    public void transitionTo(ProjectStatus newStatus) {
+        if (newStatus == null) {
+            throw new IllegalArgumentException("New status cannot be null.");
+        }
+
+        boolean isValidTransition =
+                switch (this.status) {
+                    case DRAFT ->
+                            newStatus == ProjectStatus.OPEN || newStatus == ProjectStatus.CANCELLED;
+                    case OPEN ->
+                            newStatus == ProjectStatus.IN_PROGRESS
+                                    || newStatus == ProjectStatus.CANCELLED;
+                    case IN_PROGRESS ->
+                            newStatus == ProjectStatus.COMPLETED
+                                    || newStatus == ProjectStatus.CANCELLED;
+                    case COMPLETED, CANCELLED ->
+                            false; // Terminal states cannot transition to anything
+                };
+
+        if (!isValidTransition) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Invalid state transition from %s to %s", this.status, newStatus));
+        }
+
+        this.status = newStatus;
+
+        // Note: If you are using Spring Data's @DomainEvents, you would register the event here:
+        // registerEvent(new ProjectStatusChangedEvent(this.getId(), this.status));
+    }
+
+    // --- 2. CAPACITY ENCAPSULATION ---
+    public void incrementTeamSize() {
+        if (isFull()) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Project is at maximum capacity. Cannot exceed %d members.",
+                            this.maxTeamSize));
+        }
+        this.currentTeamSize++;
+    }
+
+    public boolean isFull() {
+        if (this.maxTeamSize == null) {
+            return false; // Assuming null means unlimited, or handle according to your domain rules
+        }
+        return this.currentTeamSize >= this.maxTeamSize;
+    }
+
+    public boolean canAcceptApplications() {
+        return this.status == ProjectStatus.OPEN && !isFull();
+    }
+
+    // --- 3. LIFECYCLE GUARDS ---
+    public boolean canBeDeleted() {
+        // Blocked if IN_PROGRESS
+        return this.status != ProjectStatus.IN_PROGRESS;
+    }
+
+    public boolean canBeUpdated() {
+        // Blocked if COMPLETED or CANCELLED
+        return this.status != ProjectStatus.COMPLETED && this.status != ProjectStatus.CANCELLED;
+    }
+
+    /**
+     * INFRASTRUCTURE USE ONLY. Called by {@link
+     * com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper} to hydrate
+     * this object from persistence without triggering state machine validation.
+     *
+     * <p>Do NOT call this from business logic or application services. For status transitions, use
+     * {@link #transitionTo(ProjectStatus)}.
+     */
+    public void reconstitute(ProjectStatus status, Integer currentTeamSize) {
+        this.status = status;
+        this.currentTeamSize = currentTeamSize != null ? currentTeamSize : 0;
+    }
+
     public void setOwner(User owner) {
         this.owner = owner;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public void setApplications(List<ProjectApplication> applications) {
+        this.applications = applications;
+    }
+
+    public void setMaxTeamSize(Integer maxTeamSize) {
+        this.maxTeamSize = maxTeamSize;
+    }
+
+    public void setRequiredSkills(List<String> requiredSkills) {
+        this.requiredSkills = requiredSkills;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
     }
 }

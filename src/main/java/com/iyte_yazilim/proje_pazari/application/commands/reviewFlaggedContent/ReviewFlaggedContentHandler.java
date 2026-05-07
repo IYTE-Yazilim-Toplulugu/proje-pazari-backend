@@ -1,11 +1,13 @@
 package com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FlaggedContentNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.FlaggedContentRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.FlaggedContentEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.time.LocalDateTime;
@@ -22,6 +24,7 @@ public class ReviewFlaggedContentHandler
 
     private final FlaggedContentRepository flaggedContentRepository;
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -57,13 +60,18 @@ public class ReviewFlaggedContentHandler
                     // is thrown and the @Transactional method rolls back entirely — the flag status
                     // is NOT persisted as "REMOVED". This is correct: banning a non-existent user
                     // is an error condition that must surface to the caller, not silently succeed.
-                    UserEntity user =
+                    UserEntity userEntity =
                             userRepository
                                     .findById(flag.getContentId())
                                     .orElseThrow(
                                             () -> new UserNotFoundException(flag.getContentId()));
-                    user.setIsActive(false);
-                    userRepository.save(user);
+                    // Delegate to domain aggregate — enforces lifecycle guard
+                    User user = userMapper.entityToDomain(userEntity);
+                    if (user.isActive()) {
+                        user.deactivate();
+                    }
+                    userMapper.applyDomainToEntity(user, userEntity);
+                    userRepository.save(userEntity);
                 }
                 break;
             default:

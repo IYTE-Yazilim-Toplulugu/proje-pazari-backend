@@ -3,7 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.SystemConfigRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.SystemConfigEntity;
 import java.util.Map;
