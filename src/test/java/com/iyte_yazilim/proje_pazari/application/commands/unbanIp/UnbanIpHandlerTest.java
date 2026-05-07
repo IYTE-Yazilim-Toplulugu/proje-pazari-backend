@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
+import com.iyte_yazilim.proje_pazari.application.services.BanCheckService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.BannedIpRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UnbanIpHandlerTest {
 
     @Mock private BannedIpRepository bannedIpRepository;
+    @Mock private BanCheckService banCheckService;
 
     @InjectMocks private UnbanIpHandler handler;
 
@@ -30,6 +32,7 @@ class UnbanIpHandlerTest {
         assertNotNull(response);
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         verify(bannedIpRepository).deleteByIpAddress("192.168.1.100");
+        verify(banCheckService).evict("192.168.1.100");
     }
 
     @Test
