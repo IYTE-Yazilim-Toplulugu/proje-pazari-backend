@@ -21,7 +21,6 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -38,7 +37,6 @@ public class ElasticsearchSyncService {
     private final ProjectDocumentMapper mapper;
     private final ElasticsearchOperations elasticsearchOperations;
 
-    @Transactional(readOnly = true)
     public void indexProject(String projectId) {
         ProjectEntity project =
                 projectRepository
@@ -49,7 +47,6 @@ public class ElasticsearchSyncService {
         projectSearchRepository.save(document);
     }
 
-    @Transactional(readOnly = true)
     public void indexUser(String userId) {
         UserEntity user =
                 userRepository
@@ -71,7 +68,6 @@ public class ElasticsearchSyncService {
         userSearchRepository.deleteById(userId);
     }
 
-    @Transactional(readOnly = true)
     @Async
     public void reindexAllProjects() {
         projectSearchRepository.deleteAll();
@@ -92,7 +88,6 @@ public class ElasticsearchSyncService {
         } while (page.hasNext());
     }
 
-    @Transactional(readOnly = true)
     @Async
     public void reindexAllUsers() {
         userSearchRepository.deleteAll();
