@@ -1,17 +1,29 @@
 package com.iyte_yazilim.proje_pazari.application.behaviors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import com.iyte_yazilim.proje_pazari.application.common.ICommand;
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.application.common.RequestHandlerDelegate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.RegexPatternTypeFilter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
@@ -76,9 +88,9 @@ class TransactionBehaviorTest {
     @Test
     void handle_shouldIdentifyCommandByClassName() {
         // Arrange
-        record CreateUserCommand(String name) implements IRequest<String> {}
+        record CreateUserCommand(String name) implements ICommand<String> {}
 
-        record UpdateProfileCommand(String data) implements IRequest<String> {}
+        record UpdateProfileCommand(String data) implements ICommand<String> {}
 
         CreateUserCommand createCommand = new CreateUserCommand("John");
         UpdateProfileCommand updateCommand = new UpdateProfileCommand("data");
@@ -155,5 +167,42 @@ class TransactionBehaviorTest {
                 assertThrows(RuntimeException.class, () -> transactionBehavior.handle(query, next));
 
         assertEquals("Query failed", thrown.getMessage());
+    }
+
+    /**
+     * Scans every class under application.commands whose simple name ends with "Command" and
+     * asserts it implements ICommand. This guarantees TransactionBehavior wraps ALL present and
+     * future state-mutating commands — a regression guard against the IRequest/ICommand gap
+     * described in the architectural audit (Issue-01).
+     */
+    @Test
+    void allProductionCommandClassesMustImplementICommand() throws ClassNotFoundException {
+        var scanner = new ClassPathScanningCandidateComponentProvider(false);
+        scanner.addIncludeFilter(
+                new RegexPatternTypeFilter(Pattern.compile(".*\\.commands\\..*Command$")));
+
+        Set<BeanDefinition> candidates =
+                scanner.findCandidateComponents(
+                        "com.iyte_yazilim.proje_pazari.application.commands");
+
+        assertFalse(
+                candidates.isEmpty(),
+                "Classpath scanner found zero command classes — verify the base package path");
+
+        List<String> violations = new ArrayList<>();
+        for (BeanDefinition bd : candidates) {
+            Class<?> commandClass = Class.forName(bd.getBeanClassName());
+            if (!ICommand.class.isAssignableFrom(commandClass)) {
+                violations.add(
+                        commandClass.getSimpleName()
+                                + " implements IRequest instead of ICommand"
+                                + " — will bypass TransactionBehavior");
+            }
+        }
+
+        assertTrue(
+                violations.isEmpty(),
+                "Transaction gap detected — the following commands are not ICommand:\n"
+                        + String.join("\n", violations));
     }
 }

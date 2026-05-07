@@ -2,7 +2,6 @@ package com.iyte_yazilim.proje_pazari.application.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
-import lombok.Getter;
 
 /**
  * ApiResponse
@@ -12,7 +11,6 @@ import lombok.Getter;
  *
  * @param <T> the type of data contained in the response
  */
-@Getter
 @JsonInclude(JsonInclude.Include.NON_NULL) // 1. Don't send "data": null to the client on errors
 @SuppressWarnings("unused")
 public class ApiResponse<T> {
@@ -81,5 +79,21 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> error(String message) {
         return new ApiResponse<>(null, message, ResponseCode.INTERNAL_SERVER_ERROR);
+    }
+
+    public T getData() {
+        return this.data;
+    }
+
+    public String getMessage() {
+        return this.message;
+    }
+
+    public ResponseCode getCode() {
+        return this.code;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return this.timestamp;
     }
 }
