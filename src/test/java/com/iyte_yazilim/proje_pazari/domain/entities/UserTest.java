@@ -63,7 +63,7 @@ class UserTest {
         @Test
         @DisplayName("Activates an inactive user")
         void activate_onInactiveUser_succeeds() {
-            user.setActive(false); // Infrastructure reconstitution to set inactive state
+            user.reconstituteActive(false); // Infrastructure reconstitution to set inactive state
             assertFalse(user.isActive());
 
             user.activate();
@@ -99,7 +99,7 @@ class UserTest {
         @Test
         @DisplayName("Throws IllegalUserStateException on already inactive user")
         void deactivate_onInactiveUser_throwsException() {
-            user.setActive(false);
+            user.reconstituteActive(false);
 
             IllegalUserStateException ex =
                     assertThrows(IllegalUserStateException.class, () -> user.deactivate());
@@ -231,19 +231,19 @@ class UserTest {
     // ---------------------------------------------------------------------------
 
     @Test
-    @DisplayName("setActive() reconstitutes state without guards")
+    @DisplayName("reconstituteActive() reconstitutes state without guards")
     void setActive_reconstitutesWithoutGuards() {
-        user.setActive(false);
+        user.reconstituteActive(false);
         assertFalse(user.isActive());
 
-        user.setActive(true);
+        user.reconstituteActive(true);
         assertTrue(user.isActive());
     }
 
     @Test
-    @DisplayName("setRoles() reconstitutes roles without guards")
+    @DisplayName("reconstituteRoles() reconstitutes roles without guards")
     void setRoles_reconstitutesWithoutGuards() {
-        user.setRoles(Set.of(RoleType.ADMIN, RoleType.USER));
+        user.reconstituteRoles(Set.of(RoleType.ADMIN, RoleType.USER));
 
         assertTrue(user.hasRole(RoleType.ADMIN));
         assertTrue(user.hasRole(RoleType.USER));
@@ -251,10 +251,46 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("setRoles(null) defaults to empty set")
+    @DisplayName("reconstituteRoles(null) defaults to empty set")
     void setRoles_null_defaultsToEmpty() {
-        user.setRoles(null);
+        user.reconstituteRoles(null);
         assertNotNull(user.getRoles());
         assertTrue(user.getRoles().isEmpty());
+    }
+
+    // ---------------------------------------------------------------------------
+    //  addRole — additive role management
+    // ---------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("AddRole Tests")
+    class AddRoleTests {
+
+        @Test
+        @DisplayName("addRole() appends without clearing existing roles")
+        void addRole_addsWithoutClearing() {
+            user.assignRole(RoleType.USER);
+            user.addRole(RoleType.ADMIN);
+
+            assertTrue(user.hasRole(RoleType.USER));
+            assertTrue(user.hasRole(RoleType.ADMIN));
+            assertEquals(2, user.getRoles().size());
+        }
+
+        @Test
+        @DisplayName("addRole() is idempotent for already-present roles")
+        void addRole_existingRole_noChange() {
+            user.assignRole(RoleType.USER);
+            int sizeBefore = user.getRoles().size();
+            user.addRole(RoleType.USER);
+
+            assertEquals(sizeBefore, user.getRoles().size());
+        }
+
+        @Test
+        @DisplayName("addRole(null) throws IllegalArgumentException")
+        void addRole_null_throwsException() {
+            assertThrows(IllegalArgumentException.class, () -> user.addRole(null));
+        }
     }
 }

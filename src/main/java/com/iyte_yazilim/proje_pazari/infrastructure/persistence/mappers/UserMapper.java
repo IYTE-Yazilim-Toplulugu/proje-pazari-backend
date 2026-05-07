@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers;
 
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -26,9 +27,17 @@ public interface UserMapper {
             expression =
                     "java(userEntity.getId() != null ? com.github.f4b6a3.ulid.Ulid.from(userEntity.getId()) : null)")
     @Mapping(target = "domainEvents", ignore = true)
-    @Mapping(target = "active", source = "isActive")
-    @Mapping(target = "roles", source = "roles")
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "roles", ignore = true)
     User entityToDomain(UserEntity userEntity);
+
+    @AfterMapping
+    default void hydrateUserFromEntity(UserEntity source, @MappingTarget User target) {
+        if (source.getIsActive() != null) {
+            target.reconstituteActive(source.getIsActive());
+        }
+        target.reconstituteRoles(source.getRoles());
+    }
 
     // Update existing Persistence Entity from Domain Entity (for updates)
     @Mapping(

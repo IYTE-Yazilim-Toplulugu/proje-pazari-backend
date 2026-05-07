@@ -43,7 +43,7 @@ class BulkUserActionHandlerTest {
 
     private User createDomainUser(boolean active, RoleType role) {
         User user = new User("test@example.com", "pw", "Test", "User");
-        user.setActive(active);
+        user.reconstituteActive(active);
         user.assignRole(role);
         return user;
     }
