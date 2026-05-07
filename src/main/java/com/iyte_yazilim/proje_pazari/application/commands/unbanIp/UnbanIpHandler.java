@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.unbanIp;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.services.BanCheckService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.BannedIpRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UnbanIpHandler implements IRequestHandler<UnbanIpCommand, ApiResponse<Void>> {
 
     private final BannedIpRepository bannedIpRepository;
+    private final BanCheckService banCheckService;
 
     @Override
     @Transactional
@@ -25,6 +27,7 @@ public class UnbanIpHandler implements IRequestHandler<UnbanIpCommand, ApiRespon
         }
 
         bannedIpRepository.deleteByIpAddress(command.ipAddress());
+        banCheckService.evict(command.ipAddress());
         return ApiResponse.success(null, "IP address unbanned: " + command.ipAddress());
     }
 }
