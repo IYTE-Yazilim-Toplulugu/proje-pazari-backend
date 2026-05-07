@@ -1,11 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.commands.bulkApplicationAction;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
-import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
+import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectApplicationMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ public class BulkApplicationActionHandler
         implements IRequestHandler<BulkApplicationActionCommand, ApiResponse<BulkActionResult>> {
 
     private final ProjectApplicationRepository applicationRepository;
+    private final ProjectApplicationMapper applicationMapper;
 
     @Override
     @Transactional
@@ -29,30 +31,36 @@ public class BulkApplicationActionHandler
 
         for (String appId : command.applicationIds()) {
             try {
-                ProjectApplicationEntity app =
+                ProjectApplicationEntity appEntity =
                         applicationRepository
                                 .findById(appId)
                                 .orElseThrow(() -> new ApplicationNotFoundException(appId));
 
+                // Delegate to domain aggregate — enforces PENDING guard
+                ProjectApplication application = applicationMapper.entityToDomain(appEntity);
+
                 switch (command.action().toUpperCase()) {
                     case "APPROVE":
-                        app.setStatus(ApplicationStatus.APPROVED);
-                        applicationRepository.save(app);
-                        result.incrementSuccess();
+                        application.approve();
                         break;
                     case "REJECT":
-                        app.setStatus(ApplicationStatus.REJECTED);
-                        applicationRepository.save(app);
-                        result.incrementSuccess();
+                        application.reject();
                         break;
                     default:
                         result.addFailure(appId, "Unknown action: " + command.action());
+                        continue;
                 }
+
+                // Sync domain state back to persistence entity
+                appEntity.setStatus(application.getStatus());
+                applicationRepository.save(appEntity);
+                result.incrementSuccess();
             } catch (Exception e) {
-                // Intentional: domain exceptions (e.g. ApplicationNotFoundException) are caught
-                // here and recorded as per-item failures rather than propagated. This preserves
-                // bulk-operation semantics — a single missing or invalid item must not abort the
-                // entire batch. GlobalExceptionHandler will NOT handle these; failures are surfaced
+                // Intentional: domain exceptions (e.g. ApplicationNotFoundException,
+                // IllegalApplicationStateException) are caught here and recorded as per-item
+                // failures rather than propagated. This preserves bulk-operation semantics —
+                // a single missing or invalid item must not abort the entire batch.
+                // GlobalExceptionHandler will NOT handle these; failures are surfaced
                 // in BulkActionResult instead.
                 result.addFailure(appId, e.getMessage());
             }

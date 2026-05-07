@@ -5,17 +5,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.StatObjectArgs;
-import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Integration tests for MinioStorageAdapter.
@@ -114,19 +113,15 @@ class MinioStorageAdapterTest {
     @Test
     void ShouldStoreFile() throws Exception {
         // Given
-        MultipartFile mockFile = mock(MultipartFile.class);
         byte[] content = "test content".getBytes();
-        when(mockFile.getInputStream()).thenReturn(new ByteArrayInputStream(content));
-        when(mockFile.getContentType()).thenReturn("text/plain");
-        when(mockFile.getSize()).thenReturn((long) content.length);
-        when(mockFile.isEmpty()).thenReturn(false);
+        FileUpload file = new FileUpload("test.txt", "text/plain", content, content.length);
 
         String presignedUrl = "http://localhost:9000/test-bucket/test/test.txt?signature=test";
         when(mockMinioClient.getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class)))
                 .thenReturn(presignedUrl);
 
         // When
-        String result = adapter.store(mockFile, "test/test.txt");
+        String result = adapter.store(file, "test/test.txt");
 
         // Then
         assertNotNull(result);
@@ -137,23 +132,16 @@ class MinioStorageAdapterTest {
     @Test
     void ShouldRejectPathTraversal() throws Exception {
         // Given
-        MultipartFile mockFile = mock(MultipartFile.class);
         byte[] content = "test content".getBytes();
-        when(mockFile.getInputStream()).thenReturn(new ByteArrayInputStream(content));
-        when(mockFile.getContentType()).thenReturn("text/plain");
-        when(mockFile.getSize()).thenReturn((long) content.length);
-        when(mockFile.isEmpty()).thenReturn(false);
+        FileUpload file = new FileUpload("test.txt", "text/plain", content, content.length);
         String path = "../test.txt";
 
-        // When/Then - MinIO adapter doesn't validate path traversal, but FileStorageService does
-        // This test verifies the adapter can handle the path (it will be stored as-is)
-        // The actual path validation should be in FileStorageService tests
         String presignedUrl = "http://localhost:9000/test-bucket/../test.txt?signature=test";
         when(mockMinioClient.getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class)))
                 .thenReturn(presignedUrl);
 
-        // The adapter itself doesn't reject path traversal - it's handled by FileStorageService
-        String result = adapter.store(mockFile, path);
+        // When
+        String result = adapter.store(file, path);
         assertNotNull(result);
     }
 

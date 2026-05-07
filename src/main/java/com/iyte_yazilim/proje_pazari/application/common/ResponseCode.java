@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.domain.enums;
+package com.iyte_yazilim.proje_pazari.application.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -22,7 +22,7 @@ import lombok.Getter;
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
  * @since 2024-01-01
- * @see com.iyte_yazilim.proje_pazari.domain.models.ApiResponse
+ * @see com.iyte_yazilim.proje_pazari.application.common.ApiResponse
  */
 @Getter
 @AllArgsConstructor

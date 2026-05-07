@@ -15,7 +15,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 
-@Document(indexName = "#{@environment.getProperty('app.elasticsearch.project-index')}")
+@Document(indexName = "#{@environment.getProperty('app.elasticsearch.project-index', 'projects')}")
 @Setting(settingPath = "elasticsearch/project-settings.json")
 @Getter
 @Setter
@@ -26,17 +26,20 @@ public class ProjectDocument {
 
     @Id private String id;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String title;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String description;
 
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String summary;
 
     @Field(type = FieldType.Keyword)
     private String status;
+
+    @Field(type = FieldType.Keyword)
+    private String category;
 
     @Field(type = FieldType.Nested)
     private OwnerInfo owner;

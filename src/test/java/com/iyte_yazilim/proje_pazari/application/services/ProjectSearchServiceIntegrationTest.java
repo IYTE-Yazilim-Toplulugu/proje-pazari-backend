@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,16 +20,20 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest
 @Testcontainers
-@Disabled(
-        "Elasticsearch testcontainer configuration needs to be fixed - client/server version compatibility issue")
-class ProjectSearchServiceTest {
+@DisplayName("Project Search Service Integration Tests")
+class ProjectSearchServiceIntegrationTest {
 
     @Container
     static ElasticsearchContainer elasticsearch =
-            new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:9.2.0")
+            new ElasticsearchContainer(
+                            DockerImageName.parse(
+                                            "docker.elastic.co/elasticsearch/elasticsearch:9.2.2")
+                                    .asCompatibleSubstituteFor(
+                                            "docker.elastic.co/elasticsearch/elasticsearch"))
                     .withEnv("xpack.security.enabled", "false")
                     .withEnv("xpack.security.http.ssl.enabled", "false");
 
@@ -48,6 +53,7 @@ class ProjectSearchServiceTest {
     void setUp() {
         elasticsearchOperations.indexOps(ProjectDocument.class).delete();
         elasticsearchOperations.indexOps(ProjectDocument.class).create();
+        elasticsearchOperations.indexOps(ProjectDocument.class).putMapping();
 
         // Note: tags are set to null to reflect actual behavior - the ProjectDocumentMapper
         // ignores tags (see @Mapping(target = "tags", ignore = true)). Tag functionality
@@ -99,6 +105,7 @@ class ProjectSearchServiceTest {
     }
 
     @Test
+    @DisplayName("Should return results matching keyword in title")
     void shouldSearchProjects() {
         List<ProjectDocument> results = projectSearchService.searchProjects("Spring");
 
@@ -107,14 +114,16 @@ class ProjectSearchServiceTest {
     }
 
     @Test
+    @DisplayName("Should return results matching keyword in description")
     void shouldSearchProjectsByDescription() {
         List<ProjectDocument> results = projectSearchService.searchProjects("TypeScript");
 
         assertThat(results).isNotEmpty();
-        assertThat(results.get(0).getDescription()).contains("TypeScript");
+        assertThat(results).anyMatch(p -> p.getDescription().contains("TypeScript"));
     }
 
     @Test
+    @DisplayName("Should return empty list when no projects match search keyword")
     void shouldReturnEmptyListForNonMatchingSearch() {
         List<ProjectDocument> results =
                 projectSearchService.searchProjects("NonExistentKeyword123");
@@ -123,6 +132,7 @@ class ProjectSearchServiceTest {
     }
 
     @Test
+    @DisplayName("Should return results for advanced search with keyword filter")
     void shouldPerformAdvancedSearchWithKeyword() {
         SearchPage<ProjectDocument> results =
                 projectSearchService.advancedSearch("Java", null, null, PageRequest.of(0, 10));
@@ -131,6 +141,7 @@ class ProjectSearchServiceTest {
     }
 
     @Test
+    @DisplayName("Should return only projects matching the given status in advanced search")
     void shouldPerformAdvancedSearchWithStatus() {
         SearchPage<ProjectDocument> results =
                 projectSearchService.advancedSearch(null, "COMPLETED", null, PageRequest.of(0, 10));
@@ -141,6 +152,7 @@ class ProjectSearchServiceTest {
     @Test
     @Disabled(
             "Tag search functionality not yet implemented - tags are ignored in ProjectDocumentMapper")
+    @DisplayName("Should return results matching given tags in advanced search")
     void shouldPerformAdvancedSearchWithTags() {
         SearchPage<ProjectDocument> results =
                 projectSearchService.advancedSearch(
@@ -150,6 +162,7 @@ class ProjectSearchServiceTest {
     }
 
     @Test
+    @DisplayName("Should return title suggestions for given prefix")
     void shouldGetSuggestions() {
         List<String> suggestions = projectSearchService.getSuggestions("Java");
 
@@ -157,6 +170,7 @@ class ProjectSearchServiceTest {
     }
 
     @Test
+    @DisplayName("Should return project statistics grouped by status")
     void shouldGetProjectStatistics() {
         Map<String, Long> statistics = projectSearchService.getProjectStatistics();
 

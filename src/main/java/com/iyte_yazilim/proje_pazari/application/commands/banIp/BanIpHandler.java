@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.banIp;
 
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.BannedIpRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.BannedIpEntity;
 import lombok.RequiredArgsConstructor;

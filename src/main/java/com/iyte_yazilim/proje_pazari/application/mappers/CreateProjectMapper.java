@@ -20,9 +20,9 @@ public interface CreateProjectMapper {
     @Mapping(target = "domainEvents", ignore = true)
     @Mapping(target = "owner", expression = "java(createUserWithId(command.ownerId()))")
     @Mapping(target = "summary", ignore = true)
-    @Mapping(target = "status", ignore = true)
     @Mapping(target = "applications", ignore = true)
-    @Mapping(target = "currentTeamSize", constant = "1") // Owner başlangıçta takımın parçası
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "currentTeamSize", ignore = true)
     @Mapping(
             target = "requiredSkills",
             expression = "java(convertArrayToList(command.requiredSkills()))")
@@ -64,5 +64,13 @@ public interface CreateProjectMapper {
             return new String[0];
         }
         return list.toArray(new String[0]);
+    }
+
+    @org.mapstruct.AfterMapping
+    default void initializeTeamSize(@org.mapstruct.MappingTarget Project domain) {
+        if (domain != null) {
+            // The owner is initially part of the team, so we increment from 0 to 1
+            domain.incrementTeamSize();
+        }
     }
 }

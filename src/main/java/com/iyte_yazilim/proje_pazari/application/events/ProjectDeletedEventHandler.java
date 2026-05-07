@@ -7,6 +7,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -31,6 +32,7 @@ public class ProjectDeletedEventHandler implements IEventHandler<ProjectDeletedE
     @Value("${app.frontend.url:http://localhost:3000}")
     private String baseUrl;
 
+    @Async
     @Override
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ProjectDeletedEvent event) {

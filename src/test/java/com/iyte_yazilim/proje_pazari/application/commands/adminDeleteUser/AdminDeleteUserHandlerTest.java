@@ -1,13 +1,17 @@
 package com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.iyte_yazilim.proje_pazari.domain.events.UserDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,11 +21,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class AdminDeleteUserHandlerTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private UserMapper userMapper;
+
+    @Mock private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks private AdminDeleteUserHandler handler;
 
@@ -40,13 +48,18 @@ class AdminDeleteUserHandlerTest {
     @Test
     @DisplayName("Should deactivate user successfully")
     void shouldDeactivateUser_whenUserExists() {
+        User domainUser = new User("user@std.iyte.edu.tr", "pw", "Test", "User");
+
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userMapper.entityToDomain(userEntity)).thenReturn(domainUser);
 
         ApiResponse<Void> response = handler.handle(new AdminDeleteUserCommand(userId));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertFalse(userEntity.getIsActive());
+        assertFalse(domainUser.isActive());
+        verify(userMapper).applyDomainToEntity(domainUser, userEntity);
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent(any(UserDeletedEvent.class));
     }
 
     @Test
