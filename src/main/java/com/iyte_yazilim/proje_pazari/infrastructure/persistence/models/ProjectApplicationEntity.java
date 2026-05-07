@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
@@ -19,7 +20,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "project_applications")
+@Table(
+        name = "project_applications",
+        indexes = {
+            @Index(name = "idx_proj_apps_project_id", columnList = "project_id"),
+            @Index(name = "idx_proj_apps_user_id", columnList = "user_id")
+        })
 @Getter
 @Setter
 @NoArgsConstructor
