@@ -6,10 +6,12 @@ import static org.mockito.Mockito.*;
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FlaggedContentNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.FlaggedContentRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.FlaggedContentEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;
@@ -26,6 +28,7 @@ class ReviewFlaggedContentHandlerTest {
 
     @Mock private FlaggedContentRepository flaggedContentRepository;
     @Mock private UserRepository userRepository;
+    @Mock private UserMapper userMapper;
 
     @InjectMocks private ReviewFlaggedContentHandler handler;
 
@@ -79,8 +82,11 @@ class ReviewFlaggedContentHandlerTest {
         userEntity.setId(userId);
         userEntity.setIsActive(true);
 
+        User domainUser = new User("user@test.com", "pw", "Test", "User");
+
         when(flaggedContentRepository.findById(flagId)).thenReturn(Optional.of(flagEntity));
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userMapper.entityToDomain(userEntity)).thenReturn(domainUser);
 
         ApiResponse<Void> response =
                 handler.handle(
@@ -88,7 +94,8 @@ class ReviewFlaggedContentHandlerTest {
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals("REMOVED", flagEntity.getStatus());
-        assertFalse(userEntity.getIsActive());
+        assertFalse(domainUser.isActive());
+        verify(userMapper).applyDomainToEntity(domainUser, userEntity);
         verify(userRepository).save(userEntity);
         verify(flaggedContentRepository).save(flagEntity);
     }

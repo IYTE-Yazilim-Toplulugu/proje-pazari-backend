@@ -4,13 +4,14 @@ import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
+import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationReviewedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectApplicationMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -24,11 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Handles application review (approval/rejection).
  *
- * <p>Validates application existence, updates status, and publishes ApplicationReviewedEvent for
- * email notifications. Enforces project capacity and status constraints.
+ * <p>Validates application existence, delegates status transition to the domain aggregate, and
+ * publishes ApplicationReviewedEvent for email notifications. Enforces project capacity and status
+ * constraints.
  *
  * @author IYTE Yazılım Topluluğu
- * @version 1.1
+ * @version 2.0
  * @since 2026-02-01
  */
 @Component
@@ -38,10 +40,12 @@ public class ReviewApplicationHandler
                 ReviewApplicationCommand, ApiResponse<ReviewApplicationCommandResult>> {
 
     private final ProjectApplicationRepository applicationRepository;
-    private final ProjectRepository projectRepository;
+    private final ProjectRepository
+            projectRepository; // <-- Added to persist the incremented team size
+    private final ProjectApplicationMapper applicationMapper;
     private final MessageService messageService;
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final ProjectMapper projectMapper;
+    private final ProjectMapper projectMapper; // <-- Added mapper injection
 
     @Override
     @Transactional(
@@ -64,13 +68,12 @@ public class ReviewApplicationHandler
             return ApiResponse.badRequest(messageService.getMessage("error.invalid.review.status"));
         }
 
-        // --- 3. Enforce Domain Rules for Approvals ---
+        // --- 3. Map to domain aggregate and perform guarded transition ---
+        ProjectApplication application = applicationMapper.entityToDomain(applicationEntity);
+
         if (command.status() == ApplicationStatus.APPROVED) {
-            String projectId = applicationEntity.getProject().getId();
-            ProjectEntity projectEntity =
-                    projectRepository
-                            .findByIdWithLock(projectId)
-                            .orElseThrow(() -> new ProjectNotFoundException(projectId));
+            // --- 3a. Enforce Domain Rules for Approvals ---
+            ProjectEntity projectEntity = applicationEntity.getProject();
             Project projectDomain = projectMapper.entityToDomain(projectEntity);
 
             // Check if project is OPEN and not full
@@ -91,10 +94,16 @@ public class ReviewApplicationHandler
                 // Catch the capacity limit exception thrown by the domain
                 return ApiResponse.badRequest(e.getMessage());
             }
+
+            // --- 3b. Approve via domain aggregate (enforces PENDING guard) ---
+            application.approve();
+        } else {
+            // --- 3c. Reject via domain aggregate (enforces PENDING guard) ---
+            application.reject();
         }
 
-        // --- 4. Update Application Status ---
-        applicationEntity.setStatus(command.status());
+        // --- 4. Sync status back to persistence entity ---
+        applicationEntity.setStatus(application.getStatus());
 
         // --- 5. Persistence ---
         ProjectApplicationEntity savedApplication = applicationRepository.save(applicationEntity);

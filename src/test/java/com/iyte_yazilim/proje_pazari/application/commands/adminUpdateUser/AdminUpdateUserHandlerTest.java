@@ -1,12 +1,15 @@
 package com.iyte_yazilim.proje_pazari.application.commands.adminUpdateUser;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.HashSet;
 import java.util.Optional;
@@ -23,25 +26,31 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AdminUpdateUserHandlerTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private UserMapper userMapper;
 
     @InjectMocks private AdminUpdateUserHandler handler;
 
-    private UserEntity testUser;
+    private UserEntity testUserEntity;
+    private User testDomainUser;
 
     @BeforeEach
     void setUp() {
-        testUser = new UserEntity();
-        testUser.setId("01ABCDEF12345678901234");
-        testUser.setEmail("test@example.com");
-        testUser.setRoles(new HashSet<>(Set.of(RoleType.USER)));
-        testUser.setIsActive(true);
+        testUserEntity = new UserEntity();
+        testUserEntity.setId("01ABCDEF12345678901234");
+        testUserEntity.setEmail("test@example.com");
+        testUserEntity.setRoles(new HashSet<>(Set.of(RoleType.USER)));
+        testUserEntity.setIsActive(true);
+
+        testDomainUser = new User("test@example.com", "pw", "Test", "User");
+        testDomainUser.assignRole(RoleType.USER);
     }
 
     @Test
     @DisplayName("Should update user role")
     void shouldUpdateUserRole() {
-        when(userRepository.findById("01ABCDEF12345678901234")).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any())).thenReturn(testUser);
+        when(userRepository.findById("01ABCDEF12345678901234"))
+                .thenReturn(Optional.of(testUserEntity));
+        when(userMapper.entityToDomain(testUserEntity)).thenReturn(testDomainUser);
 
         AdminUpdateUserCommand command =
                 new AdminUpdateUserCommand(
@@ -50,15 +59,18 @@ class AdminUpdateUserHandlerTest {
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);
-        assertEquals(Set.of(RoleType.ADMIN), testUser.getRoles());
-        verify(userRepository).save(testUser);
+        assertTrue(testDomainUser.hasRole(RoleType.ADMIN));
+        assertFalse(testDomainUser.hasRole(RoleType.USER));
+        verify(userMapper).applyDomainToEntity(testDomainUser, testUserEntity);
+        verify(userRepository).save(testUserEntity);
     }
 
     @Test
     @DisplayName("Should update user active status")
     void shouldUpdateUserActiveStatus() {
-        when(userRepository.findById("01ABCDEF12345678901234")).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any())).thenReturn(testUser);
+        when(userRepository.findById("01ABCDEF12345678901234"))
+                .thenReturn(Optional.of(testUserEntity));
+        when(userMapper.entityToDomain(testUserEntity)).thenReturn(testDomainUser);
 
         AdminUpdateUserCommand command =
                 new AdminUpdateUserCommand("01ABCDEF12345678901234", null, false, null, null, null);
@@ -66,7 +78,9 @@ class AdminUpdateUserHandlerTest {
         ApiResponse<Void> response = handler.handle(command);
 
         assertNotNull(response);
-        assertFalse(testUser.getIsActive());
+        assertFalse(testDomainUser.isActive());
+        verify(userMapper).applyDomainToEntity(testDomainUser, testUserEntity);
+        verify(userRepository).save(testUserEntity);
     }
 
     @Test

@@ -3,7 +3,6 @@ package com.iyte_yazilim.proje_pazari.application.commands.submitApplication;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationSubmittedEvent;
 import com.iyte_yazilim.proje_pazari.domain.models.results.SubmitApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
@@ -79,11 +78,10 @@ public class SubmitApplicationHandler
             return ApiResponse.badRequest(messageService.getMessage("application.already.exists"));
         }
 
-        // --- 5. Create Application Entity ---
+        // --- 5. Create Application Entity (defaults to PENDING status) ---
         ProjectApplicationEntity applicationEntity = new ProjectApplicationEntity();
         applicationEntity.setProject(projectEntity);
         applicationEntity.setUser(userEntity);
-        applicationEntity.setStatus(ApplicationStatus.PENDING);
 
         // --- 6. Persistence ---
         ProjectApplicationEntity savedApplication = applicationRepository.save(applicationEntity);
