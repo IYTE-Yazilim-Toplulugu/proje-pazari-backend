@@ -98,4 +98,59 @@ class RedisTokenBlacklistServiceTest {
 
         verify(valueOperations).set(eq("token:blacklist:someToken"), anyString(), eq(ttl));
     }
+
+    // ── User blacklist methods ──────────────────────────────────────────
+
+    private static final String EMAIL = "user@std.iyte.edu.tr";
+    private static final String USER_KEY = "user:blacklist:" + EMAIL;
+
+    @Test
+    @DisplayName("Should blacklist user with given TTL")
+    void blacklistUser_withValidTtl_setsWithGivenTtl() {
+        Duration ttl = Duration.ofHours(24);
+
+        service.blacklistUser(EMAIL, ttl);
+
+        verify(valueOperations).set(USER_KEY, "blacklisted", ttl);
+    }
+
+    @Test
+    @DisplayName("Should use default 24h TTL when user blacklist TTL is null")
+    void blacklistUser_withNullTtl_usesDefaultTtl() {
+        service.blacklistUser(EMAIL, null);
+
+        verify(valueOperations).set(USER_KEY, "blacklisted", Duration.ofHours(24));
+    }
+
+    @Test
+    @DisplayName("Should use default 24h TTL when user blacklist TTL is zero")
+    void blacklistUser_withZeroTtl_usesDefaultTtl() {
+        service.blacklistUser(EMAIL, Duration.ZERO);
+
+        verify(valueOperations).set(USER_KEY, "blacklisted", Duration.ofHours(24));
+    }
+
+    @Test
+    @DisplayName("Should return true when user key exists in Redis")
+    void isUserBlacklisted_whenKeyExists_returnsTrue() {
+        when(redisTemplate.hasKey(USER_KEY)).thenReturn(true);
+
+        assertTrue(service.isUserBlacklisted(EMAIL));
+    }
+
+    @Test
+    @DisplayName("Should return false when user key does not exist in Redis")
+    void isUserBlacklisted_whenKeyAbsent_returnsFalse() {
+        when(redisTemplate.hasKey(USER_KEY)).thenReturn(false);
+
+        assertFalse(service.isUserBlacklisted(EMAIL));
+    }
+
+    @Test
+    @DisplayName("Should return false when Redis hasKey returns null for user")
+    void isUserBlacklisted_whenHasKeyReturnsNull_returnsFalse() {
+        when(redisTemplate.hasKey(USER_KEY)).thenReturn(null);
+
+        assertFalse(service.isUserBlacklisted(EMAIL));
+    }
 }
