@@ -1,0 +1,27 @@
+# Production overlay — use with:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Requires env var: ELASTIC_PASSWORD (see docs/DEPLOYMENT.md)
+
+services:
+  elasticsearch:
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+    ports: []
+
+  kibana:
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+      - xpack.security.enabled=true
+    ports: []
+
+  app:
+    environment:
+      SPRING_ELASTICSEARCH_USERNAME: elastic
+      SPRING_ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}

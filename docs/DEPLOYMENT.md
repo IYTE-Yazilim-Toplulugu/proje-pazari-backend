@@ -8,6 +8,9 @@ This document covers deployment options for the Proje Pazarı Backend.
 |----------|-------------|----------|---------|-------------------|
 | `JWT_SECRET` | Secret key for JWT signing (min 32 chars, no placeholder substrings) | **Yes** | — | `IllegalStateException`, non-zero exit |
 | `JWT_EXPIRATION` | Token expiration in milliseconds | No | `86400000` (24h) | — |
+| `ELASTIC_PASSWORD` | Elasticsearch built-in `elastic` user password (production only) | Prod | — | ES returns 401, app fails to index |
+| `SPRING_ELASTICSEARCH_USERNAME` | ES username forwarded to Spring Boot | Prod | `elastic` | — |
+| `SPRING_ELASTICSEARCH_PASSWORD` | ES password forwarded to Spring Boot | Prod | `""` | App starts but cannot authenticate to ES |
 | `SPRING_DATASOURCE_URL` | PostgreSQL JDBC URL | Yes | — | — |
 | `SPRING_DATASOURCE_USERNAME` | Database username | Yes | — | — |
 | `SPRING_DATASOURCE_PASSWORD` | Database password | Yes | — | — |
@@ -345,3 +348,28 @@ Set interval with:
 ```bash
 BACKUP_INTERVAL_SECONDS=86400
 ```
+
+---
+
+## Production Elasticsearch Security
+
+The default `docker-compose.yml` runs Elasticsearch with `xpack.security.enabled=false` (development
+mode). Before deploying to production, overlay the security configuration:
+
+```bash
+# Generate a strong password
+ELASTIC_PASSWORD=$(openssl rand -base64 32)
+
+# Start with the production overlay
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+The `docker-compose.prod.yml` overlay:
+- Enables `xpack.security.enabled=true`
+- Requires `ELASTIC_PASSWORD` to be set in the environment (fails fast otherwise)
+- Removes localhost port bindings for ES and Kibana (internal network only)
+- Passes credentials to the Spring Boot app via `SPRING_ELASTICSEARCH_USERNAME/PASSWORD`
+
+> [!IMPORTANT]
+> Store `ELASTIC_PASSWORD` in your secret manager (Vault, AWS Secrets Manager, k8s Secret).
+> Never commit it to version control.
