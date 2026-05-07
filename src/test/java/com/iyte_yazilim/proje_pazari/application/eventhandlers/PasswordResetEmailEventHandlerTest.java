@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.application.events;
+package com.iyte_yazilim.proje_pazari.application.eventhandlers;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;

@@ -1,4 +1,4 @@
-package com.iyte_yazilim.proje_pazari.application.events;
+package com.iyte_yazilim.proje_pazari.application.eventhandlers;
 
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
@@ -57,8 +57,16 @@ public class ProjectDeletedEventHandler implements IEventHandler<ProjectDeletedE
                         "baseUrl",
                         baseUrl);
 
-        emailService.sendTemplateEmailAsync(
-                event.ownerEmail(), "project-deleted.html", ownerVariables);
+        try {
+            emailService.sendTemplateEmailAsync(
+                    event.ownerEmail(), "project-deleted.html", ownerVariables);
+        } catch (Exception e) {
+            log.error(
+                    "Failed to send owner notification for ProjectDeletedEvent [projectId={}]: {}",
+                    event.projectId(),
+                    e.getMessage(),
+                    e);
+        }
 
         // --- 2. Notify affected applicants ---
         if (event.applicantEmails() != null && !event.applicantEmails().isEmpty()) {
@@ -82,8 +90,17 @@ public class ProjectDeletedEventHandler implements IEventHandler<ProjectDeletedE
                                 "baseUrl",
                                 baseUrl);
 
-                emailService.sendTemplateEmailAsync(
-                        applicantEmail, "application-rejected.html", applicantVariables);
+                try {
+                    emailService.sendTemplateEmailAsync(
+                            applicantEmail, "application-rejected.html", applicantVariables);
+                } catch (Exception e) {
+                    log.error(
+                            "Failed to notify applicant {} for ProjectDeletedEvent [projectId={}]: {}",
+                            applicantEmail,
+                            event.projectId(),
+                            e.getMessage(),
+                            e);
+                }
             }
             log.info(
                     "Sent notification emails to {} affected applicants",

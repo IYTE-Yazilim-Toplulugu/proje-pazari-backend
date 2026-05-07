@@ -1,12 +1,12 @@
-package com.iyte_yazilim.proje_pazari.application.events;
+package com.iyte_yazilim.proje_pazari.application.eventhandlers;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
-import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
-import com.iyte_yazilim.proje_pazari.domain.models.TeamMemberInfo;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
+import com.iyte_yazilim.proje_pazari.domain.events.ProjectStatusChangedEvent;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,12 +25,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ProjectUpdatedEventHandler Tests")
-class ProjectUpdatedEventHandlerTest {
+@DisplayName("ProjectStatusChangedEventHandler Tests")
+class ProjectStatusChangedEventHandlerTest {
 
     @Mock private EmailService emailService;
 
-    @InjectMocks private ProjectUpdatedEventHandler eventHandler;
+    @InjectMocks private ProjectStatusChangedEventHandler eventHandler;
 
     @Captor private ArgumentCaptor<String> emailCaptor;
 
@@ -40,6 +40,7 @@ class ProjectUpdatedEventHandlerTest {
 
     @BeforeEach
     void setUp() {
+        // Set baseUrl using reflection for testing
         ReflectionTestUtils.setField(eventHandler, "baseUrl", "http://localhost:3000");
 
         lenient()
@@ -48,42 +49,71 @@ class ProjectUpdatedEventHandlerTest {
     }
 
     @Test
-    @DisplayName("Should send project update email to owner")
-    void shouldSendProjectUpdateEmailToOwner() {
+    @DisplayName("Should send email to owner when project status changes")
+    void shouldSendEmailToOwnerWhenStatusChanges() {
         // Given
-        ProjectUpdatedEvent event =
-                new ProjectUpdatedEvent(
+        ProjectStatusChangedEvent event =
+                new ProjectStatusChangedEvent(
                         "project-123",
                         "AI Research Platform",
                         "owner-123",
                         "owner@example.com",
                         "Jane",
+                        ProjectStatus.OPEN,
+                        ProjectStatus.IN_PROGRESS,
                         Collections.emptyList(),
                         LocalDateTime.now());
 
         // When
         eventHandler.handle(event);
 
-        // Then
+        // Then - should send one email to owner
         verify(emailService, times(1))
                 .sendTemplateEmailAsync(
                         emailCaptor.capture(), templateCaptor.capture(), variablesCaptor.capture());
 
         assertEquals("owner@example.com", emailCaptor.getValue());
-        assertEquals("project-updated.html", templateCaptor.getValue());
+        assertEquals("project-status-changed.html", templateCaptor.getValue());
+    }
+
+    @Test
+    @DisplayName("Should send emails to both owner and team members")
+    void shouldSendEmailsToBothOwnerAndTeamMembers() {
+        // Given
+        List<String> teamMemberEmails = Arrays.asList("member1@example.com", "member2@example.com");
+
+        ProjectStatusChangedEvent event =
+                new ProjectStatusChangedEvent(
+                        "project-123",
+                        "AI Research Platform",
+                        "owner-123",
+                        "owner@example.com",
+                        "Jane",
+                        ProjectStatus.IN_PROGRESS,
+                        ProjectStatus.COMPLETED,
+                        teamMemberEmails,
+                        LocalDateTime.now());
+
+        // When
+        eventHandler.handle(event);
+
+        // Then - should send 3 emails total (1 to owner + 2 to team members)
+        verify(emailService, times(3)).sendTemplateEmailAsync(any(), any(), any());
     }
 
     @Test
     @DisplayName("Should include correct variables in owner notification")
     void shouldIncludeCorrectVariablesInOwnerNotification() {
         // Given
-        ProjectUpdatedEvent event =
-                new ProjectUpdatedEvent(
+        ProjectStatusChangedEvent event =
+                new ProjectStatusChangedEvent(
                         "project-123",
                         "AI Research Platform",
                         "owner-123",
                         "owner@example.com",
                         "Jane",
+                        ProjectStatus.DRAFT,
+                        ProjectStatus.OPEN,
                         Collections.emptyList(),
                         LocalDateTime.now());
 
@@ -94,61 +124,38 @@ class ProjectUpdatedEventHandlerTest {
         verify(emailService)
                 .sendTemplateEmailAsync(
                         eq("owner@example.com"),
-                        eq("project-updated.html"),
+                        eq("project-status-changed.html"),
                         variablesCaptor.capture());
 
         Map<String, Object> variables = variablesCaptor.getValue();
-        assertEquals("Project Updated - AI Research Platform", variables.get("subject"));
+        assertEquals("Project Status Updated - AI Research Platform", variables.get("subject"));
         assertEquals("Jane", variables.get("firstName"));
         assertEquals("AI Research Platform", variables.get("projectTitle"));
+        assertEquals("OPEN", variables.get("newStatus"));
         assertEquals("project-123", variables.get("projectId"));
         assertEquals("http://localhost:3000", variables.get("baseUrl"));
-    }
-
-    @Test
-    @DisplayName("Should send emails to both owner and team members")
-    void shouldSendEmailsToBothOwnerAndTeamMembers() {
-        // Given
-        List<TeamMemberInfo> teamMembers =
-                Arrays.asList(
-                        new TeamMemberInfo("member1@example.com", "Alice"),
-                        new TeamMemberInfo("member2@example.com", "Bob"));
-
-        ProjectUpdatedEvent event =
-                new ProjectUpdatedEvent(
-                        "project-123",
-                        "AI Research Platform",
-                        "owner-123",
-                        "owner@example.com",
-                        "Jane",
-                        teamMembers,
-                        LocalDateTime.now());
-
-        // When
-        eventHandler.handle(event);
-
-        // Then - 1 to owner + 2 to team members
-        verify(emailService, times(3)).sendTemplateEmailAsync(any(), any(), any());
     }
 
     @Test
     @DisplayName("Should not send team member emails when list is empty")
     void shouldNotSendTeamMemberEmailsWhenListIsEmpty() {
         // Given
-        ProjectUpdatedEvent event =
-                new ProjectUpdatedEvent(
+        ProjectStatusChangedEvent event =
+                new ProjectStatusChangedEvent(
                         "project-123",
                         "Test Project",
                         "owner-123",
                         "owner@example.com",
                         "Owner",
+                        ProjectStatus.OPEN,
+                        ProjectStatus.CANCELLED,
                         Collections.emptyList(),
                         LocalDateTime.now());
 
         // When
         eventHandler.handle(event);
 
-        // Then - only owner email
+        // Then - only owner email should be sent
         verify(emailService, times(1)).sendTemplateEmailAsync(any(), any(), any());
     }
 
@@ -156,20 +163,22 @@ class ProjectUpdatedEventHandlerTest {
     @DisplayName("Should not send team member emails when list is null")
     void shouldNotSendTeamMemberEmailsWhenListIsNull() {
         // Given
-        ProjectUpdatedEvent event =
-                new ProjectUpdatedEvent(
+        ProjectStatusChangedEvent event =
+                new ProjectStatusChangedEvent(
                         "project-123",
                         "Test Project",
                         "owner-123",
                         "owner@example.com",
                         "Owner",
+                        ProjectStatus.OPEN,
+                        ProjectStatus.CANCELLED,
                         null,
                         LocalDateTime.now());
 
         // When
         eventHandler.handle(event);
 
-        // Then - only owner email
+        // Then - only owner email should be sent
         verify(emailService, times(1)).sendTemplateEmailAsync(any(), any(), any());
     }
 
@@ -177,13 +186,15 @@ class ProjectUpdatedEventHandlerTest {
     @DisplayName("Should use async email sending")
     void shouldUseAsyncEmailSending() {
         // Given
-        ProjectUpdatedEvent event =
-                new ProjectUpdatedEvent(
+        ProjectStatusChangedEvent event =
+                new ProjectStatusChangedEvent(
                         "project-123",
                         "Test",
                         "owner-123",
                         "test@example.com",
                         "Test",
+                        ProjectStatus.DRAFT,
+                        ProjectStatus.OPEN,
                         Collections.emptyList(),
                         LocalDateTime.now());
 
@@ -204,13 +215,15 @@ class ProjectUpdatedEventHandlerTest {
                         CompletableFuture.failedFuture(
                                 new RuntimeException("Email service unavailable")));
 
-        ProjectUpdatedEvent event =
-                new ProjectUpdatedEvent(
+        ProjectStatusChangedEvent event =
+                new ProjectStatusChangedEvent(
                         "project-123",
                         "Test",
                         "owner-123",
                         "test@example.com",
                         "Test",
+                        ProjectStatus.DRAFT,
+                        ProjectStatus.OPEN,
                         Collections.emptyList(),
                         LocalDateTime.now());
 
