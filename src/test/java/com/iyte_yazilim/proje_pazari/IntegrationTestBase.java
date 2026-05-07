@@ -1,7 +1,5 @@
 package com.iyte_yazilim.proje_pazari;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -16,10 +14,6 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicati
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.RefreshTokenRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.security.config.RateLimitConfig;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,8 +69,6 @@ public abstract class IntegrationTestBase {
 
     @MockitoBean protected JavaMailSender javaMailSender;
 
-    @MockitoBean protected RateLimitConfig rateLimitConfig;
-
     @Autowired private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired protected EmailVerificationRepository emailVerificationRepository;
@@ -94,17 +86,6 @@ public abstract class IntegrationTestBase {
         projectApplicationRepository.deleteAll();
         projectRepository.deleteAll();
         userRepository.deleteAll();
-
-        // Configure rate limiter to be permissive in tests
-        Bucket permissiveBucket =
-                Bucket.builder()
-                        .addLimit(
-                                Bandwidth.builder()
-                                        .capacity(1000)
-                                        .refillIntervally(1000, Duration.ofMinutes(1))
-                                        .build())
-                        .build();
-        when(rateLimitConfig.resolveBucket(anyString())).thenReturn(permissiveBucket);
     }
 
     // ── Shared Helper Methods ────────────────────────────────────────────
