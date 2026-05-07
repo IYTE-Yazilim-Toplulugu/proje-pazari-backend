@@ -2,6 +2,8 @@ package com.iyte_yazilim.proje_pazari.application.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
  * Enumeration of response codes used in API responses.
@@ -19,9 +21,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.0
- * @see ApiResponse
  * @since 2024-01-01
+ * @see com.iyte_yazilim.proje_pazari.application.common.ApiResponse
  */
+@Getter
+@AllArgsConstructor
 @SuppressWarnings("unused")
 public enum ResponseCode {
     // Success codes
@@ -63,10 +67,6 @@ public enum ResponseCode {
     /** Numeric status code for this response type. */
     @JsonValue private final int status;
 
-    private ResponseCode(int status) {
-        this.status = status;
-    }
-
     @JsonCreator
     public static ResponseCode fromIntValue(int value) {
         for (ResponseCode responseCode : ResponseCode.values()) {
@@ -75,9 +75,5 @@ public enum ResponseCode {
             }
         }
         throw new IllegalArgumentException();
-    }
-
-    public int getStatus() {
-        return this.status;
     }
 }
