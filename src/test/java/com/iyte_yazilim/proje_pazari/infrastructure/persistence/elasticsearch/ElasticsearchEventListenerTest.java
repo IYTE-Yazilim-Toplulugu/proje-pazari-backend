@@ -77,7 +77,15 @@ class ElasticsearchEventListenerTest {
     @DisplayName("Should re-index project and increment index success on project updated")
     void shouldReindexProject_whenProjectUpdated() throws Exception {
         // Given
-        ProjectUpdatedEvent event = new ProjectUpdatedEvent("proj-2");
+        ProjectUpdatedEvent event =
+                new ProjectUpdatedEvent(
+                        "proj-2",
+                        "Title",
+                        "owner-1",
+                        "owner@test.com",
+                        "Owner",
+                        List.of(),
+                        LocalDateTime.now());
 
         // When
         listener.handleProjectUpdated(event);
@@ -92,7 +100,15 @@ class ElasticsearchEventListenerTest {
     @DisplayName("Should increment index failure when project updated sync throws")
     void shouldIncrementIndexFailure_whenProjectUpdatedSyncThrows() throws Exception {
         // Given
-        ProjectUpdatedEvent event = new ProjectUpdatedEvent("proj-2");
+        ProjectUpdatedEvent event =
+                new ProjectUpdatedEvent(
+                        "proj-2",
+                        "Title",
+                        "owner-1",
+                        "owner@test.com",
+                        "Owner",
+                        List.of(),
+                        LocalDateTime.now());
         doThrow(new RuntimeException("ES unavailable")).when(syncService).indexProject("proj-2");
 
         // When
