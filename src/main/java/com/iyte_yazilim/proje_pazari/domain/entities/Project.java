@@ -4,6 +4,9 @@ import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Represents a project in the Proje Pazarı marketplace.
@@ -33,7 +36,6 @@ import java.util.List;
  * project.setTitle("Mobile App Development");
  * project.setDescription("Looking for Flutter developers");
  * project.setOwner(currentUser);
- * project.setStatus(ProjectStatus.OPEN);
  * }</pre>
  *
  * @author IYTE Yazılım Topluluğu
@@ -43,6 +45,9 @@ import java.util.List;
  * @see ProjectStatus
  * @since 2024-01-01
  */
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 @SuppressWarnings("unused")
 public class Project extends BaseEntity<Ulid> {
 
@@ -76,91 +81,92 @@ public class Project extends BaseEntity<Ulid> {
      */
     private List<ProjectApplication> applications;
 
-    /**
-     * Sets the owner of this project.
-     *
-     * @param owner the user to set as project owner
-     */
     private Integer maxTeamSize;
-
-    private Integer currentTeamSize;
+    private Integer currentTeamSize = 0;
     private List<String> requiredSkills;
     private String category;
     private LocalDateTime deadline;
 
-    public Project(
-            String title,
-            String description,
-            String summary,
-            ProjectStatus status,
-            User owner,
-            List<ProjectApplication> applications,
-            Integer maxTeamSize,
-            Integer currentTeamSize,
-            List<String> requiredSkills,
-            String category,
-            LocalDateTime deadline) {
-        this.title = title;
-        this.description = description;
-        this.summary = summary;
-        this.status = status;
-        this.owner = owner;
-        this.applications = applications;
-        this.maxTeamSize = maxTeamSize;
-        this.currentTeamSize = currentTeamSize;
-        this.requiredSkills = requiredSkills;
-        this.category = category;
-        this.deadline = deadline;
+    // --- 1. STATE MACHINE ---
+    public void transitionTo(ProjectStatus newStatus) {
+        if (newStatus == null) {
+            throw new IllegalArgumentException("New status cannot be null.");
+        }
+
+        boolean isValidTransition =
+                switch (this.status) {
+                    case DRAFT ->
+                            newStatus == ProjectStatus.OPEN || newStatus == ProjectStatus.CANCELLED;
+                    case OPEN ->
+                            newStatus == ProjectStatus.IN_PROGRESS
+                                    || newStatus == ProjectStatus.CANCELLED;
+                    case IN_PROGRESS ->
+                            newStatus == ProjectStatus.COMPLETED
+                                    || newStatus == ProjectStatus.CANCELLED;
+                    case COMPLETED, CANCELLED ->
+                            false; // Terminal states cannot transition to anything
+                };
+
+        if (!isValidTransition) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Invalid state transition from %s to %s", this.status, newStatus));
+        }
+
+        this.status = newStatus;
+
+        // Note: If you are using Spring Data's @DomainEvents, you would register the event here:
+        // registerEvent(new ProjectStatusChangedEvent(this.getId(), this.status));
     }
 
-    public Project() {}
+    // --- 2. CAPACITY ENCAPSULATION ---
+    public void incrementTeamSize() {
+        if (isFull()) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Project is at maximum capacity. Cannot exceed %d members.",
+                            this.maxTeamSize));
+        }
+        this.currentTeamSize++;
+    }
+
+    public boolean isFull() {
+        if (this.maxTeamSize == null) {
+            return false; // Assuming null means unlimited, or handle according to your domain rules
+        }
+        return this.currentTeamSize >= this.maxTeamSize;
+    }
+
+    public boolean canAcceptApplications() {
+        return this.status == ProjectStatus.OPEN && !isFull();
+    }
+
+    // --- 3. LIFECYCLE GUARDS ---
+    public boolean canBeDeleted() {
+        // Blocked if IN_PROGRESS
+        return this.status != ProjectStatus.IN_PROGRESS;
+    }
+
+    public boolean canBeUpdated() {
+        // Blocked if COMPLETED or CANCELLED
+        return this.status != ProjectStatus.COMPLETED && this.status != ProjectStatus.CANCELLED;
+    }
+
+    /**
+     * INFRASTRUCTURE USE ONLY. Called by {@link
+     * com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper} to hydrate
+     * this object from persistence without triggering state machine validation.
+     *
+     * <p>Do NOT call this from business logic or application services. For status transitions, use
+     * {@link #transitionTo(ProjectStatus)}.
+     */
+    public void reconstitute(ProjectStatus status, Integer currentTeamSize) {
+        this.status = status;
+        this.currentTeamSize = currentTeamSize != null ? currentTeamSize : 0;
+    }
 
     public void setOwner(User owner) {
         this.owner = owner;
-    }
-
-    public String getTitle() {
-        return this.title;
-    }
-
-    public String getDescription() {
-        return this.description;
-    }
-
-    public String getSummary() {
-        return this.summary;
-    }
-
-    public ProjectStatus getStatus() {
-        return this.status;
-    }
-
-    public User getOwner() {
-        return this.owner;
-    }
-
-    public List<ProjectApplication> getApplications() {
-        return this.applications;
-    }
-
-    public Integer getMaxTeamSize() {
-        return this.maxTeamSize;
-    }
-
-    public Integer getCurrentTeamSize() {
-        return this.currentTeamSize;
-    }
-
-    public List<String> getRequiredSkills() {
-        return this.requiredSkills;
-    }
-
-    public String getCategory() {
-        return this.category;
-    }
-
-    public LocalDateTime getDeadline() {
-        return this.deadline;
     }
 
     public void setTitle(String title) {
@@ -175,20 +181,12 @@ public class Project extends BaseEntity<Ulid> {
         this.summary = summary;
     }
 
-    public void setStatus(ProjectStatus status) {
-        this.status = status;
-    }
-
     public void setApplications(List<ProjectApplication> applications) {
         this.applications = applications;
     }
 
     public void setMaxTeamSize(Integer maxTeamSize) {
         this.maxTeamSize = maxTeamSize;
-    }
-
-    public void setCurrentTeamSize(Integer currentTeamSize) {
-        this.currentTeamSize = currentTeamSize;
     }
 
     public void setRequiredSkills(List<String> requiredSkills) {

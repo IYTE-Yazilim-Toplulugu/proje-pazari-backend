@@ -200,6 +200,12 @@ class UpdateProjectHandlerTest {
     @DisplayName("Should return 403 when project is COMPLETED")
     void shouldReturnForbidden_whenProjectIsCompleted() {
         projectEntity.setStatus(ProjectStatus.COMPLETED);
+
+        // --- ADDED MOCK BEHAVIOR ---
+        domainProject.reconstitute(ProjectStatus.COMPLETED, 0);
+        when(projectMapper.entityToDomain(any())).thenReturn(domainProject);
+        // ---------------------------
+
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
         when(messageService.getMessage("project.update.not.allowed")).thenReturn("Not allowed");
 
@@ -217,6 +223,12 @@ class UpdateProjectHandlerTest {
     @DisplayName("Should return 403 when project is CANCELLED")
     void shouldReturnForbidden_whenProjectIsCancelled() {
         projectEntity.setStatus(ProjectStatus.CANCELLED);
+
+        // --- ADDED MOCK BEHAVIOR ---
+        domainProject.reconstitute(ProjectStatus.CANCELLED, 0);
+        when(projectMapper.entityToDomain(any())).thenReturn(domainProject);
+        // ---------------------------
+
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
         when(messageService.getMessage("project.update.not.allowed")).thenReturn("Not allowed");
 
