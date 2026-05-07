@@ -59,6 +59,9 @@ class SearchControllerTest {
     @MockitoBean private UserRepository userRepository;
 
     @MockitoBean
+    private org.springframework.data.redis.core.StringRedisTemplate stringRedisTemplate;
+
+    @MockitoBean
     private com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService
             tokenBlacklistService;
 

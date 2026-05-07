@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class DeactivateAccountHandlerTest {
@@ -29,6 +30,7 @@ class DeactivateAccountHandlerTest {
     @Mock private UserRepository userRepository;
     @Mock private UserMapper userMapper;
     @Mock private MessageService messageService;
+    @Mock private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks private DeactivateAccountHandler handler;
 
@@ -73,6 +75,7 @@ class DeactivateAccountHandlerTest {
         assertFalse(domainUser.isActive());
         verify(userMapper).applyDomainToEntity(domainUser, userEntity);
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent((Object) any());
     }
 
     @Test
@@ -100,6 +103,7 @@ class DeactivateAccountHandlerTest {
         assertEquals("Account deactivated successfully", response.getMessage());
         assertFalse(domainUser.isActive());
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent((Object) any());
     }
 
     @Test
@@ -111,6 +115,7 @@ class DeactivateAccountHandlerTest {
 
         UserEntity userEntity = new UserEntity();
         userEntity.setId(userId);
+        userEntity.setEmail("test@std.iyte.edu.tr");
         userEntity.setIsActive(true);
 
         User domainUser = createDomainUser(true);
@@ -125,6 +130,7 @@ class DeactivateAccountHandlerTest {
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertFalse(domainUser.isActive());
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent((Object) any());
     }
 
     @Test

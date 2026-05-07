@@ -1,7 +1,5 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -11,11 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.iyte_yazilim.proje_pazari.TestRateLimitConfig;
 import com.iyte_yazilim.proje_pazari.TestRedisConfig;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
-import com.iyte_yazilim.proje_pazari.infrastructure.security.config.RateLimitConfig;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -56,20 +50,9 @@ class AdminControllerIntegrationTest {
 
     @MockitoBean private JavaMailSender javaMailSender;
 
-    @MockitoBean private RateLimitConfig rateLimitConfig;
-
     @BeforeEach
     void setUp() {
         adminToken = jwtUtil.generateToken("admin-test-id", "admin@test.com", "ADMIN");
-        Bucket permissiveBucket =
-                Bucket.builder()
-                        .addLimit(
-                                Bandwidth.builder()
-                                        .capacity(1000)
-                                        .refillIntervally(1000, Duration.ofMinutes(1))
-                                        .build())
-                        .build();
-        when(rateLimitConfig.resolveBucket(anyString())).thenReturn(permissiveBucket);
     }
 
     // --- Access Control Tests ---

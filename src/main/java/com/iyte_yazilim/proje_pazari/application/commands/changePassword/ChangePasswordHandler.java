@@ -29,41 +29,19 @@ public class ChangePasswordHandler
             isolation = Isolation.READ_COMMITTED,
             propagation = Propagation.REQUIRED)
     public ApiResponse<Void> handle(ChangePasswordCommand command) {
-        try {
-            command.validate();
-        } catch (IllegalArgumentException e) {
-            return ApiResponse.validationError(e.getMessage());
-        }
-
         UserEntity user =
                 userRepository
                         .findById(command.userId())
                         .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
-        // Verify current password
         if (!passwordEncoder.matches(command.currentPassword(), user.getPassword())) {
             return ApiResponse.validationError(
                     messageService.getMessage("user.password.current.incorrect"));
         }
 
-        // Validate new password strength
-        if (!isPasswordStrong(command.newPassword())) {
-            return ApiResponse.validationError(messageService.getMessage("user.password.weak"));
-        }
-
-        // Hash and save new password
         user.setPassword(passwordEncoder.encode(command.newPassword()));
         userRepository.save(user);
 
         return ApiResponse.success(null, messageService.getMessage("user.password.changed"));
-    }
-
-    private boolean isPasswordStrong(String password) {
-        // At least 8 characters, one uppercase, one lowercase, one digit, one special char
-        return password.length() >= 8
-                && password.matches(".*[A-Z].*")
-                && password.matches(".*[a-z].*")
-                && password.matches(".*\\d.*")
-                && password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
     }
 }

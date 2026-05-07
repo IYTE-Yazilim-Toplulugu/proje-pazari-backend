@@ -7,12 +7,14 @@ import static org.mockito.Mockito.*;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.ImportResultDTO;
+import com.iyte_yazilim.proje_pazari.application.services.CsvImportService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -21,6 +23,7 @@ class ImportUsersFromCsvHandlerTest {
 
     @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
+    @Spy private CsvImportService csvImportService = new CsvImportService();
 
     @InjectMocks private ImportUsersFromCsvHandler handler;
 

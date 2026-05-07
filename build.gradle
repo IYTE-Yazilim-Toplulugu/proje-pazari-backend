@@ -82,6 +82,9 @@ dependencies {
     // Rate limiting
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
+    // RFC 4180-compliant CSV parsing
+    implementation 'org.apache.commons:commons-csv:1.10.0'
+
     // 2FA - Google Authenticator
     implementation 'com.warrenstrange:googleauth:1.5.0'
     implementation 'com.google.zxing:core:3.5.3'

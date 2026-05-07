@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.iyte_yazilim.proje_pazari.domain.events.UserDeactivatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.UserDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
@@ -36,8 +37,11 @@ public class AdminDeleteUserHandler
         userMapper.applyDomainToEntity(user, userEntity);
         userRepository.save(userEntity);
 
-        // Publish user deleted event for Elasticsearch indexing
+        // ES sync
         applicationEventPublisher.publishEvent(new UserDeletedEvent(command.userId()));
+        // Session revocation
+        applicationEventPublisher.publishEvent(
+                new UserDeactivatedEvent(command.userId(), userEntity.getEmail()));
 
         return ApiResponse.success(null, "User deleted (deactivated) successfully");
     }
