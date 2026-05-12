@@ -93,7 +93,7 @@ public enum ResponseCode {
         return switch (this) {
             case SUCCESS -> HttpStatus.OK;
             case NO_CONTENT -> HttpStatus.NO_CONTENT;
-            case CREATED -> HttpStatus.CREATED;
+            case CREATED, REGISTERED_NEEDS_VERIFICATION -> HttpStatus.CREATED;
             case ACCEPTED -> HttpStatus.ACCEPTED;
             case BAD_REQUEST, VALIDATION_ERROR -> HttpStatus.BAD_REQUEST;
             case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
