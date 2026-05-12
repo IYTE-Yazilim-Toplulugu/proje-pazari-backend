@@ -373,3 +373,90 @@ The `docker-compose.prod.yml` overlay:
 > [!IMPORTANT]
 > Store `ELASTIC_PASSWORD` in your secret manager (Vault, AWS Secrets Manager, k8s Secret).
 > Never commit it to version control.
+
+---
+
+## GitHub Actions CD Pipeline
+
+The `prod-cd.yml` workflow automatically deploys to the production VPS on every push to `main`
+(and on `workflow_dispatch` for manual re-deploys). The pipeline runs five sequential jobs:
+
+1. **Format** — Spotless check (fail-fast gate).
+2. **Build & Test** — Gradle build + JaCoCo verification (≥70% instruction / ≥60% line).
+3. **Publish** — Builds the Docker image and pushes it to **GHCR** as
+   `ghcr.io/iyte-yazilim-toplulugu/proje-pazari-backend:{<sha>, latest}`.
+   Outputs an immutable `image@sha256:digest` reference for the deploy step.
+4. **Deploy** — SSHes into the VPS, pulls the exact image digest, updates `APP_IMAGE` in
+   `.env.prod`, and runs `docker compose up -d --no-deps app` (zero downtime for all other
+   services).
+5. **Smoke Test** — Curls `PROD_HEALTH_URL` (Spring Boot Actuator) with 5 retries / 15s
+   backoff to confirm the new container is healthy.
+
+### One-time VPS setup
+
+```bash
+sudo mkdir -p /opt/proje-pazari
+cd /opt/proje-pazari
+
+# Copy docker-compose.yml, docker-compose.prod.yml, and .env.prod
+# .env.prod must contain APP_IMAGE=placeholder (the pipeline replaces it on every deploy)
+
+# Log in to GHCR once (or set GHCR_READ_TOKEN + GHCR_READ_USER as persistent env vars)
+echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_READ_USER" --password-stdin
+```
+
+Minimal `.env.prod` template:
+
+```env
+APP_IMAGE=ghcr.io/iyte-yazilim-toplulugu/proje-pazari-backend:latest
+ELASTIC_PASSWORD=<generate with: openssl rand -base64 32>
+JWT_SECRET=<generate with: openssl rand -base64 64>
+POSTGRES_DB=proje_pazari_db
+POSTGRES_USER=<db_user>
+POSTGRES_PASSWORD=<db_password>
+SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/proje_pazari_db
+MINIO_ADMIN_USER=<minio_root_user>
+MINIO_ADMIN_PASSWORD=<minio_root_password>
+MINIO_APP_ACCESS_KEY=<backend_access_key>
+MINIO_APP_SECRET_KEY=<backend_secret_key>
+FRONTEND_URL=https://projepazari.site
+GF_SECURITY_ADMIN_USER=<grafana_admin>
+GF_SECURITY_ADMIN_PASSWORD=<grafana_password>
+```
+
+### Required GitHub Secrets
+
+Configure under **Settings → Secrets and variables → Actions**:
+
+| Secret | Purpose |
+|--------|---------|
+| `SERVER_HOST` | VPS hostname or IP |
+| `SERVER_USER` | SSH user (non-root, in the `docker` group) |
+| `SERVER_SSH_KEY` | Private SSH key (ed25519 PEM format) |
+| `SERVER_SSH_PORT` | SSH port — optional, defaults to 22 |
+| `PROD_HEALTH_URL` | Public health URL, e.g. `https://api.projepazari.site/actuator/health` |
+| `GH_PAT` | Classic PAT with `repo` scope (already used by `pr-validation.yml`) |
+
+> [!NOTE]
+> Application secrets (`JWT_SECRET`, `ELASTIC_PASSWORD`, database credentials, MinIO keys, etc.)
+> live in `.env.prod` **on the VPS** — they are never passed through GitHub Actions and never
+> appear in workflow logs.
+
+### Manual approval gate
+
+The `deploy` job uses the **`production`** GitHub Environment. Configure required reviewers
+under **Settings → Environments → production** to enforce human approval before any SSH deploy
+is triggered. This is strongly recommended for the first several production releases.
+
+### Generating the SSH deploy keypair
+
+```bash
+# Generate a dedicated ed25519 keypair for CI/CD
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy -N ""
+
+# Add the public key to the VPS (SERVER_USER's authorized_keys)
+ssh-copy-id -i ~/.ssh/github_deploy.pub SERVER_USER@SERVER_HOST
+
+# Add the private key to GitHub Secrets as SERVER_SSH_KEY
+cat ~/.ssh/github_deploy   # copy this value into the secret
+```

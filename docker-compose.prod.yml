@@ -22,6 +22,7 @@ services:
     ports: []
 
   app:
+    image: ${APP_IMAGE:?APP_IMAGE is required}
     environment:
       SPRING_ELASTICSEARCH_USERNAME: elastic
       SPRING_ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
