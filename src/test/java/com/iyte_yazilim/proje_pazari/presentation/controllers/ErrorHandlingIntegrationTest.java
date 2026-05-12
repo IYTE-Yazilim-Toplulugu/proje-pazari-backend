@@ -84,7 +84,7 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
                                                             VALID_FIRST_NAME,
                                                             VALID_LAST_NAME))))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.code").value(2))
+                    .andExpect(jsonPath("$.code").value(11))
                     .andExpect(jsonPath("$.data").exists())
                     .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.timestamp").exists());
@@ -353,8 +353,8 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
     class ResponseCodeMappingTests {
 
         @Test
-        @DisplayName("1. SUCCESS code is 2")
-        void successCode_is0() throws Exception {
+        @DisplayName("1. Registered needs verification code is 11")
+        void registeredNeedsVerificationCode_is11() throws Exception {
             mockMvc.perform(
                             post("/api/v1/auth/register")
                                     .contentType(MediaType.APPLICATION_JSON)
@@ -366,7 +366,7 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
                                                             VALID_FIRST_NAME,
                                                             VALID_LAST_NAME))))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.code").value(2));
+                    .andExpect(jsonPath("$.code").value(11));
         }
 
         @Test
