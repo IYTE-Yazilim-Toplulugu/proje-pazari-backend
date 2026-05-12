@@ -111,7 +111,7 @@ services:
     image: docker.elastic.co/logstash/logstash:9.0.0
     container_name: proje-pazari-logstash
     volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/pipeline-config:/usr/share/logstash/pipeline:ro
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
     ports:
       - "127.0.0.1:5000:5000/tcp"
@@ -404,5 +404,4 @@ volumes:
 networks:
   proje-pazari-network:
     driver: bridge
-
 

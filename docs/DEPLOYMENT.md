@@ -9,11 +9,13 @@ This document covers deployment options for the Proje Pazarı Backend.
 | `JWT_SECRET` | Secret key for JWT signing (min 32 chars, no placeholder substrings) | **Yes** | — | `IllegalStateException`, non-zero exit |
 | `JWT_EXPIRATION` | Token expiration in milliseconds | No | `86400000` (24h) | — |
 | `ELASTIC_PASSWORD` | Elasticsearch built-in `elastic` user password (production only) | Prod | — | ES returns 401, app fails to index |
+| `KIBANA_SYSTEM_PASSWORD` | Password assigned to Elasticsearch's `kibana_system` user for Kibana 9.x | Prod when Kibana enabled | — | Kibana refuses to start |
 | `SPRING_ELASTICSEARCH_USERNAME` | ES username forwarded to Spring Boot | Prod | `elastic` | — |
 | `SPRING_ELASTICSEARCH_PASSWORD` | ES password forwarded to Spring Boot | Prod | `""` | App starts but cannot authenticate to ES |
 | `SPRING_DATASOURCE_URL` | PostgreSQL JDBC URL | Yes | — | — |
 | `SPRING_DATASOURCE_USERNAME` | Database username | Yes | — | — |
 | `SPRING_DATASOURCE_PASSWORD` | Database password | Yes | — | — |
+| `APP_IMAGE` | Backend Docker image tag used by `docker-compose.prod.yml` overlay | Prod compose | — | Compose config fails |
 | `SPRING_JPA_HIBERNATE_DDL_AUTO` | DDL handling strategy | No | `update` | — |
 | `SPRING_JPA_SHOW_SQL` | Log SQL statements | No | `false` | — |
 | `APP_UPLOAD_DIR` | File upload directory | No | `./uploads` | — |
