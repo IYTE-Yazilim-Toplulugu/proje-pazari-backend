@@ -424,12 +424,13 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("8. Review with optional review message is included in response")
-        void reviewApplication_withMessage_returns200() throws Exception {
+        @DisplayName("8. Approval review message is persisted and queryable")
+        void reviewApplication_approvalMessage_isPersistedAndQueryable() throws Exception {
             String ownerToken = createProjectOwnerAndGetToken();
             String projectId = createProjectAndGetId(ownerToken);
             String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
             String applicationId = createApplicationAndGetId(projectId, applicantToken);
+            String reviewMessage = "Great portfolio! Welcome aboard.";
 
             String reviewBody =
                     """
@@ -446,6 +447,58 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                                     .content(reviewBody))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.status").value("APPROVED"));
+
+            var savedApp = applicationRepository.findById(applicationId).orElseThrow();
+            assertThat(savedApp.getReviewMessage()).isEqualTo(reviewMessage);
+
+            mockMvc.perform(
+                            get(MY_APPLICATIONS_URL)
+                                    .header("Authorization", "Bearer " + applicantToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.applications.length()").value(1))
+                    .andExpect(
+                            jsonPath("$.data.applications[0].applicationId").value(applicationId))
+                    .andExpect(jsonPath("$.data.applications[0].status").value("APPROVED"))
+                    .andExpect(
+                            jsonPath("$.data.applications[0].reviewMessage").value(reviewMessage));
+        }
+
+        @Test
+        @DisplayName("9. Rejection review message is persisted and queryable")
+        void reviewApplication_rejectionMessage_isPersistedAndQueryable() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicationId = createApplicationAndGetId(projectId, applicantToken);
+            String reviewMessage = "Unfortunately we need different skills.";
+
+            String reviewBody =
+                    """
+                    {
+                        "status": "REJECTED",
+                        "reviewMessage": "Unfortunately we need different skills."
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl(applicationId))
+                                    .header("Authorization", "Bearer " + ownerToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.status").value("REJECTED"));
+
+            var savedApp = applicationRepository.findById(applicationId).orElseThrow();
+            assertThat(savedApp.getReviewMessage()).isEqualTo(reviewMessage);
+
+            mockMvc.perform(
+                            get(projectApplicationsUrl(projectId))
+                                    .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].applicationId").value(applicationId))
+                    .andExpect(jsonPath("$.data[0].status").value("REJECTED"))
+                    .andExpect(jsonPath("$.data[0].reviewMessage").value(reviewMessage));
         }
     }
 

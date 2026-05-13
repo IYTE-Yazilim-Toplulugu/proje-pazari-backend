@@ -35,6 +35,7 @@ public interface ProjectApplicationMapper {
     @Mapping(target = "project", ignore = true) // Avoid circular mapping
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "reviewMessage", ignore = true)
     ProjectApplication entityToDomainBase(ProjectApplicationEntity projectApplicationEntity);
 
     /**
@@ -47,7 +48,7 @@ public interface ProjectApplicationMapper {
         }
         ProjectApplication domain = entityToDomainBase(entity);
         // Use reconstitute to bypass domain guards — this is infrastructure mapping
-        domain.reconstitute(null, null, entity.getStatus());
+        domain.reconstitute(null, null, entity.getStatus(), entity.getReviewMessage());
         return domain;
     }
 }

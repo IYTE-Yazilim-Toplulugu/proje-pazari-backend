@@ -102,6 +102,7 @@ class GetUserApplicationsHandlerTest {
     @DisplayName("Should map application entity fields to ApplicationDto correctly")
     void shouldMapEntityToDto_correctly() {
         ProjectApplicationEntity app = buildApp(ApplicationStatus.PENDING);
+        app.setReviewMessage("Thanks for applying");
         Page<ProjectApplicationEntity> page = new PageImpl<>(List.of(app));
         when(applicationRepository.findWithFilters(
                         isNull(), isNull(), eq(user.getId()), any(Pageable.class)))
@@ -117,6 +118,7 @@ class GetUserApplicationsHandlerTest {
         assertEquals(user.getId(), dto.applicantId());
         assertEquals("Jane Doe", dto.applicantName());
         assertEquals(ApplicationStatus.PENDING, dto.status());
+        assertEquals("Thanks for applying", dto.reviewMessage());
     }
 
     private ProjectApplicationEntity buildApp(ApplicationStatus status) {

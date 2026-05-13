@@ -96,14 +96,15 @@ public class ReviewApplicationHandler
             }
 
             // --- 3b. Approve via domain aggregate (enforces PENDING guard) ---
-            application.approve();
+            application.approve(command.reviewMessage());
         } else {
             // --- 3c. Reject via domain aggregate (enforces PENDING guard) ---
-            application.reject();
+            application.reject(command.reviewMessage());
         }
 
-        // --- 4. Sync status back to persistence entity ---
+        // --- 4. Sync review result back to persistence entity ---
         applicationEntity.setStatus(application.getStatus());
+        applicationEntity.setReviewMessage(application.getReviewMessage());
 
         // --- 5. Persistence ---
         ProjectApplicationEntity savedApplication = applicationRepository.save(applicationEntity);
