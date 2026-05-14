@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.domain.exceptions;
 
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 
 /**
@@ -12,10 +13,11 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
  * @author IYTE Yazılım Topluluğu
  * @since 2026-04-04
  */
-public class IllegalApplicationStateException extends IllegalStateException {
+public class IllegalApplicationStateException extends DomainException {
 
     public IllegalApplicationStateException(String action, ApplicationStatus currentStatus) {
         super(
+                ErrorCode.ILLEGAL_APPLICATION_STATE,
                 String.format(
                         "Cannot %s application: current status is %s (expected PENDING)",
                         action, currentStatus));

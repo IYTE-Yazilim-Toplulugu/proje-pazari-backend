@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 /**
  * Enumeration of response codes used in API responses.
@@ -79,5 +80,27 @@ public enum ResponseCode {
             }
         }
         throw new IllegalArgumentException();
+    }
+
+    /**
+     * Maps this response code to the HTTP status it should be served with. Keeping the mapping here
+     * lets callers (e.g. {@code GlobalExceptionHandler}) derive the status in one place instead of
+     * hardcoding it per exception handler.
+     *
+     * @return the corresponding {@link HttpStatus}
+     */
+    public HttpStatus httpStatus() {
+        return switch (this) {
+            case SUCCESS -> HttpStatus.OK;
+            case NO_CONTENT -> HttpStatus.NO_CONTENT;
+            case CREATED -> HttpStatus.CREATED;
+            case ACCEPTED -> HttpStatus.ACCEPTED;
+            case BAD_REQUEST, VALIDATION_ERROR -> HttpStatus.BAD_REQUEST;
+            case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
+            case FORBIDDEN -> HttpStatus.FORBIDDEN;
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case CONFLICT -> HttpStatus.CONFLICT;
+            case INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
     }
 }

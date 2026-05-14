@@ -138,9 +138,9 @@ public class AuthController extends BaseController {
                                                         value =
                                                                 """
                                         {
-                                            "code": "BAD_REQUEST",
-                                            "message": "Email already exists",
-                                            "data": null
+                                            "code": 9,
+                                            "errorCode": "VALIDATION_ERROR",
+                                            "message": "This email address is already registered"
                                         }
                                         """)))
             })
@@ -190,7 +190,7 @@ public class AuthController extends BaseController {
                                                         value =
                                                                 """
                                         {
-                                            "code": "SUCCESS",
+                                            "code": 0,
                                             "message": "Login successful",
                                             "data": {
                                                 "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -200,7 +200,7 @@ public class AuthController extends BaseController {
                                                 }
                                         """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
+                        responseCode = "401",
                         description = "Invalid credentials",
                         content =
                                 @Content(
@@ -212,9 +212,9 @@ public class AuthController extends BaseController {
                                                         value =
                                                                 """
                                         {
-                                            "code": "BAD_REQUEST",
-                                            "message": "Invalid email or password",
-                                            "data": null
+                                            "code": 5,
+                                            "errorCode": "UNAUTHORIZED",
+                                            "message": "Invalid username or password"
                                         }
                                         """)))
             })
@@ -343,7 +343,7 @@ public class AuthController extends BaseController {
                                                         value =
                                                                 """
                                         {
-                                            "code": "SUCCESS",
+                                            "code": 0,
                                             "message": "A password reset link has been sent to your email address",
                                             "data": null
                                         }
@@ -361,9 +361,9 @@ public class AuthController extends BaseController {
                                                         value =
                                                                 """
                                         {
-                                            "code": "BAD_REQUEST",
-                                            "message": "Invalid email format",
-                                            "data": null
+                                            "code": 9,
+                                            "errorCode": "VALIDATION_ERROR",
+                                            "message": "Invalid email address"
                                         }
                                         """)))
             })
@@ -391,7 +391,7 @@ public class AuthController extends BaseController {
                                                         value =
                                                                 """
                                         {
-                                            "code": "SUCCESS",
+                                            "code": 0,
                                             "message": "Your password has been reset successfully",
                                             "data": null
                                         }
@@ -409,9 +409,9 @@ public class AuthController extends BaseController {
                                                         value =
                                                                 """
                                         {
-                                            "code": "BAD_REQUEST",
-                                            "message": "Invalid or already used password reset link",
-                                            "data": null
+                                            "code": 4,
+                                            "errorCode": "INVALID_VERIFICATION_TOKEN",
+                                            "message": "Invalid or already used password reset link"
                                         }
                                         """)))
             })

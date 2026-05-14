@@ -6,10 +6,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
 import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -97,21 +99,18 @@ class GetUserProfileHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return not found when user does not exist")
-    void shouldReturnNotFound_whenUserDoesNotExist() {
+    @DisplayName("Should throw UserNotFoundException when user does not exist")
+    void shouldThrowNotFound_whenUserDoesNotExist() {
         // Given
         String userId = "nonexistent-user";
         GetUserProfileQuery query = new GetUserProfileQuery(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        // When
-        ApiResponse<UserProfileDTO> response = handler.handle(query);
-
-        // Then
-        assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-        assertTrue(response.getMessage().contains("not found"));
-        assertNull(response.getData());
+        // When / Then
+        UserNotFoundException ex =
+                assertThrows(UserNotFoundException.class, () -> handler.handle(query));
+        assertEquals(ErrorCode.USER_NOT_FOUND, ex.getErrorCode());
         verify(projectRepository, never()).findByOwnerId(any());
     }
 
