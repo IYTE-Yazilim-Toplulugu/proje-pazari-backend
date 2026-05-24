@@ -10,12 +10,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -415,6 +418,35 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("3. Get all projects is accessible without authentication")
         void getAllProjects_noAuth_returns200() throws Exception {
             mockMvc.perform(get(BASE_URL)).andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("4. Get all projects filters by status")
+        void getAllProjects_withStatus_returnsOnlyMatchingProjects() throws Exception {
+            UserEntity owner = userRepository.findById(testUserId).orElseThrow();
+            projectRepository.save(buildProject("Open Project", ProjectStatus.OPEN, owner));
+            projectRepository.save(buildProject("Draft Project", ProjectStatus.DRAFT, owner));
+
+            mockMvc.perform(get(BASE_URL).param("status", "OPEN"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.projects.length()").value(1))
+                    .andExpect(jsonPath("$.data.projects[0].title").value("Open Project"))
+                    .andExpect(jsonPath("$.data.projects[0].status").value("OPEN"))
+                    .andExpect(jsonPath("$.data.totalElements").value(1));
+        }
+
+        private ProjectEntity buildProject(String title, ProjectStatus status, UserEntity owner) {
+            ProjectEntity project = new ProjectEntity();
+            project.setTitle(title);
+            project.setDescription("Project used for status filtering integration coverage.");
+            project.setSummary(title);
+            project.setStatus(status);
+            project.setOwner(owner);
+            project.setApplications(List.of());
+            project.setMaxTeamSize(5);
+            project.setRequiredSkills(List.of("Java", "Spring Boot"));
+            project.setCategory("Backend");
+            return project;
         }
     }
 

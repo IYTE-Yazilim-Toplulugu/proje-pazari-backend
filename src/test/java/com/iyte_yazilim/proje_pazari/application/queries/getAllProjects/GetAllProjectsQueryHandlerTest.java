@@ -11,6 +11,7 @@ import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.ProjectDetailDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -59,13 +60,35 @@ class GetAllProjectsQueryHandlerTest {
         when(projectDtoMapper.domainToDto(domain)).thenReturn(dto);
 
         ApiResponse<PagedProjectsResult> response =
-                handler.handle(new GetAllProjectsQuery(0, 10, "title", "ASC"));
+                handler.handle(new GetAllProjectsQuery(0, 10, "title", "ASC", null));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals(1, response.getData().projects().size());
         assertEquals(0, response.getData().currentPage());
         assertEquals(1, response.getData().totalPages());
         assertEquals(1L, response.getData().totalElements());
+        verify(projectRepository, never())
+                .findAllByStatusWithApplications(any(ProjectStatus.class), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Should filter projects by status when status is provided")
+    void shouldFilterProjectsByStatus_whenStatusIsProvided() {
+        Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        when(projectRepository.findAllByStatusWithApplications(
+                        eq(ProjectStatus.OPEN), pageableCaptor.capture()))
+                .thenReturn(emptyPage);
+
+        ApiResponse<PagedProjectsResult> response =
+                handler.handle(
+                        new GetAllProjectsQuery(0, 10, "status", "DESC", ProjectStatus.OPEN));
+
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals(0, response.getData().currentPage());
+        assertEquals(0, response.getData().totalElements());
+        assertNotNull(pageableCaptor.getValue().getSort().getOrderFor("status"));
+        verify(projectRepository, never()).findAllWithApplications(any(Pageable.class));
     }
 
     @Test
@@ -76,7 +99,7 @@ class GetAllProjectsQueryHandlerTest {
         when(projectRepository.findAllWithApplications(pageableCaptor.capture()))
                 .thenReturn(emptyPage);
 
-        handler.handle(new GetAllProjectsQuery(0, 10, "invalidField", "ASC"));
+        handler.handle(new GetAllProjectsQuery(0, 10, "invalidField", "ASC", null));
 
         Pageable captured = pageableCaptor.getValue();
         Sort.Order order = captured.getSort().getOrderFor("id");
@@ -91,7 +114,7 @@ class GetAllProjectsQueryHandlerTest {
         when(projectRepository.findAllWithApplications(pageableCaptor.capture()))
                 .thenReturn(emptyPage);
 
-        handler.handle(new GetAllProjectsQuery(0, 10, "title", "DESC"));
+        handler.handle(new GetAllProjectsQuery(0, 10, "title", "DESC", null));
 
         Pageable captured = pageableCaptor.getValue();
         Sort.Order order = captured.getSort().getOrderFor("title");
