@@ -61,4 +61,14 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, String> 
                             + "LEFT JOIN FETCH p.applications",
             countQuery = "SELECT COUNT(p) FROM ProjectEntity p")
     Page<ProjectEntity> findAllWithApplications(Pageable pageable);
+
+    @Query(
+            value =
+                    "SELECT p FROM ProjectEntity p "
+                            + "LEFT JOIN FETCH p.owner "
+                            + "LEFT JOIN FETCH p.applications "
+                            + "WHERE p.status = :status",
+            countQuery = "SELECT COUNT(p) FROM ProjectEntity p WHERE p.status = :status")
+    Page<ProjectEntity> findAllByStatusWithApplications(
+            @Param("status") ProjectStatus status, Pageable pageable);
 }
