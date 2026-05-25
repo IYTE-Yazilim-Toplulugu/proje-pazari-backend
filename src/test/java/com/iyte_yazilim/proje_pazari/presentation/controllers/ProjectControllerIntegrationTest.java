@@ -435,6 +435,14 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                     .andExpect(jsonPath("$.data.totalElements").value(1));
         }
 
+        @Test
+        @DisplayName("5. Invalid status filter returns 400 BAD_REQUEST")
+        void getAllProjects_invalidStatus_returns400() throws Exception {
+            mockMvc.perform(get(BASE_URL).param("status", "BOGUS_VALUE"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(4));
+        }
+
         private ProjectEntity buildProject(String title, ProjectStatus status, UserEntity owner) {
             ProjectEntity project = new ProjectEntity();
             project.setTitle(title);
