@@ -47,10 +47,7 @@ public class GetAllProjectsQueryHandler
 
         // --- 2. Fetch Paged Data from Repository ---
         Page<ProjectEntity> projectEntityPage =
-                query.status() == null
-                        ? projectRepository.findAllWithApplications(pageable)
-                        : projectRepository.findAllByStatusWithApplications(
-                                query.status(), pageable);
+                projectRepository.findWithFilters(query.status(), null, null, pageable);
 
         // --- 3. Map Entity -> Domain -> DTO ---
         List<ProjectDetailDto> projectDtos =

@@ -40,14 +40,14 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, String> 
                             + "LEFT JOIN FETCH p.applications "
                             + "WHERE (:status IS NULL OR p.status = :status) AND "
                             + "(:ownerId IS NULL OR p.owner.id = :ownerId) AND "
-                            + "(:search IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) "
-                            + "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))",
+                            + "(:search IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) "
+                            + "OR LOWER(p.description) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))",
             countQuery =
                     "SELECT COUNT(p) FROM ProjectEntity p "
                             + "WHERE (:status IS NULL OR p.status = :status) AND "
                             + "(:ownerId IS NULL OR p.owner.id = :ownerId) AND "
-                            + "(:search IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) "
-                            + "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
+                            + "(:search IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) "
+                            + "OR LOWER(p.description) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))")
     Page<ProjectEntity> findWithFilters(
             @Param("status") ProjectStatus status,
             @Param("ownerId") String ownerId,
@@ -61,14 +61,4 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, String> 
                             + "LEFT JOIN FETCH p.applications",
             countQuery = "SELECT COUNT(p) FROM ProjectEntity p")
     Page<ProjectEntity> findAllWithApplications(Pageable pageable);
-
-    @Query(
-            value =
-                    "SELECT p FROM ProjectEntity p "
-                            + "LEFT JOIN FETCH p.owner "
-                            + "LEFT JOIN FETCH p.applications "
-                            + "WHERE p.status = :status",
-            countQuery = "SELECT COUNT(p) FROM ProjectEntity p WHERE p.status = :status")
-    Page<ProjectEntity> findAllByStatusWithApplications(
-            @Param("status") ProjectStatus status, Pageable pageable);
 }

@@ -55,7 +55,8 @@ class GetAllProjectsQueryHandlerTest {
                         null, null);
 
         Page<ProjectEntity> page = new PageImpl<>(List.of(entity));
-        when(projectRepository.findAllWithApplications(any(Pageable.class))).thenReturn(page);
+        when(projectRepository.findWithFilters(isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(page);
         when(projectMapper.entityToDomain(entity)).thenReturn(domain);
         when(projectDtoMapper.domainToDto(domain)).thenReturn(dto);
 
@@ -67,8 +68,6 @@ class GetAllProjectsQueryHandlerTest {
         assertEquals(0, response.getData().currentPage());
         assertEquals(1, response.getData().totalPages());
         assertEquals(1L, response.getData().totalElements());
-        verify(projectRepository, never())
-                .findAllByStatusWithApplications(any(ProjectStatus.class), any(Pageable.class));
     }
 
     @Test
@@ -76,8 +75,8 @@ class GetAllProjectsQueryHandlerTest {
     void shouldFilterProjectsByStatus_whenStatusIsProvided() {
         Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(projectRepository.findAllByStatusWithApplications(
-                        eq(ProjectStatus.OPEN), pageableCaptor.capture()))
+        when(projectRepository.findWithFilters(
+                        eq(ProjectStatus.OPEN), isNull(), isNull(), pageableCaptor.capture()))
                 .thenReturn(emptyPage);
 
         ApiResponse<PagedProjectsResult> response =
@@ -88,7 +87,6 @@ class GetAllProjectsQueryHandlerTest {
         assertEquals(0, response.getData().currentPage());
         assertEquals(0, response.getData().totalElements());
         assertNotNull(pageableCaptor.getValue().getSort().getOrderFor("status"));
-        verify(projectRepository, never()).findAllWithApplications(any(Pageable.class));
     }
 
     @Test
@@ -96,7 +94,8 @@ class GetAllProjectsQueryHandlerTest {
     void shouldDefaultSortById_whenSortByIsInvalid() {
         Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(projectRepository.findAllWithApplications(pageableCaptor.capture()))
+        when(projectRepository.findWithFilters(
+                        isNull(), isNull(), isNull(), pageableCaptor.capture()))
                 .thenReturn(emptyPage);
 
         handler.handle(new GetAllProjectsQuery(0, 10, "invalidField", "ASC", null));
@@ -111,7 +110,8 @@ class GetAllProjectsQueryHandlerTest {
     void shouldSortDescending_whenSortDirectionIsDesc() {
         Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(projectRepository.findAllWithApplications(pageableCaptor.capture()))
+        when(projectRepository.findWithFilters(
+                        isNull(), isNull(), isNull(), pageableCaptor.capture()))
                 .thenReturn(emptyPage);
 
         handler.handle(new GetAllProjectsQuery(0, 10, "title", "DESC", null));
