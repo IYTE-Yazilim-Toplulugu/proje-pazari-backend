@@ -51,7 +51,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
     // ── Helper Methods ──────────────────────────────────────────────────
 
     @BeforeEach
-    void setUp() {
+    void createDefaultUser() {
         UserEntity user = new UserEntity();
         user.setEmail("projcontroller-" + System.nanoTime() + "@std.iyte.edu.tr");
         user.setPassword(passwordEncoder.encode("TestPassword123!"));
