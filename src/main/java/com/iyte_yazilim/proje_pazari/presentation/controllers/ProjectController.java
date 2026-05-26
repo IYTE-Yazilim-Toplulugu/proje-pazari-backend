@@ -9,6 +9,7 @@ import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.queries.getAllProjects.GetAllProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getProject.GetProjectQuery;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -174,8 +175,9 @@ public class ProjectController extends BaseController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDirection) {
-        return send(new GetAllProjectsQuery(page, size, sortBy, sortDirection));
+            @RequestParam(defaultValue = "DESC") String sortDirection,
+            @RequestParam(required = false) ProjectStatus status) {
+        return send(new GetAllProjectsQuery(page, size, sortBy, sortDirection, status));
     }
 
     @GetMapping("/{projectId}")
