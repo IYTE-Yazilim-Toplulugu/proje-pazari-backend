@@ -30,6 +30,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 
@@ -108,6 +109,15 @@ public class GlobalExceptionHandler {
         log.error("Missing request parameter: {}", ex.getMessage());
         ApiResponse<Void> response =
                 ApiResponse.validationError(messageService.getMessage("error.validation"));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex) {
+        log.error("Request parameter type mismatch: {}", ex.getMessage());
+        ApiResponse<Void> response =
+                ApiResponse.badRequest(messageService.getMessage("error.validation"));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 

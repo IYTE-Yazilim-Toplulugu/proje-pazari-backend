@@ -11,6 +11,7 @@ import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.ProjectDetailDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -54,12 +55,13 @@ class GetAllProjectsQueryHandlerTest {
                         null, null);
 
         Page<ProjectEntity> page = new PageImpl<>(List.of(entity));
-        when(projectRepository.findAllWithApplications(any(Pageable.class))).thenReturn(page);
+        when(projectRepository.findWithFilters(isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(page);
         when(projectMapper.entityToDomain(entity)).thenReturn(domain);
         when(projectDtoMapper.domainToDto(domain)).thenReturn(dto);
 
         ApiResponse<PagedProjectsResult> response =
-                handler.handle(new GetAllProjectsQuery(0, 10, "title", "ASC"));
+                handler.handle(new GetAllProjectsQuery(0, 10, "title", "ASC", null));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals(1, response.getData().projects().size());
@@ -69,14 +71,34 @@ class GetAllProjectsQueryHandlerTest {
     }
 
     @Test
+    @DisplayName("Should filter projects by status when status is provided")
+    void shouldFilterProjectsByStatus_whenStatusIsProvided() {
+        Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        when(projectRepository.findWithFilters(
+                        eq(ProjectStatus.OPEN), isNull(), isNull(), pageableCaptor.capture()))
+                .thenReturn(emptyPage);
+
+        ApiResponse<PagedProjectsResult> response =
+                handler.handle(
+                        new GetAllProjectsQuery(0, 10, "status", "DESC", ProjectStatus.OPEN));
+
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals(0, response.getData().currentPage());
+        assertEquals(0, response.getData().totalElements());
+        assertNotNull(pageableCaptor.getValue().getSort().getOrderFor("status"));
+    }
+
+    @Test
     @DisplayName("Should default to 'id' when sortBy field is not in allowlist")
     void shouldDefaultSortById_whenSortByIsInvalid() {
         Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(projectRepository.findAllWithApplications(pageableCaptor.capture()))
+        when(projectRepository.findWithFilters(
+                        isNull(), isNull(), isNull(), pageableCaptor.capture()))
                 .thenReturn(emptyPage);
 
-        handler.handle(new GetAllProjectsQuery(0, 10, "invalidField", "ASC"));
+        handler.handle(new GetAllProjectsQuery(0, 10, "invalidField", "ASC", null));
 
         Pageable captured = pageableCaptor.getValue();
         Sort.Order order = captured.getSort().getOrderFor("id");
@@ -88,10 +110,11 @@ class GetAllProjectsQueryHandlerTest {
     void shouldSortDescending_whenSortDirectionIsDesc() {
         Page<ProjectEntity> emptyPage = new PageImpl<>(List.of());
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        when(projectRepository.findAllWithApplications(pageableCaptor.capture()))
+        when(projectRepository.findWithFilters(
+                        isNull(), isNull(), isNull(), pageableCaptor.capture()))
                 .thenReturn(emptyPage);
 
-        handler.handle(new GetAllProjectsQuery(0, 10, "title", "DESC"));
+        handler.handle(new GetAllProjectsQuery(0, 10, "title", "DESC", null));
 
         Pageable captured = pageableCaptor.getValue();
         Sort.Order order = captured.getSort().getOrderFor("title");
