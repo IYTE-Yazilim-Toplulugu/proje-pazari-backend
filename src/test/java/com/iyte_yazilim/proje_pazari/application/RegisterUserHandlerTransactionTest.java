@@ -32,7 +32,7 @@ class RegisterUserHandlerTransactionTest {
 
         // First registration should succeed
         ApiResponse<RegisterUserResult> firstResponse = handler.handle(command);
-        assertEquals(ResponseCode.CREATED, firstResponse.getCode());
+        assertEquals(ResponseCode.REGISTERED_NEEDS_VERIFICATION, firstResponse.getCode());
 
         // When - try to register with same email (should fail due to unique constraint)
         RegisterUserCommand duplicateCommand =
@@ -58,7 +58,7 @@ class RegisterUserHandlerTransactionTest {
 
         // Then
         assertNotNull(response);
-        assertEquals(ResponseCode.CREATED, response.getCode());
+        assertEquals(ResponseCode.REGISTERED_NEEDS_VERIFICATION, response.getCode());
         assertTrue(userRepository.existsByEmail(email), "User was not persisted to the database!");
     }
 }
