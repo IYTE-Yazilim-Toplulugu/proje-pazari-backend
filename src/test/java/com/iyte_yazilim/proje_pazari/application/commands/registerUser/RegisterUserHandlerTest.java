@@ -106,11 +106,12 @@ class RegisterUserHandlerTest {
         ApiResponse<RegisterUserResult> response = handler.handle(command);
 
         // Then
-        assertEquals(ResponseCode.CREATED, response.getCode());
+        assertEquals(ResponseCode.REGISTERED_NEEDS_VERIFICATION, response.getCode());
         assertNotNull(response.getData());
         assertEquals(expectedResult.userId(), response.getData().userId());
         assertEquals(expectedResult.email(), response.getData().email());
         verify(userRepository).save(userEntity);
+        verify(emailVerificationRepository).save(any());
         verify(passwordEncoder).encode(command.password());
         verify(metricsService).incrementUserRegistrationSuccess();
     }

@@ -39,10 +39,10 @@ POST /auth/register
 }
 ```
 
-**Success Response (201 Created):**
+**Success Response (201 Created - Email Verification Required):**
 ```json
 {
-  "code": "CREATED",
+  "code": 11,
   "message": "User registered successfully",
   "data": {
     "userId": "01HQXV5KXBW9FYMN8CJZSP2R4G",
@@ -463,6 +463,7 @@ GET /health
 |------|-------------|-------------|
 | `SUCCESS` | 200 | Request completed successfully |
 | `CREATED` | 201 | Resource created successfully |
+| `REGISTERED_NEEDS_VERIFICATION` | 201 | User registered and email verification is required |
 | `BAD_REQUEST` | 400 | Invalid request data |
 | `UNAUTHORIZED` | 401 | Authentication required |
 | `FORBIDDEN` | 403 | Insufficient permissions |

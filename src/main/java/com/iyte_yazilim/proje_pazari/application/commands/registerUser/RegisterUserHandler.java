@@ -104,6 +104,7 @@ public class RegisterUserHandler
 
         // --- 11. Response with localized message ---
         metricsService.incrementUserRegistrationSuccess();
-        return ApiResponse.created(result, messageService.getMessage("user.registered.success"));
+        return ApiResponse.registeredNeedsVerification(
+                result, messageService.getMessage("user.registered.success"));
     }
 }

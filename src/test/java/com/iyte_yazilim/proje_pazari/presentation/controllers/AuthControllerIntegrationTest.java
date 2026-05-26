@@ -79,6 +79,7 @@ class AuthControllerIntegrationTest extends IntegrationTestBase {
         void register_validData_returns201() throws Exception {
             registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
                     .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.code").value(11))
                     .andExpect(jsonPath("$.data.userId").isNotEmpty())
                     .andExpect(jsonPath("$.data.email").value(VALID_EMAIL))
                     .andExpect(jsonPath("$.data.firstName").value(VALID_FIRST_NAME))
