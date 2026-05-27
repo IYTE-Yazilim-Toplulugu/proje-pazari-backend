@@ -25,8 +25,10 @@ services:
       elasticsearch-setup:
         condition: service_completed_successfully
     ports:
-      - "127.0.0.1:5601:5601"
+      - "127.0.0.1:5601:5601" # intentional: localhost-only; use SSH tunnel for remote prod access
 
+  # No `profiles` key here is intentional: elasticsearch in docker-compose.yml also has no profile
+  # (it is always active), so elasticsearch-setup is correctly aligned with it.
   elasticsearch-setup:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
     container_name: proje-pazari-elasticsearch-setup
