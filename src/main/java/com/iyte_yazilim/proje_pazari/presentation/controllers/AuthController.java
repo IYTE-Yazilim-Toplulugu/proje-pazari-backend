@@ -103,7 +103,8 @@ public class AuthController extends BaseController {
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "201",
-                        description = "User registered successfully",
+                        description =
+                                "User registered successfully and email verification is required",
                         content =
                                 @Content(
                                         mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -114,7 +115,7 @@ public class AuthController extends BaseController {
                                                         value =
                                                                 """
                                         {
-                                            "code": "CREATED",
+                                            "code": 11,
                                             "message": "User registered successfully",
                                             "data": {
                                                 "userId": "01HQXV5KXBW9FYMN8CJZSP2R4G",

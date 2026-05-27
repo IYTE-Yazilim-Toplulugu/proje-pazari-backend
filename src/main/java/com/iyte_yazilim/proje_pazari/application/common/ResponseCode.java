@@ -14,9 +14,10 @@ import lombok.Getter;
  * <h2>Code Categories:</h2>
  *
  * <ul>
- *   <li><b>0-3:</b> Success codes
+ *   <li><b>0-3:</b> General success codes
  *   <li><b>4-9:</b> Client error codes
- *   <li><b>10+:</b> Server error codes
+ *   <li><b>10:</b> Server error code
+ *   <li><b>11+:</b> Application flow success states
  * </ul>
  *
  * @author IYTE Yazılım Topluluğu
@@ -40,6 +41,9 @@ public enum ResponseCode {
 
     /** Request was accepted for processing. */
     ACCEPTED(3),
+
+    /** User registered successfully and must verify their email address. */
+    REGISTERED_NEEDS_VERIFICATION(11),
 
     // Client error codes
     /** Request was malformed or invalid. */

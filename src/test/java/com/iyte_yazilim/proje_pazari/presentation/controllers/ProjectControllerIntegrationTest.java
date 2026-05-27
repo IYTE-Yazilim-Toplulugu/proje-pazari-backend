@@ -10,17 +10,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,7 +53,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
     // ── Helper Methods ──────────────────────────────────────────────────
 
     @BeforeEach
-    void setUp() {
+    void createDefaultUser() {
         UserEntity user = new UserEntity();
         user.setEmail("projcontroller-" + System.nanoTime() + "@std.iyte.edu.tr");
         user.setPassword(passwordEncoder.encode("TestPassword123!"));
@@ -415,6 +420,49 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("3. Get all projects is accessible without authentication")
         void getAllProjects_noAuth_returns200() throws Exception {
             mockMvc.perform(get(BASE_URL)).andExpect(status().isOk());
+        }
+
+        @ParameterizedTest(name = "4. Get all projects filters by status {0}")
+        @EnumSource(ProjectStatus.class)
+        void getAllProjects_withStatus_returnsOnlyMatchingProjects(ProjectStatus status)
+                throws Exception {
+            UserEntity owner = userRepository.findById(testUserId).orElseThrow();
+            String matchingTitle = status.name() + " Project";
+            projectRepository.save(buildProject(matchingTitle, status, owner));
+            projectRepository.save(buildProject("Other Project", differentStatus(status), owner));
+
+            mockMvc.perform(get(BASE_URL).param("status", status.name()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.projects.length()").value(1))
+                    .andExpect(jsonPath("$.data.projects[0].title").value(matchingTitle))
+                    .andExpect(jsonPath("$.data.projects[0].status").value(status.name()))
+                    .andExpect(jsonPath("$.data.totalElements").value(1));
+        }
+
+        @Test
+        @DisplayName("5. Invalid status filter returns 400 BAD_REQUEST")
+        void getAllProjects_invalidStatus_returns400() throws Exception {
+            mockMvc.perform(get(BASE_URL).param("status", "INVALID_VALUE"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value(4));
+        }
+
+        private ProjectStatus differentStatus(ProjectStatus status) {
+            return status == ProjectStatus.OPEN ? ProjectStatus.DRAFT : ProjectStatus.OPEN;
+        }
+
+        private ProjectEntity buildProject(String title, ProjectStatus status, UserEntity owner) {
+            ProjectEntity project = new ProjectEntity();
+            project.setTitle(title);
+            project.setDescription("Project used for status filtering integration coverage.");
+            project.setSummary(title);
+            project.setStatus(status);
+            project.setOwner(owner);
+            project.setApplications(List.of());
+            project.setMaxTeamSize(5);
+            project.setRequiredSkills(List.of("Java", "Spring Boot"));
+            project.setCategory("Backend");
+            return project;
         }
     }
 

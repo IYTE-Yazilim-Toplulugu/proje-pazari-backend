@@ -73,6 +73,7 @@ public class GetUserApplicationsHandler
                 applicantName,
                 entity.getUser().getEmail(),
                 entity.getStatus(),
+                entity.getReviewMessage(),
                 entity.getCreatedAt());
     }
 }

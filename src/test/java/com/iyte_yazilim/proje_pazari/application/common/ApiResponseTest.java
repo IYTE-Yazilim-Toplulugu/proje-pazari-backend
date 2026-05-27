@@ -46,6 +46,19 @@ class ApiResponseTest {
     }
 
     @Test
+    @DisplayName("Should create registered needs verification response")
+    void shouldCreateRegisteredNeedsVerificationResponse() {
+        // When
+        ApiResponse<String> response =
+                ApiResponse.registeredNeedsVerification("new-user", "Verify your email");
+
+        // Then
+        assertEquals(ResponseCode.REGISTERED_NEEDS_VERIFICATION, response.getCode());
+        assertEquals("new-user", response.getData());
+        assertEquals("Verify your email", response.getMessage());
+    }
+
+    @Test
     @DisplayName("Should create bad request response without data")
     void shouldCreateBadRequestResponse() {
         // When

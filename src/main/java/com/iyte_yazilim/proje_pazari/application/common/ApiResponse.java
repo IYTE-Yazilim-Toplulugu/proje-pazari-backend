@@ -42,6 +42,10 @@ public class ApiResponse<T> {
         return new ApiResponse<>(data, message, ResponseCode.ACCEPTED);
     }
 
+    public static <T> ApiResponse<T> registeredNeedsVerification(T data, String message) {
+        return new ApiResponse<>(data, message, ResponseCode.REGISTERED_NEEDS_VERIFICATION);
+    }
+
     // --- ERROR RESPONSES ---
 
     public static <T> ApiResponse<T> badRequest(String message) {

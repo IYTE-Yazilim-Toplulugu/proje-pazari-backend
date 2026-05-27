@@ -28,6 +28,7 @@ public abstract class BaseController {
         return switch (code) {
             case SUCCESS -> HttpStatus.OK;
             case CREATED -> HttpStatus.CREATED;
+            case REGISTERED_NEEDS_VERIFICATION -> HttpStatus.CREATED;
             case ACCEPTED -> HttpStatus.ACCEPTED;
             case NO_CONTENT -> HttpStatus.NO_CONTENT;
             case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
