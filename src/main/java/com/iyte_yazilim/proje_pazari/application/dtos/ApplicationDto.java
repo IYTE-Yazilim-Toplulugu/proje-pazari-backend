@@ -13,4 +13,5 @@ public record ApplicationDto(
         @Schema(description = "Applicant name") String applicantName,
         @Schema(description = "Applicant email") String applicantEmail,
         @Schema(description = "Application status") ApplicationStatus status,
+        @Schema(description = "Review message provided by the project owner") String reviewMessage,
         @Schema(description = "Submission date") LocalDateTime createdAt) {}

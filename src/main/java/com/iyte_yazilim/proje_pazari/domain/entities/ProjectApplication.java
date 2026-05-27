@@ -53,6 +53,9 @@ public class ProjectApplication extends BaseEntity<Ulid> {
     /** The current status of the application. Defaults to PENDING. */
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
+    /** Optional message provided by the project owner during approval or rejection. */
+    private String reviewMessage;
+
     /**
      * Creates a new application for the given project and user.
      *
@@ -78,8 +81,19 @@ public class ProjectApplication extends BaseEntity<Ulid> {
      *     ApplicationStatus#PENDING}
      */
     public void approve() {
+        approve(null);
+    }
+
+    /**
+     * Approves this application and stores the owner's review message.
+     *
+     * @throws IllegalApplicationStateException if the current status is not {@link
+     *     ApplicationStatus#PENDING}
+     */
+    public void approve(String reviewMessage) {
         requirePending("approve");
         this.status = ApplicationStatus.APPROVED;
+        this.reviewMessage = reviewMessage;
     }
 
     /**
@@ -89,8 +103,19 @@ public class ProjectApplication extends BaseEntity<Ulid> {
      *     ApplicationStatus#PENDING}
      */
     public void reject() {
+        reject(null);
+    }
+
+    /**
+     * Rejects this application and stores the owner's review message.
+     *
+     * @throws IllegalApplicationStateException if the current status is not {@link
+     *     ApplicationStatus#PENDING}
+     */
+    public void reject(String reviewMessage) {
         requirePending("reject");
         this.status = ApplicationStatus.REJECTED;
+        this.reviewMessage = reviewMessage;
     }
 
     /**
@@ -118,9 +143,25 @@ public class ProjectApplication extends BaseEntity<Ulid> {
      * @param status the persisted status
      */
     public void reconstitute(Project project, User user, ApplicationStatus status) {
+        reconstitute(project, user, status, null);
+    }
+
+    /**
+     * Reconstitutes the application state from persistence without triggering guards.
+     *
+     * <p><strong>Infrastructure-only</strong> — must not be called from domain or application code.
+     *
+     * @param project the project
+     * @param user the applicant
+     * @param status the persisted status
+     * @param reviewMessage the persisted review message
+     */
+    public void reconstitute(
+            Project project, User user, ApplicationStatus status, String reviewMessage) {
         this.project = project;
         this.user = user;
         this.status = status;
+        this.reviewMessage = reviewMessage;
     }
 
     // ---------------------------------------------------------------------------

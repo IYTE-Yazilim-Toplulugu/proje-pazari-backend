@@ -132,6 +132,7 @@ class GetProjectApplicationsHandlerTest {
     void shouldMapEntityToDto_correctly() {
         UserEntity applicant = buildUser();
         ProjectApplicationEntity app = buildApp(applicant, ApplicationStatus.APPROVED);
+        app.setReviewMessage("Welcome aboard");
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
         when(applicationRepository.findByProjectIdWithOptionalStatus(projectId, null))
@@ -148,6 +149,7 @@ class GetProjectApplicationsHandlerTest {
         assertEquals(applicant.getId(), dto.applicantId());
         assertEquals("Bob Jones", dto.applicantName());
         assertEquals(ApplicationStatus.APPROVED, dto.status());
+        assertEquals("Welcome aboard", dto.reviewMessage());
     }
 
     private UserEntity buildUser() {

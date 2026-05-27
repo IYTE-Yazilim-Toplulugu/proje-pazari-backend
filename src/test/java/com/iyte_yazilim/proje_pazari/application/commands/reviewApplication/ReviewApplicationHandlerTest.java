@@ -104,10 +104,34 @@ class ReviewApplicationHandlerTest {
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals(ApplicationStatus.APPROVED, applicationEntity.getStatus());
+        assertEquals("Good fit", applicationEntity.getReviewMessage());
         verify(applicationEventPublisher).publishEvent(any(Object.class));
 
         // Verify the team size was persisted
         verify(projectRepository).save(any(ProjectEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should reject application and persist review message")
+    void shouldRejectApplicationAndPersistReviewMessage_whenApplicationExists() {
+        ReviewApplicationCommand command =
+                new ReviewApplicationCommand(
+                        applicationId, ApplicationStatus.REJECTED, "Need a different skill set");
+
+        ProjectApplication domainApp = new ProjectApplication();
+        when(applicationMapper.entityToDomain(applicationEntity)).thenReturn(domainApp);
+
+        when(applicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(applicationEntity));
+        when(applicationRepository.save(applicationEntity)).thenReturn(applicationEntity);
+
+        ApiResponse<ReviewApplicationCommandResult> response = handler.handle(command);
+
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals(ApplicationStatus.REJECTED, applicationEntity.getStatus());
+        assertEquals("Need a different skill set", applicationEntity.getReviewMessage());
+        verify(applicationEventPublisher).publishEvent(any(Object.class));
+        verify(projectRepository, never()).save(any(ProjectEntity.class));
     }
 
     @Test

@@ -48,6 +48,9 @@ public class ProjectApplicationEntity {
     @Column(name = "status", nullable = false)
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
+    @Column(name = "review_message", columnDefinition = "TEXT")
+    private String reviewMessage;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
