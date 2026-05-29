@@ -115,10 +115,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException ex) {
-        log.error("Request parameter type mismatch: {}", ex.getMessage());
-        ApiResponse<Void> response =
-                ApiResponse.badRequest(messageService.getMessage("error.validation"));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        log.warn("Request parameter type mismatch: {}", ex.getMessage());
+        return respond(ErrorCode.INVALID_ARGUMENT);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
