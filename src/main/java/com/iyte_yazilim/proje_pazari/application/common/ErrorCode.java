@@ -50,6 +50,15 @@ public enum ErrorCode {
     /** The authenticated principal lacks permission for the requested action. */
     ACCESS_DENIED(ResponseCode.FORBIDDEN, "error.forbidden"),
 
+    /**
+     * The supplied credentials are invalid (wrong email or password). Kept vague to prevent user
+     * enumeration.
+     */
+    INVALID_CREDENTIALS(ResponseCode.BAD_REQUEST, "auth.login.failed"),
+
+    /** The account exists but has been administratively deactivated. */
+    ACCOUNT_DEACTIVATED(ResponseCode.FORBIDDEN, "auth.account.deactivated"),
+
     // --- Not-found errors ---
     /** No user matches the supplied identifier. */
     USER_NOT_FOUND(ResponseCode.NOT_FOUND, "user.not.found"),
@@ -62,6 +71,9 @@ public enum ErrorCode {
 
     /** No flagged content matches the supplied identifier. */
     FLAGGED_CONTENT_NOT_FOUND(ResponseCode.NOT_FOUND, "flag.not.found"),
+
+    /** A user has already submitted an application to the same project. */
+    APPLICATION_ALREADY_EXISTS(ResponseCode.CONFLICT, "application.already.exists"),
 
     // --- Email / verification errors ---
     /** The account's email address has not been verified yet. */
