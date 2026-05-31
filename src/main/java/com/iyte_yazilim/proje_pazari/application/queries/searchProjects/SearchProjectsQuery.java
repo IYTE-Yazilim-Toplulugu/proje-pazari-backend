@@ -2,7 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.queries.searchProjects;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
+import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -15,4 +15,4 @@ public record SearchProjectsQuery(
         List<String> tags,
         @Min(0) int page,
         @Min(1) @Max(100) int size)
-        implements IRequest<ApiResponse<List<ProjectDocument>>> {}
+        implements IRequest<ApiResponse<PagedProjectsResult>> {}
