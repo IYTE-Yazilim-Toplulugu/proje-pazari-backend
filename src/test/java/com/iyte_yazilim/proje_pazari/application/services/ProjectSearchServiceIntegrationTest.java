@@ -68,7 +68,7 @@ class ProjectSearchServiceIntegrationTest {
                         .tags(null)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
-                        .applicationsCount(5)
+                        .applicationCount(5)
                         .build();
 
         ProjectDocument project2 =
@@ -81,7 +81,7 @@ class ProjectSearchServiceIntegrationTest {
                         .tags(null)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
-                        .applicationsCount(3)
+                        .applicationCount(3)
                         .build();
 
         ProjectDocument project3 =
@@ -94,7 +94,7 @@ class ProjectSearchServiceIntegrationTest {
                         .tags(null)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
-                        .applicationsCount(10)
+                        .applicationCount(10)
                         .build();
 
         elasticsearchOperations.save(project1);
