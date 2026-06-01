@@ -7,6 +7,8 @@ import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.PendingIndexRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PendingIndexEntity;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +24,8 @@ class ElasticsearchEventListenerTest {
     @Mock private ElasticsearchSyncService syncService;
 
     @Mock private BusinessMetricsService metricsService;
+
+    @Mock private PendingIndexRepository pendingIndexRepository;
 
     @InjectMocks private ElasticsearchEventListener listener;
 
@@ -47,10 +51,11 @@ class ElasticsearchEventListenerTest {
         verify(syncService).indexProject("proj-1");
         verify(metricsService).incrementEsIndexSuccess();
         verify(metricsService, never()).incrementEsIndexFailure();
+        verifyNoInteractions(pendingIndexRepository);
     }
 
     @Test
-    @DisplayName("Should increment index failure when project created sync throws")
+    @DisplayName("Should increment index failure and queue for retry when project created sync throws")
     void shouldIncrementIndexFailure_whenProjectCreatedSyncThrows() throws Exception {
         // Given
         ProjectCreatedEvent event =
@@ -69,6 +74,7 @@ class ElasticsearchEventListenerTest {
         // Then
         verify(metricsService).incrementEsIndexFailure();
         verify(metricsService, never()).incrementEsIndexSuccess();
+        verify(pendingIndexRepository).save(argThat(e -> "proj-1".equals(e.getProjectId())));
     }
 
     // ── handleProjectUpdated ──────────────────────────────────────────────
@@ -94,10 +100,11 @@ class ElasticsearchEventListenerTest {
         verify(syncService).indexProject("proj-2");
         verify(metricsService).incrementEsIndexSuccess();
         verify(metricsService, never()).incrementEsIndexFailure();
+        verifyNoInteractions(pendingIndexRepository);
     }
 
     @Test
-    @DisplayName("Should increment index failure when project updated sync throws")
+    @DisplayName("Should increment index failure and queue for retry when project updated sync throws")
     void shouldIncrementIndexFailure_whenProjectUpdatedSyncThrows() throws Exception {
         // Given
         ProjectUpdatedEvent event =
@@ -117,6 +124,7 @@ class ElasticsearchEventListenerTest {
         // Then
         verify(metricsService).incrementEsIndexFailure();
         verify(metricsService, never()).incrementEsIndexSuccess();
+        verify(pendingIndexRepository).save(argThat(e -> "proj-2".equals(e.getProjectId())));
     }
 
     // ── handleProjectDeleted ──────────────────────────────────────────────
