@@ -8,7 +8,6 @@ import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.PendingIndexRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PendingIndexEntity;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -55,7 +54,8 @@ class ElasticsearchEventListenerTest {
     }
 
     @Test
-    @DisplayName("Should increment index failure and queue for retry when project created sync throws")
+    @DisplayName(
+            "Should increment index failure and queue for retry when project created sync throws")
     void shouldIncrementIndexFailure_whenProjectCreatedSyncThrows() throws Exception {
         // Given
         ProjectCreatedEvent event =
@@ -104,7 +104,8 @@ class ElasticsearchEventListenerTest {
     }
 
     @Test
-    @DisplayName("Should increment index failure and queue for retry when project updated sync throws")
+    @DisplayName(
+            "Should increment index failure and queue for retry when project updated sync throws")
     void shouldIncrementIndexFailure_whenProjectUpdatedSyncThrows() throws Exception {
         // Given
         ProjectUpdatedEvent event =
