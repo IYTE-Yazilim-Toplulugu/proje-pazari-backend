@@ -53,45 +53,43 @@ import java.time.LocalDateTime;
 @Schema(description = "Command to create a new project")
 public record CreateProjectCommand(
         @Schema(description = "Name of the project", example = "Machine Learning Research Platform")
-        @NotBlank(message = "Project name is required")
-        @Size(
-                min = 3,
-                max = 100,
-                message = "Project name must be between 3 and 100 characters")
-        String projectName,
+                @NotBlank(message = "Project name is required")
+                @Size(
+                        min = 3,
+                        max = 100,
+                        message = "Project name must be between 3 and 100 characters")
+                String projectName,
         @Schema(
-                description = "Detailed description of the project",
-                example =
-                        "A platform for collaborative ML research enabling teams to share"
-                                + " datasets, run experiments, and publish results.")
-        @NotBlank(message = "Description is required")
-        @Size(
-                min = 10,
-                max = 2000,
-                message = "Description must be between 10 and 2000 characters")
-        String description,
+                        description = "Detailed description of the project",
+                        example =
+                                "A platform for collaborative ML research enabling teams to share"
+                                        + " datasets, run experiments, and publish results.")
+                @NotBlank(message = "Description is required")
+                @Size(
+                        min = 10,
+                        max = 2000,
+                        message = "Description must be between 10 and 2000 characters")
+                String description,
         @Schema(
-                description = "Brief summary of the project for listing displays",
-                example = "Collaborative ML research platform for dataset sharing and experimentation")
-        @NotBlank(message = "Summary is required")
-        @Size(
-                min = 3,
-                max = 250,
-                message = "Summary must be between 3 and 250 characters")
-        String summary,
+                        description = "Brief summary of the project for listing displays",
+                        example =
+                                "Collaborative ML research platform for dataset sharing and experimentation")
+                @NotBlank(message = "Summary is required")
+                @Size(min = 3, max = 250, message = "Summary must be between 3 and 250 characters")
+                String summary,
         @Schema(
-                description =
-                        "ID of the project owner (resolved from authentication, do not"
-                                + " send)",
-                accessMode = Schema.AccessMode.READ_ONLY,
-                example = "01HQZX...")
-        @NotBlank(message = "Owner ID is required")
-        String ownerId,
+                        description =
+                                "ID of the project owner (resolved from authentication, do not"
+                                        + " send)",
+                        accessMode = Schema.AccessMode.READ_ONLY,
+                        example = "01HQZX...")
+                @NotBlank(message = "Owner ID is required")
+                String ownerId,
         @Schema(description = "Maximum team size for the project", example = "5")
-        @Min(value = 1, message = "Maximum team size must be at least 1")
-        Integer maxTeamSize,
+                @Min(value = 1, message = "Maximum team size must be at least 1")
+                Integer maxTeamSize,
         @Schema(description = "Array of required skills", example = "[\"Java\", \"Spring Boot\"]")
-        String[] requiredSkills,
+                String[] requiredSkills,
         @Schema(description = "Project category", example = "Software Development") String category,
         @Schema(description = "Project deadline") LocalDateTime deadline)
         implements ICommand<ApiResponse<CreateProjectCommandResult>> {}
