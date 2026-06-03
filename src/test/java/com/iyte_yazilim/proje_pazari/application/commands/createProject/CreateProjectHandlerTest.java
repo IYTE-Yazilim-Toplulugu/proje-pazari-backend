@@ -78,9 +78,8 @@ class CreateProjectHandlerTest {
                 new CreateProjectCommand(
                         "Test Project",
                         "This is a test project description",
+                        "A concise summary of the test project",
                         ownerId,
-                        new String[] {},
-                        new String[] {"java", "spring"},
                         5,
                         new String[] {"Java", "Spring Boot"},
                         "Software Development",
@@ -98,6 +97,7 @@ class CreateProjectHandlerTest {
         Project domainProject = new Project();
         domainProject.setTitle(command.projectName());
         domainProject.setDescription(command.description());
+        domainProject.setSummary(command.summary());
 
         ProjectEntity projectEntity = new ProjectEntity();
         projectEntity.setId(projectId);
@@ -107,6 +107,7 @@ class CreateProjectHandlerTest {
         Project savedDomainProject = new Project();
         savedDomainProject.setId(projectUlid);
         savedDomainProject.setTitle(command.projectName());
+        savedDomainProject.setSummary(command.summary());
         savedDomainProject.setOwner(ownerDomain);
 
         CreateProjectCommandResult expectedResult =
@@ -114,9 +115,8 @@ class CreateProjectHandlerTest {
                         projectId,
                         command.projectName(),
                         command.description(),
+                        command.summary(),
                         ownerId,
-                        new String[] {},
-                        new String[] {},
                         5,
                         0,
                         new String[] {"Java", "Spring Boot"},
@@ -140,6 +140,7 @@ class CreateProjectHandlerTest {
         assertNotNull(response.getData());
         assertEquals(expectedResult.projectId(), response.getData().projectId());
         assertEquals(expectedResult.projectName(), response.getData().projectName());
+        assertEquals(expectedResult.summary(), response.getData().summary());
         assertEquals(ownerId, response.getData().ownerId());
         verify(projectRepository).save(projectEntity);
         verify(metricsService).incrementProjectCreationSuccess();
@@ -154,9 +155,8 @@ class CreateProjectHandlerTest {
                 new CreateProjectCommand(
                         "Test Project",
                         "This is a test project description",
+                        "A concise summary of the test project",
                         nonExistentOwnerId,
-                        new String[] {},
-                        new String[] {},
                         5,
                         new String[] {},
                         null,
