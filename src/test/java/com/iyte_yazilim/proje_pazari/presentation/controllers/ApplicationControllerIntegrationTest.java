@@ -56,6 +56,7 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
         data.put("maxTeamSize", 5);
         data.put("requiredSkills", new String[] {"Python", "NLP", "Machine Learning"});
         data.put("category", "Artificial Intelligence");
+        data.put("summary","AI-powered chatbot for customer support using modern NLP techniques");
         return data;
     }
 

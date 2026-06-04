@@ -207,6 +207,7 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
             Map<String, Object> data = new HashMap<>();
             data.put("projectName", "Test Project");
             data.put("description", "A test project description that is long enough to pass.");
+            data.put("summary","");
 
             mockMvc.perform(
                             post("/api/v1/projects")
