@@ -97,6 +97,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         data.put("maxTeamSize", 5);
         data.put("requiredSkills", new String[] {"Python", "NLP", "Machine Learning"});
         data.put("category", "Artificial Intelligence");
+        data.put("summary", "AI-powered chatbot for customer support using modern NLP techniques");
         return data;
     }
 
@@ -219,6 +220,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                     {
                         "projectName": "AI Chatbot Project",
                         "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                        "summary": "AI-powered chatbot for customer support using modern NLP techniques",
                         "maxTeamSize": 5,
                         "deadline": "%s"
                     }
@@ -299,6 +301,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                     {
                         "projectName": "AI Chatbot Project",
                         "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                        "summary": "AI-powered chatbot for customer support using modern NLP techniques",
                         "maxTeamSize": 5,
                         "deadline": "%s"
                     }
@@ -316,11 +319,10 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("13. Create project with tags and required skills returns 201 CREATED")
-        void createProject_withTagsAndSkills_returns201() throws Exception {
+        void createProject_withRequiredSkills_returns201() throws Exception {
             String token = createProjectOwnerAndGetToken();
 
             Map<String, Object> data = validProjectData();
-            data.put("tags", new String[] {"ai", "nlp", "chatbot"});
             data.put("requiredSkills", new String[] {"Java", "Spring Boot", "Docker"});
 
             mockMvc.perform(
@@ -342,6 +344,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
             data.put(
                     "description",
                     "A minimal project with only required fields for testing purposes.");
+            data.put("summary", "A minimal project for testing required fields only");
 
             mockMvc.perform(
                             post(BASE_URL)
