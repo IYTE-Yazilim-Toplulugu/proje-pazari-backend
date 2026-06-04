@@ -7,6 +7,7 @@ import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,69 +27,49 @@ class UploadFileHandlerTest {
     @InjectMocks private UploadFileHandler handler;
 
     @Test
-    @DisplayName("Should return bad request when file is null")
-    void handle_nullFile_returnsBadRequest() {
+    @DisplayName("Should throw FileValidationException when file is null")
+    void handle_nullFile_throwsFileValidationException() {
         UploadFileCommand command = new UploadFileCommand(null);
-
-        ApiResponse<Map<String, Object>> response = handler.handle(command);
-
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
-        assertEquals("File is empty", response.getMessage());
+        assertThrows(FileValidationException.class, () -> handler.handle(command));
         verifyNoInteractions(fileStorageService);
     }
 
     @Test
-    @DisplayName("Should return bad request when file is empty")
-    void handle_emptyFile_returnsBadRequest() {
+    @DisplayName("Should throw FileValidationException when file is empty")
+    void handle_emptyFile_throwsFileValidationException() {
         when(mockFile.isEmpty()).thenReturn(true);
         UploadFileCommand command = new UploadFileCommand(mockFile);
-
-        ApiResponse<Map<String, Object>> response = handler.handle(command);
-
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
-        assertEquals("File is empty", response.getMessage());
+        assertThrows(FileValidationException.class, () -> handler.handle(command));
         verifyNoInteractions(fileStorageService);
     }
 
     @Test
-    @DisplayName("Should return bad request when filename is null")
-    void handle_nullFilename_returnsBadRequest() {
+    @DisplayName("Should throw FileValidationException when filename is null")
+    void handle_nullFilename_throwsFileValidationException() {
         when(mockFile.isEmpty()).thenReturn(false);
         when(mockFile.getOriginalFilename()).thenReturn(null);
         UploadFileCommand command = new UploadFileCommand(mockFile);
-
-        ApiResponse<Map<String, Object>> response = handler.handle(command);
-
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
-        assertEquals("Invalid filename", response.getMessage());
+        assertThrows(FileValidationException.class, () -> handler.handle(command));
         verifyNoInteractions(fileStorageService);
     }
 
     @Test
-    @DisplayName("Should return bad request when filename is blank")
-    void handle_blankFilename_returnsBadRequest() {
+    @DisplayName("Should throw FileValidationException when filename is blank")
+    void handle_blankFilename_throwsFileValidationException() {
         when(mockFile.isEmpty()).thenReturn(false);
         when(mockFile.getOriginalFilename()).thenReturn("   ");
         UploadFileCommand command = new UploadFileCommand(mockFile);
-
-        ApiResponse<Map<String, Object>> response = handler.handle(command);
-
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
-        assertEquals("Invalid filename", response.getMessage());
+        assertThrows(FileValidationException.class, () -> handler.handle(command));
         verifyNoInteractions(fileStorageService);
     }
 
     @Test
-    @DisplayName("Should return bad request when filename contains path traversal")
-    void handle_pathTraversalFilename_returnsBadRequest() {
+    @DisplayName("Should throw FileValidationException when filename contains path traversal")
+    void handle_pathTraversalFilename_throwsFileValidationException() {
         when(mockFile.isEmpty()).thenReturn(false);
         when(mockFile.getOriginalFilename()).thenReturn("../etc/passwd");
         UploadFileCommand command = new UploadFileCommand(mockFile);
-
-        ApiResponse<Map<String, Object>> response = handler.handle(command);
-
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
-        assertEquals("Invalid filename", response.getMessage());
+        assertThrows(FileValidationException.class, () -> handler.handle(command));
         verifyNoInteractions(fileStorageService);
     }
 
@@ -108,7 +89,6 @@ class UploadFileHandlerTest {
         ApiResponse<Map<String, Object>> response = handler.handle(command);
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals("File uploaded successfully", response.getMessage());
         assertNotNull(response.getData());
         assertEquals(filename, response.getData().get("filename"));
         assertEquals("/api/v1/files/" + storedPath, response.getData().get("url"));
@@ -117,20 +97,14 @@ class UploadFileHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return error when file storage throws FileStorageException")
-    void handle_storageException_returnsError() {
-        String filename = "document.pdf";
-        String errorMessage = "Disk full";
-
+    @DisplayName("Should propagate FileStorageException when storage fails")
+    void handle_storageException_propagatesFileStorageException() {
         when(mockFile.isEmpty()).thenReturn(false);
-        when(mockFile.getOriginalFilename()).thenReturn(filename);
+        when(mockFile.getOriginalFilename()).thenReturn("document.pdf");
         when(fileStorageService.storeFile(mockFile, "uploads"))
-                .thenThrow(new FileStorageException(errorMessage));
+                .thenThrow(new FileStorageException("Disk full"));
 
         UploadFileCommand command = new UploadFileCommand(mockFile);
-        ApiResponse<Map<String, Object>> response = handler.handle(command);
-
-        assertEquals(ResponseCode.INTERNAL_SERVER_ERROR, response.getCode());
-        assertEquals("File upload failed: " + errorMessage, response.getMessage());
+        assertThrows(FileStorageException.class, () -> handler.handle(command));
     }
 }

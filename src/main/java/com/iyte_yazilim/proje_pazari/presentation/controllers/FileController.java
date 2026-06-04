@@ -99,7 +99,7 @@ public class FileController extends BaseController {
                                                         value =
                                                                 """
                                         {
-                                            "code": "SUCCESS",
+                                            "code": 0,
                                             "message": "File uploaded successfully",
                                             "data": {
                                                 "filename": "document.pdf",

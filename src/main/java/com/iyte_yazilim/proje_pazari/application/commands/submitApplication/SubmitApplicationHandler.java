@@ -1,9 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.commands.submitApplication;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationSubmittedEvent;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.results.SubmitApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
@@ -56,17 +59,14 @@ public class SubmitApplicationHandler
         ProjectEntity projectEntity = projectRepository.findById(command.projectId()).orElse(null);
         if (projectEntity == null) {
             metricsService.incrementApplicationSubmissionFailure();
-            return ApiResponse.notFound(
-                    messageService.getMessage(
-                            "project.not.found", new Object[] {command.projectId()}));
+            throw new ProjectNotFoundException(command.projectId());
         }
 
         // --- 3. Verify User Exists ---
         UserEntity userEntity = userRepository.findById(command.userId()).orElse(null);
         if (userEntity == null) {
             metricsService.incrementApplicationSubmissionFailure();
-            return ApiResponse.notFound(
-                    messageService.getMessage("user.not.found", new Object[] {command.userId()}));
+            throw new UserNotFoundException(command.userId());
         }
 
         // --- 4. Check for Duplicate Application ---
@@ -75,7 +75,9 @@ public class SubmitApplicationHandler
                         command.projectId(), command.userId());
         if (alreadyApplied) {
             metricsService.incrementApplicationSubmissionFailure();
-            return ApiResponse.badRequest(messageService.getMessage("application.already.exists"));
+            return ApiResponse.failure(
+                    ErrorCode.APPLICATION_ALREADY_EXISTS,
+                    messageService.getMessage("application.already.exists"));
         }
 
         // --- 5. Create Application Entity (defaults to PENDING status) ---
