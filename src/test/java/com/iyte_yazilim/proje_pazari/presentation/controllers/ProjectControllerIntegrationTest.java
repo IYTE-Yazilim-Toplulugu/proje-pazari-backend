@@ -539,7 +539,8 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             put(BASE_URL + "/" + projectId)
                                     .header("Authorization", "Bearer " + otherOwnerToken)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"projectName\": \"Hijacked Name\", \"summary\": \"Hijacked project summary\"}"))
+                                    .content(
+                                            "{\"projectName\": \"Hijacked Name\", \"summary\": \"Hijacked project summary\"}"))
                     .andExpect(status().isForbidden());
         }
 
@@ -552,7 +553,8 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             put(BASE_URL + "/01NONEXISTENT0000000000000")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"projectName\": \"Some Name\", \"summary\": \"Summary for non-existent project test\"}"))
+                                    .content(
+                                            "{\"projectName\": \"Some Name\", \"summary\": \"Summary for non-existent project test\"}"))
                     .andExpect(status().isNotFound());
         }
 
@@ -580,7 +582,8 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             put(BASE_URL + "/" + projectId)
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"projectName\": \"Persisted Name\", \"summary\": \"Persisted project summary for database test\"}"))
+                                    .content(
+                                            "{\"projectName\": \"Persisted Name\", \"summary\": \"Persisted project summary for database test\"}"))
                     .andExpect(status().isOk());
 
             var saved = projectRepository.findById(projectId).orElseThrow();
