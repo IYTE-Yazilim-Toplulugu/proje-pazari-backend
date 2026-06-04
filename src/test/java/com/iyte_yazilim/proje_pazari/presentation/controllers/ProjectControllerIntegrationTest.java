@@ -501,6 +501,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
             Map<String, Object> update = new HashMap<>();
             update.put("projectName", "Updated AI Project Name");
+            update.put("summary", "Updated AI-powered chatbot for customer support");
 
             mockMvc.perform(
                             put(BASE_URL + "/" + projectId)
@@ -538,7 +539,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             put(BASE_URL + "/" + projectId)
                                     .header("Authorization", "Bearer " + otherOwnerToken)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"projectName\": \"Hijacked Name\"}"))
+                                    .content("{\"projectName\": \"Hijacked Name\", \"summary\": \"Hijacked project summary\"}"))
                     .andExpect(status().isForbidden());
         }
 
@@ -551,7 +552,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             put(BASE_URL + "/01NONEXISTENT0000000000000")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"projectName\": \"Some Name\"}"))
+                                    .content("{\"projectName\": \"Some Name\", \"summary\": \"Summary for non-existent project test\"}"))
                     .andExpect(status().isNotFound());
         }
 
@@ -579,7 +580,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             put(BASE_URL + "/" + projectId)
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"projectName\": \"Persisted Name\"}"))
+                                    .content("{\"projectName\": \"Persisted Name\", \"summary\": \"Persisted project summary for database test\"}"))
                     .andExpect(status().isOk());
 
             var saved = projectRepository.findById(projectId).orElseThrow();
