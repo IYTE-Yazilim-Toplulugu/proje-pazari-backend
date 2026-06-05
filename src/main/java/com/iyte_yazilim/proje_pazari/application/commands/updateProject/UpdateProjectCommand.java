@@ -32,7 +32,6 @@ public record UpdateProjectCommand(
         @Schema(
                         description = "Updated brief summary of the project for listing displays",
                         example = "AI chatbot for campus support using state-of-the-art LLMs")
-                @NotBlank(message = "Summary is required")
                 @Size(min = 3, max = 250, message = "Summary must be between 3 and 250 characters")
                 String summary,
         @Schema(description = "Updated maximum team size", example = "8") Integer maxTeamSize,

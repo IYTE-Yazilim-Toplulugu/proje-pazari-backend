@@ -74,7 +74,6 @@ public record CreateProjectCommand(
                         description = "Brief summary of the project for listing displays",
                         example =
                                 "Collaborative ML research platform for dataset sharing and experimentation")
-                @NotBlank(message = "Summary is required")
                 @Size(min = 3, max = 250, message = "Summary must be between 3 and 250 characters")
                 String summary,
         @Schema(
