@@ -387,6 +387,41 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         }
     }
 
+    @Test
+    @DisplayName("16. Create project response does not contain teamMemberIds or tags")
+    void createProject_response_doesNotContainRemovedFields() throws Exception {
+        String token = createProjectOwnerAndGetToken();
+
+        mockMvc.perform(
+                        post(BASE_URL)
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(validProjectData())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.teamMemberIds").doesNotExist())
+                .andExpect(jsonPath("$.data.tags").doesNotExist());
+    }
+
+    @Test
+    @DisplayName(
+            "17. Create project request with legacy tags and teamMemberIds fields is ignored and returns 201")
+    void createProject_withLegacyFields_ignoredAndReturns201() throws Exception {
+        String token = createProjectOwnerAndGetToken();
+
+        Map<String, Object> data = validProjectData();
+        data.put("tags", new String[] {"ai", "nlp"});
+        data.put("teamMemberIds", new String[] {"01HQZX...", "01HQZY..."});
+
+        mockMvc.perform(
+                        post(BASE_URL)
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(data)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.teamMemberIds").doesNotExist())
+                .andExpect(jsonPath("$.data.tags").doesNotExist());
+    }
+
     // ── 2. Get All Projects Tests ───────────────────────────────────────
 
     @Nested
@@ -588,6 +623,47 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
             var saved = projectRepository.findById(projectId).orElseThrow();
             assertThat(saved.getTitle()).isEqualTo("Persisted Name");
+        }
+
+        @Test
+        @DisplayName("7. Update only projectName without summary preserves existing summary")
+        void updateProject_withoutSummary_preservesExistingSummary() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            // Only send projectName — no summary field
+            mockMvc.perform(
+                            put(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"projectName\": \"Updated Name Only\"}"))
+                    .andExpect(status().isOk());
+
+            var saved = projectRepository.findById(projectId).orElseThrow();
+            assertThat(saved.getTitle()).isEqualTo("Updated Name Only");
+            assertThat(saved.getSummary())
+                    .isEqualTo(
+                            "AI-powered chatbot for customer support using modern NLP techniques");
+        }
+
+        @Test
+        @DisplayName("8. Update summary persists it and GET returns new value")
+        void updateProject_summary_persistedAndReturnedByGet() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(
+                            put(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            "{\"projectName\": \"AI Chatbot Project\","
+                                                    + " \"summary\": \"Updated summary value\"}"))
+                    .andExpect(status().isOk());
+
+            mockMvc.perform(get(BASE_URL + "/" + projectId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.summary").value("Updated summary value"));
         }
     }
 
@@ -808,6 +884,37 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("3. Get project by ID is accessible without authentication")
         void getProjectById_noAuth_returns404ForNonExistent() throws Exception {
             mockMvc.perform(get(BASE_URL + "/nonexistent-id")).andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("4. Created project summary is persisted and returned by GET")
+        void getProjectById_returnsSummary() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+
+            MvcResult result =
+                    mockMvc.perform(
+                                    post(BASE_URL)
+                                            .header("Authorization", "Bearer " + token)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(
+                                                    objectMapper.writeValueAsString(
+                                                            validProjectData())))
+                            .andExpect(status().isCreated())
+                            .andReturn();
+
+            String projectId =
+                    objectMapper
+                            .readTree(result.getResponse().getContentAsString())
+                            .get("data")
+                            .get("projectId")
+                            .asText();
+
+            mockMvc.perform(get(BASE_URL + "/" + projectId))
+                    .andExpect(status().isOk())
+                    .andExpect(
+                            jsonPath("$.data.summary")
+                                    .value(
+                                            "AI-powered chatbot for customer support using modern NLP techniques"));
         }
     }
 }
