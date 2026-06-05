@@ -28,7 +28,7 @@ public class SearchProjectsHandler
     public ApiResponse<List<ProjectDocument>> handle(SearchProjectsQuery query) {
         Pageable pageable = PageRequest.of(query.page(), query.size());
         SearchPage<ProjectDocument> results =
-                searchService.advancedSearch(query.q(), query.status(), query.tags(), pageable);
+                searchService.advancedSearch(query.q(), query.status(), pageable);
 
         List<ProjectDocument> documents =
                 results.getContent().stream().map(SearchHit::getContent).toList();

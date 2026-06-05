@@ -108,7 +108,6 @@ class SearchControllerTest {
                         .description("A data processing pipeline")
                         .summary("ML project for data engineering")
                         .status("ACTIVE")
-                        .tags(List.of("python", "ml", "data"))
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
                         .applicationsCount(3)
@@ -121,7 +120,6 @@ class SearchControllerTest {
                         .description("A comprehensive React frontend with machine learning backend")
                         .summary("Full-stack web app")
                         .status("COMPLETED")
-                        .tags(List.of("react", "javascript"))
                         .createdAt(LocalDateTime.now().minusDays(10))
                         .updatedAt(LocalDateTime.now().minusDays(5))
                         .applicationsCount(8)
@@ -261,8 +259,8 @@ class SearchControllerTest {
 
         @Test
         @WithMockUser
-        @DisplayName("3. Filter by multiple tags passes tags to query")
-        void search_filterByMultipleTags_passesTagsToQuery() throws Exception {
+        @DisplayName("3. Filter by status passes status to query")
+        void search_filterByStatus_passesStatus() throws Exception {
             when(mediator.send(any(SearchProjectsQuery.class)))
                     .thenReturn(
                             ApiResponse.success(
@@ -271,41 +269,18 @@ class SearchControllerTest {
             mockMvc.perform(
                             get("/api/v1/search/projects")
                                     .param("q", "project")
-                                    .param("tags", "python", "ml"))
-                    .andExpect(status().isOk());
-
-            ArgumentCaptor<SearchProjectsQuery> captor =
-                    ArgumentCaptor.forClass(SearchProjectsQuery.class);
-            verify(mediator).send(captor.capture());
-            assertThat(captor.getValue().tags()).contains("python", "ml").hasSize(2);
-        }
-
-        @Test
-        @WithMockUser
-        @DisplayName("4. Filter by status and tags combined passes both to query")
-        void search_filterByStatusAndTags_passesBoth() throws Exception {
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenReturn(
-                            ApiResponse.success(
-                                    List.of(projectWithTitle), "Projects retrieved successfully"));
-
-            mockMvc.perform(
-                            get("/api/v1/search/projects")
-                                    .param("q", "project")
-                                    .param("status", "ACTIVE")
-                                    .param("tags", "python"))
+                                    .param("status", "ACTIVE"))
                     .andExpect(status().isOk());
 
             ArgumentCaptor<SearchProjectsQuery> captor =
                     ArgumentCaptor.forClass(SearchProjectsQuery.class);
             verify(mediator).send(captor.capture());
             assertThat(captor.getValue().status()).isEqualTo("ACTIVE");
-            assertThat(captor.getValue().tags()).contains("python");
         }
 
         @Test
         @WithMockUser
-        @DisplayName("5. Search without filters uses default values")
+        @DisplayName("4. Search without filters uses default values")
         void search_noFilters_usesDefaults() throws Exception {
             when(mediator.send(any(SearchProjectsQuery.class)))
                     .thenReturn(
@@ -321,7 +296,6 @@ class SearchControllerTest {
             assertThat(captor.getValue().page()).isZero();
             assertThat(captor.getValue().size()).isEqualTo(10);
             assertThat(captor.getValue().status()).isNull();
-            assertThat(captor.getValue().tags()).isNull();
         }
     }
 
@@ -422,30 +396,12 @@ class SearchControllerTest {
                     .andExpect(jsonPath("$.data[0].title").exists())
                     .andExpect(jsonPath("$.data[0].description").exists())
                     .andExpect(jsonPath("$.data[0].status").exists())
-                    .andExpect(jsonPath("$.data[0].tags").exists())
                     .andExpect(jsonPath("$.data[0].applicationsCount").exists());
         }
 
         @Test
         @WithMockUser
-        @DisplayName("2. Search results have correct tag values")
-        void search_results_haveCorrectTags() throws Exception {
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenReturn(
-                            ApiResponse.success(
-                                    List.of(projectWithTitle), "Projects retrieved successfully"));
-
-            mockMvc.perform(get("/api/v1/search/projects").param("q", "machine"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data[0].tags").isArray())
-                    .andExpect(jsonPath("$.data[0].tags[0]").value("python"))
-                    .andExpect(jsonPath("$.data[0].tags[1]").value("ml"))
-                    .andExpect(jsonPath("$.data[0].tags[2]").value("data"));
-        }
-
-        @Test
-        @WithMockUser
-        @DisplayName("3. Title-match results ranked before description-match results")
+        @DisplayName("2. Title-match results ranked before description-match results")
         void search_titleMatchRankedHigher() throws Exception {
             when(mediator.send(any(SearchProjectsQuery.class)))
                     .thenReturn(

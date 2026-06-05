@@ -1,7 +1,6 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,9 +42,6 @@ public class ProjectDocument {
 
     @Field(type = FieldType.Nested)
     private OwnerInfo owner;
-
-    @Field(type = FieldType.Keyword)
-    private List<String> tags;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_fraction)
     private LocalDateTime createdAt;

@@ -62,7 +62,7 @@ public class ProjectSearchService {
 
     // Changed from Page to SearchPage
     public SearchPage<ProjectDocument> advancedSearch(
-            String keyword, String status, List<String> tags, Pageable pageable) {
+            String keyword, String status, Pageable pageable) {
 
         // Build bool query with multiple conditions
         Query query =
@@ -100,33 +100,6 @@ public class ProjectSearchService {
                                                                                                         "status")
                                                                                                 .value(
                                                                                                         status)));
-                                                    }
-
-                                                    // Add tags filter if provided
-                                                    if (tags != null && !tags.isEmpty()) {
-                                                        b.filter(
-                                                                f ->
-                                                                        f.terms(
-                                                                                t ->
-                                                                                        t.field(
-                                                                                                        "tags")
-                                                                                                .terms(
-                                                                                                        ts ->
-                                                                                                                ts
-                                                                                                                        .value(
-                                                                                                                                tags
-                                                                                                                                        .stream()
-                                                                                                                                        .map(
-                                                                                                                                                tag ->
-                                                                                                                                                        co
-                                                                                                                                                                .elastic
-                                                                                                                                                                .clients
-                                                                                                                                                                .elasticsearch
-                                                                                                                                                                ._types
-                                                                                                                                                                .FieldValue
-                                                                                                                                                                .of(
-                                                                                                                                                                        tag))
-                                                                                                                                        .toList()))));
                                                     }
 
                                                     return b;

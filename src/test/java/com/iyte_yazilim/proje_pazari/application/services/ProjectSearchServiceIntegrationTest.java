@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,9 +54,6 @@ class ProjectSearchServiceIntegrationTest {
         elasticsearchOperations.indexOps(ProjectDocument.class).create();
         elasticsearchOperations.indexOps(ProjectDocument.class).putMapping();
 
-        // Note: tags are set to null to reflect actual behavior - the ProjectDocumentMapper
-        // ignores tags (see @Mapping(target = "tags", ignore = true)). Tag functionality
-        // is not yet implemented in the mapper.
         ProjectDocument project1 =
                 ProjectDocument.builder()
                         .id("1")
@@ -65,7 +61,6 @@ class ProjectSearchServiceIntegrationTest {
                         .description("A comprehensive Spring Boot application")
                         .summary("Backend development with Java")
                         .status("ACTIVE")
-                        .tags(null)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
                         .applicationsCount(5)
@@ -78,7 +73,6 @@ class ProjectSearchServiceIntegrationTest {
                         .description("Modern React application with TypeScript")
                         .summary("Frontend development with React")
                         .status("ACTIVE")
-                        .tags(null)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
                         .applicationsCount(3)
@@ -91,7 +85,6 @@ class ProjectSearchServiceIntegrationTest {
                         .description("ML project using Python and TensorFlow")
                         .summary("Data science and machine learning")
                         .status("COMPLETED")
-                        .tags(null)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
                         .applicationsCount(10)
@@ -135,7 +128,7 @@ class ProjectSearchServiceIntegrationTest {
     @DisplayName("Should return results for advanced search with keyword filter")
     void shouldPerformAdvancedSearchWithKeyword() {
         SearchPage<ProjectDocument> results =
-                projectSearchService.advancedSearch("Java", null, null, PageRequest.of(0, 10));
+                projectSearchService.advancedSearch("Java", null, PageRequest.of(0, 10));
 
         assertThat(results.getSearchHits().getTotalHits()).isGreaterThan(0);
     }
@@ -144,21 +137,9 @@ class ProjectSearchServiceIntegrationTest {
     @DisplayName("Should return only projects matching the given status in advanced search")
     void shouldPerformAdvancedSearchWithStatus() {
         SearchPage<ProjectDocument> results =
-                projectSearchService.advancedSearch(null, "COMPLETED", null, PageRequest.of(0, 10));
+                projectSearchService.advancedSearch(null, "COMPLETED", PageRequest.of(0, 10));
 
         assertThat(results.getSearchHits().getTotalHits()).isEqualTo(1);
-    }
-
-    @Test
-    @Disabled(
-            "Tag search functionality not yet implemented - tags are ignored in ProjectDocumentMapper")
-    @DisplayName("Should return results matching given tags in advanced search")
-    void shouldPerformAdvancedSearchWithTags() {
-        SearchPage<ProjectDocument> results =
-                projectSearchService.advancedSearch(
-                        null, null, List.of("java"), PageRequest.of(0, 10));
-
-        assertThat(results.getSearchHits().getTotalHits()).isGreaterThan(0);
     }
 
     @Test
