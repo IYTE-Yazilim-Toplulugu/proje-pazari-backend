@@ -13,7 +13,6 @@ public interface UserDtoMapper {
     @Mapping(
             target = "userId",
             expression = "java(user.getId() != null ? user.getId().toString() : null)")
-    @Mapping(target = "preferredLanguage", ignore = true)
     UserDto domainToDto(User user);
 
     // Map UserEntity -> DTO

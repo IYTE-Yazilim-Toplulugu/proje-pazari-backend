@@ -72,6 +72,9 @@ public class User extends BaseEntity<Ulid> {
     /** User's GitHub profile URL. Optional social link. */
     private String githubUrl;
 
+    /** User's preferred language for UI/messages (e.g. "tr", "en"). */
+    private String preferredLanguage;
+
     /** Indicates whether the user account is active. Inactive accounts cannot log in. */
     private boolean isActive;
 
@@ -250,6 +253,10 @@ public class User extends BaseEntity<Ulid> {
 
     public void setGithubUrl(String githubUrl) {
         this.githubUrl = githubUrl;
+    }
+
+    public void setPreferredLanguage(String preferredLanguage) {
+        this.preferredLanguage = preferredLanguage;
     }
 
     // ---------------------------------------------------------------------------
