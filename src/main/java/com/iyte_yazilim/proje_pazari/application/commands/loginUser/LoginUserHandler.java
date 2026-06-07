@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.loginUser;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
@@ -56,19 +57,23 @@ public class LoginUserHandler
         UserEntity user = userRepository.findByEmail(command.email()).orElse(null);
         if (user == null) {
             metricsService.incrementAuthLoginFailure();
-            return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
+            return ApiResponse.failure(
+                    ErrorCode.INVALID_CREDENTIALS, messageService.getMessage("auth.login.failed"));
         }
 
         // --- 3. Check if account is active ---
         if (user.getIsActive() == null || !user.getIsActive()) {
             metricsService.incrementAuthLoginFailure();
-            return ApiResponse.badRequest(messageService.getMessage("auth.account.deactivated"));
+            return ApiResponse.failure(
+                    ErrorCode.ACCOUNT_DEACTIVATED,
+                    messageService.getMessage("auth.account.deactivated"));
         }
 
         // --- 4. Verify password with BCrypt ---
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
             metricsService.incrementAuthLoginFailure();
-            return ApiResponse.badRequest(messageService.getMessage("auth.login.failed"));
+            return ApiResponse.failure(
+                    ErrorCode.INVALID_CREDENTIALS, messageService.getMessage("auth.login.failed"));
         }
 
         // --- 5. Check email verification ---

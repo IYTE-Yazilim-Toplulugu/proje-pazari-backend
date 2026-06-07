@@ -1,12 +1,14 @@
 package com.iyte_yazilim.proje_pazari.application.commands.updateProjectStatus;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectStatusChangedEvent;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.results.UpdateProjectStatusCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
@@ -15,6 +17,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEn
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -33,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class UpdateProjectStatusHandler
         implements IRequestHandler<
                 UpdateProjectStatusCommand, ApiResponse<UpdateProjectStatusCommandResult>> {
@@ -55,9 +59,7 @@ public class UpdateProjectStatusHandler
         // --- 1. Verify Project Exists ---
         ProjectEntity projectEntity = projectRepository.findById(command.projectId()).orElse(null);
         if (projectEntity == null) {
-            return ApiResponse.notFound(
-                    messageService.getMessage(
-                            "project.not.found", new Object[] {command.projectId()}));
+            throw new ProjectNotFoundException(command.projectId());
         }
 
         // --- 2. Store Old Status ---
@@ -65,7 +67,9 @@ public class UpdateProjectStatusHandler
 
         // --- 3. Check if status is actually changing ---
         if (oldStatus == command.newStatus()) {
-            return ApiResponse.badRequest(messageService.getMessage("project.status.unchanged"));
+            return ApiResponse.failure(
+                    ErrorCode.INVALID_ARGUMENT,
+                    messageService.getMessage("project.status.unchanged"));
         }
 
         // --- 4. Validate and Apply Transition via Domain Model ---
@@ -74,8 +78,14 @@ public class UpdateProjectStatusHandler
             // The domain dictates if this is legal!
             projectDomain.transitionTo(command.newStatus());
         } catch (IllegalStateException | IllegalArgumentException e) {
-            // Catch the domain exception and return it as a clean API response
-            return ApiResponse.badRequest(e.getMessage());
+            log.warn(
+                    "Invalid project status transition [{}->{}]: {}",
+                    oldStatus,
+                    command.newStatus(),
+                    e.getMessage());
+            return ApiResponse.failure(
+                    ErrorCode.INVALID_ARGUMENT,
+                    messageService.getMessage("project.status.transition.invalid"));
         }
 
         // --- 5. Update Entity Status ---

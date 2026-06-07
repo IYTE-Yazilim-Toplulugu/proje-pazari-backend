@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 /**
@@ -9,6 +10,17 @@ import java.time.LocalDateTime;
  * <p>Represents a standardized HTTP response body. Adheres to Clean Architecture by decoupling
  * internal logic from external JSON structure.
  *
+ * <p>On errors, two code fields are populated:
+ *
+ * <ul>
+ *   <li>{@code code} — a coarse {@link ResponseCode} HTTP-category bucket (kept for backward
+ *       compatibility);
+ *   <li>{@code errorCode} — a granular, stable {@link ErrorCode} string that clients can branch on.
+ * </ul>
+ *
+ * <p>The {@code message} is always a localized, user-safe string. Technical detail is never placed
+ * here — it stays in server logs.
+ *
  * @param <T> the type of data contained in the response
  */
 @JsonInclude(JsonInclude.Include.NON_NULL) // 1. Don't send "data": null to the client on errors
@@ -16,15 +28,38 @@ import java.time.LocalDateTime;
 public class ApiResponse<T> {
 
     private final T data;
+
+    @Schema(
+            description = "Localized, user-safe message. Safe to display directly to end users.",
+            example = "Kullanıcı bulunamadı")
     private final String message;
+
+    @Schema(
+            description = "Coarse HTTP-category response code. Kept for backward compatibility.",
+            example = "7")
     private final ResponseCode code; // 2. Using the Enum strictly
+
+    @Schema(
+            description =
+                    "Stable, granular machine-readable error identifier. Present only on error"
+                            + " responses; clients should branch on this rather than on `code` or"
+                            + " `message`.",
+            example = "USER_NOT_FOUND")
+    private final ErrorCode errorCode; // 2b. Null on success responses
+
     private final LocalDateTime timestamp; // 3. Audit trail
 
-    // Private constructor enforces usage of static factory methods
+    // Private constructors enforce usage of static factory methods
+
     private ApiResponse(T data, String message, ResponseCode code) {
+        this(data, message, code, null);
+    }
+
+    private ApiResponse(T data, String message, ResponseCode code, ErrorCode errorCode) {
         this.data = data;
         this.message = message;
         this.code = code;
+        this.errorCode = errorCode;
         this.timestamp = LocalDateTime.now();
     }
 
@@ -47,6 +82,17 @@ public class ApiResponse<T> {
     }
 
     // --- ERROR RESPONSES ---
+
+    /**
+     * Preferred factory for error responses. Derives the coarse {@code code} from the {@link
+     * ErrorCode} category and records the granular {@code errorCode} for client branching.
+     *
+     * @param errorCode the granular, stable error identifier
+     * @param message a localized, user-safe message (never technical detail)
+     */
+    public static <T> ApiResponse<T> failure(ErrorCode errorCode, String message) {
+        return new ApiResponse<>(null, message, errorCode.getCategory(), errorCode);
+    }
 
     public static <T> ApiResponse<T> badRequest(String message) {
         // Fix: Use Enum, do not pass raw '400' int
@@ -95,6 +141,10 @@ public class ApiResponse<T> {
 
     public ResponseCode getCode() {
         return this.code;
+    }
+
+    public ErrorCode getErrorCode() {
+        return this.errorCode;
     }
 
     public LocalDateTime getTimestamp() {

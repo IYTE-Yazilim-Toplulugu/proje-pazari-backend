@@ -1,12 +1,14 @@
 package com.iyte_yazilim.proje_pazari.domain.exceptions;
 
-public class FileStorageException extends RuntimeException {
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
+
+public class FileStorageException extends DomainException {
 
     public FileStorageException(String message) {
-        super(message);
+        super(ErrorCode.FILE_STORAGE_ERROR, message);
     }
 
     public FileStorageException(String message, Throwable cause) {
-        super(message, cause);
+        super(ErrorCode.FILE_STORAGE_ERROR, message, cause);
     }
 }

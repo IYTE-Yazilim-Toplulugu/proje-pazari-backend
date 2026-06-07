@@ -141,8 +141,8 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("3. Duplicate application returns 400 BAD_REQUEST")
-        void submitApplication_duplicate_returns400() throws Exception {
+        @DisplayName("3. Duplicate application returns 409 CONFLICT")
+        void submitApplication_duplicate_returns409() throws Exception {
             String ownerToken = createProjectOwnerAndGetToken();
             String projectId = createProjectAndGetId(ownerToken);
             String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
@@ -159,7 +159,7 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                             post(submitApplicationUrl(projectId))
                                     .header("Authorization", "Bearer " + applicantToken)
                                     .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isConflict());
         }
 
         @Test

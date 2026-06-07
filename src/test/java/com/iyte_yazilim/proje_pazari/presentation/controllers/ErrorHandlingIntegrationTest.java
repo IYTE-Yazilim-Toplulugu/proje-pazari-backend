@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -43,7 +44,7 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
     class ResponseFormatTests {
 
         @Test
-        @DisplayName("1. Error response contains code, message, and timestamp fields")
+        @DisplayName("1. Error response contains code, errorCode, message, and timestamp fields")
         void errorResponse_containsRequiredFields() throws Exception {
             mockMvc.perform(
                             post("/api/v1/auth/register")
@@ -51,6 +52,7 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
                                     .content("{}"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").exists())
+                    .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
                     .andExpect(jsonPath("$.message").exists())
                     .andExpect(jsonPath("$.timestamp").exists());
         }
@@ -157,11 +159,12 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("5. Missing request parameter returns 400")
+        @DisplayName("5. Missing request parameter returns 400 with MISSING_PARAMETER errorCode")
         void refresh_missingParam_returns400() throws Exception {
             mockMvc.perform(post("/api/v1/auth/refresh"))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(9));
+                    .andExpect(jsonPath("$.code").value(4))
+                    .andExpect(jsonPath("$.errorCode").value("MISSING_PARAMETER"));
         }
 
         @Test
@@ -256,20 +259,25 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
     class NotFoundTests {
 
         @Test
-        @DisplayName("1. Non-existent user profile returns 404 with NOT_FOUND code")
+        @DisplayName("1. Non-existent user profile returns 404 with USER_NOT_FOUND errorCode")
         void getUserProfile_nonExistent_returns404() throws Exception {
             mockMvc.perform(get("/api/v1/users/non-existent-user-id"))
                     .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.code").value(7));
+                    .andExpect(jsonPath("$.code").value(7))
+                    .andExpect(jsonPath("$.errorCode").value("USER_NOT_FOUND"));
         }
 
         @Test
-        @DisplayName("2. Non-existent user returns 404 with message")
+        @DisplayName("2. Non-existent user returns 404 with a user-safe message (no leaked id)")
         void getUserProfile_nonExistent_returns404WithMessage() throws Exception {
             mockMvc.perform(get("/api/v1/users/another-non-existent-id"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value(7))
+                    .andExpect(jsonPath("$.errorCode").value("USER_NOT_FOUND"))
                     .andExpect(jsonPath("$.message").isNotEmpty())
+                    // Leak-regression guard: the looked-up id must never reach the client message.
+                    .andExpect(
+                            jsonPath("$.message", not(containsString("another-non-existent-id"))))
                     .andExpect(jsonPath("$.data").doesNotExist());
         }
     }
@@ -332,7 +340,8 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
                                                     new LoginUserCommand(
                                                             VALID_EMAIL, VALID_PASSWORD))))
                     .andExpect(status().isForbidden())
-                    .andExpect(jsonPath("$.code").value(6));
+                    .andExpect(jsonPath("$.code").value(6))
+                    .andExpect(jsonPath("$.errorCode").value("EMAIL_NOT_VERIFIED"));
         }
 
         @Test
@@ -342,7 +351,8 @@ class ErrorHandlingIntegrationTest extends IntegrationTestBase {
                             get("/api/v1/auth/verify-email")
                                     .param("token", "completely-invalid-token"))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.code").value(4));
+                    .andExpect(jsonPath("$.code").value(4))
+                    .andExpect(jsonPath("$.errorCode").value("INVALID_VERIFICATION_TOKEN"));
         }
     }
 
