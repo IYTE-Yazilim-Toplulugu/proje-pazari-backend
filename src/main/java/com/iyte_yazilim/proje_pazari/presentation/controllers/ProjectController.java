@@ -60,7 +60,7 @@ public class ProjectController extends BaseController {
                                                         value =
                                                                 """
                     {
-                        "code": "CREATED",
+                        "code": 2,
                         "message": "Project created successfully",
                         "data": {
                             "projectId": "01HQXV5KXBW9FYMN8CJZSP2R4H",
@@ -82,9 +82,9 @@ public class ProjectController extends BaseController {
                                                         value =
                                                                 """
                     {
-                        "code": "BAD_REQUEST",
-                        "message": "Title is required",
-                        "data": null
+                        "code": 9,
+                        "errorCode": "VALIDATION_ERROR",
+                        "message": "Validation error"
                     }
                     """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -99,9 +99,9 @@ public class ProjectController extends BaseController {
                                                         value =
                                                                 """
                     {
-                        "code": "UNAUTHORIZED",
-                        "message": "Authentication required",
-                        "data": null
+                        "code": 5,
+                        "errorCode": "UNAUTHORIZED",
+                        "message": "Unauthorized access"
                     }
                     """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -155,7 +155,7 @@ public class ProjectController extends BaseController {
                                                         value =
                                                                 """
                     {
-                        "code": "SUCCESS",
+                        "code": 0,
                         "message": "Projects retrieved successfully",
                         "data": [
                             {

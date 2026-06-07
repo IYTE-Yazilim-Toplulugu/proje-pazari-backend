@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
 import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.models.results.LoginUserResult;
@@ -106,12 +107,13 @@ class LoginUserHandlerTest {
 
         // Then
         assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, response.getErrorCode());
         assertEquals("Invalid email or password", response.getMessage());
         verify(passwordEncoder, never()).matches(anyString(), anyString());
     }
 
     @Test
-    @DisplayName("Should return error when account is deactivated")
+    @DisplayName("Should return forbidden when account is deactivated")
     void shouldReturnError_whenAccountIsDeactivated() {
         // Given
         String email = "deactivated@std.iyte.edu.tr";
@@ -130,13 +132,14 @@ class LoginUserHandlerTest {
         ApiResponse<LoginUserResult> response = handler.handle(command);
 
         // Then
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
+        assertEquals(ResponseCode.FORBIDDEN, response.getCode());
+        assertEquals(ErrorCode.ACCOUNT_DEACTIVATED, response.getErrorCode());
         assertEquals("Account has been deactivated", response.getMessage());
         verify(passwordEncoder, never()).matches(anyString(), anyString());
     }
 
     @Test
-    @DisplayName("Should return error when isActive is null")
+    @DisplayName("Should return forbidden when isActive is null")
     void shouldReturnError_whenIsActiveIsNull() {
         // Given
         String email = "nullactive@std.iyte.edu.tr";
@@ -155,7 +158,8 @@ class LoginUserHandlerTest {
         ApiResponse<LoginUserResult> response = handler.handle(command);
 
         // Then
-        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
+        assertEquals(ResponseCode.FORBIDDEN, response.getCode());
+        assertEquals(ErrorCode.ACCOUNT_DEACTIVATED, response.getErrorCode());
         assertEquals("Account has been deactivated", response.getMessage());
         verify(passwordEncoder, never()).matches(anyString(), anyString());
     }
@@ -186,6 +190,7 @@ class LoginUserHandlerTest {
 
         // Then
         assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, response.getErrorCode());
         assertEquals("Invalid email or password", response.getMessage());
         verify(jwtUtil, never()).generateToken(anyString(), anyString(), anyString());
     }

@@ -1,7 +1,9 @@
 package com.iyte_yazilim.proje_pazari.domain.exceptions;
 
-public class InvalidVerificationTokenException extends RuntimeException {
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
+
+public class InvalidVerificationTokenException extends DomainException {
     public InvalidVerificationTokenException(String message) {
-        super(message);
+        super(ErrorCode.INVALID_VERIFICATION_TOKEN, message);
     }
 }

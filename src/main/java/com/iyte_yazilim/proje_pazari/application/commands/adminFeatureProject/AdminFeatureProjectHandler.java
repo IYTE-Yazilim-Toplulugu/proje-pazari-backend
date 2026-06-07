@@ -2,6 +2,8 @@ package com.iyte_yazilim.proje_pazari.application.commands.adminFeatureProject;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ProjectNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ public class AdminFeatureProjectHandler
         implements IRequestHandler<AdminFeatureProjectCommand, ApiResponse<Void>> {
 
     private final ProjectRepository projectRepository;
+    private final MessageService messageService;
 
     @Override
     @Transactional
@@ -21,16 +24,14 @@ public class AdminFeatureProjectHandler
         ProjectEntity project = projectRepository.findById(command.projectId()).orElse(null);
 
         if (project == null) {
-            return ApiResponse.notFound("Project not found with id: " + command.projectId());
+            throw new ProjectNotFoundException(command.projectId());
         }
 
         project.setFeatured(command.featured());
         projectRepository.save(project);
 
-        String message =
-                command.featured()
-                        ? "Project featured successfully"
-                        : "Project unfeatured successfully";
-        return ApiResponse.success(null, message);
+        String messageKey =
+                command.featured() ? "project.featured.success" : "project.unfeatured.success";
+        return ApiResponse.success(null, messageService.getMessage(messageKey));
     }
 }

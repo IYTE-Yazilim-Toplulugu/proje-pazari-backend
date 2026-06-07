@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.application.commands.reviewApplication;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
@@ -16,6 +17,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectM
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -35,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewApplicationHandler
         implements IRequestHandler<
                 ReviewApplicationCommand, ApiResponse<ReviewApplicationCommandResult>> {
@@ -91,8 +94,10 @@ public class ReviewApplicationHandler
                 projectRepository.save(projectEntity); // Persist the new team size
 
             } catch (IllegalStateException e) {
-                // Catch the capacity limit exception thrown by the domain
-                return ApiResponse.badRequest(e.getMessage());
+                log.warn("Project capacity check failed: {}", e.getMessage());
+                return ApiResponse.failure(
+                        ErrorCode.ILLEGAL_APPLICATION_STATE,
+                        messageService.getMessage("application.illegal.state"));
             }
 
             // --- 3b. Approve via domain aggregate (enforces PENDING guard) ---

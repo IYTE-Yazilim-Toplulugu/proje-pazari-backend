@@ -6,6 +6,7 @@ import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
@@ -27,7 +28,8 @@ public class GetUserHandler implements IRequestHandler<GetUserQuery, ApiResponse
         // --- 1. Find user by ID ---
         UserEntity userEntity = userRepository.findById(query.userId()).orElse(null);
         if (userEntity == null) {
-            return ApiResponse.notFound(messageService.getMessage("user.not.found"));
+            // Enumeration-safe: the looked-up id is kept out of the response (logs only).
+            throw new UserNotFoundException();
         }
 
         // --- 2. Map to domain ---
