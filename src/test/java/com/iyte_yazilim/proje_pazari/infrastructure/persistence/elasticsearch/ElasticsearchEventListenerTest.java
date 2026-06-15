@@ -8,6 +8,7 @@ import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.PendingIndexRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PendingIndexStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -67,6 +68,9 @@ class ElasticsearchEventListenerTest {
                         "Owner",
                         LocalDateTime.now());
         doThrow(new RuntimeException("ES unavailable")).when(syncService).indexProject("proj-1");
+        when(pendingIndexRepository.existsByProjectIdAndStatus(
+                        "proj-1", PendingIndexStatus.PENDING))
+                .thenReturn(false);
 
         // When
         listener.handleProjectCreated(event);
@@ -75,6 +79,30 @@ class ElasticsearchEventListenerTest {
         verify(metricsService).incrementEsIndexFailure();
         verify(metricsService, never()).incrementEsIndexSuccess();
         verify(pendingIndexRepository).save(argThat(e -> "proj-1".equals(e.getProjectId())));
+    }
+
+    @Test
+    @DisplayName("Should not queue a duplicate when a PENDING entry already exists")
+    void shouldNotQueueDuplicate_whenPendingEntryAlreadyExists() throws Exception {
+        // Given
+        ProjectCreatedEvent event =
+                new ProjectCreatedEvent(
+                        "proj-1",
+                        "Title",
+                        "owner-1",
+                        "owner@test.com",
+                        "Owner",
+                        LocalDateTime.now());
+        doThrow(new RuntimeException("ES unavailable")).when(syncService).indexProject("proj-1");
+        when(pendingIndexRepository.existsByProjectIdAndStatus(
+                        "proj-1", PendingIndexStatus.PENDING))
+                .thenReturn(true);
+
+        // When
+        listener.handleProjectCreated(event);
+
+        // Then
+        verify(pendingIndexRepository, never()).save(any());
     }
 
     // ── handleProjectUpdated ──────────────────────────────────────────────
@@ -118,6 +146,9 @@ class ElasticsearchEventListenerTest {
                         List.of(),
                         LocalDateTime.now());
         doThrow(new RuntimeException("ES unavailable")).when(syncService).indexProject("proj-2");
+        when(pendingIndexRepository.existsByProjectIdAndStatus(
+                        "proj-2", PendingIndexStatus.PENDING))
+                .thenReturn(false);
 
         // When
         listener.handleProjectUpdated(event);

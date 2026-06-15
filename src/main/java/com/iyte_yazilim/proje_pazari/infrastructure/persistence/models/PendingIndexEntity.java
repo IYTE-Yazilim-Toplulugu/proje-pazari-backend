@@ -3,6 +3,8 @@ package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 import com.github.f4b6a3.ulid.Ulid;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -33,9 +35,10 @@ public class PendingIndexEntity {
     @Builder.Default
     private int attemptCount = 0;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private String status = "PENDING";
+    private PendingIndexStatus status = PendingIndexStatus.PENDING;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

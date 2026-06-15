@@ -5,3 +5,12 @@ CREATE TABLE pending_index (
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     created_at TIMESTAMP NOT NULL
 );
+
+-- At most one live (PENDING) retry entry per project, preventing duplicate rows
+-- when a project repeatedly fails to index during an outage.
+CREATE UNIQUE INDEX ux_pending_index_project_pending
+    ON pending_index (project_id)
+    WHERE status = 'PENDING';
+
+-- Supports the scheduled retry loop's lookup by status.
+CREATE INDEX ix_pending_index_status ON pending_index (status);
