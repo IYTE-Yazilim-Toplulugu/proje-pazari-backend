@@ -31,7 +31,7 @@ public class SearchProjectsHandler
     public ApiResponse<PagedProjectsResult> handle(SearchProjectsQuery query) {
         Pageable pageable = PageRequest.of(query.page(), query.size());
         SearchPage<ProjectDocument> results =
-                searchService.advancedSearch(query.q(), query.status(), query.tags(), pageable);
+                searchService.advancedSearch(query.q(), query.status(), pageable);
 
         List<ProjectDetailDto> projects =
                 results.getContent().stream()

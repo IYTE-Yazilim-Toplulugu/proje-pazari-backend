@@ -114,7 +114,6 @@ class SearchControllerTest {
                         .ownerId("owner-1")
                         .ownerName("Jane Smith")
                         .ownerEmail("jane@example.com")
-                        .tags(List.of("python", "ml", "data"))
                         .requiredSkills(List.of("python", "ml", "data"))
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
@@ -131,7 +130,6 @@ class SearchControllerTest {
                         .ownerId("owner-2")
                         .ownerName("John Smith")
                         .ownerEmail("john@example.com")
-                        .tags(List.of("react", "javascript"))
                         .requiredSkills(List.of("react", "javascript"))
                         .createdAt(LocalDateTime.now().minusDays(10))
                         .updatedAt(LocalDateTime.now().minusDays(5))
@@ -260,47 +258,7 @@ class SearchControllerTest {
 
         @Test
         @WithMockUser
-        @DisplayName("3. Filter by multiple tags passes tags to query")
-        void search_filterByMultipleTags_passesTagsToQuery() throws Exception {
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenReturn(searchResponse(projectWithTitle));
-
-            mockMvc.perform(
-                            get("/api/v1/search/projects")
-                                    .param("q", "project")
-                                    .param("tags", "python", "ml"))
-                    .andExpect(status().isOk());
-
-            ArgumentCaptor<SearchProjectsQuery> captor =
-                    ArgumentCaptor.forClass(SearchProjectsQuery.class);
-            verify(mediator).send(captor.capture());
-            assertThat(captor.getValue().tags()).contains("python", "ml").hasSize(2);
-        }
-
-        @Test
-        @WithMockUser
-        @DisplayName("4. Filter by status and tags combined passes both to query")
-        void search_filterByStatusAndTags_passesBoth() throws Exception {
-            when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenReturn(searchResponse(projectWithTitle));
-
-            mockMvc.perform(
-                            get("/api/v1/search/projects")
-                                    .param("q", "project")
-                                    .param("status", "OPEN")
-                                    .param("tags", "python"))
-                    .andExpect(status().isOk());
-
-            ArgumentCaptor<SearchProjectsQuery> captor =
-                    ArgumentCaptor.forClass(SearchProjectsQuery.class);
-            verify(mediator).send(captor.capture());
-            assertThat(captor.getValue().status()).isEqualTo("OPEN");
-            assertThat(captor.getValue().tags()).contains("python");
-        }
-
-        @Test
-        @WithMockUser
-        @DisplayName("5. Search without filters uses default values")
+        @DisplayName("3. Search without filters uses default values")
         void search_noFilters_usesDefaults() throws Exception {
             when(mediator.send(any(SearchProjectsQuery.class)))
                     .thenReturn(searchResponse(projectWithTitle));
@@ -314,7 +272,6 @@ class SearchControllerTest {
             assertThat(captor.getValue().page()).isZero();
             assertThat(captor.getValue().size()).isEqualTo(10);
             assertThat(captor.getValue().status()).isNull();
-            assertThat(captor.getValue().tags()).isNull();
         }
     }
 
@@ -409,8 +366,8 @@ class SearchControllerTest {
 
         @Test
         @WithMockUser
-        @DisplayName("2. Search results have correct tag values")
-        void search_results_haveCorrectTags() throws Exception {
+        @DisplayName("2. Search results have correct requiredSkills values")
+        void search_results_haveCorrectRequiredSkills() throws Exception {
             when(mediator.send(any(SearchProjectsQuery.class)))
                     .thenReturn(searchResponse(projectWithTitle));
 
@@ -465,8 +422,7 @@ class SearchControllerTest {
             mockMvc.perform(
                             get("/api/v1/search/projects")
                                     .param("q", "project")
-                                    .param("status", "DRAFT")
-                                    .param("tags", "nonexistent-tag"))
+                                    .param("status", "DRAFT"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.projects").isEmpty());
         }

@@ -49,9 +49,6 @@ public class ProjectDocument {
     @Field(type = FieldType.Keyword)
     private String ownerEmail;
 
-    @Field(type = FieldType.Keyword)
-    private List<String> tags;
-
     @Field(type = FieldType.Integer)
     private Integer maxTeamSize;
 

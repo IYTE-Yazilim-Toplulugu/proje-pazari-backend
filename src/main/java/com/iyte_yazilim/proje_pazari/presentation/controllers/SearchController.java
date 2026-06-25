@@ -38,7 +38,7 @@ public class SearchController extends BaseController {
             summary = "Search projects",
             description =
                     "Full-text search across projects using Elasticsearch. "
-                            + "Supports filtering by status and tags with pagination.")
+                            + "Supports filtering by status with pagination.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -63,15 +63,12 @@ public class SearchController extends BaseController {
                             example = "OPEN")
                     @RequestParam(required = false)
                     String status,
-            @Parameter(description = "Filter by tags (multiple allowed)", example = "python")
-                    @RequestParam(required = false)
-                    List<String> tags,
             @Parameter(description = "Page number (zero-based)", example = "0")
                     @RequestParam(defaultValue = "0")
                     int page,
             @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10")
                     int size) {
-        return send(new SearchProjectsQuery(q, status, tags, page, size));
+        return send(new SearchProjectsQuery(q, status, page, size));
     }
 
     @GetMapping("/projects/suggest")
