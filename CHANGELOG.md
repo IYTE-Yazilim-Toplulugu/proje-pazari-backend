@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ProjectStatus default initialization issue
 - Project search response now matches the regular project list shape (flat `ownerId`/`ownerName`/`ownerEmail`, `applicationCount`); requires a post-deploy reindex of the `projects` index (see `docs/DEPLOYMENT.md` → Elasticsearch Index Management)
+- Search no longer returns HTTP 500 when an indexed document carries an unrecognized status value — unknown statuses now degrade to `null`
 
 ### Security
 

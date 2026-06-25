@@ -59,7 +59,7 @@ public class SearchProjectsHandler
                 document.getDescription(),
                 document.getSummary(),
                 document.getApplicationCount(),
-                document.getStatus() != null ? ProjectStatus.valueOf(document.getStatus()) : null,
+                ProjectStatus.fromString(document.getStatus()),
                 document.getMaxTeamSize(),
                 document.getRequiredSkills() != null ? document.getRequiredSkills() : List.of(),
                 document.getCategory(),
