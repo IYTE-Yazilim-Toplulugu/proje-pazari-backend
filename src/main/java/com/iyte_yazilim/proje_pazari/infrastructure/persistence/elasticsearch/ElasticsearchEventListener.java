@@ -8,6 +8,9 @@ import com.iyte_yazilim.proje_pazari.domain.events.UserDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.PendingIndexRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PendingIndexEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PendingIndexStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,6 +30,7 @@ public class ElasticsearchEventListener {
 
     private final ElasticsearchSyncService syncService;
     private final BusinessMetricsService metricsService;
+    private final PendingIndexRepository pendingIndexRepository;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
@@ -42,6 +46,7 @@ public class ElasticsearchEventListener {
                     event.projectId(),
                     e.getMessage(),
                     e);
+            enqueuePendingIndex(event.projectId());
         }
     }
 
@@ -59,7 +64,21 @@ public class ElasticsearchEventListener {
                     event.projectId(),
                     e.getMessage(),
                     e);
+            enqueuePendingIndex(event.projectId());
         }
+    }
+
+    /**
+     * Queues a project for retry indexing, skipping the insert when a {@code PENDING} entry for the
+     * same project already exists. Avoids accumulating duplicate rows when a project fails to index
+     * repeatedly during an outage.
+     */
+    private void enqueuePendingIndex(String projectId) {
+        if (pendingIndexRepository.existsByProjectIdAndStatus(
+                projectId, PendingIndexStatus.PENDING)) {
+            return;
+        }
+        pendingIndexRepository.save(PendingIndexEntity.of(projectId));
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
