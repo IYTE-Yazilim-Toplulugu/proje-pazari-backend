@@ -1,10 +1,10 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectStatistics.GetProjectStatisticsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.searchProjects.SearchProjectsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.suggestProjects.SuggestProjectsQuery;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectDocument;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -48,7 +48,7 @@ public class SearchController extends BaseController {
                         responseCode = "400",
                         description = "Invalid search parameters")
             })
-    public ResponseEntity<ApiResponse<List<ProjectDocument>>> searchProjects(
+    public ResponseEntity<ApiResponse<PagedProjectsResult>> searchProjects(
             @Parameter(
                             description = "Search query string",
                             required = true,
