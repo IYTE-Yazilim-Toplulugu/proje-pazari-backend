@@ -112,8 +112,6 @@ class ResetPasswordIntegrationTest {
                                                         "token",
                                                         tokenEntity.getToken(),
                                                         "newPassword",
-                                                        "NewSecurePassword123!",
-                                                        "confirmPassword",
                                                         "NewSecurePassword123!"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0));
@@ -158,8 +156,6 @@ class ResetPasswordIntegrationTest {
                                                         "token",
                                                         "invalid-token",
                                                         "newPassword",
-                                                        "NewSecurePassword123!",
-                                                        "confirmPassword",
                                                         "NewSecurePassword123!"))))
                 .andExpect(status().isBadRequest());
     }
@@ -187,8 +183,7 @@ class ResetPasswordIntegrationTest {
         Map<String, String> resetRequest =
                 Map.of(
                         "token", tokenEntity.getToken(),
-                        "newPassword", "NewSecurePassword123!",
-                        "confirmPassword", "NewSecurePassword123!");
+                        "newPassword", "NewSecurePassword123!");
 
         // First reset — should succeed
         mockMvc.perform(
@@ -236,44 +231,7 @@ class ResetPasswordIntegrationTest {
                                                         "token",
                                                         tokenEntity.getToken(),
                                                         "newPassword",
-                                                        "NewSecurePassword123!",
-                                                        "confirmPassword",
                                                         "NewSecurePassword123!"))))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("POST /api/v1/auth/reset-password - should fail when passwords don't match")
-    void shouldReturn400_WhenPasswordsDontMatch() throws Exception {
-        String email = "reset-mismatch@std.iyte.edu.tr";
-        registerAndVerifyUser(email);
-
-        // Trigger forgot-password
-        mockMvc.perform(
-                post("/api/v1/auth/forgot-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("email", email))));
-
-        // Retrieve token
-        String userId = userRepository.findByEmail(email).orElseThrow().getId();
-        PasswordResetTokenEntity tokenEntity =
-                passwordResetTokenRepository.findAll().stream()
-                        .filter(t -> t.getUserId().equals(userId))
-                        .findFirst()
-                        .orElseThrow();
-
-        mockMvc.perform(
-                        post("/api/v1/auth/reset-password")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                Map.of(
-                                                        "token",
-                                                        tokenEntity.getToken(),
-                                                        "newPassword",
-                                                        "NewSecurePassword123!",
-                                                        "confirmPassword",
-                                                        "DifferentPassword123!"))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -306,8 +264,6 @@ class ResetPasswordIntegrationTest {
                                                         "token",
                                                         tokenEntity.getToken(),
                                                         "newPassword",
-                                                        "weak",
-                                                        "confirmPassword",
                                                         "weak"))))
                 .andExpect(status().isBadRequest());
     }
