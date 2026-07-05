@@ -181,9 +181,7 @@ class ResetPasswordIntegrationTest {
                         .orElseThrow();
 
         Map<String, String> resetRequest =
-                Map.of(
-                        "token", tokenEntity.getToken(),
-                        "newPassword", "NewSecurePassword123!");
+                Map.of("token", tokenEntity.getToken(), "newPassword", "NewSecurePassword123!");
 
         // First reset — should succeed
         mockMvc.perform(
