@@ -92,7 +92,7 @@ class ResetPasswordHandlerTest {
         when(passwordEncoder.encode(VALID_PASSWORD)).thenReturn("new-hashed-password");
 
         ApiResponse<Void> response =
-                handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD, VALID_PASSWORD));
+                handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals("new-hashed-password", user.getPassword());
@@ -107,10 +107,7 @@ class ResetPasswordHandlerTest {
 
         assertThrows(
                 InvalidVerificationTokenException.class,
-                () ->
-                        handler.handle(
-                                new ResetPasswordCommand(
-                                        "bad-token", VALID_PASSWORD, VALID_PASSWORD)));
+                () -> handler.handle(new ResetPasswordCommand("bad-token", VALID_PASSWORD)));
     }
 
     @Test
@@ -123,9 +120,7 @@ class ResetPasswordHandlerTest {
 
         assertThrows(
                 InvalidVerificationTokenException.class,
-                () ->
-                        handler.handle(
-                                new ResetPasswordCommand(TOKEN, VALID_PASSWORD, VALID_PASSWORD)));
+                () -> handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD)));
     }
 
     @Test
@@ -138,9 +133,7 @@ class ResetPasswordHandlerTest {
 
         assertThrows(
                 VerificationTokenExpiredException.class,
-                () ->
-                        handler.handle(
-                                new ResetPasswordCommand(TOKEN, VALID_PASSWORD, VALID_PASSWORD)));
+                () -> handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD)));
     }
 
     @Test
@@ -151,8 +144,6 @@ class ResetPasswordHandlerTest {
 
         assertThrows(
                 UserNotFoundException.class,
-                () ->
-                        handler.handle(
-                                new ResetPasswordCommand(TOKEN, VALID_PASSWORD, VALID_PASSWORD)));
+                () -> handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD)));
     }
 }
