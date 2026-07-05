@@ -1,7 +1,7 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.persistence.models;
 
-import java.util.List;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
