@@ -261,9 +261,7 @@ class SearchControllerTest {
         @DisplayName("3. Filter by status passes status to query")
         void search_filterByStatus_passesStatus() throws Exception {
             when(mediator.send(any(SearchProjectsQuery.class)))
-                    .thenReturn(
-                            ApiResponse.success(
-                                    List.of(projectWithTitle), "Projects retrieved successfully"));
+                    .thenReturn(searchResponse(projectWithTitle));
 
             mockMvc.perform(
                             get("/api/v1/search/projects")
