@@ -14,12 +14,12 @@ import org.mapstruct.Mapping;
 public interface CreateProjectMapper {
 
     @Mapping(target = "title", source = "projectName")
+    @Mapping(target = "summary", source = "summary")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "domainEvents", ignore = true)
     @Mapping(target = "owner", expression = "java(createUserWithId(command.ownerId()))")
-    @Mapping(target = "summary", ignore = true)
     @Mapping(target = "applications", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "currentTeamSize", ignore = true)
@@ -32,12 +32,11 @@ public interface CreateProjectMapper {
             target = "projectId",
             expression = "java(project.getId() != null ? project.getId().toString() : null)")
     @Mapping(target = "projectName", source = "title")
+    @Mapping(target = "summary", source = "summary")
     @Mapping(
             target = "ownerId",
             expression =
                     "java(project.getOwner() != null ? project.getOwner().getId().toString() : null)")
-    @Mapping(target = "teamMemberIds", expression = "java(new String[0])")
-    @Mapping(target = "tags", expression = "java(new String[0])")
     @Mapping(
             target = "requiredSkills",
             expression = "java(convertListToArray(project.getRequiredSkills()))")
