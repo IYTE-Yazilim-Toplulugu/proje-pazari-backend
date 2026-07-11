@@ -258,7 +258,26 @@ class SearchControllerTest {
 
         @Test
         @WithMockUser
-        @DisplayName("3. Search without filters uses default values")
+        @DisplayName("3. Filter by status passes status to query")
+        void search_filterByStatus_passesStatus() throws Exception {
+            when(mediator.send(any(SearchProjectsQuery.class)))
+                    .thenReturn(searchResponse(projectWithTitle));
+
+            mockMvc.perform(
+                            get("/api/v1/search/projects")
+                                    .param("q", "project")
+                                    .param("status", "ACTIVE"))
+                    .andExpect(status().isOk());
+
+            ArgumentCaptor<SearchProjectsQuery> captor =
+                    ArgumentCaptor.forClass(SearchProjectsQuery.class);
+            verify(mediator).send(captor.capture());
+            assertThat(captor.getValue().status()).isEqualTo("ACTIVE");
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("4. Search without filters uses default values")
         void search_noFilters_usesDefaults() throws Exception {
             when(mediator.send(any(SearchProjectsQuery.class)))
                     .thenReturn(searchResponse(projectWithTitle));

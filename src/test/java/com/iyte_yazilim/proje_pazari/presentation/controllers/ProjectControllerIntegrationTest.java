@@ -97,6 +97,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         data.put("maxTeamSize", 5);
         data.put("requiredSkills", new String[] {"Python", "NLP", "Machine Learning"});
         data.put("category", "Artificial Intelligence");
+        data.put("summary", "AI-powered chatbot for customer support using modern NLP techniques");
         return data;
     }
 
@@ -219,6 +220,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                     {
                         "projectName": "AI Chatbot Project",
                         "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                        "summary": "AI-powered chatbot for customer support using modern NLP techniques",
                         "maxTeamSize": 5,
                         "deadline": "%s"
                     }
@@ -299,6 +301,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                     {
                         "projectName": "AI Chatbot Project",
                         "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
+                        "summary": "AI-powered chatbot for customer support using modern NLP techniques",
                         "maxTeamSize": 5,
                         "deadline": "%s"
                     }
@@ -316,11 +319,10 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("13. Create project with tags and required skills returns 201 CREATED")
-        void createProject_withTagsAndSkills_returns201() throws Exception {
+        void createProject_withRequiredSkills_returns201() throws Exception {
             String token = createProjectOwnerAndGetToken();
 
             Map<String, Object> data = validProjectData();
-            data.put("tags", new String[] {"ai", "nlp", "chatbot"});
             data.put("requiredSkills", new String[] {"Java", "Spring Boot", "Docker"});
 
             mockMvc.perform(
@@ -342,6 +344,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
             data.put(
                     "description",
                     "A minimal project with only required fields for testing purposes.");
+            data.put("summary", "A minimal project for testing required fields only");
 
             mockMvc.perform(
                             post(BASE_URL)
@@ -382,6 +385,41 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
             var projects = projectRepository.findByOwnerId(ownerId);
             assertThat(projects).hasSize(2);
         }
+    }
+
+    @Test
+    @DisplayName("16. Create project response does not contain teamMemberIds or tags")
+    void createProject_response_doesNotContainRemovedFields() throws Exception {
+        String token = createProjectOwnerAndGetToken();
+
+        mockMvc.perform(
+                        post(BASE_URL)
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(validProjectData())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.teamMemberIds").doesNotExist())
+                .andExpect(jsonPath("$.data.tags").doesNotExist());
+    }
+
+    @Test
+    @DisplayName(
+            "17. Create project request with legacy tags and teamMemberIds fields is ignored and returns 201")
+    void createProject_withLegacyFields_ignoredAndReturns201() throws Exception {
+        String token = createProjectOwnerAndGetToken();
+
+        Map<String, Object> data = validProjectData();
+        data.put("tags", new String[] {"ai", "nlp"});
+        data.put("teamMemberIds", new String[] {"01HQZX...", "01HQZY..."});
+
+        mockMvc.perform(
+                        post(BASE_URL)
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(data)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.teamMemberIds").doesNotExist())
+                .andExpect(jsonPath("$.data.tags").doesNotExist());
     }
 
     // ── 2. Get All Projects Tests ───────────────────────────────────────
@@ -498,6 +536,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
             Map<String, Object> update = new HashMap<>();
             update.put("projectName", "Updated AI Project Name");
+            update.put("summary", "Updated AI-powered chatbot for customer support");
 
             mockMvc.perform(
                             put(BASE_URL + "/" + projectId)
@@ -535,7 +574,8 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             put(BASE_URL + "/" + projectId)
                                     .header("Authorization", "Bearer " + otherOwnerToken)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"projectName\": \"Hijacked Name\"}"))
+                                    .content(
+                                            "{\"projectName\": \"Hijacked Name\", \"summary\": \"Hijacked project summary\"}"))
                     .andExpect(status().isForbidden());
         }
 
@@ -548,7 +588,8 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             put(BASE_URL + "/01NONEXISTENT0000000000000")
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"projectName\": \"Some Name\"}"))
+                                    .content(
+                                            "{\"projectName\": \"Some Name\", \"summary\": \"Summary for non-existent project test\"}"))
                     .andExpect(status().isNotFound());
         }
 
@@ -576,11 +617,53 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                             put(BASE_URL + "/" + projectId)
                                     .header("Authorization", "Bearer " + token)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"projectName\": \"Persisted Name\"}"))
+                                    .content(
+                                            "{\"projectName\": \"Persisted Name\", \"summary\": \"Persisted project summary for database test\"}"))
                     .andExpect(status().isOk());
 
             var saved = projectRepository.findById(projectId).orElseThrow();
             assertThat(saved.getTitle()).isEqualTo("Persisted Name");
+        }
+
+        @Test
+        @DisplayName("7. Update only projectName without summary preserves existing summary")
+        void updateProject_withoutSummary_preservesExistingSummary() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            // Only send projectName — no summary field
+            mockMvc.perform(
+                            put(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"projectName\": \"Updated Name Only\"}"))
+                    .andExpect(status().isOk());
+
+            var saved = projectRepository.findById(projectId).orElseThrow();
+            assertThat(saved.getTitle()).isEqualTo("Updated Name Only");
+            assertThat(saved.getSummary())
+                    .isEqualTo(
+                            "AI-powered chatbot for customer support using modern NLP techniques");
+        }
+
+        @Test
+        @DisplayName("8. Update summary persists it and GET returns new value")
+        void updateProject_summary_persistedAndReturnedByGet() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(token);
+
+            mockMvc.perform(
+                            put(BASE_URL + "/" + projectId)
+                                    .header("Authorization", "Bearer " + token)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            "{\"projectName\": \"AI Chatbot Project\","
+                                                    + " \"summary\": \"Updated summary value\"}"))
+                    .andExpect(status().isOk());
+
+            mockMvc.perform(get(BASE_URL + "/" + projectId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.summary").value("Updated summary value"));
         }
     }
 
@@ -801,6 +884,37 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
         @DisplayName("3. Get project by ID is accessible without authentication")
         void getProjectById_noAuth_returns404ForNonExistent() throws Exception {
             mockMvc.perform(get(BASE_URL + "/nonexistent-id")).andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("4. Created project summary is persisted and returned by GET")
+        void getProjectById_returnsSummary() throws Exception {
+            String token = createProjectOwnerAndGetToken();
+
+            MvcResult result =
+                    mockMvc.perform(
+                                    post(BASE_URL)
+                                            .header("Authorization", "Bearer " + token)
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(
+                                                    objectMapper.writeValueAsString(
+                                                            validProjectData())))
+                            .andExpect(status().isCreated())
+                            .andReturn();
+
+            String projectId =
+                    objectMapper
+                            .readTree(result.getResponse().getContentAsString())
+                            .get("data")
+                            .get("projectId")
+                            .asText();
+
+            mockMvc.perform(get(BASE_URL + "/" + projectId))
+                    .andExpect(status().isOk())
+                    .andExpect(
+                            jsonPath("$.data.summary")
+                                    .value(
+                                            "AI-powered chatbot for customer support using modern NLP techniques"));
         }
     }
 }

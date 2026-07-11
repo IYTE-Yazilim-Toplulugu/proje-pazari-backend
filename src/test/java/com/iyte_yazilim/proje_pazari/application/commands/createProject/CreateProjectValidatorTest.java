@@ -17,9 +17,8 @@ class CreateProjectValidatorTest {
                 new CreateProjectCommand(
                         "Test Project",
                         "A valid project description",
+                        "A concise summary of the test project",
                         "owner-123",
-                        new String[] {},
-                        new String[] {"java"},
                         5,
                         new String[] {"Java"},
                         "Software Development",
@@ -38,9 +37,8 @@ class CreateProjectValidatorTest {
                 new CreateProjectCommand(
                         "Test Project",
                         "A valid description",
+                        "A concise summary of the test project",
                         "owner-123",
-                        new String[] {},
-                        new String[] {},
                         5,
                         new String[] {},
                         null,
@@ -59,9 +57,8 @@ class CreateProjectValidatorTest {
                 new CreateProjectCommand(
                         "Test Project",
                         "A valid description",
+                        "A concise summary of the test project",
                         "owner-123",
-                        new String[] {},
-                        new String[] {},
                         5,
                         new String[] {},
                         null,
@@ -80,9 +77,8 @@ class CreateProjectValidatorTest {
                 new CreateProjectCommand(
                         "Test Project",
                         "A valid description",
+                        "A concise summary of the test project",
                         "owner-123",
-                        new String[] {},
-                        new String[] {},
                         5,
                         new String[] {},
                         null,
