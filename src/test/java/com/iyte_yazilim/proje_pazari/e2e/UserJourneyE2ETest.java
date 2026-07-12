@@ -154,8 +154,8 @@ class UserJourneyE2ETest {
                         "E2E Test Project",
                         "description",
                         "A project created during the E2E user journey test to verify full flow",
-                        "ownerId",
-                        userId);
+                        "summary",
+                        "E2E test project for the user journey flow");
 
         MvcResult projectResult =
                 mockMvc.perform(

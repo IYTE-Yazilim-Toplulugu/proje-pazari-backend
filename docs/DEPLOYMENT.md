@@ -251,6 +251,39 @@ spring.flyway.baseline-on-migrate=true
 
 ---
 
+## Elasticsearch Index Management
+
+Project and user search are backed by Elasticsearch documents (`ProjectDocument`,
+`UserDocument`) that are denormalized copies of the PostgreSQL data. The index mappings are
+auto-created from the `@Field` annotations at startup, but existing documents are **not**
+rewritten when those annotations change.
+
+### Post-Deploy Reindex (required after a document shape/mapping change)
+
+Whenever a release changes the shape of a search document — renaming/adding/removing fields,
+flattening nested objects, or changing a `@Field` type/analyzer — pre-existing documents stay
+in the **old** shape. Until they are rewritten, search hits deserialize with the old layout
+(missing or null fields), so the change appears not to work for already-indexed records.
+
+After such a deploy, once the smoke test passes, trigger a full reindex. The endpoint drops the
+index and rebuilds it from PostgreSQL (runs asynchronously):
+
+```bash
+# Projects (ADMIN role + Bearer token required)
+curl -X POST https://api.projepazari.site/api/v1/admin/elasticsearch/reindex/projects \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Users (only when the user document shape changed)
+curl -X POST https://api.projepazari.site/api/v1/admin/elasticsearch/reindex/users \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+> [!NOTE]
+> The CD pipeline does **not** reindex automatically — this is a manual post-deploy step.
+> Monitor the application logs for completion since the reindex is `@Async`.
+
+---
+
 ## Health Checks
 
 ### Built-in Endpoints

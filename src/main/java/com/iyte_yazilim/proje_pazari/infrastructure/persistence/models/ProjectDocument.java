@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -41,11 +40,23 @@ public class ProjectDocument {
     @Field(type = FieldType.Keyword)
     private String category;
 
-    @Field(type = FieldType.Nested)
-    private OwnerInfo owner;
+    @Field(type = FieldType.Keyword)
+    private String ownerId;
+
+    @Field(type = FieldType.Text)
+    private String ownerName;
 
     @Field(type = FieldType.Keyword)
-    private List<String> tags;
+    private String ownerEmail;
+
+    @Field(type = FieldType.Integer)
+    private Integer maxTeamSize;
+
+    @Field(type = FieldType.Keyword)
+    private List<String> requiredSkills;
+
+    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_fraction)
+    private LocalDateTime deadline;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_fraction)
     private LocalDateTime createdAt;
@@ -54,17 +65,5 @@ public class ProjectDocument {
     private LocalDateTime updatedAt;
 
     @Field(type = FieldType.Integer)
-    private int applicationsCount;
-
-    @Data
-    public static class OwnerInfo {
-        @Field(type = FieldType.Keyword)
-        private String id;
-
-        @Field(type = FieldType.Text)
-        private String name;
-
-        @Field(type = FieldType.Keyword)
-        private String email;
-    }
+    private int applicationCount;
 }

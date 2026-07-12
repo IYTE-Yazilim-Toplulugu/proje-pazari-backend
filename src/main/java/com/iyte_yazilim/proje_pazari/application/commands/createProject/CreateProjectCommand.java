@@ -27,19 +27,25 @@ import java.time.LocalDateTime;
  * CreateProjectCommand command = new CreateProjectCommand(
  *                 "Mobile App Development",
  *                 "Building a Flutter mobile app for campus navigation",
+ *                 "Flutter app for navigating the IYTE campus with real-time updates",
  *                 "01HQXYZ123",
- *                 new String[] {},
- *                 new String[] { "flutter", "mobile", "navigation" });
+ *                 5,
+ *                 new String[] { "Flutter", "Dart", "Firebase" },
+ *                 "Mobile Development",
+ *                 LocalDateTime.of(2025, 6, 1, 0, 0));
  * ApiResponse<CreateProjectCommandResult> response = handler.handle(command);
  * }</pre>
  *
- * @param projectName the title of the project (3-100 chars)
- * @param description detailed project description (10-2000 chars)
- * @param ownerId ULID of the project owner
- * @param teamMemberIds optional array of initial team member ULIDs
- * @param tags optional array of project tags for categorization
+ * @param projectName the title of the project (3–100 chars)
+ * @param description detailed project description (10–2000 chars)
+ * @param summary brief summary of the project for listing displays (3–250 chars)
+ * @param ownerId ULID of the project owner (resolved from authentication, not sent by client)
+ * @param maxTeamSize maximum number of team members allowed (minimum 1)
+ * @param requiredSkills optional array of skills required for the project
+ * @param category optional category that the project belongs to
+ * @param deadline optional deadline by which the project should be completed
  * @author IYTE Yazılım Topluluğu
- * @version 1.0
+ * @version 1.1
  * @since 2024-01-01
  * @see CreateProjectHandler
  * @see com.iyte_yazilim.proje_pazari.domain.models.results.CreateProjectCommandResult
@@ -55,7 +61,9 @@ public record CreateProjectCommand(
                 String projectName,
         @Schema(
                         description = "Detailed description of the project",
-                        example = "A platform for collaborative ML research")
+                        example =
+                                "A platform for collaborative ML research enabling teams to share"
+                                        + " datasets, run experiments, and publish results.")
                 @NotBlank(message = "Description is required")
                 @Size(
                         min = 10,
@@ -63,20 +71,19 @@ public record CreateProjectCommand(
                         message = "Description must be between 10 and 2000 characters")
                 String description,
         @Schema(
+                        description = "Brief summary of the project for listing displays",
+                        example =
+                                "Collaborative ML research platform for dataset sharing and experimentation")
+                @Size(min = 3, max = 250, message = "Summary must be between 3 and 250 characters")
+                String summary,
+        @Schema(
                         description =
-                                "ID of the project owner (resolved from authentication, do not send)",
+                                "ID of the project owner (resolved from authentication, do not"
+                                        + " send)",
                         accessMode = Schema.AccessMode.READ_ONLY,
                         example = "01HQZX...")
                 @NotBlank(message = "Owner ID is required")
                 String ownerId,
-        @Schema(
-                        description = "Array of team member IDs",
-                        example = "[\"01HQZX...\", \"01HQZY...\"]")
-                String[] teamMemberIds,
-        @Schema(
-                        description = "Array of project tags",
-                        example = "[\"machine-learning\", \"python\", \"research\"]")
-                String[] tags,
         @Schema(description = "Maximum team size for the project", example = "5")
                 @Min(value = 1, message = "Maximum team size must be at least 1")
                 Integer maxTeamSize,
