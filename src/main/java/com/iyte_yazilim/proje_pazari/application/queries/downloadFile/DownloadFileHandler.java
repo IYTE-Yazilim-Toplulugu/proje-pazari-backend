@@ -65,12 +65,12 @@ public class DownloadFileHandler
         return path;
     }
 
-    /**
-     * Re-validates the path after normalization. This is intentionally a superset check: anything
-     * rejected here would also be rejected by FileStorageService.validatePath(), but checking it
-     * here lets us fail fast with a clear 400 instead of relying on the service layer to translate
-     * its own exception into the right HTTP status.
-     */
+/**
+ * Re-validates the path after normalization.
+ *
+ * <p>This duplicates the critical parts of FileStorageService.validatePath() and adds extra
+ * HTTP-boundary checks (e.g. rejecting double slashes) so we can fail fast with a clear 400.
+ */
     private boolean isValidRelativePath(String path) {
         if (path == null || path.isBlank()) {
             return false;
