@@ -19,28 +19,74 @@ public class DownloadFileHandler
 
     @Override
     public ApiResponse<String> handle(DownloadFileQuery query) {
-        String path = query.path();
+        String rawPath = query.path();
 
-        if (path == null || path.isBlank()) {
+        if (rawPath == null || rawPath.isBlank()) {
+            return ApiResponse.badRequest("Invalid file path");
+        }
+
+        // Defense in depth: reject traversal patterns before decoding too,
+        // since decoding can only ever reveal MORE ".." sequences, never hide them.
+        if (rawPath.contains("..")) {
             return ApiResponse.badRequest("Invalid file path");
         }
 
         String decodedPath;
         try {
-            decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+            decodedPath = URLDecoder.decode(rawPath, StandardCharsets.UTF_8);
         } catch (IllegalArgumentException e) {
             return ApiResponse.badRequest("Invalid file path encoding");
         }
 
-        if (decodedPath.contains("..") || path.contains("..")) {
+        // Spring's `/{*path}` binding always prefixes the captured value with a
+        // single leading slash (e.g. "/bucket/file.png"). That slash is an artifact
+        // of the routing mechanism, not part of the logical storage key, so we strip
+        // EXACTLY one leading slash here, at the HTTP boundary, before the path is
+        // handed to FileStorageService. FileStorageService.validatePath() is left
+        // untouched and continues to correctly reject any path starting with "/".
+        String normalizedPath = stripSingleLeadingSlash(decodedPath);
+
+        if (!isValidRelativePath(normalizedPath)) {
             return ApiResponse.badRequest("Invalid file path");
         }
 
-        if (!fileStorageService.fileExists(decodedPath)) {
+        if (!fileStorageService.fileExists(normalizedPath)) {
             return ApiResponse.notFound("File not found");
         }
 
-        String presignedUrl = fileStorageService.getFileUrl(decodedPath, DEFAULT_EXPIRY_MINUTES);
+        String presignedUrl =
+                fileStorageService.getFileUrl(normalizedPath, DEFAULT_EXPIRY_MINUTES);
         return ApiResponse.success(presignedUrl, "File URL generated successfully");
+    }
+
+    private String stripSingleLeadingSlash(String path) {
+        if (path.startsWith("/")) {
+            return path.substring(1);
+        }
+        return path;
+    }
+
+    /**
+     * Re-validates the path after normalization. This is intentionally a superset check:
+     * anything rejected here would also be rejected by FileStorageService.validatePath(),
+     * but checking it here lets us fail fast with a clear 400 instead of relying on the
+     * service layer to translate its own exception into the right HTTP status.
+     */
+    private boolean isValidRelativePath(String path) {
+        if (path == null || path.isBlank()) {
+            return false;
+        }
+        if (path.contains("..")) {
+            return false;
+        }
+        // A remaining leading slash means the original path had a double leading
+        // slash ("//...") — only one slash is ever the routing artifact.
+        if (path.startsWith("/") || path.startsWith("\\")) {
+            return false;
+        }
+        if (path.contains("//") || path.contains("\\\\")) {
+            return false;
+        }
+        return true;
     }
 }
