@@ -54,8 +54,7 @@ public class DownloadFileHandler
             return ApiResponse.notFound("File not found");
         }
 
-        String presignedUrl =
-                fileStorageService.getFileUrl(normalizedPath, DEFAULT_EXPIRY_MINUTES);
+        String presignedUrl = fileStorageService.getFileUrl(normalizedPath, DEFAULT_EXPIRY_MINUTES);
         return ApiResponse.success(presignedUrl, "File URL generated successfully");
     }
 
@@ -67,10 +66,10 @@ public class DownloadFileHandler
     }
 
     /**
-     * Re-validates the path after normalization. This is intentionally a superset check:
-     * anything rejected here would also be rejected by FileStorageService.validatePath(),
-     * but checking it here lets us fail fast with a clear 400 instead of relying on the
-     * service layer to translate its own exception into the right HTTP status.
+     * Re-validates the path after normalization. This is intentionally a superset check: anything
+     * rejected here would also be rejected by FileStorageService.validatePath(), but checking it
+     * here lets us fail fast with a clear 400 instead of relying on the service layer to translate
+     * its own exception into the right HTTP status.
      */
     private boolean isValidRelativePath(String path) {
         if (path == null || path.isBlank()) {

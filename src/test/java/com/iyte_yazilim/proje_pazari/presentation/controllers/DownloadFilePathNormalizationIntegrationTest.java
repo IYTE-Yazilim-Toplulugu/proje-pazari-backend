@@ -22,11 +22,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 /**
  * Regression tests for the "/{*path}" leading-slash normalization bug.
  *
- * <p>Unlike {@link FileControllerIntegrationTest}, this suite does NOT mock
- * {@link FileStorageService}. It mocks only the underlying {@link IFileStorageAdapter}, so
- * requests go through Spring's real "/{*path}" binding, the real {@link
- * com.iyte_yazilim.proje_pazari.application.queries.downloadFile.DownloadFileHandler}
- * normalization logic, and FileStorageService's real (unmodified) validatePath().
+ * <p>Unlike {@link FileControllerIntegrationTest}, this suite does NOT mock {@link
+ * FileStorageService}. It mocks only the underlying {@link IFileStorageAdapter}, so requests go
+ * through Spring's real "/{*path}" binding, the real {@link
+ * com.iyte_yazilim.proje_pazari.application.queries.downloadFile.DownloadFileHandler} normalization
+ * logic, and FileStorageService's real (unmodified) validatePath().
  */
 class DownloadFilePathNormalizationIntegrationTest extends IntegrationTestBase {
 
@@ -45,7 +45,8 @@ class DownloadFilePathNormalizationIntegrationTest extends IntegrationTestBase {
         void normalPath_existingObject_returns302() throws Exception {
             String presignedUrl = "https://minio.example.com/bucket/profiles/test.jpg?signed=true";
             when(fileStorageAdapter.exists(eq("profiles/test.jpg"))).thenReturn(true);
-            when(fileStorageAdapter.generatePresignedUrl(eq("profiles/test.jpg"), any(Integer.class)))
+            when(fileStorageAdapter.generatePresignedUrl(
+                            eq("profiles/test.jpg"), any(Integer.class)))
                     .thenReturn(presignedUrl);
 
             mockMvc.perform(get(FILES_URL + "/profiles/test.jpg"))
@@ -58,7 +59,8 @@ class DownloadFilePathNormalizationIntegrationTest extends IntegrationTestBase {
         void normalPath_missingObject_returns404() throws Exception {
             when(fileStorageAdapter.exists(eq("profiles/missing.jpg"))).thenReturn(false);
 
-            mockMvc.perform(get(FILES_URL + "/profiles/missing.jpg")).andExpect(status().isNotFound());
+            mockMvc.perform(get(FILES_URL + "/profiles/missing.jpg"))
+                    .andExpect(status().isNotFound());
         }
 
         @Test
@@ -73,7 +75,8 @@ class DownloadFilePathNormalizationIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("4. Double leading slash returns 400 without hitting storage adapter")
         void doubleLeadingSlash_returns400() throws Exception {
-            mockMvc.perform(get(FILES_URL + "//profiles/test.jpg")).andExpect(status().isBadRequest());
+            mockMvc.perform(get(FILES_URL + "//profiles/test.jpg"))
+                    .andExpect(status().isBadRequest());
 
             verifyNoInteractions(fileStorageAdapter);
         }
@@ -81,7 +84,8 @@ class DownloadFilePathNormalizationIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("5. Encoded leading slash returns 400 without hitting storage adapter")
         void encodedLeadingSlash_returns400() throws Exception {
-            mockMvc.perform(get(FILES_URL + "/%2Fprofiles/test.jpg")).andExpect(status().isBadRequest());
+            mockMvc.perform(get(FILES_URL + "/%2Fprofiles/test.jpg"))
+                    .andExpect(status().isBadRequest());
 
             verifyNoInteractions(fileStorageAdapter);
         }
@@ -89,10 +93,11 @@ class DownloadFilePathNormalizationIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("6. Nested relative path with existing object redirects with 302")
         void nestedPath_existingObject_returns302() throws Exception {
-            String presignedUrl = "https://minio.example.com/bucket/projects/p1/doc.pdf?signed=true";
+            String presignedUrl =
+                    "https://minio.example.com/bucket/projects/p1/doc.pdf?signed=true";
             when(fileStorageAdapter.exists(eq("projects/p1/doc.pdf"))).thenReturn(true);
             when(fileStorageAdapter.generatePresignedUrl(
-                    eq("projects/p1/doc.pdf"), any(Integer.class)))
+                            eq("projects/p1/doc.pdf"), any(Integer.class)))
                     .thenReturn(presignedUrl);
 
             mockMvc.perform(get(FILES_URL + "/projects/p1/doc.pdf"))
