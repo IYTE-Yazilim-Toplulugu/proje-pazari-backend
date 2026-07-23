@@ -75,7 +75,7 @@ class DownloadFilePathNormalizationIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("4. Double leading slash returns 400 without hitting storage adapter")
         void doubleLeadingSlash_returns400() throws Exception {
-            mockMvc.perform(get(FILES_URL + "//profiles/test.jpg"))
+            mockMvc.perform(get(FILES_URL + "/%2F%2Fprofiles/test.jpg"))
                     .andExpect(status().isBadRequest());
 
             verifyNoInteractions(fileStorageAdapter);
