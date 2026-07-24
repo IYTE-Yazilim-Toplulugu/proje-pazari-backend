@@ -45,6 +45,7 @@ class GetCurrentUserProfileHandlerTest {
                         null,
                         null,
                         null,
+                        null,
                         LocalDateTime.now(),
                         0,
                         0,

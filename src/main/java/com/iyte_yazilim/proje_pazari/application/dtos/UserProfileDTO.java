@@ -15,6 +15,8 @@ public record UserProfileDTO(
         @Schema(description = "Profile picture URL") String profilePictureUrl,
         @Schema(description = "LinkedIn profile URL") String linkedinUrl,
         @Schema(description = "GitHub profile URL") String githubUrl,
+        @Schema(description = "Preferred language (tr, en)", example = "en")
+                String preferredLanguage,
         @Schema(description = "Account creation timestamp") LocalDateTime joinedAt,
         @Schema(description = "Number of projects created by user") int projectsCreated,
         @Schema(description = "Number of applications submitted by user") int applicationsSubmitted,

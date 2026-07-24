@@ -68,6 +68,7 @@ public class GetUserProfileHandler
                         user.getProfilePictureUrl(),
                         user.getLinkedinUrl(),
                         user.getGithubUrl(),
+                        user.getPreferredLanguage(),
                         user.getCreatedAt(),
                         projectsCreated,
                         applicationsSubmitted,
