@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 import com.iyte_yazilim.proje_pazari.application.commands.uploadFile.UploadFileCommand;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.queries.downloadFile.DownloadFileQuery;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,34 +40,66 @@ public class FileController extends BaseController {
     @Operation(
             summary = "Download file",
             description =
-                    "Redirects to presigned URL for file access. "
-                            + "Supports images, PDFs, and documents. Public access.")
+                    "Redirects to a presigned URL when the storage provider supports it (e.g. "
+                            + "MinIO/S3), or streams the file content inline for providers that "
+                            + "don't (e.g. local disk). Public access.")
     @ApiResponses(
             value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "302",
-                        description = "Redirect to presigned URL"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "File not found")
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "302",
+                            description = "Redirect to presigned URL"),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "File content streamed inline"),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "File not found")
             })
     public ResponseEntity<?> downloadFile(
             @Parameter(
-                            description = "File path relative to storage root",
-                            required = true,
-                            example = "profile-pictures/avatar.png")
-                    @PathVariable
-                    String path) {
-        ApiResponse<String> response = mediator.send(new DownloadFileQuery(path));
+                    description = "File path relative to storage root",
+                    required = true,
+                    example = "profile-pictures/avatar.png")
+            @PathVariable
+            String path) {
+        ApiResponse<StorageDownloadResult> response = mediator.send(new DownloadFileQuery(path));
         HttpStatus status = resolveHttpStatus(response.getCode());
 
         if (status.is2xxSuccessful()) {
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .header(HttpHeaders.LOCATION, response.getData())
-                    .build();
+            StorageDownloadResult result = response.getData();
+
+            if (result instanceof StorageDownloadResult.RedirectResult redirect) {
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header(HttpHeaders.LOCATION, redirect.url())
+                        .build();
+            }
+
+            if (result instanceof StorageDownloadResult.InlineResult inline) {
+                MediaType mediaType;
+                try {
+                    mediaType = MediaType.parseMediaType(inline.contentType());
+                } catch (Exception e) {
+                    mediaType = MediaType.APPLICATION_OCTET_STREAM;
+                }
+
+                return ResponseEntity.ok()
+                        .contentType(mediaType)
+                        .contentLength(inline.content().length)
+                        .header(
+                                HttpHeaders.CONTENT_DISPOSITION,
+                                "inline; filename=\"" + sanitizeForHeader(inline.filename()) + "\"")
+                        .body(inline.content());
+            }
         }
 
         return ResponseEntity.status(status).body(response);
+    }
+
+    private String sanitizeForHeader(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return "file";
+        }
+        return filename.replaceAll("[\\r\\n\"\\\\]", "_");
     }
 
     @PostMapping
@@ -101,37 +134,37 @@ public class FileController extends BaseController {
                                                             contentType = "*/*"))))
     @ApiResponses(
             value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "File uploaded successfully",
-                        content =
-                                @Content(
-                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                        schema = @Schema(implementation = ApiResponse.class),
-                                        examples =
-                                                @io.swagger.v3.oas.annotations.media.ExampleObject(
-                                                        name = "Success Response",
-                                                        value =
-                                                                """
-                                        {
-                                            "code": 0,
-                                            "message": "File uploaded successfully",
-                                            "data": {
-                                                "filename": "document.pdf",
-                                                "url": "/api/v1/files/document.pdf",
-                                                "size": 1024567
-                                            }
-                                        }
-                                        """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Invalid file or validation error"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "401",
-                        description = "Unauthorized - authentication required"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "500",
-                        description = "Internal server error")
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "File uploaded successfully",
+                            content =
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ApiResponse.class),
+                                    examples =
+                                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                            name = "Success Response",
+                                            value =
+                                                    """
+                            {
+                                "code": 0,
+                                "message": "File uploaded successfully",
+                                "data": {
+                                    "filename": "document.pdf",
+                                    "url": "/api/v1/files/document.pdf",
+                                    "size": 1024567
+                                }
+                            }
+                            """))),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid file or validation error"),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized - authentication required"),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "500",
+                            description = "Internal server error")
             })
     public ResponseEntity<ApiResponse<Map<String, Object>>> uploadFile(
             @RequestParam("file") MultipartFile file) {
