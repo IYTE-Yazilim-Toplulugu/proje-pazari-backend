@@ -16,7 +16,6 @@ public interface UserMapper {
             expression = "java(user.getId() != null ? user.getId().toString() : null)")
     @Mapping(target = "isActive", source = "active")
     @Mapping(target = "roles", source = "roles")
-    @Mapping(target = "preferredLanguage", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     UserEntity domainToEntity(User user);
@@ -45,7 +44,6 @@ public interface UserMapper {
             expression = "java(user.getId() != null ? user.getId().toString() : null)")
     @Mapping(target = "isActive", source = "active")
     @Mapping(target = "roles", source = "roles")
-    @Mapping(target = "preferredLanguage", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void applyDomainToEntity(User user, @MappingTarget UserEntity entity);

@@ -3,10 +3,13 @@ package com.iyte_yazilim.proje_pazari.application.commands.updateUserProfile;
 import com.iyte_yazilim.proje_pazari.domain.validators.IValidator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UpdateUserProfileValidator implements IValidator<UpdateUserProfileCommand> {
+
+    private static final Set<String> SUPPORTED_LANGUAGES = Set.of("tr", "en");
 
     @Override
     public String[] validate(UpdateUserProfileCommand command) {
@@ -22,6 +25,10 @@ public class UpdateUserProfileValidator implements IValidator<UpdateUserProfileC
                 && !command.githubUrl().isBlank()
                 && !command.githubUrl().matches("^https://github\\.com/[a-zA-Z0-9_-]+(/.*)?$")) {
             errors.add("Invalid GitHub URL format");
+        }
+        if (command.preferredLanguage() != null
+                && !SUPPORTED_LANGUAGES.contains(command.preferredLanguage())) {
+            errors.add("Invalid preferred language. Supported languages: " + SUPPORTED_LANGUAGES);
         }
 
         return errors.toArray(new String[0]);

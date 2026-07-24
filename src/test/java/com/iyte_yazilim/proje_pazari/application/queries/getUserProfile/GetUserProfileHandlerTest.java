@@ -66,6 +66,7 @@ class GetUserProfileHandlerTest {
         user.setFirstName("John");
         user.setLastName("Doe");
         user.setDescription("Developer");
+        user.setPreferredLanguage("en");
         user.setCreatedAt(LocalDateTime.of(2024, 1, 1, 0, 0));
 
         ProjectEntity project = new ProjectEntity();
@@ -91,6 +92,7 @@ class GetUserProfileHandlerTest {
         assertEquals("John", response.getData().firstName());
         assertEquals("Doe", response.getData().lastName());
         assertEquals("John Doe", response.getData().fullName());
+        assertEquals("en", response.getData().preferredLanguage());
         assertEquals(1, response.getData().projectsCreated());
         assertEquals(2, response.getData().applicationsSubmitted());
         assertEquals(1, response.getData().projects().size());
