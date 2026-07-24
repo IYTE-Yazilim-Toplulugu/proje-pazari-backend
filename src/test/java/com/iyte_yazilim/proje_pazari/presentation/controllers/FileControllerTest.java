@@ -233,8 +233,8 @@ class FileControllerTest {
                     .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/jpeg"))
                     .andExpect(
                             header().string(
-                                    HttpHeaders.CONTENT_DISPOSITION,
-                                    "inline; filename=\"avatar.jpg\""));
+                                            HttpHeaders.CONTENT_DISPOSITION,
+                                            "inline; filename=\"avatar.jpg\""));
         }
     }
 
