@@ -3,6 +3,8 @@ package com.iyte_yazilim.proje_pazari.application.queries.downloadFile;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -12,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class DownloadFileHandler
-        implements IRequestHandler<DownloadFileQuery, ApiResponse<String>> {
+        implements IRequestHandler<DownloadFileQuery, ApiResponse<StorageDownloadResult>> {
 
     private static final int DEFAULT_EXPIRY_MINUTES = 60;
     private static final int MAX_DECODE_ITERATIONS = 5;
@@ -20,7 +22,7 @@ public class DownloadFileHandler
     private final FileStorageService fileStorageService;
 
     @Override
-    public ApiResponse<String> handle(DownloadFileQuery query) {
+    public ApiResponse<StorageDownloadResult> handle(DownloadFileQuery query) {
         String rawPath = query.path();
 
         if (rawPath == null || rawPath.isBlank()) {
@@ -54,8 +56,13 @@ public class DownloadFileHandler
             return ApiResponse.notFound("File not found");
         }
 
-        String presignedUrl = fileStorageService.getFileUrl(normalizedPath, DEFAULT_EXPIRY_MINUTES);
-        return ApiResponse.success(presignedUrl, "File URL generated successfully");
+        try {
+            StorageDownloadResult result =
+                    fileStorageService.getDownloadResult(normalizedPath, DEFAULT_EXPIRY_MINUTES);
+            return ApiResponse.success(result, "File resolved successfully");
+        } catch (FileValidationException e) {
+            return ApiResponse.badRequest(e.getMessage());
+        }
     }
 
     /**
