@@ -6,6 +6,7 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -84,6 +85,23 @@ public class FileStorageService {
 
     public String getFileUrl(String filePath) {
         return storageAdapter.generatePresignedUrl(filePath, 60);
+    }
+
+    /**
+     * Resolves how a file at {@code path} should be delivered to a client. Delegates to the
+     * configured {@link IFileStorageAdapter}, which decides between a redirect (e.g. MinIO/S3
+     * presigned URL) or inline content (e.g. local disk) — see {@link StorageDownloadResult}.
+     * Reuses the same path validation as {@link #deleteFile(String)} / {@link
+     * #getFileMetadata(String)}, so traversal and malformed paths are rejected identically
+     * regardless of the download strategy the adapter chooses.
+     *
+     * @param path the file path
+     * @param expirationMinutes URL validity duration, used only when the adapter redirects
+     * @return the resolved download result
+     */
+    public StorageDownloadResult getDownloadResult(String path, int expirationMinutes) {
+        validatePath(path);
+        return storageAdapter.resolveDownload(path, expirationMinutes);
     }
 
     /**
