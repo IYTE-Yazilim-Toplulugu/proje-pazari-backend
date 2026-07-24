@@ -13,6 +13,7 @@ import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.queries.downloadFile.DownloadFileQuery;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
@@ -104,7 +105,9 @@ class FileControllerTest {
                     "https://minio.example.com/bucket/profiles/ulid123.jpg?signed=true";
             when(mediator.send(any(DownloadFileQuery.class)))
                     .thenReturn(
-                            ApiResponse.success(presignedUrl, "File URL generated successfully"));
+                            ApiResponse.success(
+                                    new StorageDownloadResult.RedirectResult(presignedUrl),
+                                    "File URL generated successfully"));
 
             mockMvc.perform(get("/api/v1/files/profiles/ulid123.jpg"))
                     .andExpect(status().isFound())
@@ -138,7 +141,9 @@ class FileControllerTest {
             String presignedUrl = "https://minio.example.com/bucket/profiles/photo.png?signed=true";
             when(mediator.send(any(DownloadFileQuery.class)))
                     .thenReturn(
-                            ApiResponse.success(presignedUrl, "File URL generated successfully"));
+                            ApiResponse.success(
+                                    new StorageDownloadResult.RedirectResult(presignedUrl),
+                                    "File URL generated successfully"));
 
             // No Authorization header — endpoint is permitAll
             mockMvc.perform(get("/api/v1/files/profiles/photo.png"))
@@ -152,7 +157,9 @@ class FileControllerTest {
             when(mediator.send(any(DownloadFileQuery.class)))
                     .thenReturn(
                             ApiResponse.success(
-                                    "https://example.com/url", "File URL generated successfully"));
+                                    new StorageDownloadResult.RedirectResult(
+                                            "https://example.com/url"),
+                                    "File URL generated successfully"));
 
             mockMvc.perform(get("/api/v1/files/projects/user123/document.pdf"))
                     .andExpect(status().isFound());
@@ -169,7 +176,9 @@ class FileControllerTest {
             when(mediator.send(any(DownloadFileQuery.class)))
                     .thenReturn(
                             ApiResponse.success(
-                                    "https://example.com/url", "File URL generated successfully"));
+                                    new StorageDownloadResult.RedirectResult(
+                                            "https://example.com/url"),
+                                    "File URL generated successfully"));
 
             mockMvc.perform(get("/api/v1/files/profiles/file%20name.jpg"))
                     .andExpect(status().isFound());
@@ -183,7 +192,9 @@ class FileControllerTest {
             String presignedUrl = "https://minio.example.com/bucket/docs/report.pdf?signed=true";
             when(mediator.send(any(DownloadFileQuery.class)))
                     .thenReturn(
-                            ApiResponse.success(presignedUrl, "File URL generated successfully"));
+                            ApiResponse.success(
+                                    new StorageDownloadResult.RedirectResult(presignedUrl),
+                                    "File URL generated successfully"));
 
             mockMvc.perform(get("/api/v1/files/docs/report.pdf"))
                     .andExpect(status().isFound())
@@ -197,11 +208,33 @@ class FileControllerTest {
                     "https://minio.example.com/bucket/profiles/avatar.png?signed=true";
             when(mediator.send(any(DownloadFileQuery.class)))
                     .thenReturn(
-                            ApiResponse.success(presignedUrl, "File URL generated successfully"));
+                            ApiResponse.success(
+                                    new StorageDownloadResult.RedirectResult(presignedUrl),
+                                    "File URL generated successfully"));
 
             mockMvc.perform(get("/api/v1/files/profiles/avatar.png"))
                     .andExpect(status().isFound())
                     .andExpect(header().string(HttpHeaders.LOCATION, presignedUrl));
+        }
+
+        @Test
+        @DisplayName("Should return inline content with 200 when adapter resolves an InlineResult")
+        void shouldReturnInlineContent_whenAdapterResolvesInlineResult() throws Exception {
+            byte[] content = "fake-jpeg-bytes".getBytes();
+            when(mediator.send(any(DownloadFileQuery.class)))
+                    .thenReturn(
+                            ApiResponse.success(
+                                    new StorageDownloadResult.InlineResult(
+                                            content, "image/jpeg", "avatar.jpg"),
+                                    "File resolved successfully"));
+
+            mockMvc.perform(get("/api/v1/files/profiles/avatar.jpg"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/jpeg"))
+                    .andExpect(
+                            header().string(
+                                    HttpHeaders.CONTENT_DISPOSITION,
+                                    "inline; filename=\"avatar.jpg\""));
         }
     }
 
@@ -215,7 +248,9 @@ class FileControllerTest {
             when(mediator.send(any(DownloadFileQuery.class)))
                     .thenReturn(
                             ApiResponse.success(
-                                    "https://example.com/url", "File URL generated successfully"));
+                                    new StorageDownloadResult.RedirectResult(
+                                            "https://example.com/url"),
+                                    "File URL generated successfully"));
 
             mockMvc.perform(get("/api/v1/files/profiles/user123-ulid.jpg"))
                     .andExpect(status().isFound());
@@ -232,7 +267,9 @@ class FileControllerTest {
             when(mediator.send(any(DownloadFileQuery.class)))
                     .thenReturn(
                             ApiResponse.success(
-                                    "https://example.com/url", "File URL generated successfully"));
+                                    new StorageDownloadResult.RedirectResult(
+                                            "https://example.com/url"),
+                                    "File URL generated successfully"));
 
             mockMvc.perform(get("/api/v1/files/projects/proj-ulid/attachment.pdf"))
                     .andExpect(status().isFound());
