@@ -3,6 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.services;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -10,6 +11,7 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -415,5 +417,32 @@ class FileStorageServiceTest {
         assertThrows(
                 FileValidationException.class,
                 () -> fileStorageService.storeUserAvatar("../bad", file));
+    }
+
+    @Test
+    @DisplayName("Should delegate download resolution to adapter after path validation")
+    void shouldGetDownloadResult_delegatesToAdapter() {
+        // Given
+        String path = "profiles/photo.jpg";
+        StorageDownloadResult expected =
+                new StorageDownloadResult.RedirectResult(
+                        "https://storage.example.com/presigned/photo.jpg");
+        when(storageAdapter.resolveDownload(path, 60)).thenReturn(expected);
+
+        // When
+        StorageDownloadResult result = fileStorageService.getDownloadResult(path, 60);
+
+        // Then
+        assertEquals(expected, result);
+        verify(storageAdapter).resolveDownload(path, 60);
+    }
+
+    @Test
+    @DisplayName("Should reject traversal path before calling adapter for download resolution")
+    void shouldGetDownloadResult_rejectsInvalidPath() {
+        assertThrows(
+                FileValidationException.class,
+                () -> fileStorageService.getDownloadResult("../etc/passwd", 60));
+        verify(storageAdapter, never()).resolveDownload(anyString(), anyInt());
     }
 }
