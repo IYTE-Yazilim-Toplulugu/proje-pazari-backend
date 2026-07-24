@@ -54,17 +54,16 @@ public class DownloadFileHandler
             return ApiResponse.notFound("File not found");
         }
 
-        String presignedUrl =
-                fileStorageService.getFileUrl(normalizedPath, DEFAULT_EXPIRY_MINUTES);
+        String presignedUrl = fileStorageService.getFileUrl(normalizedPath, DEFAULT_EXPIRY_MINUTES);
         return ApiResponse.success(presignedUrl, "File URL generated successfully");
     }
 
     /**
-     * Repeatedly URL-decodes the path until it stops changing (or a small iteration cap is hit),
-     * so multi-layer encoding tricks such as "%252e%252e%252f" (which single-decode only turns
-     * into the literal text "%2e%2e%2f") are fully unwrapped to their real, meaningful form
-     * ("..") before validation runs. The iteration cap guards against pathological/malicious
-     * inputs designed to force excessive decode loops.
+     * Repeatedly URL-decodes the path until it stops changing (or a small iteration cap is hit), so
+     * multi-layer encoding tricks such as "%252e%252e%252f" (which single-decode only turns into
+     * the literal text "%2e%2e%2f") are fully unwrapped to their real, meaningful form ("..")
+     * before validation runs. The iteration cap guards against pathological/malicious inputs
+     * designed to force excessive decode loops.
      */
     private String fullyDecode(String path) {
         String current = path;

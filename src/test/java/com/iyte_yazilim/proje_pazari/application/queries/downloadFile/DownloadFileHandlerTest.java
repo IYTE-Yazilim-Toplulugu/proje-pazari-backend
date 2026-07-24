@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +20,8 @@ import org.mockito.MockitoAnnotations;
  * upstream by Spring Security's default {@code StrictHttpFirewall} before a request ever reaches
  * this handler — an HTTP-level integration test asserting only on status code would pass
  * identically whether or not this handler's validation logic exists at all. These tests exercise
- * the handler's decode/normalize/validate logic in isolation so they actually fail if that logic
- * is weakened or removed.
+ * the handler's decode/normalize/validate logic in isolation so they actually fail if that logic is
+ * weakened or removed.
  */
 class DownloadFileHandlerTest {
 
@@ -44,7 +45,7 @@ class DownloadFileHandlerTest {
 
         ApiResponse<String> response = handler.handle(new DownloadFileQuery("/profiles/test.jpg"));
 
-        assertThat(response.getCode()).isEqualTo(0);
+        assertThat(response.getCode()).isEqualTo(ResponseCode.SUCCESS);
         assertThat(response.getData()).isEqualTo("https://example.com/signed");
     }
 
@@ -58,7 +59,7 @@ class DownloadFileHandlerTest {
         ApiResponse<String> response =
                 handler.handle(new DownloadFileQuery("/profiles/../../etc/passwd"));
 
-        assertThat(response.getCode()).isNotEqualTo(0);
+        assertThat(response.getCode()).isEqualTo(ResponseCode.BAD_REQUEST);
         assertThat(response.getMessage()).isEqualTo("Invalid file path");
         verifyNoInteractions(fileStorageService);
     }
@@ -68,7 +69,7 @@ class DownloadFileHandlerTest {
     void doubleLeadingSlash_isRejected() {
         ApiResponse<String> response = handler.handle(new DownloadFileQuery("//profiles/test.jpg"));
 
-        assertThat(response.getCode()).isNotEqualTo(0);
+        assertThat(response.getCode()).isEqualTo(ResponseCode.BAD_REQUEST);
         assertThat(response.getMessage()).isEqualTo("Invalid file path");
         verifyNoInteractions(fileStorageService);
     }
@@ -81,7 +82,7 @@ class DownloadFileHandlerTest {
         ApiResponse<String> response =
                 handler.handle(new DownloadFileQuery("/%2Fprofiles/test.jpg"));
 
-        assertThat(response.getCode()).isNotEqualTo(0);
+        assertThat(response.getCode()).isEqualTo(ResponseCode.BAD_REQUEST);
         assertThat(response.getMessage()).isEqualTo("Invalid file path");
         verifyNoInteractions(fileStorageService);
     }
@@ -92,7 +93,7 @@ class DownloadFileHandlerTest {
         ApiResponse<String> response =
                 handler.handle(new DownloadFileQuery("/profiles/%252e%252e%252fetc/passwd"));
 
-        assertThat(response.getCode()).isNotEqualTo(0);
+        assertThat(response.getCode()).isEqualTo(ResponseCode.BAD_REQUEST);
         assertThat(response.getMessage()).isIn("Invalid file path", "Invalid file path encoding");
         verifyNoInteractions(fileStorageService);
     }
@@ -101,10 +102,9 @@ class DownloadFileHandlerTest {
     @DisplayName("5b. Nested double-URL-encoded traversal is also rejected")
     void nestedDoubleEncodedTraversal_isRejected() {
         ApiResponse<String> response =
-                handler.handle(
-                        new DownloadFileQuery("/%252e%252e%252f%252e%252e%252fetc/passwd"));
+                handler.handle(new DownloadFileQuery("/%252e%252e%252f%252e%252e%252fetc/passwd"));
 
-        assertThat(response.getCode()).isNotEqualTo(0);
+        assertThat(response.getCode()).isEqualTo(ResponseCode.BAD_REQUEST);
         assertThat(response.getMessage()).isIn("Invalid file path", "Invalid file path encoding");
         verifyNoInteractions(fileStorageService);
     }
@@ -114,7 +114,7 @@ class DownloadFileHandlerTest {
     void blankPath_isRejected() {
         ApiResponse<String> response = handler.handle(new DownloadFileQuery("   "));
 
-        assertThat(response.getCode()).isNotEqualTo(0);
+        assertThat(response.getCode()).isEqualTo(ResponseCode.BAD_REQUEST);
         verifyNoInteractions(fileStorageService);
     }
 }
