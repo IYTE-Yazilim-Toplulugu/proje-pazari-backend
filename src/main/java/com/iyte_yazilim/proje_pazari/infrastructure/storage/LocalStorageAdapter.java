@@ -5,6 +5,7 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -138,6 +139,48 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
         } catch (IOException e) {
             throw new FileValidationException("Failed to retrieve file", e);
         }
+    }
+    /**
+     * Reads the file directly from disk and returns it as an {@link
+     * StorageDownloadResult.InlineResult}, since local storage has no externally redirectable
+     * URL to offer. This is the fix for the infinite-redirect bug: previously {@link
+     * #generatePresignedUrl(String, int)} was reused for downloads and returned a URL pointing
+     * back at this same API endpoint.
+     */
+    @Override
+    public StorageDownloadResult resolveDownload(String path, int expirationMinutes) {
+        Path filePath = storageLocation.resolve(path).normalize();
+
+        // Security: same traversal guard used by store/delete/exists/getMetadata
+        if (!filePath.startsWith(storageLocation)) {
+            throw new FileValidationException("Invalid file path - path traversal detected");
+        }
+
+        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+            throw new FileValidationException("File not found: " + path);
+        }
+
+        try {
+            byte[] content = Files.readAllBytes(filePath);
+            String contentType = Files.probeContentType(filePath);
+            if (contentType == null || contentType.isBlank()) {
+                contentType = "application/octet-stream";
+            }
+
+            String filename = safeFilename(filePath.getFileName().toString());
+
+            return new StorageDownloadResult.InlineResult(content, contentType, filename);
+        } catch (IOException e) {
+            throw new FileStorageException("Failed to read local file", e);
+        }
+    }
+
+    /** Strips characters that could enable HTTP header injection via Content-Disposition. */
+    private String safeFilename(String rawName) {
+        if (rawName == null || rawName.isBlank()) {
+            return "download";
+        }
+        return rawName.replaceAll("[\\r\\n\"\\\\]", "_");
     }
 
     @Override
