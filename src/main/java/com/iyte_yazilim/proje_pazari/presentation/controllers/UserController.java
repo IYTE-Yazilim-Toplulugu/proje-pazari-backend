@@ -136,13 +136,25 @@ public class UserController extends BaseController {
             description = "Uploads a new profile picture for the authenticated user",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
                             content =
                                     @io.swagger.v3.oas.annotations.media.Content(
                                             mediaType = "multipart/form-data",
                                             schema =
                                                     @io.swagger.v3.oas.annotations.media.Schema(
                                                             type = "object",
-                                                            implementation = Object.class),
+                                                            requiredProperties = {"file"}),
+                                            schemaProperties = {
+                                                @io.swagger.v3.oas.annotations.media.SchemaProperty(
+                                                        name = "file",
+                                                        schema =
+                                                                @io.swagger.v3.oas.annotations.media
+                                                                        .Schema(
+                                                                        type = "string",
+                                                                        format = "binary",
+                                                                        description =
+                                                                                "Profile picture file (JPEG, PNG, GIF, or WebP)"))
+                                            },
                                             encoding =
                                                     @io.swagger.v3.oas.annotations.media.Encoding(
                                                             name = "file",
@@ -161,15 +173,7 @@ public class UserController extends BaseController {
                         description = "Unauthorized")
             })
     public ResponseEntity<ApiResponse<String>> uploadProfilePicture(
-            @io.swagger.v3.oas.annotations.Parameter(
-                            description = "Profile picture file to upload",
-                            required = true,
-                            content =
-                                    @io.swagger.v3.oas.annotations.media.Content(
-                                            mediaType = "multipart/form-data"))
-                    @RequestParam("file")
-                    MultipartFile file,
-            Authentication auth) {
+            @RequestParam("file") MultipartFile file, Authentication auth) {
         return send(
                 UploadProfilePictureCommand.class, null, null, null, auth, Map.of("file", file));
     }

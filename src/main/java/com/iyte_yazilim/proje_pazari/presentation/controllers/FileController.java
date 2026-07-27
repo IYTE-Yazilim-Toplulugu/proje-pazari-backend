@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -76,10 +77,24 @@ public class FileController extends BaseController {
             description = "Uploads a new file. Requires authentication.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
                             content =
                                     @Content(
                                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                                            schema = @Schema(type = "object"),
+                                            schema =
+                                                    @Schema(
+                                                            type = "object",
+                                                            requiredProperties = {"file"}),
+                                            schemaProperties = {
+                                                @SchemaProperty(
+                                                        name = "file",
+                                                        schema =
+                                                                @Schema(
+                                                                        type = "string",
+                                                                        format = "binary",
+                                                                        description =
+                                                                                "File to upload"))
+                                            },
                                             encoding =
                                                     @io.swagger.v3.oas.annotations.media.Encoding(
                                                             name = "file",
@@ -119,12 +134,7 @@ public class FileController extends BaseController {
                         description = "Internal server error")
             })
     public ResponseEntity<ApiResponse<Map<String, Object>>> uploadFile(
-            @Parameter(
-                            description = "File to upload",
-                            required = true,
-                            content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-                    @RequestParam("file")
-                    MultipartFile file) {
+            @RequestParam("file") MultipartFile file) {
         return send(UploadFileCommand.class, null, null, null, null, Map.of("file", file));
     }
 }
