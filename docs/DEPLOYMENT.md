@@ -455,6 +455,7 @@ MINIO_ADMIN_PASSWORD=<minio_root_password>
 MINIO_APP_ACCESS_KEY=<backend_access_key>
 MINIO_APP_SECRET_KEY=<backend_secret_key>
 FRONTEND_URL=https://projepazari.site
+FRONTEND_VERIFY_EMAIL_PATH=/verify-email
 GF_SECURITY_ADMIN_USER=<grafana_admin>
 GF_SECURITY_ADMIN_PASSWORD=<grafana_password>
 ```

@@ -164,6 +164,7 @@ services:
       REDIS_PORT: 6379
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       FRONTEND_URL: ${FRONTEND_URL:-https://projepazari.site}
+      FRONTEND_VERIFY_EMAIL_PATH: ${FRONTEND_VERIFY_EMAIL_PATH:-/verify-email}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
@@ -410,4 +411,3 @@ volumes:
 networks:
   proje-pazari-network:
     driver: bridge
-
