@@ -12,6 +12,7 @@ import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
+import com.iyte_yazilim.proje_pazari.domain.events.ApplicationReviewedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -105,7 +107,15 @@ class ReviewApplicationHandlerTest {
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals(ApplicationStatus.APPROVED, applicationEntity.getStatus());
         assertEquals("Good fit", applicationEntity.getReviewMessage());
-        verify(applicationEventPublisher).publishEvent(any(Object.class));
+        assertEquals(applicationId, response.getData().applicationId());
+        assertEquals(applicationEntity.getProject().getId(), response.getData().projectId());
+        assertEquals("Test Project", response.getData().projectTitle());
+        assertEquals("APPROVED", response.getData().status());
+
+        ArgumentCaptor<ApplicationReviewedEvent> eventCaptor =
+                ArgumentCaptor.forClass(ApplicationReviewedEvent.class);
+        verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+        assertEquals("Good fit", eventCaptor.getValue().reviewMessage());
 
         // Verify the team size was persisted
         verify(projectRepository).save(any(ProjectEntity.class));
@@ -130,8 +140,36 @@ class ReviewApplicationHandlerTest {
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals(ApplicationStatus.REJECTED, applicationEntity.getStatus());
         assertEquals("Need a different skill set", applicationEntity.getReviewMessage());
-        verify(applicationEventPublisher).publishEvent(any(Object.class));
+        assertEquals(applicationId, response.getData().applicationId());
+        assertEquals(applicationEntity.getProject().getId(), response.getData().projectId());
+        assertEquals("Test Project", response.getData().projectTitle());
+        assertEquals("REJECTED", response.getData().status());
+
+        ArgumentCaptor<ApplicationReviewedEvent> eventCaptor =
+                ArgumentCaptor.forClass(ApplicationReviewedEvent.class);
+        verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+        assertEquals("Need a different skill set", eventCaptor.getValue().reviewMessage());
         verify(projectRepository, never()).save(any(ProjectEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should reject WITHDRAWN as an invalid review status")
+    void shouldRejectWithdrawnStatus() {
+        when(applicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(applicationEntity));
+        when(messageService.getMessage("error.invalid.review.status"))
+                .thenReturn("Invalid review status");
+
+        ApiResponse<ReviewApplicationCommandResult> response =
+                handler.handle(
+                        new ReviewApplicationCommand(
+                                applicationId, ApplicationStatus.WITHDRAWN, "Not a review"));
+
+        assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
+        assertNull(response.getData());
+        verify(applicationRepository, never()).save(any());
+        verify(projectRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any(Object.class));
     }
 
     @Test
