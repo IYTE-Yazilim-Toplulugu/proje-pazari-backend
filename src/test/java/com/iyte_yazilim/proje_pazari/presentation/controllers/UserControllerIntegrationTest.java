@@ -86,7 +86,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
 
             mockMvc.perform(get(BASE_URL + "/" + userId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.id").value(userId))
+                    .andExpect(jsonPath("$.data.userId").value(userId))
                     .andExpect(jsonPath("$.data.email").value(VALID_EMAIL))
                     .andExpect(jsonPath("$.data.firstName").value(VALID_FIRST_NAME))
                     .andExpect(jsonPath("$.data.lastName").value(VALID_LAST_NAME))

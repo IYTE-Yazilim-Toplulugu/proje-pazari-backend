@@ -87,7 +87,7 @@ class GetUserProfileHandlerTest {
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertNotNull(response.getData());
-        assertEquals(userId, response.getData().id());
+        assertEquals(userId, response.getData().userId());
         assertEquals("test@std.iyte.edu.tr", response.getData().email());
         assertEquals("John", response.getData().firstName());
         assertEquals("Doe", response.getData().lastName());
