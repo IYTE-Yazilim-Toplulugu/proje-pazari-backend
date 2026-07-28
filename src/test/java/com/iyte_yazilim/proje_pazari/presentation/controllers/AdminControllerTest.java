@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser.AdminDeleteUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction.BulkUserActionCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.flagContent.FlagContentCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.reviewApplication.ReviewApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
@@ -22,6 +23,8 @@ import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSyst
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSystemHealthQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.services.StorageHealthService;
+import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
+import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +32,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -111,6 +115,45 @@ class AdminControllerTest {
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertEquals(1, response.getBody().getData().getSuccessCount());
+        }
+    }
+
+    @Nested
+    @DisplayName("reviewApplication() method")
+    class ReviewApplicationTests {
+
+        @Test
+        @DisplayName("should use the shared review command and return its result")
+        void shouldUseSharedReviewCommand() {
+            String applicationId = "01HQXV5KXBW9FYMN8CJZSP2R5A";
+            String reviewMessage = "Great experience!";
+            ReviewApplicationCommandResult result =
+                    new ReviewApplicationCommandResult(
+                            applicationId,
+                            "01HQXV5KXBW9FYMN8CJZSP2R4H",
+                            "Test Project",
+                            "APPROVED");
+            ApiResponse<ReviewApplicationCommandResult> apiResponse =
+                    ApiResponse.success(result, "Application reviewed successfully");
+            when(mediator.send(any(ReviewApplicationCommand.class))).thenReturn(apiResponse);
+
+            ResponseEntity<ApiResponse<ReviewApplicationCommandResult>> response =
+                    adminController.reviewApplication(
+                            applicationId,
+                            new AdminController.ReviewApplicationRequest(
+                                    ApplicationStatus.APPROVED, reviewMessage));
+
+            ArgumentCaptor<ReviewApplicationCommand> commandCaptor =
+                    ArgumentCaptor.forClass(ReviewApplicationCommand.class);
+            verify(mediator).send(commandCaptor.capture());
+
+            ReviewApplicationCommand command = commandCaptor.getValue();
+            assertEquals(applicationId, command.applicationId());
+            assertEquals(ApplicationStatus.APPROVED, command.status());
+            assertEquals(reviewMessage, command.reviewMessage());
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertSame(apiResponse, response.getBody());
+            assertSame(result, response.getBody().getData());
         }
     }
 
