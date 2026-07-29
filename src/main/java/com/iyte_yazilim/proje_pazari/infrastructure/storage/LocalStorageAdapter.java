@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.StoredFileNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
@@ -15,7 +16,9 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MimeType;
 
 /**
  * Local file system storage implementation for development without external storage. Active when
@@ -25,6 +28,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(name = "storage.provider", havingValue = "local")
 public class LocalStorageAdapter implements IFileStorageAdapter {
+
+    private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
     private final Path storageLocation;
 
@@ -95,49 +100,20 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
 
     @Override
     public FileMetadata getMetadata(String path) {
+        Path filePath = resolveExistingFile(path);
         try {
-            Path filePath = storageLocation.resolve(path).normalize();
-
-            if (!filePath.startsWith(storageLocation)) {
-                throw new FileValidationException("Invalid file path - path traversal detected");
-            }
-
-            if (!Files.exists(filePath)) {
-                throw new FileValidationException("File not found: " + path);
-            }
-
             BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
-            String contentType = Files.probeContentType(filePath);
 
             return new FileMetadata(
                     path,
                     attrs.size(),
-                    contentType != null ? contentType : "application/octet-stream",
+                    resolveContentType(filePath),
                     attrs.creationTime().toInstant(),
                     attrs.lastModifiedTime().toInstant(),
                     filePath.getFileName().toString(),
                     null);
         } catch (IOException e) {
             throw new FileStorageException("Failed to get file metadata", e);
-        }
-    }
-
-    /** Retrieves file content as bytes. Used internally for serving files. */
-    public byte[] retrieveAsBytes(String path) {
-        try {
-            Path filePath = storageLocation.resolve(path).normalize();
-
-            if (!filePath.startsWith(storageLocation)) {
-                throw new FileValidationException("Invalid file path - path traversal detected");
-            }
-
-            if (!Files.exists(filePath)) {
-                throw new FileValidationException("File not found: " + path);
-            }
-
-            return Files.readAllBytes(filePath);
-        } catch (IOException e) {
-            throw new FileValidationException("Failed to retrieve file", e);
         }
     }
 
@@ -150,38 +126,58 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
      */
     @Override
     public StorageDownloadResult resolveDownload(String path, int expirationMinutes) {
-        Path filePath = storageLocation.resolve(path).normalize();
-
-        // Security: same traversal guard used by store/delete/exists/getMetadata
-        if (!filePath.startsWith(storageLocation)) {
-            throw new FileValidationException("Invalid file path - path traversal detected");
-        }
-
-        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
-            throw new FileValidationException("File not found: " + path);
-        }
+        Path filePath = resolveExistingFile(path);
 
         try {
-            byte[] content = Files.readAllBytes(filePath);
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null || contentType.isBlank()) {
-                contentType = "application/octet-stream";
-            }
-
-            String filename = safeFilename(filePath.getFileName().toString());
-
-            return new StorageDownloadResult.InlineResult(content, contentType, filename);
+            return new StorageDownloadResult.InlineResult(
+                    Files.readAllBytes(filePath),
+                    resolveContentType(filePath),
+                    filePath.getFileName().toString());
         } catch (IOException e) {
             throw new FileStorageException("Failed to read local file", e);
         }
     }
 
-    /** Strips characters that could enable HTTP header injection via Content-Disposition. */
-    private String safeFilename(String rawName) {
-        if (rawName == null || rawName.isBlank()) {
-            return "download";
+    /**
+     * Resolves a caller-supplied relative path to a real file inside the storage root, applying the
+     * single traversal guard shared by every read operation.
+     */
+    private Path resolveExistingFile(String path) {
+        Path filePath = storageLocation.resolve(path).normalize();
+
+        if (!filePath.startsWith(storageLocation)) {
+            throw new FileValidationException("Invalid file path - path traversal detected");
         }
-        return rawName.replaceAll("[\\r\\n\"\\\\]", "_");
+
+        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+            throw new StoredFileNotFoundException(path);
+        }
+
+        return filePath;
+    }
+
+    /**
+     * Determines the content type from the filename extension first, falling back to the platform's
+     * probe. Extension mapping is used in preference because {@link Files#probeContentType}
+     * consults host-specific databases (e.g. /etc/mime.types) and returns null on minimal
+     * containers, which would otherwise make the served content type depend on where the app
+     * happens to run.
+     */
+    private String resolveContentType(Path filePath) {
+        String fileName = filePath.getFileName().toString();
+        return MediaTypeFactory.getMediaType(fileName)
+                .map(MimeType::toString)
+                .orElseGet(
+                        () -> {
+                            try {
+                                String probed = Files.probeContentType(filePath);
+                                return probed != null && !probed.isBlank()
+                                        ? probed
+                                        : DEFAULT_CONTENT_TYPE;
+                            } catch (IOException e) {
+                                return DEFAULT_CONTENT_TYPE;
+                            }
+                        });
     }
 
     @Override

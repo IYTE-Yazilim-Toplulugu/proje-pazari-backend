@@ -101,6 +101,9 @@ public enum ErrorCode {
     /** A file storage operation failed. */
     FILE_STORAGE_ERROR(ResponseCode.INTERNAL_SERVER_ERROR, "error.internal"),
 
+    /** The requested file does not exist in the storage backend. */
+    FILE_NOT_FOUND(ResponseCode.NOT_FOUND, "file.not.found"),
+
     // --- Domain state errors ---
     /** A user lifecycle method was invoked from an invalid current state. */
     ILLEGAL_USER_STATE(ResponseCode.CONFLICT, "user.illegal.state"),

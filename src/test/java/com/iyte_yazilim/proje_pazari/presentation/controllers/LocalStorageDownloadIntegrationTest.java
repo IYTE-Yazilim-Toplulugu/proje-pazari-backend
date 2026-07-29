@@ -67,6 +67,31 @@ class LocalStorageDownloadIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Non-ASCII filename is RFC 5987 encoded instead of mangled")
+    void downloadFile_localProvider_nonAsciiFilename_isEncoded() throws Exception {
+        Files.write(
+                tempStorageDir.resolve("profiles").resolve("özgeçmiş.pdf"),
+                "cv-bytes".getBytes(StandardCharsets.UTF_8));
+
+        String token =
+                createVerifiedUserAndGetToken(
+                        VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+
+        mockMvc.perform(
+                        get(FILES_URL + "/profiles/özgeçmiş.pdf")
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(
+                        header().string(
+                                        HttpHeaders.CONTENT_DISPOSITION,
+                                        org.hamcrest.Matchers.containsString("filename*=UTF-8''")))
+                .andExpect(
+                        header().string(
+                                        HttpHeaders.CONTENT_DISPOSITION,
+                                        org.hamcrest.Matchers.containsString("%C3%B6zge")));
+    }
+
+    @Test
     @DisplayName("Download missing local file returns 404")
     void downloadFile_localProvider_missingFile_returns404() throws Exception {
         String token =

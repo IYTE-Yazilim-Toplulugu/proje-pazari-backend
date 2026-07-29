@@ -3,7 +3,6 @@ package com.iyte_yazilim.proje_pazari.application.queries.downloadFile;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -56,13 +55,14 @@ public class DownloadFileHandler
             return ApiResponse.notFound("File not found");
         }
 
-        try {
-            StorageDownloadResult result =
-                    fileStorageService.getDownloadResult(normalizedPath, DEFAULT_EXPIRY_MINUTES);
-            return ApiResponse.success(result, "File resolved successfully");
-        } catch (FileValidationException e) {
-            return ApiResponse.badRequest(e.getMessage());
-        }
+        // Left to propagate deliberately: DomainException carries its own ErrorCode, which
+        // GlobalExceptionHandler turns into the right status and a localized, user-safe message.
+        // Catching it here to rewrap e.getMessage() would leak the technical message — including
+        // the storage path — into the response body, and would flatten a file that vanished
+        // between the check above and this read (404) into a 400.
+        StorageDownloadResult result =
+                fileStorageService.getDownloadResult(normalizedPath, DEFAULT_EXPIRY_MINUTES);
+        return ApiResponse.success(result, "File resolved successfully");
     }
 
     /**

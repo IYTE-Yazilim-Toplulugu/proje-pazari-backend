@@ -12,9 +12,11 @@ import io.swagger.v3.oas.annotations.media.SchemaProperty;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -34,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController extends BaseController {
 
     private static final int DEFAULT_EXPIRY_MINUTES = 60;
+    private static final String FALLBACK_FILE_NAME = "download";
 
     @GetMapping("/{*path}")
     @PreAuthorize("permitAll()")
@@ -93,15 +96,42 @@ public class FileController extends BaseController {
                 .contentLength(inline.content().length)
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=\"" + sanitizeForHeader(inline.filename()) + "\"")
+                        inlineContentDisposition(inline.filename()))
                 .body(inline.content());
     }
 
+    /**
+     * Builds the Content-Disposition header, adding the RFC 5987 {@code filename*} form only when
+     * the name actually needs it. Non-ASCII names (e.g. "özgeçmiş.pdf") would otherwise be mangled
+     * by the ISO-8859-1 encoding the servlet layer applies to raw header strings. The charset is
+     * passed conditionally because Spring also MIME-encodes the plain {@code filename} parameter
+     * whenever a charset is present, which needlessly obscures ordinary ASCII names.
+     */
+    private String inlineContentDisposition(String rawFileName) {
+        String safeName = sanitizeForHeader(rawFileName);
+        boolean asciiOnly = StandardCharsets.US_ASCII.newEncoder().canEncode(safeName);
+
+        ContentDisposition disposition =
+                asciiOnly
+                        ? ContentDisposition.inline().filename(safeName).build()
+                        : ContentDisposition.inline()
+                                .filename(safeName, StandardCharsets.UTF_8)
+                                .build();
+
+        return disposition.toString();
+    }
+
+    /**
+     * Drops path separators and control characters before the name reaches the header builder.
+     * {@link ContentDisposition} handles quoting and encoding, but not header injection or a name
+     * that smuggles in a directory component.
+     */
     private String sanitizeForHeader(String filename) {
         if (filename == null || filename.isBlank()) {
-            return "file";
+            return FALLBACK_FILE_NAME;
         }
-        return filename.replaceAll("[\\r\\n\"\\\\]", "_");
+        String cleaned = filename.replaceAll("[\\p{Cntrl}/\\\\]", "").trim();
+        return cleaned.isEmpty() ? FALLBACK_FILE_NAME : cleaned;
     }
 
     @PostMapping

@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.StoredFileNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeEach;
@@ -149,10 +151,11 @@ class LocalStorageAdapterUnitTest {
         }
 
         @Test
-        @DisplayName("should throw when file not found")
+        @DisplayName("should throw not-found when file is missing")
         void shouldThrowWhenFileNotFound() {
             assertThrows(
-                    FileValidationException.class, () -> adapter.getMetadata("nonexistent.txt"));
+                    StoredFileNotFoundException.class,
+                    () -> adapter.getMetadata("nonexistent.txt"));
         }
 
         @Test
@@ -164,33 +167,77 @@ class LocalStorageAdapterUnitTest {
     }
 
     @Nested
-    @DisplayName("retrieveAsBytes() method")
-    class RetrieveAsBytesTests {
+    @DisplayName("resolveDownload() method")
+    class ResolveDownloadTests {
 
         @Test
-        @DisplayName("should retrieve file content as bytes")
-        void shouldRetrieveFileContent() {
+        @DisplayName("should return inline content rather than a redirect URL")
+        void shouldReturnInlineContent() {
             byte[] content = "hello bytes".getBytes();
             adapter.store(new FileUpload("f.txt", "text/plain", content, content.length), "f.txt");
 
-            byte[] result = adapter.retrieveAsBytes("f.txt");
+            StorageDownloadResult result = adapter.resolveDownload("f.txt", 60);
 
-            assertArrayEquals(content, result);
+            assertInstanceOf(StorageDownloadResult.InlineResult.class, result);
+            StorageDownloadResult.InlineResult inline = (StorageDownloadResult.InlineResult) result;
+            assertArrayEquals(content, inline.content());
+            assertEquals("f.txt", inline.filename());
         }
 
         @Test
-        @DisplayName("should throw when file not found")
+        @DisplayName("should resolve content type from the extension, not the host mime database")
+        void shouldResolveContentTypeFromExtension() {
+            byte[] content = "not really a jpeg".getBytes();
+            adapter.store(
+                    new FileUpload("avatar.jpg", "image/jpeg", content, content.length),
+                    "avatar.jpg");
+
+            StorageDownloadResult.InlineResult inline =
+                    (StorageDownloadResult.InlineResult) adapter.resolveDownload("avatar.jpg", 60);
+
+            assertEquals("image/jpeg", inline.contentType());
+        }
+
+        @Test
+        @DisplayName("should fall back to octet-stream for an unknown extension")
+        void shouldFallBackForUnknownExtension() {
+            byte[] content = "opaque".getBytes();
+            adapter.store(
+                    new FileUpload(
+                            "blob.zzzzz", "application/octet-stream", content, content.length),
+                    "blob.zzzzz");
+
+            StorageDownloadResult.InlineResult inline =
+                    (StorageDownloadResult.InlineResult) adapter.resolveDownload("blob.zzzzz", 60);
+
+            assertEquals("application/octet-stream", inline.contentType());
+        }
+
+        @Test
+        @DisplayName("should throw not-found (mapping to 404) when file is missing")
         void shouldThrowWhenFileNotFound() {
             assertThrows(
-                    FileValidationException.class,
-                    () -> adapter.retrieveAsBytes("nonexistent.txt"));
+                    StoredFileNotFoundException.class,
+                    () -> adapter.resolveDownload("nonexistent.txt", 60));
         }
 
         @Test
-        @DisplayName("should throw when path traversal detected")
+        @DisplayName("should throw validation error (mapping to 400) when path traversal detected")
         void shouldThrowOnPathTraversal() {
             assertThrows(
-                    FileValidationException.class, () -> adapter.retrieveAsBytes("../outside.txt"));
+                    FileValidationException.class,
+                    () -> adapter.resolveDownload("../outside.txt", 60));
+        }
+
+        @Test
+        @DisplayName("should never return a URL pointing back at the download endpoint")
+        void shouldNotReturnSelfReferentialRedirect() {
+            byte[] content = "bytes".getBytes();
+            adapter.store(new FileUpload("f.txt", "text/plain", content, content.length), "f.txt");
+
+            StorageDownloadResult result = adapter.resolveDownload("f.txt", 60);
+
+            assertFalse(result instanceof StorageDownloadResult.RedirectResult);
         }
     }
 
