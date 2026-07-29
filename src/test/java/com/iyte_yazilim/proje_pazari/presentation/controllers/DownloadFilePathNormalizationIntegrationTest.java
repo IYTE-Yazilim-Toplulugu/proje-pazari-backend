@@ -12,6 +12,7 @@ import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,9 +46,11 @@ class DownloadFilePathNormalizationIntegrationTest extends IntegrationTestBase {
         void normalPath_existingObject_returns302() throws Exception {
             String presignedUrl = "https://minio.example.com/bucket/profiles/test.jpg?signed=true";
             when(fileStorageAdapter.exists(eq("profiles/test.jpg"))).thenReturn(true);
-            when(fileStorageAdapter.generatePresignedUrl(
-                            eq("profiles/test.jpg"), any(Integer.class)))
-                    .thenReturn(presignedUrl);
+            // Mockito never runs interface default methods, so resolveDownload() must be stubbed
+            // explicitly here — the real default wrapping is covered by
+            // RemoteStorageAdapterRedirectTest.
+            when(fileStorageAdapter.resolveDownload(eq("profiles/test.jpg"), any(Integer.class)))
+                    .thenReturn(new StorageDownloadResult.RedirectResult(presignedUrl));
 
             mockMvc.perform(get(FILES_URL + "/profiles/test.jpg"))
                     .andExpect(status().isFound())
@@ -96,9 +99,8 @@ class DownloadFilePathNormalizationIntegrationTest extends IntegrationTestBase {
             String presignedUrl =
                     "https://minio.example.com/bucket/projects/p1/doc.pdf?signed=true";
             when(fileStorageAdapter.exists(eq("projects/p1/doc.pdf"))).thenReturn(true);
-            when(fileStorageAdapter.generatePresignedUrl(
-                            eq("projects/p1/doc.pdf"), any(Integer.class)))
-                    .thenReturn(presignedUrl);
+            when(fileStorageAdapter.resolveDownload(eq("projects/p1/doc.pdf"), any(Integer.class)))
+                    .thenReturn(new StorageDownloadResult.RedirectResult(presignedUrl));
 
             mockMvc.perform(get(FILES_URL + "/projects/p1/doc.pdf"))
                     .andExpect(status().isFound())
