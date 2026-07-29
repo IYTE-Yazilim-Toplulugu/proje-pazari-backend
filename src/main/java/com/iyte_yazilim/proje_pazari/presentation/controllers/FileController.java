@@ -45,54 +45,56 @@ public class FileController extends BaseController {
                             + "don't (e.g. local disk). Public access.")
     @ApiResponses(
             value = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "302",
-                            description = "Redirect to presigned URL"),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "File content streamed inline"),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "404",
-                            description = "File not found")
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "302",
+                        description = "Redirect to presigned URL"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "File content streamed inline"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "File not found")
             })
     public ResponseEntity<?> downloadFile(
             @Parameter(
-                    description = "File path relative to storage root",
-                    required = true,
-                    example = "profile-pictures/avatar.png")
-            @PathVariable
-            String path) {
+                            description = "File path relative to storage root",
+                            required = true,
+                            example = "profile-pictures/avatar.png")
+                    @PathVariable
+                    String path) {
         ApiResponse<StorageDownloadResult> response = mediator.send(new DownloadFileQuery(path));
         HttpStatus status = resolveHttpStatus(response.getCode());
 
-        if (status.is2xxSuccessful()) {
-            StorageDownloadResult result = response.getData();
-
-            if (result instanceof StorageDownloadResult.RedirectResult redirect) {
-                return ResponseEntity.status(HttpStatus.FOUND)
-                        .header(HttpHeaders.LOCATION, redirect.url())
-                        .build();
-            }
-
-            if (result instanceof StorageDownloadResult.InlineResult inline) {
-                MediaType mediaType;
-                try {
-                    mediaType = MediaType.parseMediaType(inline.contentType());
-                } catch (Exception e) {
-                    mediaType = MediaType.APPLICATION_OCTET_STREAM;
-                }
-
-                return ResponseEntity.ok()
-                        .contentType(mediaType)
-                        .contentLength(inline.content().length)
-                        .header(
-                                HttpHeaders.CONTENT_DISPOSITION,
-                                "inline; filename=\"" + sanitizeForHeader(inline.filename()) + "\"")
-                        .body(inline.content());
-            }
+        if (!status.is2xxSuccessful()) {
+            return ResponseEntity.status(status).body(response);
         }
 
-        return ResponseEntity.status(status).body(response);
+        // Exhaustive over the sealed StorageDownloadResult: a new variant becomes a compile
+        // error here rather than silently falling through to a 200 with a JSON body.
+        return switch (response.getData()) {
+            case StorageDownloadResult.RedirectResult redirect ->
+                    ResponseEntity.status(HttpStatus.FOUND)
+                            .header(HttpHeaders.LOCATION, redirect.url())
+                            .build();
+            case StorageDownloadResult.InlineResult inline -> toInlineResponse(inline);
+        };
+    }
+
+    private ResponseEntity<byte[]> toInlineResponse(StorageDownloadResult.InlineResult inline) {
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.parseMediaType(inline.contentType());
+        } catch (Exception e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .contentLength(inline.content().length)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + sanitizeForHeader(inline.filename()) + "\"")
+                .body(inline.content());
     }
 
     private String sanitizeForHeader(String filename) {
@@ -134,18 +136,18 @@ public class FileController extends BaseController {
                                                             contentType = "*/*"))))
     @ApiResponses(
             value = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "File uploaded successfully",
-                            content =
-                            @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = ApiResponse.class),
-                                    examples =
-                                    @io.swagger.v3.oas.annotations.media.ExampleObject(
-                                            name = "Success Response",
-                                            value =
-                                                    """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "File uploaded successfully",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                                        name = "Success Response",
+                                                        value =
+                                                                """
                             {
                                 "code": 0,
                                 "message": "File uploaded successfully",
@@ -156,15 +158,15 @@ public class FileController extends BaseController {
                                 }
                             }
                             """))),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "400",
-                            description = "Invalid file or validation error"),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "401",
-                            description = "Unauthorized - authentication required"),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "500",
-                            description = "Internal server error")
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid file or validation error"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "Unauthorized - authentication required"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "Internal server error")
             })
     public ResponseEntity<ApiResponse<Map<String, Object>>> uploadFile(
             @RequestParam("file") MultipartFile file) {
