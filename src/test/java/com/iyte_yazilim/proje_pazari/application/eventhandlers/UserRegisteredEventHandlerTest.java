@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
+import com.iyte_yazilim.proje_pazari.application.services.FrontendVerificationLinkBuilder;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UserRegisteredEventHandlerTest {
 
     @Mock private EmailService emailService;
+    @Mock private FrontendVerificationLinkBuilder verificationLinkBuilder;
 
     @InjectMocks private UserRegisteredEventHandler eventHandler;
 
@@ -38,6 +40,12 @@ class UserRegisteredEventHandlerTest {
         lenient()
                 .when(emailService.sendTemplateEmailAsync(any(), any(), any()))
                 .thenReturn(CompletableFuture.completedFuture(null));
+        lenient()
+                .when(verificationLinkBuilder.build(anyString()))
+                .thenAnswer(
+                        invocation ->
+                                "http://localhost:3000/verify-email?token="
+                                        + invocation.getArgument(0));
     }
 
     @Test
@@ -66,7 +74,9 @@ class UserRegisteredEventHandlerTest {
         Map<String, Object> variables = variablesCaptor.getValue();
         assertEquals("Welcome to Proje Pazarı!", variables.get("subject"));
         assertEquals(firstName, variables.get("userName"));
-        assertTrue(variables.get("verificationLink").toString().contains(verificationToken));
+        assertEquals(
+                "http://localhost:3000/verify-email?token=" + verificationToken,
+                variables.get("verificationLink"));
     }
 
     @Test
@@ -102,7 +112,7 @@ class UserRegisteredEventHandlerTest {
         verify(emailService).sendTemplateEmailAsync(any(), any(), variablesCaptor.capture());
 
         String verificationLink = (String) variablesCaptor.getValue().get("verificationLink");
-        assertTrue(verificationLink.startsWith("http://localhost:3000/verify?token="));
-        assertTrue(verificationLink.endsWith(verificationToken));
+        assertEquals(
+                "http://localhost:3000/verify-email?token=" + verificationToken, verificationLink);
     }
 }
