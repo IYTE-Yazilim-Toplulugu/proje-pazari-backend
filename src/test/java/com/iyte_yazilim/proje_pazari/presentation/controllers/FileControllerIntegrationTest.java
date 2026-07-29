@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -11,10 +11,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -150,8 +150,8 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
                     .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/jpeg"))
                     .andExpect(
                             header().string(
-                                    HttpHeaders.CONTENT_DISPOSITION,
-                                    "inline; filename=\"avatar.jpg\""));
+                                            HttpHeaders.CONTENT_DISPOSITION,
+                                            "inline; filename=\"avatar.jpg\""));
         }
     }
 

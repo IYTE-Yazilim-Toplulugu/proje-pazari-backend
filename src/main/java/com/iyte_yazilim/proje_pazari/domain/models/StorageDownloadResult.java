@@ -2,10 +2,9 @@ package com.iyte_yazilim.proje_pazari.domain.models;
 
 /**
  * Represents the outcome of resolving a file for download. Providers that expose a
- * pre-signed/public URL (e.g. MinIO/S3) should return {@link RedirectResult}. Providers that
- * cannot generate an externally-usable URL (e.g. local filesystem) must return
- * {@link InlineResult} so the controller can stream the bytes directly instead of redirecting
- * to itself.
+ * pre-signed/public URL (e.g. MinIO/S3) should return {@link RedirectResult}. Providers that cannot
+ * generate an externally-usable URL (e.g. local filesystem) must return {@link InlineResult} so the
+ * controller can stream the bytes directly instead of redirecting to itself.
  */
 public sealed interface StorageDownloadResult
         permits StorageDownloadResult.RedirectResult, StorageDownloadResult.InlineResult {

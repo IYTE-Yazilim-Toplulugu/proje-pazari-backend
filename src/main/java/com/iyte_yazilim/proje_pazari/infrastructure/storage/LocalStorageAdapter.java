@@ -140,12 +140,13 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
             throw new FileValidationException("Failed to retrieve file", e);
         }
     }
+
     /**
      * Reads the file directly from disk and returns it as an {@link
-     * StorageDownloadResult.InlineResult}, since local storage has no externally redirectable
-     * URL to offer. This is the fix for the infinite-redirect bug: previously {@link
-     * #generatePresignedUrl(String, int)} was reused for downloads and returned a URL pointing
-     * back at this same API endpoint.
+     * StorageDownloadResult.InlineResult}, since local storage has no externally redirectable URL
+     * to offer. This is the fix for the infinite-redirect bug: previously {@link
+     * #generatePresignedUrl(String, int)} was reused for downloads and returned a URL pointing back
+     * at this same API endpoint.
      */
     @Override
     public StorageDownloadResult resolveDownload(String path, int expirationMinutes) {
