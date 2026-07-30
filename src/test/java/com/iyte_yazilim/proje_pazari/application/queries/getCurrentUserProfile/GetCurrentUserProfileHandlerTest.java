@@ -64,7 +64,7 @@ class GetCurrentUserProfileHandlerTest {
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertNotNull(response.getData());
-        assertEquals(authenticatedUserId, response.getData().id());
+        assertEquals(authenticatedUserId, response.getData().userId());
 
         // Verify delegation with correct user ID
         ArgumentCaptor<GetUserProfileQuery> captor =

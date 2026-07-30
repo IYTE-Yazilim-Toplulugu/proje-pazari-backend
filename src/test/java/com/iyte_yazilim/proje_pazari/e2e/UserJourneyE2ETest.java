@@ -109,7 +109,7 @@ class UserJourneyE2ETest {
     void step3_viewProfile() throws Exception {
         mockMvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + jwtToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(userId))
+                .andExpect(jsonPath("$.data.userId").value(userId))
                 .andExpect(jsonPath("$.data.firstName").value("E2E"))
                 .andExpect(jsonPath("$.data.lastName").value("Tester"));
     }
@@ -140,7 +140,7 @@ class UserJourneyE2ETest {
     void step5_viewPublicProfile() throws Exception {
         mockMvc.perform(get("/api/v1/users/{userId}", userId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(userId))
+                .andExpect(jsonPath("$.data.userId").value(userId))
                 .andExpect(jsonPath("$.data.firstName").value("Updated"));
     }
 
