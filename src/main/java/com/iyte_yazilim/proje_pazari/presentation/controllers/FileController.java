@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ContentDisposition;
@@ -38,14 +39,43 @@ public class FileController extends BaseController {
     private static final int DEFAULT_EXPIRY_MINUTES = 60;
     private static final String FALLBACK_FILE_NAME = "download";
 
+    /**
+     * Content types this endpoint will render in the browser. Anything else is served as an opaque
+     * attachment, because a type the browser executes in a document context (text/html,
+     * image/svg+xml, ...) must never be rendered from this origin: downloads are public, and the
+     * bytes originate from user uploads.
+     *
+     * <p>Listed explicitly rather than read from {@code storage.allowed-content-types} so that
+     * widening what may be uploaded cannot silently widen what a browser will execute.
+     */
+    private static final Set<MediaType> INLINE_SAFE_TYPES =
+            Set.of(
+                    MediaType.IMAGE_JPEG,
+                    MediaType.IMAGE_PNG,
+                    MediaType.IMAGE_GIF,
+                    new MediaType("image", "webp"),
+                    MediaType.APPLICATION_PDF);
+
+    private static final String CONTENT_TYPE_OPTIONS_HEADER = "X-Content-Type-Options";
+    private static final String CONTENT_SECURITY_POLICY_HEADER = "Content-Security-Policy";
+
+    /**
+     * Applied to served file content so that a document rendered from these bytes can load nothing
+     * and submit nowhere. The CSP {@code sandbox} directive is deliberately omitted: it would also
+     * disable the browsers' built-in PDF viewer, and PDFs are served inline.
+     */
+    private static final String FILE_CONTENT_SECURITY_POLICY =
+            "default-src 'none'; base-uri 'none'; form-action 'none'";
+
     @GetMapping("/{*path}")
     @PreAuthorize("permitAll()")
     @Operation(
             summary = "Download file",
             description =
                     "Redirects to a presigned URL when the storage provider supports it (e.g. "
-                            + "MinIO/S3), or streams the file content inline for providers that "
-                            + "don't (e.g. local disk). Public access.")
+                            + "MinIO/S3), or streams the file content for providers that don't "
+                            + "(e.g. local disk) — rendered inline for image and PDF types, and "
+                            + "served as an attachment otherwise. Public access.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -84,20 +114,38 @@ public class FileController extends BaseController {
     }
 
     private ResponseEntity<byte[]> toInlineResponse(StorageDownloadResult.InlineResult inline) {
-        MediaType mediaType;
-        try {
-            mediaType = MediaType.parseMediaType(inline.contentType());
-        } catch (Exception e) {
-            mediaType = MediaType.APPLICATION_OCTET_STREAM;
-        }
+        MediaType mediaType = resolveServableType(inline.contentType());
+        boolean renderInline = INLINE_SAFE_TYPES.contains(mediaType);
 
         return ResponseEntity.ok()
                 .contentType(mediaType)
                 .contentLength(inline.content().length)
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        inlineContentDisposition(inline.filename()))
+                        contentDisposition(inline.filename(), renderInline))
+                // Without nosniff, a mislabeled payload can still be sniffed into an executable
+                // type, which would defeat the downgrade above.
+                .header(CONTENT_TYPE_OPTIONS_HEADER, "nosniff")
+                .header(CONTENT_SECURITY_POLICY_HEADER, FILE_CONTENT_SECURITY_POLICY)
                 .body(inline.content());
+    }
+
+    /**
+     * Parses the stored content type and downgrades anything outside {@link #INLINE_SAFE_TYPES} to
+     * application/octet-stream, so a stored value that is unexpected, stale, or hostile cannot
+     * become the response type. Parameters are dropped because they are not part of the type's
+     * identity and would defeat the comparison.
+     */
+    private MediaType resolveServableType(String storedContentType) {
+        try {
+            MediaType parsed = MediaType.parseMediaType(storedContentType);
+            MediaType bareType = new MediaType(parsed.getType(), parsed.getSubtype());
+            return INLINE_SAFE_TYPES.contains(bareType)
+                    ? bareType
+                    : MediaType.APPLICATION_OCTET_STREAM;
+        } catch (Exception e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
     }
 
     /**
@@ -107,16 +155,17 @@ public class FileController extends BaseController {
      * passed conditionally because Spring also MIME-encodes the plain {@code filename} parameter
      * whenever a charset is present, which needlessly obscures ordinary ASCII names.
      */
-    private String inlineContentDisposition(String rawFileName) {
+    private String contentDisposition(String rawFileName, boolean renderInline) {
         String safeName = sanitizeForHeader(rawFileName);
         boolean asciiOnly = StandardCharsets.US_ASCII.newEncoder().canEncode(safeName);
 
+        ContentDisposition.Builder builder =
+                renderInline ? ContentDisposition.inline() : ContentDisposition.attachment();
+
         ContentDisposition disposition =
                 asciiOnly
-                        ? ContentDisposition.inline().filename(safeName).build()
-                        : ContentDisposition.inline()
-                                .filename(safeName, StandardCharsets.UTF_8)
-                                .build();
+                        ? builder.filename(safeName).build()
+                        : builder.filename(safeName, StandardCharsets.UTF_8).build();
 
         return disposition.toString();
     }

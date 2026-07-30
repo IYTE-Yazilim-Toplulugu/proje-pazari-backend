@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
@@ -8,6 +9,7 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.StoredFileNotFoundExcepti
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeEach;
@@ -185,8 +187,8 @@ class LocalStorageAdapterUnitTest {
         }
 
         @Test
-        @DisplayName("should resolve content type from the extension, not the host mime database")
-        void shouldResolveContentTypeFromExtension() {
+        @DisplayName("should return the content type recorded at store time")
+        void shouldReturnRecordedContentType() {
             byte[] content = "not really a jpeg".getBytes();
             adapter.store(
                     new FileUpload("avatar.jpg", "image/jpeg", content, content.length),
@@ -194,6 +196,35 @@ class LocalStorageAdapterUnitTest {
 
             StorageDownloadResult.InlineResult inline =
                     (StorageDownloadResult.InlineResult) adapter.resolveDownload("avatar.jpg", 60);
+
+            assertEquals("image/jpeg", inline.contentType());
+        }
+
+        @Test
+        @DisplayName("recorded content type wins over the stored filename's extension")
+        void shouldPreferRecordedContentTypeOverExtension() {
+            byte[] content = "<script>alert(1)</script>".getBytes();
+            adapter.store(
+                    new FileUpload("payload.html", "image/jpeg", content, content.length),
+                    "payload.html");
+
+            StorageDownloadResult.InlineResult inline =
+                    (StorageDownloadResult.InlineResult)
+                            adapter.resolveDownload("payload.html", 60);
+
+            assertEquals("image/jpeg", inline.contentType());
+        }
+
+        @Test
+        @DisplayName(
+                "should fall back to the extension, not the host mime database, without a record")
+        void shouldResolveContentTypeFromExtensionWithoutRecord() throws Exception {
+            // Written directly, so no sidecar exists — the case for fixtures and for files
+            // stored before content types were recorded.
+            Files.write(tempDir.resolve("seeded.jpg"), "bytes".getBytes());
+
+            StorageDownloadResult.InlineResult inline =
+                    (StorageDownloadResult.InlineResult) adapter.resolveDownload("seeded.jpg", 60);
 
             assertEquals("image/jpeg", inline.contentType());
         }
@@ -238,6 +269,143 @@ class LocalStorageAdapterUnitTest {
             StorageDownloadResult result = adapter.resolveDownload("f.txt", 60);
 
             assertFalse(result instanceof StorageDownloadResult.RedirectResult);
+        }
+    }
+
+    @Nested
+    @DisplayName("content type metadata sidecars")
+    class MetadataSidecarTests {
+
+        @Test
+        @DisplayName("should not be readable through the adapter")
+        void shouldNotBeReadable() {
+            byte[] content = "bytes".getBytes();
+            adapter.store(
+                    new FileUpload("avatar.jpg", "image/jpeg", content, content.length),
+                    "avatar.jpg");
+            assertTrue(Files.exists(tempDir.resolve("avatar.jpg.meta")));
+
+            assertThrows(
+                    StoredFileNotFoundException.class,
+                    () -> adapter.resolveDownload("avatar.jpg.meta", 60));
+            assertThrows(
+                    StoredFileNotFoundException.class,
+                    () -> adapter.getMetadata("avatar.jpg.meta"));
+            assertFalse(adapter.exists("avatar.jpg.meta"));
+        }
+
+        @Test
+        @DisplayName("should not be writable through the adapter")
+        void shouldNotBeWritable() {
+            byte[] content = "contentType=text/html".getBytes();
+            FileUpload file = new FileUpload("x.meta", "image/jpeg", content, content.length);
+
+            assertThrows(FileStorageException.class, () -> adapter.store(file, "avatar.jpg.meta"));
+        }
+
+        @Test
+        @DisplayName("should be removed together with the file they describe")
+        void shouldBeDeletedWithFile() {
+            byte[] content = "bytes".getBytes();
+            adapter.store(
+                    new FileUpload("avatar.jpg", "image/jpeg", content, content.length),
+                    "avatar.jpg");
+
+            adapter.delete("avatar.jpg");
+
+            assertFalse(Files.exists(tempDir.resolve("avatar.jpg.meta")));
+        }
+
+        @Test
+        @DisplayName("should not leak a previous content type to a replacement upload")
+        void shouldNotLeakContentTypeToReplacement() {
+            byte[] content = "bytes".getBytes();
+            adapter.store(
+                    new FileUpload("avatar.jpg", "image/jpeg", content, content.length),
+                    "avatar.jpg");
+
+            adapter.store(
+                    new FileUpload("avatar.jpg", null, content, content.length), "avatar.jpg");
+
+            assertFalse(Files.exists(tempDir.resolve("avatar.jpg.meta")));
+        }
+    }
+
+    @Nested
+    @DisplayName("symbolic link containment")
+    class SymlinkContainmentTests {
+
+        private Path outsideFile;
+
+        @BeforeEach
+        void createOutsideTarget(@TempDir Path outsideDir) throws Exception {
+            outsideFile = outsideDir.resolve("secret.txt");
+            Files.write(outsideFile, "host secret".getBytes());
+        }
+
+        private void linkOrSkip(Path link, Path target) {
+            try {
+                Files.createSymbolicLink(link, target);
+            } catch (IOException | UnsupportedOperationException e) {
+                assumeTrue(false, "symbolic links unsupported here: " + e.getMessage());
+            }
+        }
+
+        @Test
+        @DisplayName("should reject reading through a link that points outside the root")
+        void shouldRejectLinkedFile() {
+            linkOrSkip(tempDir.resolve("public-link"), outsideFile);
+
+            assertThrows(
+                    FileValidationException.class,
+                    () -> adapter.resolveDownload("public-link", 60));
+            assertThrows(FileValidationException.class, () -> adapter.getMetadata("public-link"));
+            assertFalse(adapter.exists("public-link"));
+        }
+
+        @Test
+        @DisplayName("should reject reading through a linked directory")
+        void shouldRejectLinkedDirectory() {
+            linkOrSkip(tempDir.resolve("linked-dir"), outsideFile.getParent());
+
+            assertThrows(
+                    FileValidationException.class,
+                    () -> adapter.resolveDownload("linked-dir/secret.txt", 60));
+            assertFalse(adapter.exists("linked-dir/secret.txt"));
+        }
+
+        @Test
+        @DisplayName("should reject writing through a linked directory")
+        void shouldRejectStoreThroughLinkedDirectory() {
+            linkOrSkip(tempDir.resolve("linked-dir"), outsideFile.getParent());
+            byte[] content = "planted".getBytes();
+            FileUpload file = new FileUpload("x.jpg", "image/jpeg", content, content.length);
+
+            assertThrows(FileStorageException.class, () -> adapter.store(file, "linked-dir/x.jpg"));
+            assertFalse(Files.exists(outsideFile.getParent().resolve("x.jpg")));
+        }
+
+        @Test
+        @DisplayName("should reject deleting through a link that points outside the root")
+        void shouldRejectDeleteThroughLink() {
+            linkOrSkip(tempDir.resolve("public-link"), outsideFile);
+
+            assertThrows(FileValidationException.class, () -> adapter.delete("public-link"));
+            assertTrue(Files.exists(outsideFile));
+        }
+
+        @Test
+        @DisplayName("should still serve a link that stays inside the root")
+        void shouldAllowLinkInsideRoot() throws Exception {
+            byte[] content = "inside bytes".getBytes();
+            adapter.store(
+                    new FileUpload("real.jpg", "image/jpeg", content, content.length), "real.jpg");
+            linkOrSkip(tempDir.resolve("alias.jpg"), tempDir.resolve("real.jpg"));
+
+            StorageDownloadResult.InlineResult inline =
+                    (StorageDownloadResult.InlineResult) adapter.resolveDownload("alias.jpg", 60);
+
+            assertArrayEquals(content, inline.content());
         }
     }
 
