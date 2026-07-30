@@ -9,6 +9,8 @@ import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,31 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class FileStorageService {
+
+    /**
+     * Canonical extension for each content type the upload boundary accepts.
+     *
+     * <p>The stored extension is derived from the validated content type instead of being kept from
+     * the client-supplied filename. Only the declared multipart content type is validated, so a
+     * filename is free to disagree with it: an upload named "avatar.html" declaring "image/jpeg"
+     * would otherwise be stored with its active extension intact and handed back by the public
+     * download endpoint as HTML.
+     */
+    private static final Map<String, String> CANONICAL_EXTENSIONS =
+            Map.of(
+                    "image/jpeg", ".jpg",
+                    "image/png", ".png",
+                    "image/gif", ".gif",
+                    "image/webp", ".webp",
+                    "application/pdf", ".pdf");
+
+    /**
+     * Extension for an allowed content type with no canonical mapping above, which is reachable by
+     * widening {@code storage.allowed-content-types}. Deliberately opaque rather than rejected, so
+     * extending the configuration does not start failing uploads; the real content type is still
+     * recorded by the storage adapter.
+     */
+    private static final String OPAQUE_EXTENSION = ".bin";
 
     private final IFileStorageAdapter storageAdapter;
 
@@ -44,7 +71,7 @@ public class FileStorageService {
     public String storeFile(MultipartFile file, String directory) {
         validateFile(file);
 
-        String fileName = generateUniqueFileName(file.getOriginalFilename());
+        String fileName = generateUniqueFileName(file);
         String path = directory + "/" + fileName;
 
         return storageAdapter.store(toFileUpload(file), path);
@@ -59,7 +86,7 @@ public class FileStorageService {
         validateFile(file);
         validateStorageKeyPart(userId, "userId");
 
-        String extension = getFileExtension(file.getOriginalFilename());
+        String extension = storedExtension(file);
         String objectName = "users/" + userId + "/avatar" + extension;
         return storageAdapter.store(toFileUpload(file), avatarsBucket + "/" + objectName);
     }
@@ -74,7 +101,7 @@ public class FileStorageService {
         validateStorageKeyPart(projectId, "projectId");
         validateStorageKeyPart(documentId, "documentId");
 
-        String extension = getFileExtension(file.getOriginalFilename());
+        String extension = storedExtension(file);
         String objectName = "projects/" + projectId + "/" + documentId + extension;
         return storageAdapter.store(toFileUpload(file), documentsBucket + "/" + objectName);
     }
@@ -153,22 +180,31 @@ public class FileStorageService {
     }
 
     /**
-     * Generates a unique file name.
+     * Generates a unique file name, carrying the extension that matches the file's validated
+     * content type.
      *
-     * @param originalFilename the original file name
+     * @param file the file being stored, already validated
      * @return the unique file name
      */
-    private String generateUniqueFileName(String originalFilename) {
-        String extension = getFileExtension(originalFilename);
+    private String generateUniqueFileName(MultipartFile file) {
         String ulid = UlidCreator.getUlid().toString();
-        return ulid + extension;
+        return ulid + storedExtension(file);
     }
 
-    private String getFileExtension(String filename) {
-        if (filename != null && filename.contains(".")) {
-            return filename.substring(filename.lastIndexOf("."));
+    /**
+     * Maps the file's validated content type to the extension it will be stored under. Must be
+     * called only after {@link #validateFile(MultipartFile)}, which is what establishes that the
+     * content type is one the application accepts.
+     */
+    private String storedExtension(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType == null) {
+            return OPAQUE_EXTENSION;
         }
-        return "";
+
+        // Parameters (e.g. "image/jpeg;charset=binary") are not part of the type identity.
+        String bareType = contentType.split(";")[0].trim().toLowerCase(Locale.ROOT);
+        return CANONICAL_EXTENSIONS.getOrDefault(bareType, OPAQUE_EXTENSION);
     }
 
     private void validateStorageKeyPart(String value, String fieldName) {
