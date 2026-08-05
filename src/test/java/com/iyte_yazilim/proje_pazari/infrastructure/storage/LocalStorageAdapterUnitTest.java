@@ -11,7 +11,9 @@ import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -438,17 +440,195 @@ class LocalStorageAdapterUnitTest {
         }
 
         @Test
-        @DisplayName("should still serve a link that stays inside the root")
-        void shouldAllowLinkInsideRoot() throws Exception {
+        @DisplayName("should reject a link even when it stays inside the root")
+        void shouldRejectLinkInsideRoot() {
             byte[] content = "inside bytes".getBytes();
             adapter.store(
                     new FileUpload("real.jpg", "image/jpeg", content, content.length), "real.jpg");
             linkOrSkip(tempDir.resolve("alias.jpg"), tempDir.resolve("real.jpg"));
 
-            StorageDownloadResult.InlineResult inline =
-                    (StorageDownloadResult.InlineResult) adapter.resolveDownload("alias.jpg", 60);
+            // One rule for the whole tree: nothing stored locally is written by anything but this
+            // adapter, so a link is a plant regardless of where it points.
+            assertThrows(
+                    FileValidationException.class, () -> adapter.resolveDownload("alias.jpg", 60));
+            assertFalse(adapter.exists("alias.jpg"));
+        }
 
-            assertArrayEquals(content, inline.content());
+        @Test
+        @DisplayName("documents that hard links are outside the containment guarantee")
+        void hardLinkIsServed_documentedTrustBoundary() throws Exception {
+            try {
+                Files.createLink(tempDir.resolve("public.jpg"), outsideFile);
+            } catch (IOException | UnsupportedOperationException e) {
+                assumeTrue(false, "hard links unsupported here: " + e.getMessage());
+            }
+
+            StorageDownloadResult.InlineResult inline =
+                    (StorageDownloadResult.InlineResult) adapter.resolveDownload("public.jpg", 60);
+
+            // A hard link is an ordinary directory entry: no no-follow open or real-path check can
+            // tell it from the file it names. Asserted so the documented boundary in
+            // ContainedFileTree stays visible rather than drifting into an assumed guarantee.
+            assertArrayEquals("host secret".getBytes(), inline.content());
+        }
+    }
+
+    @Nested
+    @DisplayName("entries swapped during an operation")
+    class ConcurrentEntrySwapTests {
+
+        private static final int ATTEMPTS = 300;
+
+        private Path outsideFile;
+
+        @BeforeEach
+        void createOutsideTarget(@TempDir Path outsideDir) throws Exception {
+            outsideFile = outsideDir.resolve("secret.txt");
+            Files.write(outsideFile, "host secret".getBytes());
+        }
+
+        private void assumeSymlinksSupported() {
+            Path probe = tempDir.resolve("probe-link");
+            try {
+                Files.createSymbolicLink(probe, outsideFile);
+                Files.delete(probe);
+            } catch (IOException | UnsupportedOperationException e) {
+                assumeTrue(false, "symbolic links unsupported here: " + e.getMessage());
+            }
+        }
+
+        @Test
+        @DisplayName("should not write through a link planted after the target is checked")
+        void shouldNotWriteThroughSwappedTarget() throws Exception {
+            assumeSymlinksSupported();
+            Path target = tempDir.resolve("payload.jpg");
+            byte[] content = "planted upload".getBytes();
+            FileUpload upload =
+                    new FileUpload("payload.jpg", "image/jpeg", content, content.length);
+
+            Thread swapper = startSwapper(() -> toggleLink(target, outsideFile));
+            try {
+                for (int i = 0; i < ATTEMPTS; i++) {
+                    try {
+                        adapter.store(upload, "payload.jpg");
+                    } catch (FileStorageException e) {
+                        // Expected whenever the link is in place when the write is attempted.
+                    }
+                }
+            } finally {
+                stop(swapper);
+            }
+
+            assertArrayEquals("host secret".getBytes(), Files.readAllBytes(outsideFile));
+        }
+
+        @Test
+        @DisplayName("should not write through a directory swapped after the target is checked")
+        void shouldNotWriteThroughSwappedDirectory() throws Exception {
+            assumeSymlinksSupported();
+            Path directory = tempDir.resolve("profiles");
+            Path outsideDir = outsideFile.getParent();
+            byte[] content = "planted upload".getBytes();
+            FileUpload upload =
+                    new FileUpload("payload.jpg", "image/jpeg", content, content.length);
+
+            Thread swapper = startSwapper(() -> toggleDirectoryLink(directory, outsideDir));
+            try {
+                for (int i = 0; i < ATTEMPTS; i++) {
+                    try {
+                        adapter.store(upload, "profiles/payload.jpg");
+                    } catch (FileStorageException e) {
+                        // Expected whenever the link is in place when the write is attempted.
+                    }
+                }
+            } finally {
+                stop(swapper);
+            }
+
+            assertFalse(Files.exists(outsideDir.resolve("payload.jpg"), LinkOption.NOFOLLOW_LINKS));
+            assertArrayEquals("host secret".getBytes(), Files.readAllBytes(outsideFile));
+        }
+
+        @Test
+        @DisplayName("should not read through a link planted after the target is checked")
+        void shouldNotReadThroughSwappedTarget() throws Exception {
+            assumeSymlinksSupported();
+            Path target = tempDir.resolve("payload.jpg");
+            byte[] content = "stored bytes".getBytes();
+
+            Thread swapper = startSwapper(() -> toggleFileOrLink(target, outsideFile, content));
+            try {
+                for (int i = 0; i < ATTEMPTS; i++) {
+                    try {
+                        StorageDownloadResult.InlineResult inline =
+                                (StorageDownloadResult.InlineResult)
+                                        adapter.resolveDownload("payload.jpg", 60);
+                        // A partial read of the file being rewritten is fine; the external
+                        // target's bytes must never come back.
+                        assertFalse(Arrays.equals("host secret".getBytes(), inline.content()));
+                    } catch (FileValidationException | StoredFileNotFoundException e) {
+                        // Expected whenever the link or the gap is what the read finds.
+                    }
+                }
+            } finally {
+                stop(swapper);
+            }
+        }
+
+        private Thread startSwapper(Runnable swap) {
+            Thread thread =
+                    new Thread(
+                            () -> {
+                                while (!Thread.currentThread().isInterrupted()) {
+                                    swap.run();
+                                }
+                            });
+            thread.setDaemon(true);
+            thread.start();
+            return thread;
+        }
+
+        private void stop(Thread swapper) throws Exception {
+            swapper.interrupt();
+            swapper.join(5_000);
+        }
+
+        private void toggleLink(Path link, Path target) {
+            try {
+                Files.deleteIfExists(link);
+                Files.createSymbolicLink(link, target);
+                Files.deleteIfExists(link);
+            } catch (IOException e) {
+                // The adapter is racing the same entry; losing a step is the point.
+            }
+        }
+
+        private void toggleFileOrLink(Path entry, Path target, byte[] content) {
+            try {
+                Files.deleteIfExists(entry);
+                Files.write(entry, content);
+                Files.deleteIfExists(entry);
+                Files.createSymbolicLink(entry, target);
+            } catch (IOException e) {
+                // The adapter is racing the same entry; losing a step is the point.
+            }
+        }
+
+        private void toggleDirectoryLink(Path entry, Path target) {
+            try {
+                if (Files.isDirectory(entry, LinkOption.NOFOLLOW_LINKS)) {
+                    try (var children = Files.list(entry)) {
+                        for (Path child : children.toList()) {
+                            Files.deleteIfExists(child);
+                        }
+                    }
+                }
+                Files.deleteIfExists(entry);
+                Files.createSymbolicLink(entry, target);
+                Files.deleteIfExists(entry);
+            } catch (IOException e) {
+                // The adapter is racing the same entry; losing a step is the point.
+            }
         }
     }
 

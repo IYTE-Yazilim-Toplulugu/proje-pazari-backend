@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
+import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -33,6 +36,7 @@ class LocalStorageDownloadIntegrationTest extends IntegrationTestBase {
     private static final String VALID_PASSWORD = "SecurePass123!";
     private static final String VALID_FIRST_NAME = "Local";
     private static final String VALID_LAST_NAME = "Tester";
+    private static final String AVATAR_CONTENT = "fake-jpeg-bytes";
 
     @TempDir static Path tempStorageDir;
 
@@ -42,16 +46,21 @@ class LocalStorageDownloadIntegrationTest extends IntegrationTestBase {
         registry.add("storage.local.path", () -> tempStorageDir.toString());
     }
 
+    @Autowired private IFileStorageAdapter storageAdapter;
+
+    /**
+     * Seeded through the real adapter rather than written to disk, so the served content type comes
+     * from the type recorded at store time — the path a genuine upload takes — instead of from the
+     * filename extension. The temp directory is shared by every test in the class (it has to be
+     * static to feed the property override), so the fixture is rewritten before each test.
+     */
     @BeforeEach
     void seedFile() throws Exception {
-        Path profilesDir = tempStorageDir.resolve("profiles");
-        Files.createDirectories(profilesDir);
-        Files.write(
-                profilesDir.resolve("avatar.jpg"),
-                "fake-jpeg-bytes".getBytes(StandardCharsets.UTF_8));
-        // The temp directory is shared by every test in the class (it has to be static to feed
-        // the property override), so the fixture's content type must not depend on ordering.
-        Files.deleteIfExists(profilesDir.resolve("avatar.jpg.meta"));
+        Files.createDirectories(tempStorageDir.resolve("profiles"));
+        byte[] content = AVATAR_CONTENT.getBytes(StandardCharsets.UTF_8);
+        storageAdapter.store(
+                new FileUpload("avatar.jpg", "image/jpeg", content, content.length),
+                "profiles/avatar.jpg");
     }
 
     @Test
@@ -65,8 +74,12 @@ class LocalStorageDownloadIntegrationTest extends IntegrationTestBase {
                         get(FILES_URL + "/profiles/avatar.jpg")
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(content().bytes("fake-jpeg-bytes".getBytes(StandardCharsets.UTF_8)))
+                .andExpect(content().bytes(AVATAR_CONTENT.getBytes(StandardCharsets.UTF_8)))
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/jpeg"))
+                .andExpect(
+                        header().string(
+                                        HttpHeaders.CONTENT_LENGTH,
+                                        String.valueOf(AVATAR_CONTENT.length())))
                 .andExpect(
                         header().string(
                                         HttpHeaders.CONTENT_DISPOSITION,

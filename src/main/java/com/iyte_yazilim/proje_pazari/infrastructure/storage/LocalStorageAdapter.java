@@ -7,16 +7,19 @@ import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
+import com.iyte_yazilim.proje_pazari.infrastructure.storage.ContainedFileTree.ContainmentException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Properties;
@@ -30,6 +33,12 @@ import org.springframework.util.MimeType;
 /**
  * Local file system storage implementation for development without external storage. Active when
  * storage.provider=local
+ *
+ * <p>Caller-supplied paths are validated lexically here — traversal out of the root and the
+ * reserved sidecar suffix are rejected before anything touches the disk — while every actual read
+ * and write goes through {@link ContainedFileTree}, which binds containment to the open itself
+ * rather than to a pathname that could change afterwards. See that class for the guarantee's
+ * boundaries.
  */
 @Slf4j
 @Component
@@ -51,31 +60,12 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
     /** Lexical root: absolute and normalized, but symbolic links left unresolved. */
     private final Path storageLocation;
 
-    /**
-     * Same directory with every symbolic link resolved. Containment is checked against this, since
-     * {@link Path#normalize()} is pure string math and would accept a link inside the storage
-     * directory that points outside it. Held separately from {@link #storageLocation} because
-     * callers' relative paths are resolved lexically (no filesystem access) before being checked.
-     */
-    private final Path storageRoot;
+    private final ContainedFileTree tree;
 
     public LocalStorageAdapter(@Value("${storage.local.path:./uploads}") String storagePath) {
         this.storageLocation = Paths.get(storagePath).toAbsolutePath().normalize();
         createStorageDirectory();
-        this.storageRoot = resolveStorageRoot();
-    }
-
-    /**
-     * Resolves the real path of the storage root once at startup. The root itself is frequently a
-     * symbolic link (macOS {@code /tmp}, container mounts, JUnit temp dirs), so comparing candidate
-     * real paths against an unresolved root would reject every legitimate file.
-     */
-    private Path resolveStorageRoot() {
-        try {
-            return storageLocation.toRealPath();
-        } catch (IOException e) {
-            throw new FileStorageException("Failed to resolve storage directory", e);
-        }
+        this.tree = openStorageTree();
     }
 
     private void createStorageDirectory() {
@@ -87,38 +77,38 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
         }
     }
 
+    private ContainedFileTree openStorageTree() {
+        try {
+            return new ContainedFileTree(storageLocation);
+        } catch (IOException e) {
+            throw new FileStorageException("Failed to resolve storage directory", e);
+        }
+    }
+
     @Override
     public String store(FileUpload file, String path) {
+        Path relative = relativePathOf(path);
+
+        if (relative == null) {
+            throw new FileStorageException("Invalid file path - path traversal detected");
+        }
+        if (isMetadataPath(relative)) {
+            throw new FileStorageException("Invalid file path - reserved metadata suffix");
+        }
+
         try {
-            Path targetLocation = storageLocation.resolve(path).normalize();
-
-            // Security: Verify path is within storage location
-            if (!targetLocation.startsWith(storageLocation)) {
-                throw new FileStorageException("Invalid file path - path traversal detected");
-            }
-
-            if (isMetadataPath(targetLocation)) {
-                throw new FileStorageException("Invalid file path - reserved metadata suffix");
-            }
-
-            // Checked before createDirectories: if an existing ancestor is a link out of the
-            // root, creating directories through it would materialize them outside the root.
-            if (!isWithinStorageRoot(targetLocation)) {
-                throw new FileStorageException("Invalid file path - resolves outside storage root");
-            }
-
-            // Create parent directories if they don't exist
-            Files.createDirectories(targetLocation.getParent());
-
-            Files.write(targetLocation, file.bytes());
-            writeContentTypeSidecar(targetLocation, file.contentType());
-            log.debug("Stored file locally: {}", path);
-
-            // Return API path for local storage
-            return "/api/v1/files/" + path;
+            tree.write(relative, file.bytes());
+        } catch (ContainmentException e) {
+            throw new FileStorageException("Invalid file path - resolves outside storage root");
         } catch (IOException e) {
             throw new FileStorageException("Failed to store file locally", e);
         }
+
+        writeContentTypeSidecar(relative, file.contentType());
+        log.debug("Stored file locally: {}", path);
+
+        // Return API path for local storage
+        return "/api/v1/files/" + path;
     }
 
     @Override
@@ -129,54 +119,45 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
 
     @Override
     public void delete(String path) {
+        Path relative = relativePathOf(path);
+
+        if (relative == null || isMetadataPath(relative)) {
+            throw new FileValidationException("Invalid file path - path traversal detected");
+        }
+
         try {
-            Path filePath = storageLocation.resolve(path).normalize();
-
-            if (!filePath.startsWith(storageLocation) || isMetadataPath(filePath)) {
-                throw new FileValidationException("Invalid file path - path traversal detected");
-            }
-
-            if (!isWithinStorageRoot(filePath)) {
-                throw new FileValidationException(
-                        "Invalid file path - resolves outside storage root");
-            }
-
-            Files.deleteIfExists(filePath);
-            // Removed together with the file it describes, so a later upload to the same path
-            // cannot inherit the previous file's recorded content type.
-            Files.deleteIfExists(metadataPathFor(filePath));
-            log.debug("Deleted local file: {}", path);
+            tree.deleteIfExists(relative);
+        } catch (ContainmentException e) {
+            throw new FileValidationException("Invalid file path - resolves outside storage root");
         } catch (IOException e) {
             throw new FileStorageException("Failed to delete file", e);
         }
+
+        // Removed together with the file it describes, so a later upload to the same path
+        // cannot inherit the previous file's recorded content type.
+        deleteContentTypeSidecar(relative);
+        log.debug("Deleted local file: {}", path);
     }
 
     @Override
     public boolean exists(String path) {
-        Path filePath = storageLocation.resolve(path).normalize();
-        return filePath.startsWith(storageLocation)
-                && !isMetadataPath(filePath)
-                && isWithinStorageRoot(filePath)
-                && Files.exists(filePath);
+        Path relative = relativePathOf(path);
+        return relative != null && !isMetadataPath(relative) && tree.exists(relative);
     }
 
     @Override
     public FileMetadata getMetadata(String path) {
-        Path filePath = resolveExistingFile(path);
-        try {
-            BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
+        Path relative = requireStorableFile(path);
+        BasicFileAttributes attrs = readAttributes(relative, path);
 
-            return new FileMetadata(
-                    path,
-                    attrs.size(),
-                    resolveContentType(filePath),
-                    attrs.creationTime().toInstant(),
-                    attrs.lastModifiedTime().toInstant(),
-                    filePath.getFileName().toString(),
-                    null);
-        } catch (IOException e) {
-            throw new FileStorageException("Failed to get file metadata", e);
-        }
+        return new FileMetadata(
+                path,
+                attrs.size(),
+                resolveContentType(relative),
+                attrs.creationTime().toInstant(),
+                attrs.lastModifiedTime().toInstant(),
+                fileName(relative),
+                null);
     }
 
     /**
@@ -188,78 +169,81 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
      */
     @Override
     public StorageDownloadResult resolveDownload(String path, int expirationMinutes) {
-        Path filePath = resolveExistingFile(path);
+        Path relative = requireStorableFile(path);
+        readAttributes(relative, path);
 
         try {
             return new StorageDownloadResult.InlineResult(
-                    Files.readAllBytes(filePath),
-                    resolveContentType(filePath),
-                    filePath.getFileName().toString());
+                    tree.readAllBytes(relative), resolveContentType(relative), fileName(relative));
+        } catch (ContainmentException e) {
+            throw new FileValidationException("Invalid file path - resolves outside storage root");
+        } catch (NoSuchFileException e) {
+            throw new StoredFileNotFoundException(path);
         } catch (IOException e) {
             throw new FileStorageException("Failed to read local file", e);
         }
     }
 
     /**
-     * Resolves a caller-supplied relative path to a real file inside the storage root, applying the
-     * single traversal guard shared by every read operation.
+     * Applies the lexical guard shared by every read operation: the path must stay under the
+     * storage root and must not name a sidecar.
      */
-    private Path resolveExistingFile(String path) {
-        Path filePath = storageLocation.resolve(path).normalize();
+    private Path requireStorableFile(String path) {
+        Path relative = relativePathOf(path);
 
-        if (!filePath.startsWith(storageLocation)) {
+        if (relative == null) {
             throw new FileValidationException("Invalid file path - path traversal detected");
         }
 
         // Reported as missing rather than rejected: the sidecars are an implementation detail,
         // and a 404 does not disclose whether one exists.
-        if (isMetadataPath(filePath)) {
+        if (isMetadataPath(relative)) {
             throw new StoredFileNotFoundException(path);
         }
 
-        if (!isWithinStorageRoot(filePath)) {
+        return relative;
+    }
+
+    private BasicFileAttributes readAttributes(Path relative, String path) {
+        try {
+            BasicFileAttributes attrs = tree.readAttributes(relative);
+            if (!attrs.isRegularFile()) {
+                throw new StoredFileNotFoundException(path);
+            }
+            return attrs;
+        } catch (ContainmentException e) {
             throw new FileValidationException("Invalid file path - resolves outside storage root");
-        }
-
-        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+        } catch (NoSuchFileException e) {
             throw new StoredFileNotFoundException(path);
+        } catch (IOException e) {
+            throw new FileStorageException("Failed to get file metadata", e);
         }
-
-        return filePath;
     }
 
     /**
-     * Reports whether {@code candidate} stays inside the storage root once symbolic links are
-     * resolved. Checked against the deepest ancestor that currently exists, so the answer is
-     * meaningful for a file that has not been written yet while still catching a linked ancestor.
-     *
-     * <p>Fails closed: an unreadable path is treated as outside the root rather than assumed safe.
+     * Resolves a caller-supplied path against the storage root and returns it relative to that
+     * root, or {@code null} when it escapes lexically. Pure string math — the filesystem-level
+     * guarantee is {@link ContainedFileTree}'s.
      */
-    private boolean isWithinStorageRoot(Path candidate) {
-        Path existing = candidate;
-        while (existing != null && !Files.exists(existing, LinkOption.NOFOLLOW_LINKS)) {
-            existing = existing.getParent();
-        }
+    private Path relativePathOf(String path) {
+        Path resolved = storageLocation.resolve(path).normalize();
 
-        if (existing == null) {
-            return false;
+        if (!resolved.startsWith(storageLocation) || resolved.equals(storageLocation)) {
+            return null;
         }
-
-        try {
-            return existing.toRealPath().startsWith(storageRoot);
-        } catch (IOException e) {
-            log.warn("Failed to resolve real path for containment check: {}", e.getMessage());
-            return false;
-        }
+        return storageLocation.relativize(resolved);
     }
 
-    private boolean isMetadataPath(Path filePath) {
-        Path fileName = filePath.getFileName();
-        return fileName != null && fileName.toString().endsWith(METADATA_SUFFIX);
+    private boolean isMetadataPath(Path relative) {
+        return fileName(relative).endsWith(METADATA_SUFFIX);
     }
 
-    private Path metadataPathFor(Path filePath) {
-        return filePath.resolveSibling(filePath.getFileName().toString() + METADATA_SUFFIX);
+    private Path sidecarOf(Path relative) {
+        return relative.resolveSibling(fileName(relative) + METADATA_SUFFIX);
+    }
+
+    private String fileName(Path relative) {
+        return relative.getFileName().toString();
     }
 
     /**
@@ -274,45 +258,33 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
      * separately at the HTTP boundary, so neither a stale sidecar nor a hostile filename here can
      * turn a stored file into active content.
      */
-    private String resolveContentType(Path filePath) {
-        String recorded = readContentTypeSidecar(filePath);
+    private String resolveContentType(Path relative) {
+        String recorded = readContentTypeSidecar(relative);
         if (recorded != null && !recorded.isBlank()) {
             return recorded;
         }
 
-        String fileName = filePath.getFileName().toString();
-        return MediaTypeFactory.getMediaType(fileName)
+        return MediaTypeFactory.getMediaType(fileName(relative))
                 .map(MimeType::toString)
-                .orElseGet(
-                        () -> {
-                            try {
-                                String probed = Files.probeContentType(filePath);
-                                return probed != null && !probed.isBlank()
-                                        ? probed
-                                        : DEFAULT_CONTENT_TYPE;
-                            } catch (IOException e) {
-                                return DEFAULT_CONTENT_TYPE;
-                            }
-                        });
+                .orElse(DEFAULT_CONTENT_TYPE);
     }
 
-    private String readContentTypeSidecar(Path filePath) {
-        Path sidecar = metadataPathFor(filePath);
-        if (!isAdapterOwnedSidecar(sidecar)
-                || !Files.isRegularFile(sidecar, LinkOption.NOFOLLOW_LINKS)) {
+    private String readContentTypeSidecar(Path relative) {
+        Properties recorded = new Properties();
+
+        try (Reader reader =
+                new InputStreamReader(
+                        new ByteArrayInputStream(tree.readAllBytes(sidecarOf(relative))),
+                        StandardCharsets.UTF_8)) {
+            recorded.load(reader);
+        } catch (NoSuchFileException e) {
+            return null;
+        } catch (IOException e) {
+            // Includes a planted symbolic link at the sidecar path: not ours, so not read.
+            log.warn("Failed to read stored content type for {}: {}", relative, e.getMessage());
             return null;
         }
 
-        Properties recorded = new Properties();
-        try (Reader reader =
-                new InputStreamReader(
-                        Files.newInputStream(sidecar, LinkOption.NOFOLLOW_LINKS),
-                        StandardCharsets.UTF_8)) {
-            recorded.load(reader);
-        } catch (IOException e) {
-            log.warn("Failed to read stored content type for {}: {}", filePath, e.getMessage());
-            return null;
-        }
         return recorded.getProperty(CONTENT_TYPE_KEY);
     }
 
@@ -324,64 +296,32 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
      * downloads fall back to the extension mapping — which, for uploads that came through {@code
      * FileStorageService}, is itself derived from the validated content type.
      */
-    private void writeContentTypeSidecar(Path filePath, String contentType) {
-        Path sidecar = metadataPathFor(filePath);
-
-        if (!isAdapterOwnedSidecar(sidecar)) {
-            log.warn("Refused to record content type through a non-adapter path: {}", sidecar);
+    private void writeContentTypeSidecar(Path relative, String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            deleteContentTypeSidecar(relative);
             return;
         }
 
-        try {
-            if (contentType == null || contentType.isBlank()) {
-                // Removes the link itself rather than its target: deleteIfExists does not follow
-                // symbolic links.
-                Files.deleteIfExists(sidecar);
-                return;
-            }
+        Properties recorded = new Properties();
+        recorded.setProperty(CONTENT_TYPE_KEY, contentType);
 
-            Properties recorded = new Properties();
-            recorded.setProperty(CONTENT_TYPE_KEY, contentType);
-            replaceSidecar(sidecar, recorded);
-        } catch (IOException e) {
-            log.warn("Failed to record content type for {}: {}", filePath, e.getMessage());
-        }
-    }
-
-    /**
-     * Writes the record to a temporary file in the sidecar's own (already contained) directory and
-     * moves it into place. The move replaces the sidecar entry itself, so a link planted between
-     * the containment check and the write cannot be followed out of the storage root — writing to
-     * the sidecar path directly would follow it.
-     *
-     * <p>The temporary file carries the reserved metadata suffix, so it is unreachable through the
-     * download endpoint for the moment it exists.
-     */
-    private void replaceSidecar(Path sidecar, Properties recorded) throws IOException {
-        Path parent = sidecar.getParent();
-        Path temp = Files.createTempFile(parent, ".tmp-", METADATA_SUFFIX);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try {
-            try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
+            try (Writer writer = new OutputStreamWriter(buffer, StandardCharsets.UTF_8)) {
                 recorded.store(writer, "Content type validated at upload time");
             }
-            Files.move(temp, sidecar, StandardCopyOption.REPLACE_EXISTING);
+            tree.write(sidecarOf(relative), buffer.toByteArray());
         } catch (IOException e) {
-            Files.deleteIfExists(temp);
-            throw e;
+            log.warn("Failed to record content type for {}: {}", relative, e.getMessage());
         }
     }
 
-    /**
-     * Reports whether a sidecar path is one this adapter may read or write. Sidecars are created
-     * only here, so a sidecar that is a symbolic link was planted by someone else and is rejected
-     * outright rather than resolved.
-     *
-     * <p>Checked separately from the file it describes: {@code avatar.jpg} and {@code
-     * avatar.jpg.meta} are distinct filesystem targets, so validating the former says nothing about
-     * the latter.
-     */
-    private boolean isAdapterOwnedSidecar(Path sidecar) {
-        return !Files.isSymbolicLink(sidecar) && isWithinStorageRoot(sidecar);
+    private void deleteContentTypeSidecar(Path relative) {
+        try {
+            tree.deleteIfExists(sidecarOf(relative));
+        } catch (IOException e) {
+            log.warn("Failed to remove stored content type for {}: {}", relative, e.getMessage());
+        }
     }
 
     @Override
