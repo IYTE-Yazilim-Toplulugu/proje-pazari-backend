@@ -8,6 +8,7 @@ import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Properties;
@@ -296,12 +298,16 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
 
     private String readContentTypeSidecar(Path filePath) {
         Path sidecar = metadataPathFor(filePath);
-        if (!Files.isRegularFile(sidecar)) {
+        if (!isAdapterOwnedSidecar(sidecar)
+                || !Files.isRegularFile(sidecar, LinkOption.NOFOLLOW_LINKS)) {
             return null;
         }
 
         Properties recorded = new Properties();
-        try (Reader reader = Files.newBufferedReader(sidecar, StandardCharsets.UTF_8)) {
+        try (Reader reader =
+                new InputStreamReader(
+                        Files.newInputStream(sidecar, LinkOption.NOFOLLOW_LINKS),
+                        StandardCharsets.UTF_8)) {
             recorded.load(reader);
         } catch (IOException e) {
             log.warn("Failed to read stored content type for {}: {}", filePath, e.getMessage());
@@ -320,20 +326,62 @@ public class LocalStorageAdapter implements IFileStorageAdapter {
      */
     private void writeContentTypeSidecar(Path filePath, String contentType) {
         Path sidecar = metadataPathFor(filePath);
+
+        if (!isAdapterOwnedSidecar(sidecar)) {
+            log.warn("Refused to record content type through a non-adapter path: {}", sidecar);
+            return;
+        }
+
         try {
             if (contentType == null || contentType.isBlank()) {
+                // Removes the link itself rather than its target: deleteIfExists does not follow
+                // symbolic links.
                 Files.deleteIfExists(sidecar);
                 return;
             }
 
             Properties recorded = new Properties();
             recorded.setProperty(CONTENT_TYPE_KEY, contentType);
-            try (Writer writer = Files.newBufferedWriter(sidecar, StandardCharsets.UTF_8)) {
-                recorded.store(writer, "Content type validated at upload time");
-            }
+            replaceSidecar(sidecar, recorded);
         } catch (IOException e) {
             log.warn("Failed to record content type for {}: {}", filePath, e.getMessage());
         }
+    }
+
+    /**
+     * Writes the record to a temporary file in the sidecar's own (already contained) directory and
+     * moves it into place. The move replaces the sidecar entry itself, so a link planted between
+     * the containment check and the write cannot be followed out of the storage root — writing to
+     * the sidecar path directly would follow it.
+     *
+     * <p>The temporary file carries the reserved metadata suffix, so it is unreachable through the
+     * download endpoint for the moment it exists.
+     */
+    private void replaceSidecar(Path sidecar, Properties recorded) throws IOException {
+        Path parent = sidecar.getParent();
+        Path temp = Files.createTempFile(parent, ".tmp-", METADATA_SUFFIX);
+        try {
+            try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
+                recorded.store(writer, "Content type validated at upload time");
+            }
+            Files.move(temp, sidecar, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            Files.deleteIfExists(temp);
+            throw e;
+        }
+    }
+
+    /**
+     * Reports whether a sidecar path is one this adapter may read or write. Sidecars are created
+     * only here, so a sidecar that is a symbolic link was planted by someone else and is rejected
+     * outright rather than resolved.
+     *
+     * <p>Checked separately from the file it describes: {@code avatar.jpg} and {@code
+     * avatar.jpg.meta} are distinct filesystem targets, so validating the former says nothing about
+     * the latter.
+     */
+    private boolean isAdapterOwnedSidecar(Path sidecar) {
+        return !Files.isSymbolicLink(sidecar) && isWithinStorageRoot(sidecar);
     }
 
     @Override

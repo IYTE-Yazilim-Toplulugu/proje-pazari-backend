@@ -395,6 +395,49 @@ class LocalStorageAdapterUnitTest {
         }
 
         @Test
+        @DisplayName("should not write a content type sidecar through a planted link")
+        void shouldRejectSidecarWriteThroughLink() throws Exception {
+            linkOrSkip(tempDir.resolve("avatar.jpg.meta"), outsideFile);
+            byte[] content = "bytes".getBytes();
+
+            adapter.store(
+                    new FileUpload("avatar.jpg", "image/jpeg", content, content.length),
+                    "avatar.jpg");
+
+            assertArrayEquals("host secret".getBytes(), Files.readAllBytes(outsideFile));
+            assertArrayEquals(content, Files.readAllBytes(tempDir.resolve("avatar.jpg")));
+        }
+
+        @Test
+        @DisplayName("should not read a content type sidecar through a planted link")
+        void shouldRejectSidecarReadThroughLink() throws Exception {
+            Files.write(outsideFile, "contentType=text/html".getBytes());
+            byte[] content = "bytes".getBytes();
+            Files.write(tempDir.resolve("avatar.jpg"), content);
+            linkOrSkip(tempDir.resolve("avatar.jpg.meta"), outsideFile);
+
+            StorageDownloadResult.InlineResult inline =
+                    (StorageDownloadResult.InlineResult) adapter.resolveDownload("avatar.jpg", 60);
+
+            assertEquals("image/jpeg", inline.contentType());
+            assertEquals("image/jpeg", adapter.getMetadata("avatar.jpg").contentType());
+        }
+
+        @Test
+        @DisplayName("should not read a content type sidecar linked inside the root")
+        void shouldRejectSidecarReadThroughInRootLink() throws Exception {
+            byte[] content = "bytes".getBytes();
+            Files.write(tempDir.resolve("avatar.jpg"), content);
+            Files.write(tempDir.resolve("planted"), "contentType=text/html".getBytes());
+            linkOrSkip(tempDir.resolve("avatar.jpg.meta"), tempDir.resolve("planted"));
+
+            StorageDownloadResult.InlineResult inline =
+                    (StorageDownloadResult.InlineResult) adapter.resolveDownload("avatar.jpg", 60);
+
+            assertEquals("image/jpeg", inline.contentType());
+        }
+
+        @Test
         @DisplayName("should still serve a link that stays inside the root")
         void shouldAllowLinkInsideRoot() throws Exception {
             byte[] content = "inside bytes".getBytes();
