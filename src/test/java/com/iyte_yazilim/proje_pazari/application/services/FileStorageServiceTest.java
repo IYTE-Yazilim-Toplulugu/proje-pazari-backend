@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.services;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -10,6 +11,7 @@ import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
 import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -415,5 +417,126 @@ class FileStorageServiceTest {
         assertThrows(
                 FileValidationException.class,
                 () -> fileStorageService.storeUserAvatar("../bad", file));
+    }
+
+    @Test
+    @DisplayName("Should delegate download resolution to adapter after path validation")
+    void shouldGetDownloadResult_delegatesToAdapter() {
+        // Given
+        String path = "profiles/photo.jpg";
+        StorageDownloadResult expected =
+                new StorageDownloadResult.RedirectResult(
+                        "https://storage.example.com/presigned/photo.jpg");
+        when(storageAdapter.resolveDownload(path, 60)).thenReturn(expected);
+
+        // When
+        StorageDownloadResult result = fileStorageService.getDownloadResult(path, 60);
+
+        // Then
+        assertEquals(expected, result);
+        verify(storageAdapter).resolveDownload(path, 60);
+    }
+
+    @Test
+    @DisplayName("Should reject traversal path before calling adapter for download resolution")
+    void shouldGetDownloadResult_rejectsInvalidPath() {
+        assertThrows(
+                FileValidationException.class,
+                () -> fileStorageService.getDownloadResult("../etc/passwd", 60));
+        verify(storageAdapter, never()).resolveDownload(anyString(), anyInt());
+    }
+
+    @Test
+    @DisplayName("Avatar extension comes from the validated content type, not the filename")
+    void shouldStoreAvatar_withExtensionFromContentType_whenFilenameDisagrees() {
+        // An allowed content type paired with an active extension: only the declared content
+        // type is validated, so the filename must not decide what lands on disk.
+        MockMultipartFile file =
+                new MockMultipartFile("file", "avatar.html", "image/jpeg", "img".getBytes());
+        String expectedPath = "proje-pazari-avatars/users/user-1/avatar.jpg";
+
+        when(storageAdapter.store(any(), eq(expectedPath))).thenReturn(expectedPath);
+
+        assertEquals(expectedPath, fileStorageService.storeUserAvatar("user-1", file));
+        verify(storageAdapter).store(any(), eq(expectedPath));
+    }
+
+    @Test
+    @DisplayName("Uploaded file is never stored under an active extension")
+    void shouldStoreFile_withExtensionFromContentType_whenFilenameIsActiveContent() {
+        MockMultipartFile file =
+                new MockMultipartFile("file", "payload.svg", "image/png", "img".getBytes());
+        when(storageAdapter.store(any(FileUpload.class), anyString())).thenReturn("stored");
+
+        fileStorageService.storeFile(file, "uploads");
+
+        ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+        verify(storageAdapter).store(any(FileUpload.class), pathCaptor.capture());
+        assertTrue(pathCaptor.getValue().endsWith(".png"));
+        assertFalse(pathCaptor.getValue().contains("svg"));
+    }
+
+    @Test
+    @DisplayName("Project document extension comes from the validated content type")
+    void shouldStoreProjectDocument_withExtensionFromContentType_whenFilenameDisagrees() {
+        MockMultipartFile file =
+                new MockMultipartFile("file", "spec.xhtml", "application/pdf", "pdf".getBytes());
+        String expectedPath = "proje-pazari-documents/projects/proj-1/doc-1.pdf";
+
+        when(storageAdapter.store(any(), eq(expectedPath))).thenReturn(expectedPath);
+
+        assertEquals(
+                expectedPath, fileStorageService.storeProjectDocument("proj-1", "doc-1", file));
+    }
+
+    @Test
+    @DisplayName("Allowed type without a canonical extension is stored opaquely, not rejected")
+    void shouldStoreFile_withOpaqueExtension_whenContentTypeHasNoCanonicalExtension() {
+        ReflectionTestUtils.setField(
+                fileStorageService, "allowedContentTypesString", "image/jpeg,text/csv");
+        MockMultipartFile file =
+                new MockMultipartFile("file", "rows.csv", "text/csv", "a,b".getBytes());
+        when(storageAdapter.store(any(FileUpload.class), anyString())).thenReturn("stored");
+
+        fileStorageService.storeFile(file, "uploads");
+
+        ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+        verify(storageAdapter).store(any(FileUpload.class), pathCaptor.capture());
+        assertTrue(pathCaptor.getValue().endsWith(".bin"));
+    }
+
+    @Test
+    @DisplayName("Content type parameters do not defeat the extension mapping")
+    void shouldStoreFile_withCanonicalExtension_whenContentTypeCarriesParameters() {
+        ReflectionTestUtils.setField(
+                fileStorageService, "allowedContentTypesString", "image/jpeg;charset=binary");
+        MockMultipartFile file =
+                new MockMultipartFile(
+                        "file", "photo.jpg", "image/jpeg;charset=binary", "img".getBytes());
+        when(storageAdapter.store(any(FileUpload.class), anyString())).thenReturn("stored");
+
+        fileStorageService.storeFile(file, "uploads");
+
+        ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+        verify(storageAdapter).store(any(FileUpload.class), pathCaptor.capture());
+        assertTrue(pathCaptor.getValue().endsWith(".jpg"));
+    }
+
+    /**
+     * The domain type carries the validated content type into the adapter, which is what allows a
+     * local adapter to record it rather than infer it from the stored filename.
+     */
+    @Test
+    @DisplayName("Validated content type is handed to the adapter with the file")
+    void shouldPassValidatedContentType_toAdapter() {
+        MockMultipartFile file =
+                new MockMultipartFile("file", "avatar.html", "image/jpeg", "img".getBytes());
+        when(storageAdapter.store(any(FileUpload.class), anyString())).thenReturn("stored");
+
+        fileStorageService.storeFile(file, "uploads");
+
+        ArgumentCaptor<FileUpload> uploadCaptor = ArgumentCaptor.forClass(FileUpload.class);
+        verify(storageAdapter).store(uploadCaptor.capture(), anyString());
+        assertEquals("image/jpeg", uploadCaptor.getValue().contentType());
     }
 }

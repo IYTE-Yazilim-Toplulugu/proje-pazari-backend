@@ -1,6 +1,7 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
+import com.iyte_yazilim.proje_pazari.domain.models.StorageDownloadResult;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -54,8 +56,8 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String token = createVerifiedUserAndGetToken();
             String presignedUrl = "https://minio.example.com/bucket/profiles/test.jpg?signed=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
-            when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
-                    .thenReturn(presignedUrl);
+            when(fileStorageService.getDownloadResult(anyString(), anyInt()))
+                    .thenReturn(new StorageDownloadResult.RedirectResult(presignedUrl));
 
             mockMvc.perform(
                             get(FILES_URL + "/profiles/test.jpg")
@@ -103,8 +105,8 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String token = createVerifiedUserAndGetToken();
             String presignedUrl = "https://minio.example.com/bucket/docs/report.pdf?signed=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
-            when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
-                    .thenReturn(presignedUrl);
+            when(fileStorageService.getDownloadResult(anyString(), anyInt()))
+                    .thenReturn(new StorageDownloadResult.RedirectResult(presignedUrl));
 
             mockMvc.perform(
                             get(FILES_URL + "/docs/report.pdf")
@@ -120,14 +122,36 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String presignedUrl =
                     "https://minio.example.com/bucket/profiles/avatar.png?signed=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
-            when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
-                    .thenReturn(presignedUrl);
+            when(fileStorageService.getDownloadResult(anyString(), anyInt()))
+                    .thenReturn(new StorageDownloadResult.RedirectResult(presignedUrl));
 
             mockMvc.perform(
                             get(FILES_URL + "/profiles/avatar.png")
                                     .header("Authorization", "Bearer " + token))
                     .andExpect(status().isFound())
                     .andExpect(header().string(HttpHeaders.LOCATION, presignedUrl));
+        }
+
+        @Test
+        @DisplayName("7. Download existing local file returns 200 with inline content")
+        void downloadFile_localProvider_returnsInlineContent() throws Exception {
+            String token = createVerifiedUserAndGetToken();
+            byte[] content = "fake-jpeg-bytes".getBytes();
+            when(fileStorageService.fileExists(anyString())).thenReturn(true);
+            when(fileStorageService.getDownloadResult(anyString(), anyInt()))
+                    .thenReturn(
+                            new StorageDownloadResult.InlineResult(
+                                    content, "image/jpeg", "avatar.jpg"));
+
+            mockMvc.perform(
+                            get(FILES_URL + "/profiles/avatar.jpg")
+                                    .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "image/jpeg"))
+                    .andExpect(
+                            header().string(
+                                            HttpHeaders.CONTENT_DISPOSITION,
+                                            "inline; filename=\"avatar.jpg\""));
         }
     }
 
@@ -143,8 +167,8 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String token = createVerifiedUserAndGetToken();
             String presignedUrl = "https://minio.example.com/bucket/profiles/ulid123.jpg?s=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
-            when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
-                    .thenReturn(presignedUrl);
+            when(fileStorageService.getDownloadResult(anyString(), anyInt()))
+                    .thenReturn(new StorageDownloadResult.RedirectResult(presignedUrl));
 
             mockMvc.perform(
                             get(FILES_URL + "/profiles/ulid123.jpg")
@@ -158,8 +182,8 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String token = createVerifiedUserAndGetToken();
             String presignedUrl = "https://minio.example.com/bucket/projects/proj1/doc.pdf?s=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
-            when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
-                    .thenReturn(presignedUrl);
+            when(fileStorageService.getDownloadResult(anyString(), anyInt()))
+                    .thenReturn(new StorageDownloadResult.RedirectResult(presignedUrl));
 
             mockMvc.perform(
                             get(FILES_URL + "/projects/proj1/doc.pdf")
@@ -174,8 +198,8 @@ class FileControllerIntegrationTest extends IntegrationTestBase {
             String presignedUrl =
                     "https://minio.example.com/bucket/projects/user1/proj2/att.pdf?s=true";
             when(fileStorageService.fileExists(anyString())).thenReturn(true);
-            when(fileStorageService.getFileUrl(anyString(), any(Integer.class)))
-                    .thenReturn(presignedUrl);
+            when(fileStorageService.getDownloadResult(anyString(), anyInt()))
+                    .thenReturn(new StorageDownloadResult.RedirectResult(presignedUrl));
 
             mockMvc.perform(
                             get(FILES_URL + "/projects/user1/proj2/att.pdf")
