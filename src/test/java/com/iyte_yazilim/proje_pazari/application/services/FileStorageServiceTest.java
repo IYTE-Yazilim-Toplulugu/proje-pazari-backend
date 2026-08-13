@@ -385,14 +385,17 @@ class FileStorageServiceTest {
     void shouldStoreUserAvatarWithOrganizedPath() {
         MockMultipartFile file =
                 new MockMultipartFile("file", "avatar.png", "image/png", "img".getBytes());
-        String expectedPath = "proje-pazari-avatars/users/user-1/avatar.png";
-
-        when(storageAdapter.store(any(), eq(expectedPath))).thenReturn(expectedPath);
+        ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+        when(storageAdapter.store(any(), pathCaptor.capture())).thenReturn("stored");
 
         String storedPath = fileStorageService.storeUserAvatar("user-1", file);
 
-        assertEquals(expectedPath, storedPath);
-        verify(storageAdapter).store(any(), eq(expectedPath));
+        assertEquals("stored", storedPath);
+        assertTrue(
+                pathCaptor
+                        .getValue()
+                        .matches("proje-pazari-avatars/users/user-1/avatar-[0-9A-Z]{26}\\.png"),
+                () -> "Unexpected avatar path: " + pathCaptor.getValue());
     }
 
     @Test
@@ -453,12 +456,15 @@ class FileStorageServiceTest {
         // type is validated, so the filename must not decide what lands on disk.
         MockMultipartFile file =
                 new MockMultipartFile("file", "avatar.html", "image/jpeg", "img".getBytes());
-        String expectedPath = "proje-pazari-avatars/users/user-1/avatar.jpg";
+        ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+        when(storageAdapter.store(any(), pathCaptor.capture())).thenReturn("stored");
 
-        when(storageAdapter.store(any(), eq(expectedPath))).thenReturn(expectedPath);
-
-        assertEquals(expectedPath, fileStorageService.storeUserAvatar("user-1", file));
-        verify(storageAdapter).store(any(), eq(expectedPath));
+        assertEquals("stored", fileStorageService.storeUserAvatar("user-1", file));
+        assertTrue(
+                pathCaptor
+                        .getValue()
+                        .matches("proje-pazari-avatars/users/user-1/avatar-[0-9A-Z]{26}\\.jpg"),
+                () -> "Unexpected avatar path: " + pathCaptor.getValue());
     }
 
     @Test
