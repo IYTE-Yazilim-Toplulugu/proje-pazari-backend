@@ -80,14 +80,17 @@ public class FileStorageService {
     /**
      * Stores a user avatar using organized bucket structure.
      *
-     * <p>Storage path format: {avatarsBucket}/users/{userId}/avatar.{ext}
+     * <p>Storage path format: {avatarsBucket}/users/{userId}/avatar-{ULID}.{ext}
+     *
+     * <p>Each upload gets a distinct object key rather than overwriting a deterministic one, so a
+     * replacement upload never shares its key with the object it's replacing.
      */
     public String storeUserAvatar(String userId, MultipartFile file) {
         validateFile(file);
         validateStorageKeyPart(userId, "userId");
 
         String extension = storedExtension(file);
-        String objectName = "users/" + userId + "/avatar" + extension;
+        String objectName = "users/" + userId + "/avatar-" + UlidCreator.getUlid() + extension;
         return storageAdapter.store(toFileUpload(file), avatarsBucket + "/" + objectName);
     }
 
