@@ -52,4 +52,24 @@ class AvatarPathResolverTest {
     void shouldReturnNull_whenUrlHasNoExtractablePath() {
         assertNull(AvatarPathResolver.resolveStoragePath("http://minio:9000"));
     }
+
+    @Test
+    @DisplayName(
+            "Should fall back to legacy /profiles/ extraction when URI parsing fails and there is"
+                    + " no query string")
+    void shouldFallBackToLegacyProfilesPath_whenUrlMalformedWithoutQuery() {
+        // The raw space is illegal in a URI, so URI.create throws and resolution falls back to
+        // the legacy /profiles/ pattern match instead of the presigned-URL branch.
+        String stored = "http://minio:9000/profiles/old avatar.jpg";
+        assertEquals("profiles/old avatar.jpg", AvatarPathResolver.resolveStoragePath(stored));
+    }
+
+    @Test
+    @DisplayName(
+            "Should fall back to legacy /profiles/ extraction and trim the query string when URI"
+                    + " parsing fails")
+    void shouldFallBackToLegacyProfilesPath_whenUrlMalformedWithQuery() {
+        String stored = "http://minio:9000/profiles/old avatar.jpg?token=abc";
+        assertEquals("profiles/old avatar.jpg", AvatarPathResolver.resolveStoragePath(stored));
+    }
 }
