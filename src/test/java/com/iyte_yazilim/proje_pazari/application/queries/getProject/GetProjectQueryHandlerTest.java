@@ -66,7 +66,7 @@ class GetProjectQueryHandlerTest {
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertNotNull(response.getData());
-        assertEquals(projectId, response.getData().id());
+        assertEquals(projectId, response.getData().projectId());
     }
 
     @Test

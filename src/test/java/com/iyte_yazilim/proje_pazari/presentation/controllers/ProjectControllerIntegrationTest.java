@@ -472,7 +472,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(get(BASE_URL).param("status", status.name()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.projects.length()").value(1))
-                    .andExpect(jsonPath("$.data.projects[0].title").value(matchingTitle))
+                    .andExpect(jsonPath("$.data.projects[0].projectName").value(matchingTitle))
                     .andExpect(jsonPath("$.data.projects[0].status").value(status.name()))
                     .andExpect(jsonPath("$.data.totalElements").value(1));
         }
@@ -544,7 +544,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(update)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.title").value("Updated AI Project Name"));
+                    .andExpect(jsonPath("$.data.projectName").value("Updated AI Project Name"));
         }
 
         @Test
@@ -871,7 +871,7 @@ class ProjectControllerIntegrationTest extends IntegrationTestBase {
 
             mockMvc.perform(get(BASE_URL + "/" + projectId))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.title").value("AI Chatbot Project"));
+                    .andExpect(jsonPath("$.data.projectName").value("AI Chatbot Project"));
         }
 
         @Test
