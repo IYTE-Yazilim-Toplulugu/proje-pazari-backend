@@ -154,8 +154,9 @@ class SearchControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.projects").isArray())
                     .andExpect(
-                            jsonPath("$.data.projects[0].title").value("Machine Learning Pipeline"))
-                    .andExpect(jsonPath("$.data.projects[0].id").value("1"));
+                            jsonPath("$.data.projects[0].projectName")
+                                    .value("Machine Learning Pipeline"))
+                    .andExpect(jsonPath("$.data.projects[0].projectId").value("1"));
         }
 
         @Test
@@ -168,7 +169,7 @@ class SearchControllerTest {
             mockMvc.perform(get("/api/v1/search/projects").param("q", "Pipeline"))
                     .andExpect(status().isOk())
                     .andExpect(
-                            jsonPath("$.data.projects[0].title")
+                            jsonPath("$.data.projects[0].projectName")
                                     .value("Machine Learning Pipeline"));
         }
     }
@@ -189,7 +190,7 @@ class SearchControllerTest {
             mockMvc.perform(get("/api/v1/search/projects").param("q", "React frontend"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.projects").isArray())
-                    .andExpect(jsonPath("$.data.projects[0].title").value("Web Application"))
+                    .andExpect(jsonPath("$.data.projects[0].projectName").value("Web Application"))
                     .andExpect(
                             jsonPath("$.data.projects[0].description")
                                     .value(
@@ -375,8 +376,8 @@ class SearchControllerTest {
 
             mockMvc.perform(get("/api/v1/search/projects").param("q", "machine"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.projects[0].id").exists())
-                    .andExpect(jsonPath("$.data.projects[0].title").exists())
+                    .andExpect(jsonPath("$.data.projects[0].projectId").exists())
+                    .andExpect(jsonPath("$.data.projects[0].projectName").exists())
                     .andExpect(jsonPath("$.data.projects[0].description").exists())
                     .andExpect(jsonPath("$.data.projects[0].status").exists())
                     .andExpect(jsonPath("$.data.projects[0].requiredSkills").exists())
@@ -408,8 +409,9 @@ class SearchControllerTest {
             mockMvc.perform(get("/api/v1/search/projects").param("q", "machine learning"))
                     .andExpect(status().isOk())
                     .andExpect(
-                            jsonPath("$.data.projects[0].title").value("Machine Learning Pipeline"))
-                    .andExpect(jsonPath("$.data.projects[1].title").value("Web Application"));
+                            jsonPath("$.data.projects[0].projectName")
+                                    .value("Machine Learning Pipeline"))
+                    .andExpect(jsonPath("$.data.projects[1].projectName").value("Web Application"));
         }
     }
 

@@ -64,7 +64,7 @@ public class ProjectController extends BaseController {
                         "message": "Project created successfully",
                         "data": {
                             "projectId": "01HQXV5KXBW9FYMN8CJZSP2R4H",
-                            "title": "AI Chatbot Project",
+                            "projectName": "AI Chatbot Project",
                             "status": "DRAFT"
                         }
                     }
@@ -121,7 +121,7 @@ public class ProjectController extends BaseController {
                                             value =
                                                     """
             {
-                "title": "AI Chatbot Project",
+                "projectName": "AI Chatbot Project",
                 "description": "Building an AI-powered chatbot for customer support using modern NLP techniques.",
                 "summary": "AI chatbot with NLP capabilities",
                 "maxTeamSize": 5,
@@ -157,14 +157,19 @@ public class ProjectController extends BaseController {
                     {
                         "code": 0,
                         "message": "Projects retrieved successfully",
-                        "data": [
-                            {
-                                "id": "1",
-                                "title": "AI Chatbot Project",
-                                "description": "Building an AI-powered chatbot",
-                                "status": "ACTIVE"
-                            }
-                        ]
+                        "data": {
+                            "projects": [
+                                {
+                                    "projectId": "1",
+                                    "projectName": "AI Chatbot Project",
+                                    "description": "Building an AI-powered chatbot",
+                                    "status": "ACTIVE"
+                                }
+                            ],
+                            "currentPage": 0,
+                            "totalPages": 1,
+                            "totalElements": 1
+                        }
                     }
                     """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
