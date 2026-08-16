@@ -12,6 +12,7 @@ import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationReviewedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
@@ -50,14 +51,18 @@ class ReviewApplicationHandlerTest {
     @InjectMocks private ReviewApplicationHandler handler;
 
     private String applicationId;
+    private String ownerId;
+    private String applicantId;
     private ProjectApplicationEntity applicationEntity;
 
     @BeforeEach
     void setUp() {
         applicationId = Ulid.fast().toString();
+        ownerId = Ulid.fast().toString();
+        applicantId = Ulid.fast().toString();
 
         UserEntity owner = new UserEntity();
-        owner.setId(Ulid.fast().toString());
+        owner.setId(ownerId);
         owner.setFirstName("Owner");
         owner.setEmail("owner@std.iyte.edu.tr");
 
@@ -67,7 +72,7 @@ class ReviewApplicationHandlerTest {
         project.setOwner(owner);
 
         UserEntity applicant = new UserEntity();
-        applicant.setId(Ulid.fast().toString());
+        applicant.setId(applicantId);
         applicant.setFirstName("Applicant");
         applicant.setEmail("applicant@std.iyte.edu.tr");
 
@@ -80,13 +85,21 @@ class ReviewApplicationHandlerTest {
         lenient()
                 .when(messageService.getMessage("application.reviewed.success"))
                 .thenReturn("Application reviewed successfully");
+        lenient()
+                .when(messageService.getMessage("project.owner.mismatch"))
+                .thenReturn("You must be the project owner to perform this action");
     }
 
     @Test
     @DisplayName("Should approve application successfully")
     void shouldApproveApplication_whenApplicationExists() {
         ReviewApplicationCommand command =
-                new ReviewApplicationCommand(applicationId, ApplicationStatus.APPROVED, "Good fit");
+                new ReviewApplicationCommand(
+                        applicationId,
+                        ownerId,
+                        RoleType.USER,
+                        ApplicationStatus.APPROVED,
+                        "Good fit");
 
         // --- DOMAIN MOCK BEHAVIOR ---
         Project mockDomainProject = new Project();
@@ -126,7 +139,11 @@ class ReviewApplicationHandlerTest {
     void shouldRejectApplicationAndPersistReviewMessage_whenApplicationExists() {
         ReviewApplicationCommand command =
                 new ReviewApplicationCommand(
-                        applicationId, ApplicationStatus.REJECTED, "Need a different skill set");
+                        applicationId,
+                        ownerId,
+                        RoleType.USER,
+                        ApplicationStatus.REJECTED,
+                        "Need a different skill set");
 
         ProjectApplication domainApp = new ProjectApplication();
         when(applicationMapper.entityToDomain(applicationEntity)).thenReturn(domainApp);
@@ -163,7 +180,11 @@ class ReviewApplicationHandlerTest {
         ApiResponse<ReviewApplicationCommandResult> response =
                 handler.handle(
                         new ReviewApplicationCommand(
-                                applicationId, ApplicationStatus.WITHDRAWN, "Not a review"));
+                                applicationId,
+                                ownerId,
+                                RoleType.USER,
+                                ApplicationStatus.WITHDRAWN,
+                                "Not a review"));
 
         assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
         assertNull(response.getData());
@@ -177,12 +198,60 @@ class ReviewApplicationHandlerTest {
     void shouldThrowException_whenApplicationNotFound() {
         String unknownId = Ulid.fast().toString();
         ReviewApplicationCommand command =
-                new ReviewApplicationCommand(unknownId, ApplicationStatus.APPROVED, null);
+                new ReviewApplicationCommand(
+                        unknownId, ownerId, RoleType.USER, ApplicationStatus.APPROVED, null);
 
         when(applicationRepository.findById(unknownId)).thenReturn(Optional.empty());
 
         assertThrows(ApplicationNotFoundException.class, () -> handler.handle(command));
         verify(applicationRepository, never()).save(any());
         verify(applicationEventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    @DisplayName("Should forbid applicant review without side effects")
+    void shouldForbidReview_whenRequesterDoesNotOwnProject() {
+        when(applicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(applicationEntity));
+
+        ApiResponse<ReviewApplicationCommandResult> response =
+                handler.handle(
+                        new ReviewApplicationCommand(
+                                applicationId,
+                                applicantId,
+                                RoleType.USER,
+                                ApplicationStatus.APPROVED,
+                                "self-approved"));
+
+        assertEquals(ResponseCode.FORBIDDEN, response.getCode());
+        assertEquals(ApplicationStatus.PENDING, applicationEntity.getStatus());
+        verifyNoInteractions(applicationMapper, projectMapper);
+        verify(applicationRepository, never()).save(any());
+        verify(projectRepository, never()).save(any());
+        verify(applicationEventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    @DisplayName("Should allow explicit administrator override")
+    void shouldAllowReview_whenRequesterIsAdministrator() {
+        ProjectApplication domainApp = new ProjectApplication();
+        when(applicationMapper.entityToDomain(applicationEntity)).thenReturn(domainApp);
+        when(applicationRepository.findById(applicationId))
+                .thenReturn(Optional.of(applicationEntity));
+        when(applicationRepository.save(applicationEntity)).thenReturn(applicationEntity);
+
+        ApiResponse<ReviewApplicationCommandResult> response =
+                handler.handle(
+                        new ReviewApplicationCommand(
+                                applicationId,
+                                applicantId,
+                                RoleType.ADMIN,
+                                ApplicationStatus.REJECTED,
+                                "Admin decision"));
+
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals(ApplicationStatus.REJECTED, applicationEntity.getStatus());
+        verify(applicationRepository).save(applicationEntity);
+        verify(applicationEventPublisher).publishEvent(any(ApplicationReviewedEvent.class));
     }
 }

@@ -7,6 +7,7 @@ import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.events.ApplicationReviewedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
@@ -65,17 +66,25 @@ public class ReviewApplicationHandler
                         .orElseThrow(
                                 () -> new ApplicationNotFoundException(command.applicationId()));
 
-        // --- 2. Validate Review Status Input ---
+        // --- 2. Authorize before any mutation or event publication ---
+        boolean isProjectOwner =
+                applicationEntity.getProject().getOwner().getId().equals(command.requesterId());
+        boolean isAdministrator = command.requesterRole() == RoleType.ADMIN;
+        if (!isProjectOwner && !isAdministrator) {
+            return ApiResponse.forbidden(messageService.getMessage("project.owner.mismatch"));
+        }
+
+        // --- 3. Validate Review Status Input ---
         if (command.status() != ApplicationStatus.APPROVED
                 && command.status() != ApplicationStatus.REJECTED) {
             return ApiResponse.badRequest(messageService.getMessage("error.invalid.review.status"));
         }
 
-        // --- 3. Map to domain aggregate and perform guarded transition ---
+        // --- 4. Map to domain aggregate and perform guarded transition ---
         ProjectApplication application = applicationMapper.entityToDomain(applicationEntity);
 
         if (command.status() == ApplicationStatus.APPROVED) {
-            // --- 3a. Enforce Domain Rules for Approvals ---
+            // --- 4a. Enforce Domain Rules for Approvals ---
             ProjectEntity projectEntity = applicationEntity.getProject();
             Project projectDomain = projectMapper.entityToDomain(projectEntity);
 
@@ -100,21 +109,21 @@ public class ReviewApplicationHandler
                         messageService.getMessage("application.illegal.state"));
             }
 
-            // --- 3b. Approve via domain aggregate (enforces PENDING guard) ---
+            // --- 4b. Approve via domain aggregate (enforces PENDING guard) ---
             application.approve(command.reviewMessage());
         } else {
-            // --- 3c. Reject via domain aggregate (enforces PENDING guard) ---
+            // --- 4c. Reject via domain aggregate (enforces PENDING guard) ---
             application.reject(command.reviewMessage());
         }
 
-        // --- 4. Sync review result back to persistence entity ---
+        // --- 5. Sync review result back to persistence entity ---
         applicationEntity.setStatus(application.getStatus());
         applicationEntity.setReviewMessage(application.getReviewMessage());
 
-        // --- 5. Persistence ---
+        // --- 6. Persistence ---
         ProjectApplicationEntity savedApplication = applicationRepository.save(applicationEntity);
 
-        // --- 6. Publish Event for Email Notifications ---
+        // --- 7. Publish Event for Email Notifications ---
         applicationEventPublisher.publishEvent(
                 new ApplicationReviewedEvent(
                         savedApplication.getId(),
@@ -127,7 +136,7 @@ public class ReviewApplicationHandler
                         savedApplication.getStatus(),
                         command.reviewMessage() != null ? command.reviewMessage() : ""));
 
-        // --- 7. Create Result ---
+        // --- 8. Create Result ---
         ReviewApplicationCommandResult result =
                 new ReviewApplicationCommandResult(
                         savedApplication.getId(),
@@ -135,7 +144,7 @@ public class ReviewApplicationHandler
                         savedApplication.getProject().getTitle(),
                         savedApplication.getStatus().toString());
 
-        // --- 8. Response ---
+        // --- 9. Response ---
         return ApiResponse.success(
                 result, messageService.getMessage("application.reviewed.success"));
     }
