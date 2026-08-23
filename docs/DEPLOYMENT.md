@@ -8,6 +8,7 @@ This document covers deployment options for the Proje Pazarı Backend.
 |----------|-------------|----------|---------|-------------------|
 | `JWT_SECRET` | Secret key for JWT signing (min 32 chars, no placeholder substrings) | **Yes** | — | `IllegalStateException`, non-zero exit |
 | `JWT_EXPIRATION` | Token expiration in milliseconds | No | `86400000` (24h) | — |
+| `WEBSOCKET_ALLOWED_ORIGINS` | Comma-separated exact origins allowed to open the admin SockJS endpoint | No | `FRONTEND_URL` | — |
 | `ELASTIC_PASSWORD` | Elasticsearch built-in `elastic` user password (production only) | Prod | — | ES returns 401, app fails to index |
 | `KIBANA_SYSTEM_PASSWORD` | Password assigned to Elasticsearch's `kibana_system` user for Kibana 9.x | Prod when Kibana enabled | — | Kibana refuses to start |
 | `SPRING_ELASTICSEARCH_USERNAME` | ES username forwarded to Spring Boot | Prod | `elastic` | — |

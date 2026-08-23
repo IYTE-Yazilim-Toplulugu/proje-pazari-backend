@@ -72,7 +72,8 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers("/api/v1/health")
                                         .permitAll()
-                                        // WebSocket endpoint
+                                        // SockJS opens its transport before browsers send STOMP
+                                        // credentials. Interceptors secure all broker data frames.
                                         .requestMatchers("/ws/**")
                                         .permitAll()
                                         // Public authentication endpoints

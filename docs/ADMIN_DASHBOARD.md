@@ -327,6 +327,32 @@ PUT /api/v1/admin/config
 - **Input Validation:** All inputs are validated before processing. Invalid inputs return `400 Bad Request` with descriptive error messages
 - **Rate Limiting:** Auth endpoints have rate limiting configured via `RateLimitConfig`
 
+### Admin activity WebSocket
+
+The SockJS endpoint is `/ws`, and the only client subscription destination is
+`/topic/admin/activity`. The transport handshake is restricted to the exact origins in
+`WEBSOCKET_ALLOWED_ORIGINS` (a comma-separated list that defaults to `FRONTEND_URL`). Wildcard
+origins are not accepted.
+
+Browser WebSocket and SockJS APIs cannot reliably add an HTTP `Authorization` header to every
+transport handshake. The client must therefore send the access token in the STOMP `CONNECT` frame:
+
+```text
+Authorization: Bearer <access-token>
+```
+
+The server validates the signature, expiry, token blacklist, and user blacklist during `CONNECT`,
+again for every subsequent data-bearing inbound frame, and before every outbound broker event.
+Anonymous and non-admin clients cannot subscribe. Only principals with `ROLE_ADMIN` may subscribe
+under `/topic/admin/**`; all client `SEND` frames and unmatched destinations are denied by default.
+Expired or revoked sessions immediately stop receiving events and must reconnect with a new access
+token.
+
+The live event contains only `action`, `entityType`, `performedBy`, `status`, and `timestamp`.
+Arbitrary audit `details`, IP addresses, and entity identifiers are excluded. Fetch full audit
+records through the separately authorized admin REST endpoint when needed. Do not place tokens in
+URLs, query parameters, logs, or subscription destinations.
+
 ## Best Practices
 
 1. **Use bulk operations** for batch updates instead of calling individual endpoints repeatedly
