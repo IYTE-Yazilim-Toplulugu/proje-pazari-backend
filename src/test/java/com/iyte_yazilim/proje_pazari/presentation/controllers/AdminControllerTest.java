@@ -24,8 +24,10 @@ import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSyst
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.services.StorageHealthService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
+import com.iyte_yazilim.proje_pazari.presentation.security.UserPrincipal;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +40,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 @ExtendWith(MockitoExtension.class)
 class AdminControllerTest {
@@ -136,12 +139,16 @@ class AdminControllerTest {
             ApiResponse<ReviewApplicationCommandResult> apiResponse =
                     ApiResponse.success(result, "Application reviewed successfully");
             when(mediator.send(any(ReviewApplicationCommand.class))).thenReturn(apiResponse);
+            Authentication auth = mock(Authentication.class);
+            when(auth.getPrincipal())
+                    .thenReturn(new UserPrincipal("admin-id", "admin@test.com", "ADMIN"));
 
             ResponseEntity<ApiResponse<ReviewApplicationCommandResult>> response =
                     adminController.reviewApplication(
                             applicationId,
                             new AdminController.ReviewApplicationRequest(
-                                    ApplicationStatus.APPROVED, reviewMessage));
+                                    ApplicationStatus.APPROVED, reviewMessage),
+                            auth);
 
             ArgumentCaptor<ReviewApplicationCommand> commandCaptor =
                     ArgumentCaptor.forClass(ReviewApplicationCommand.class);
@@ -149,6 +156,8 @@ class AdminControllerTest {
 
             ReviewApplicationCommand command = commandCaptor.getValue();
             assertEquals(applicationId, command.applicationId());
+            assertEquals("admin-id", command.requesterId());
+            assertEquals(RoleType.ADMIN, command.requesterRole());
             assertEquals(ApplicationStatus.APPROVED, command.status());
             assertEquals(reviewMessage, command.reviewMessage());
             assertEquals(HttpStatus.OK, response.getStatusCode());

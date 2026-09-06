@@ -316,6 +316,71 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
+        @DisplayName("Applicant cannot review their own application")
+        void reviewApplication_asApplicant_returns403AndDoesNotMutate() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String applicationId = createApplicationAndGetId(projectId, applicantToken);
+            int teamSizeBeforeReview =
+                    projectRepository.findById(projectId).orElseThrow().getCurrentTeamSize();
+
+            String reviewBody =
+                    """
+                    {
+                        "status": "APPROVED",
+                        "reviewMessage": "self-approved",
+                        "requesterId": "forged-owner-id",
+                        "requesterRole": "ADMIN"
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl(applicationId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isForbidden());
+
+            var savedApplication = applicationRepository.findById(applicationId).orElseThrow();
+            assertThat(savedApplication.getStatus()).isEqualTo(ApplicationStatus.PENDING);
+            assertThat(projectRepository.findById(projectId).orElseThrow().getCurrentTeamSize())
+                    .isEqualTo(teamSizeBeforeReview);
+        }
+
+        @Test
+        @DisplayName("Unrelated authenticated user cannot review an application")
+        void reviewApplication_asUnrelatedUser_returns403AndDoesNotMutate() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            String unrelatedToken = createApplicantAndGetToken(APPLICANT2_EMAIL, "Ayse");
+            String applicationId = createApplicationAndGetId(projectId, applicantToken);
+            int teamSizeBeforeReview =
+                    projectRepository.findById(projectId).orElseThrow().getCurrentTeamSize();
+
+            String reviewBody =
+                    """
+                    {
+                        "status": "REJECTED",
+                        "reviewMessage": "unauthorized rejection"
+                    }
+                    """;
+
+            mockMvc.perform(
+                            put(reviewApplicationUrl(applicationId))
+                                    .header("Authorization", "Bearer " + unrelatedToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(reviewBody))
+                    .andExpect(status().isForbidden());
+
+            var savedApplication = applicationRepository.findById(applicationId).orElseThrow();
+            assertThat(savedApplication.getStatus()).isEqualTo(ApplicationStatus.PENDING);
+            assertThat(projectRepository.findById(projectId).orElseThrow().getCurrentTeamSize())
+                    .isEqualTo(teamSizeBeforeReview);
+        }
+
+        @Test
         @DisplayName("3. Approved application status is persisted in database")
         void reviewApplication_approve_persistedInDatabase() throws Exception {
             String ownerToken = createProjectOwnerAndGetToken();
