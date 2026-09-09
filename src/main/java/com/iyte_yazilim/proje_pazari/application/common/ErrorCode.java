@@ -111,6 +111,12 @@ public enum ErrorCode {
     /** A project-application workflow method was invoked from an invalid current status. */
     ILLEGAL_APPLICATION_STATE(ResponseCode.CONFLICT, "application.illegal.state"),
 
+    /** The project's current state prevents an application approval. */
+    PROJECT_CANNOT_ACCEPT_APPLICATIONS(ResponseCode.CONFLICT, "project.cannot.accept.applications"),
+
+    /** A concurrent review prevented a deterministic application transition. */
+    APPLICATION_REVIEW_CONFLICT(ResponseCode.CONFLICT, "application.review.conflict"),
+
     // --- Catch-all ---
     /** An unexpected, unclassified server error occurred. */
     INTERNAL_ERROR(ResponseCode.INTERNAL_SERVER_ERROR, "error.internal");

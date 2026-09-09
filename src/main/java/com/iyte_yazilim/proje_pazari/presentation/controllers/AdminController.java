@@ -331,7 +331,13 @@ public class AdminController extends BaseController {
     @PostMapping("/applications/bulk-action")
     @Operation(
             summary = "Bulk application action",
-            description = "Bulk approve/reject applications")
+            description =
+                    "Bulk approve or reject applications. Each item runs in an independent transaction,"
+                            + " so successful items commit when other items fail (partial success)."
+                            + " Approval failures include PROJECT_NOT_OPEN,"
+                            + " PROJECT_APPLICATION_DEADLINE_PASSED,"
+                            + " PROJECT_FULL, APPLICATION_NOT_PENDING, and"
+                            + " CONCURRENT_REVIEW_CONFLICT.")
     @Audited(action = "BULK_APPLICATION_ACTION", entityType = "APPLICATION")
     public ResponseEntity<ApiResponse<BulkActionResult>> bulkApplicationAction(
             @Valid @RequestBody BulkApplicationActionRequest request) {
