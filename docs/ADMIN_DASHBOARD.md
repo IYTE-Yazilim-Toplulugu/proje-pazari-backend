@@ -139,6 +139,14 @@ POST /api/v1/admin/applications/bulk-action
 }
 ```
 
+Each application is reviewed in an independent transaction. Successful items remain committed
+when another item fails, and failures are returned in input order through `failures`. Approval
+uses the same project-status, deadline, capacity, team-size, and notification behavior as the
+individual review endpoint. Stable failure reasons include `APPLICATION_NOT_FOUND`,
+`APPLICATION_NOT_PENDING`, `PROJECT_NOT_OPEN`, `PROJECT_APPLICATION_DEADLINE_PASSED`,
+`PROJECT_FULL`, and
+`CONCURRENT_REVIEW_CONFLICT`.
+
 ---
 
 ## Statistics & Analytics

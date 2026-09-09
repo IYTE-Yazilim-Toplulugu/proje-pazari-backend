@@ -3,25 +3,24 @@ package com.iyte_yazilim.proje_pazari.application.commands.bulkApplicationAction
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
-import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
+import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectApplicationMapper;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationReviewException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.IllegalApplicationStateException;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BulkApplicationActionHandler
         implements IRequestHandler<BulkApplicationActionCommand, ApiResponse<BulkActionResult>> {
 
-    private final ProjectApplicationRepository applicationRepository;
-    private final ProjectApplicationMapper applicationMapper;
+    private final BulkApplicationReviewItemProcessor itemProcessor;
 
     @Override
-    @Transactional
     public ApiResponse<BulkActionResult> handle(BulkApplicationActionCommand command) {
         BulkActionResult result = new BulkActionResult();
 
@@ -29,43 +28,47 @@ public class BulkApplicationActionHandler
             return ApiResponse.validationError("Application IDs list cannot be empty");
         }
 
-        for (String appId : command.applicationIds()) {
-            try {
-                ProjectApplicationEntity appEntity =
-                        applicationRepository
-                                .findById(appId)
-                                .orElseThrow(() -> new ApplicationNotFoundException(appId));
+        ApplicationStatus status = reviewStatus(command.action());
+        if (status == null) {
+            command.applicationIds().forEach(id -> result.addFailure(id, "UNKNOWN_ACTION"));
+            return ApiResponse.success(result, "Bulk application action completed");
+        }
 
-                // Delegate to domain aggregate — enforces PENDING guard
-                ProjectApplication application = applicationMapper.entityToDomain(appEntity);
-
-                switch (command.action().toUpperCase()) {
-                    case "APPROVE":
-                        application.approve();
-                        break;
-                    case "REJECT":
-                        application.reject();
-                        break;
-                    default:
-                        result.addFailure(appId, "Unknown action: " + command.action());
-                        continue;
-                }
-
-                // Sync domain state back to persistence entity
-                appEntity.setStatus(application.getStatus());
-                applicationRepository.save(appEntity);
-                result.incrementSuccess();
-            } catch (Exception e) {
-                // Intentional: domain exceptions (e.g. ApplicationNotFoundException,
-                // IllegalApplicationStateException) are caught here and recorded as per-item
-                // failures rather than propagated. This preserves bulk-operation semantics —
-                // a single missing or invalid item must not abort the entire batch.
-                // GlobalExceptionHandler will NOT handle these; failures are surfaced
-                // in BulkActionResult instead.
-                result.addFailure(appId, e.getMessage());
-            }
+        for (String applicationId : command.applicationIds()) {
+            processItem(result, applicationId, status);
         }
 
         return ApiResponse.success(result, "Bulk application action completed");
+    }
+
+    private void processItem(
+            BulkActionResult result, String applicationId, ApplicationStatus status) {
+        try {
+            itemProcessor.process(applicationId, status, null);
+            result.incrementSuccess();
+        } catch (ApplicationNotFoundException exception) {
+            result.addFailure(applicationId, "APPLICATION_NOT_FOUND");
+        } catch (ApplicationReviewException exception) {
+            result.addFailure(applicationId, exception.getFailure().name());
+        } catch (IllegalApplicationStateException exception) {
+            result.addFailure(applicationId, "APPLICATION_NOT_PENDING");
+        } catch (RuntimeException exception) {
+            log.warn(
+                    "Unexpected bulk application review failure for applicationId={}",
+                    applicationId,
+                    exception);
+            result.addFailure(applicationId, "APPLICATION_REVIEW_FAILED");
+        }
+    }
+
+    private ApplicationStatus reviewStatus(String action) {
+        if (action == null) {
+            return null;
+        }
+        return switch (action.toUpperCase(Locale.ROOT)) {
+            case "APPROVE" -> ApplicationStatus.APPROVED;
+            case "REJECT" -> ApplicationStatus.REJECTED;
+            default -> null;
+        };
     }
 }
