@@ -165,6 +165,7 @@ services:
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       FRONTEND_URL: ${FRONTEND_URL:-https://projepazari.site}
       FRONTEND_VERIFY_EMAIL_PATH: ${FRONTEND_VERIFY_EMAIL_PATH:-/verify-email}
+      WEBSOCKET_ALLOWED_ORIGINS: ${WEBSOCKET_ALLOWED_ORIGINS:-${FRONTEND_URL:-https://projepazari.site}}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:

@@ -259,6 +259,24 @@ public class SecurityHeadersConfig implements WebFilter {
 
 ---
 
+## WebSocket and STOMP Security
+
+The `/ws` SockJS transport uses an explicit origin allowlist from
+`WEBSOCKET_ALLOWED_ORIGINS`, defaulting to `FRONTEND_URL`. Wildcard origins are rejected during
+application startup.
+
+Clients authenticate in the STOMP `CONNECT` frame with `Authorization: Bearer <access-token>`.
+The server applies the same signature, expiry, token-blacklist, and user-blacklist checks used for
+HTTP authentication. Only `ROLE_ADMIN` may subscribe to `/topic/admin/**`; all other subscriptions
+and every client `SEND` destination are denied. Credentials are also checked before outbound broker
+events, so expired, logged-out, or deactivated sessions receive no further audit activity.
+
+The live activity payload omits arbitrary audit details, IP addresses, and entity identifiers. See
+[ADMIN_DASHBOARD.md](ADMIN_DASHBOARD.md#admin-activity-websocket) for the client contract and exact
+payload fields.
+
+---
+
 ## Environment Security
 
 ### JWT Secret
