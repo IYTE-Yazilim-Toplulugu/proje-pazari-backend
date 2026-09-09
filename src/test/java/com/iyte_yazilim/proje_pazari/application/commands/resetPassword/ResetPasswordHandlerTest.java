@@ -1,20 +1,19 @@
 package com.iyte_yazilim.proje_pazari.application.commands.resetPassword;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.PasswordResetToken;
 import com.iyte_yazilim.proje_pazari.domain.entities.User;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.InvalidVerificationTokenException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.VerificationTokenExpiredException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IPasswordResetTokenRepository;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IRefreshTokenService;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -93,7 +92,7 @@ class ResetPasswordHandlerTest {
         when(passwordEncoder.encode(VALID_PASSWORD)).thenReturn("new-hashed-password");
 
         ApiResponse<Void> response =
-                handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD, VALID_PASSWORD));
+                handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD));
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals("new-hashed-password", user.getPassword());
@@ -108,10 +107,7 @@ class ResetPasswordHandlerTest {
 
         assertThrows(
                 InvalidVerificationTokenException.class,
-                () ->
-                        handler.handle(
-                                new ResetPasswordCommand(
-                                        "bad-token", VALID_PASSWORD, VALID_PASSWORD)));
+                () -> handler.handle(new ResetPasswordCommand("bad-token", VALID_PASSWORD)));
     }
 
     @Test
@@ -124,9 +120,7 @@ class ResetPasswordHandlerTest {
 
         assertThrows(
                 InvalidVerificationTokenException.class,
-                () ->
-                        handler.handle(
-                                new ResetPasswordCommand(TOKEN, VALID_PASSWORD, VALID_PASSWORD)));
+                () -> handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD)));
     }
 
     @Test
@@ -139,9 +133,7 @@ class ResetPasswordHandlerTest {
 
         assertThrows(
                 VerificationTokenExpiredException.class,
-                () ->
-                        handler.handle(
-                                new ResetPasswordCommand(TOKEN, VALID_PASSWORD, VALID_PASSWORD)));
+                () -> handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD)));
     }
 
     @Test
@@ -152,8 +144,6 @@ class ResetPasswordHandlerTest {
 
         assertThrows(
                 UserNotFoundException.class,
-                () ->
-                        handler.handle(
-                                new ResetPasswordCommand(TOKEN, VALID_PASSWORD, VALID_PASSWORD)));
+                () -> handler.handle(new ResetPasswordCommand(TOKEN, VALID_PASSWORD)));
     }
 }

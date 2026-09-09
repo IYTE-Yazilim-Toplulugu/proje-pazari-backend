@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.iyte_yazilim.proje_pazari.application.commands.adminDeleteProject.AdminDeleteProjectCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser.AdminDeleteUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.adminFeatureProject.AdminFeatureProjectCommand;
-import com.iyte_yazilim.proje_pazari.application.commands.adminReviewApplication.AdminReviewApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.adminUpdateUser.AdminUpdateUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.banIp.BanIpCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.broadcastEmail.BroadcastEmailCommand;
@@ -17,6 +16,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.importProjectsFromCsv.
 import com.iyte_yazilim.proje_pazari.application.commands.importUsersFromCsv.ImportUsersFromCsvCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.invalidateAllSessions.InvalidateAllSessionsCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.invalidateUserSessions.InvalidateUserSessionsCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.reviewApplication.ReviewApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.reviewFlaggedContent.ReviewFlaggedContentCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.scheduleEmail.ScheduleEmailCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.sendTargetedEmail.SendTargetedEmailCommand;
@@ -24,6 +24,7 @@ import com.iyte_yazilim.proje_pazari.application.commands.toggleMaintenanceMode.
 import com.iyte_yazilim.proje_pazari.application.commands.unbanIp.UnbanIpCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateFeatureFlag.UpdateFeatureFlagCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.Audited;
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.dtos.ActiveSessionDTO;
@@ -71,18 +72,22 @@ import com.iyte_yazilim.proje_pazari.application.services.StorageHealthService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -289,17 +294,38 @@ public class AdminController extends BaseController {
     @PutMapping("/applications/{applicationId}/review")
     @Operation(
             summary = "Review application",
-            description = "Admin review of any application (approve/reject)")
+            description =
+                    "Admin review of any application. Uses the same approve/reject workflow and"
+                            + " response contract as project-owner reviews.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Application reviewed successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid review status or application state"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "Application not found")
+            })
     @Audited(action = "ADMIN_REVIEW_APPLICATION", entityType = "APPLICATION")
-    public ResponseEntity<ApiResponse<Void>> reviewApplication(
+    public ResponseEntity<ApiResponse<ReviewApplicationCommandResult>> reviewApplication(
             @Parameter(
                             description = "Application ID",
                             required = true,
                             example = "01HQXV5KXBW9FYMN8CJZSP2R5A")
                     @PathVariable
                     String applicationId,
-            @Valid @RequestBody ReviewApplicationRequest request) {
-        return send(new AdminReviewApplicationCommand(applicationId, request.status()));
+            @Valid @RequestBody ReviewApplicationRequest request,
+            Authentication auth) {
+        return send(
+                new ReviewApplicationCommand(
+                        applicationId,
+                        getCurrentUserId(auth),
+                        RoleType.ADMIN,
+                        request.status(),
+                        request.reviewMessage()));
     }
 
     @PostMapping("/applications/bulk-action")
@@ -724,7 +750,20 @@ public class AdminController extends BaseController {
 
     public record BulkProjectActionRequest(String action, List<String> projectIds) {}
 
-    public record ReviewApplicationRequest(ApplicationStatus status) {}
+    @Schema(
+            name = "AdminReviewApplicationRequest",
+            description = "Admin application review request")
+    public record ReviewApplicationRequest(
+            @Schema(
+                            description = "Review decision",
+                            allowableValues = {"APPROVED", "REJECTED"},
+                            example = "APPROVED")
+                    @NotNull(message = "Status is required")
+                    ApplicationStatus status,
+            @Schema(
+                            description = "Optional message persisted with the review",
+                            example = "Great experience!")
+                    String reviewMessage) {}
 
     public record BulkApplicationActionRequest(String action, List<String> applicationIds) {}
 

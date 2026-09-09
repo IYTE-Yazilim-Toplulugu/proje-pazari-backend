@@ -5,11 +5,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationDto;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
@@ -132,6 +132,7 @@ class GetProjectApplicationsHandlerTest {
     void shouldMapEntityToDto_correctly() {
         UserEntity applicant = buildUser();
         ProjectApplicationEntity app = buildApp(applicant, ApplicationStatus.APPROVED);
+        app.setReviewMessage("Welcome aboard");
 
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
         when(applicationRepository.findByProjectIdWithOptionalStatus(projectId, null))
@@ -148,6 +149,7 @@ class GetProjectApplicationsHandlerTest {
         assertEquals(applicant.getId(), dto.applicantId());
         assertEquals("Bob Jones", dto.applicantName());
         assertEquals(ApplicationStatus.APPROVED, dto.status());
+        assertEquals("Welcome aboard", dto.reviewMessage());
     }
 
     private UserEntity buildUser() {

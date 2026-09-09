@@ -1,8 +1,8 @@
 package com.iyte_yazilim.proje_pazari.application.queries.listBannedIps;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.BannedIpDTO;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.BannedIpRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

@@ -1,0 +1,1618 @@
+{
+	"info": {
+		"_postman_id": "proje-pazari-api-collection",
+		"name": "Proje Pazari API",
+		"description": "Complete API collection for Proje Pazari Backend.\n\nBase URL: {{base_url}}\n\nAuthentication: JWT Bearer Token via {{access_token}} variable.\n\nWorkflow:\n1. Register a user\n2. Verify email\n3. Login to get access_token\n4. Use authenticated endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"Response time is less than 500ms\", function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(500);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "project_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "application_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"description": "Authentication endpoints (public)",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has user data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('email');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@std.iyte.edu.tr\",\n    \"password\": \"SecurePass123!\",\n    \"firstName\": \"Test\",\n    \"lastName\": \"User\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "register"]
+						},
+						"description": "Register a new user. Email must be an IYTE domain (@std.iyte.edu.tr or @iyte.edu.tr)."
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.accessToken).to.be.a('string');",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.data.accessToken);",
+									"});",
+									"",
+									"pm.test(\"Response has refresh token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data.refreshToken) {",
+									"        pm.collectionVariables.set(\"refresh_token\", jsonData.data.refreshToken);",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Response has user ID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data.userId) {",
+									"        pm.collectionVariables.set(\"user_id\", jsonData.data.userId);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@std.iyte.edu.tr\",\n    \"password\": \"SecurePass123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
+						},
+						"description": "Login with credentials. Automatically saves access_token, refresh_token, and user_id to collection variables."
+					}
+				},
+				{
+					"name": "Verify Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/verify-email?token=your-verification-token",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "verify-email"],
+							"query": [
+								{
+									"key": "token",
+									"value": "your-verification-token",
+									"description": "Verification token received via email"
+								}
+							]
+						},
+						"description": "Verify user email with the token sent to their email address."
+					}
+				},
+				{
+					"name": "Resend Verification Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@std.iyte.edu.tr\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/resend-verification",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "resend-verification"]
+						},
+						"description": "Resend email verification for unverified accounts."
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"New access token received\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.accessToken).to.be.a('string');",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.data.accessToken);",
+									"    if (jsonData.data.refreshToken) {",
+									"        pm.collectionVariables.set(\"refresh_token\", jsonData.data.refreshToken);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh?refreshToken={{refresh_token}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "refresh"],
+							"query": [
+								{
+									"key": "refreshToken",
+									"value": "{{refresh_token}}"
+								}
+							]
+						},
+						"description": "Refresh the access token using a valid refresh token. Automatically updates access_token variable."
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"description": "User management endpoints (authenticated)",
+			"item": [
+				{
+					"name": "Get My Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has user profile\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('email');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "me"]
+						},
+						"description": "Get the authenticated user's profile."
+					}
+				},
+				{
+					"name": "Update My Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"Updated\",\n    \"lastName\": \"Name\",\n    \"description\": \"Software engineer\",\n    \"linkedinUrl\": \"https://www.linkedin.com/in/testuser\",\n    \"githubUrl\": \"https://github.com/testuser\",\n    \"preferredLanguage\": \"en\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "me"]
+						},
+						"description": "Update the authenticated user's profile."
+					}
+				},
+				{
+					"name": "Upload Profile Picture",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Image file (JPEG, PNG, GIF, WebP)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/me/profile-picture",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "me", "profile-picture"]
+						},
+						"description": "Upload a profile picture. Accepts JPEG, PNG, GIF, WebP."
+					}
+				},
+				{
+					"name": "Change Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"currentPassword\": \"SecurePass123!\",\n    \"newPassword\": \"NewSecurePass456!\",\n    \"confirmPassword\": \"NewSecurePass456!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/me/password",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "me", "password"]
+						},
+						"description": "Change password. Requires current password and new password meeting strength requirements."
+					}
+				},
+				{
+					"name": "Deactivate Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/me?reason=Testing deactivation",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "me"],
+							"query": [
+								{
+									"key": "reason",
+									"value": "Testing deactivation",
+									"description": "Optional reason for deactivation"
+								}
+							]
+						},
+						"description": "Deactivate the authenticated user's account."
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"No sensitive data exposed\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.not.have.property('password');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "{{user_id}}"]
+						},
+						"description": "Get a user's public profile by ID. No authentication required."
+					}
+				},
+				{
+					"name": "Get All Users (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users"]
+						},
+						"description": "Get all users. Requires ADMIN role."
+					}
+				}
+			]
+		},
+		{
+			"name": "Projects",
+			"description": "Project management endpoints",
+			"item": [
+				{
+					"name": "Create Project",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has project data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.projectId) {",
+									"        pm.collectionVariables.set(\"project_id\", jsonData.data.projectId);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"AI Chatbot Project\",\n    \"description\": \"Building an AI-powered chatbot for customer support using modern NLP techniques. This project aims to create a fully functional chatbot.\",\n    \"summary\": \"AI chatbot with NLP capabilities\",\n    \"maxTeamSize\": 5,\n    \"requiredSkills\": [\"Python\", \"NLP\", \"Machine Learning\"],\n    \"category\": \"Artificial Intelligence\",\n    \"deadline\": \"2026-12-31T23:59:59\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "projects"]
+						},
+						"description": "Create a new project. Requires PROJECT_OWNER role."
+					}
+				}
+			]
+		},
+		{
+			"name": "Applications",
+			"description": "Project application endpoints",
+			"item": [
+				{
+					"name": "Submit Application",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Application created\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.applicationId) {",
+									"        pm.collectionVariables.set(\"application_id\", jsonData.data.applicationId);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects/{{project_id}}/applications",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "projects", "{{project_id}}", "applications"]
+						},
+						"description": "Submit an application to a project. User ID is extracted from the JWT token."
+					}
+				},
+				{
+					"name": "Review Application",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"APPROVED\",\n    \"reviewMessage\": \"Welcome to the team!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/applications/{{application_id}}/review",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "applications", "{{application_id}}", "review"]
+						},
+						"description": "Review an application (APPROVED or REJECTED). Only the project owner can review."
+					}
+				}
+			]
+		},
+		{
+			"name": "Search",
+			"description": "Elasticsearch-powered search endpoints",
+			"item": [
+				{
+					"name": "Search Projects",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/search/projects?q=chatbot&page=0&size=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "search", "projects"],
+							"query": [
+								{
+									"key": "q",
+									"value": "chatbot",
+									"description": "Search query"
+								},
+								{
+									"key": "status",
+									"value": "ACTIVE",
+									"description": "Filter by project status",
+									"disabled": true
+								},
+								{
+									"key": "tags",
+									"value": "AI",
+									"description": "Filter by tags",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Page number (default: 0)"
+								},
+								{
+									"key": "size",
+									"value": "10",
+									"description": "Page size (default: 10)"
+								}
+							]
+						},
+						"description": "Search projects by keyword with optional filters and pagination."
+					}
+				},
+				{
+					"name": "Suggest Projects",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/search/projects/suggest?q=AI",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "search", "projects", "suggest"],
+							"query": [
+								{
+									"key": "q",
+									"value": "AI",
+									"description": "Suggestion query prefix"
+								}
+							]
+						},
+						"description": "Get project title suggestions for autocomplete."
+					}
+				},
+				{
+					"name": "Project Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/search/projects/statistics",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "search", "projects", "statistics"]
+						},
+						"description": "Get aggregated project statistics."
+					}
+				}
+			]
+		},
+		{
+			"name": "Files",
+			"description": "File upload and download endpoints",
+			"item": [
+				{
+					"name": "Download File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 or 302\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/files/path/to/file.pdf",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "files", "path", "to", "file.pdf"]
+						},
+						"description": "Download a file by path. Returns a redirect to a presigned MinIO URL."
+					}
+				}
+			]
+		},
+		{
+			"name": "Health",
+			"description": "Health check endpoints (public)",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"UP\");",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/health",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "health"]
+						},
+						"description": "Check API health status."
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"description": "Admin-only endpoints. Requires ADMIN role.",
+			"item": [
+				{
+					"name": "User Management",
+					"item": [
+						{
+							"name": "List All Users",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/users?page=0&size=50",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "users"],
+									"query": [
+										{ "key": "page", "value": "0" },
+										{ "key": "size", "value": "50" },
+										{ "key": "role", "value": "APPLICANT", "disabled": true },
+										{ "key": "isActive", "value": "true", "disabled": true },
+										{ "key": "search", "value": "", "disabled": true }
+									]
+								}
+							}
+						},
+						{
+							"name": "Get User Details",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/users/{{user_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "users", "{{user_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Update User",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"role\": \"PROJECT_OWNER\",\n    \"isActive\": true,\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"description\": \"Updated bio\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/users/{{user_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "users", "{{user_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Delete User",
+							"request": {
+								"method": "DELETE",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/users/{{user_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "users", "{{user_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Bulk User Action",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"action\": \"ACTIVATE\",\n    \"userIds\": [\"user-id-1\", \"user-id-2\"]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/users/bulk-action",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "users", "bulk-action"]
+								},
+								"description": "Actions: DELETE, SUSPEND, ACTIVATE, CHANGE_ROLE"
+							}
+						},
+						{
+							"name": "Promote to Project Owner",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/users/{{user_id}}/promote-to-project-owner",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "users", "{{user_id}}", "promote-to-project-owner"]
+								},
+								"description": "Promote a user to PROJECT_OWNER role."
+							}
+						}
+					]
+				},
+				{
+					"name": "Project Management",
+					"item": [
+						{
+							"name": "List All Projects",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/projects?page=0&size=50",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "projects"],
+									"query": [
+										{ "key": "page", "value": "0" },
+										{ "key": "size", "value": "50" },
+										{ "key": "status", "value": "", "disabled": true },
+										{ "key": "ownerId", "value": "", "disabled": true },
+										{ "key": "search", "value": "", "disabled": true }
+									]
+								}
+							}
+						},
+						{
+							"name": "Delete Project",
+							"request": {
+								"method": "DELETE",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/projects/{{project_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "projects", "{{project_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Feature Project",
+							"request": {
+								"method": "PATCH",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/projects/{{project_id}}/feature?featured=true",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "projects", "{{project_id}}", "feature"],
+									"query": [
+										{ "key": "featured", "value": "true" }
+									]
+								}
+							}
+						},
+						{
+							"name": "Bulk Project Action",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"action\": \"FEATURE\",\n    \"projectIds\": [\"project-id-1\"]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/projects/bulk-action",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "projects", "bulk-action"]
+								},
+								"description": "Actions: DELETE, FEATURE, UNFEATURE, CANCEL"
+							}
+						}
+					]
+				},
+				{
+					"name": "Application Management",
+					"item": [
+						{
+							"name": "List All Applications",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/applications?page=0&size=50",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "applications"],
+									"query": [
+										{ "key": "page", "value": "0" },
+										{ "key": "size", "value": "50" },
+										{ "key": "status", "value": "", "disabled": true },
+										{ "key": "projectId", "value": "", "disabled": true },
+										{ "key": "userId", "value": "", "disabled": true }
+									]
+								}
+							}
+						},
+						{
+							"name": "Review Application (Admin)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"APPROVED\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/applications/{{application_id}}/review",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "applications", "{{application_id}}", "review"]
+								}
+							}
+						},
+						{
+							"name": "Bulk Application Action",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"action\": \"APPROVE\",\n    \"applicationIds\": [\"app-id-1\"]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/applications/bulk-action",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "applications", "bulk-action"]
+								},
+								"description": "Actions: APPROVE, REJECT"
+							}
+						}
+					]
+				},
+				{
+					"name": "Statistics & Analytics",
+					"item": [
+						{
+							"name": "System Overview",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/stats/overview",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "stats", "overview"]
+								}
+							}
+						},
+						{
+							"name": "User Statistics",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/stats/users",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "stats", "users"]
+								}
+							}
+						},
+						{
+							"name": "Project Statistics",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/stats/projects",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "stats", "projects"]
+								}
+							}
+						},
+						{
+							"name": "Application Statistics",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/stats/applications",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "stats", "applications"]
+								}
+							}
+						},
+						{
+							"name": "Analytics Trends",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/analytics/trends?days=30",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "analytics", "trends"],
+									"query": [
+										{ "key": "days", "value": "30" }
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Audit Logs",
+					"item": [
+						{
+							"name": "Query Audit Logs",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/audit-logs?page=0&size=50",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "audit-logs"],
+									"query": [
+										{ "key": "page", "value": "0" },
+										{ "key": "size", "value": "50" },
+										{ "key": "action", "value": "", "disabled": true },
+										{ "key": "performedBy", "value": "", "disabled": true },
+										{ "key": "entityType", "value": "", "disabled": true },
+										{ "key": "entityId", "value": "", "disabled": true }
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Content Moderation",
+					"item": [
+						{
+							"name": "Flag Content",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"reason\": \"INAPPROPRIATE\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/content/flag/PROJECT/{{project_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "content", "flag", "PROJECT", "{{project_id}}"]
+								},
+								"description": "Content types: USER, PROJECT, APPLICATION. Reasons: INAPPROPRIATE, SPAM, OFFENSIVE"
+							}
+						},
+						{
+							"name": "List Flagged Content",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/content/flagged?page=0&size=50",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "content", "flagged"],
+									"query": [
+										{ "key": "page", "value": "0" },
+										{ "key": "size", "value": "50" },
+										{ "key": "status", "value": "", "disabled": true },
+										{ "key": "contentType", "value": "", "disabled": true }
+									]
+								}
+							}
+						},
+						{
+							"name": "Review Flagged Content",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"action\": \"REMOVE\",\n    \"reviewNote\": \"Content violates community guidelines\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/content/review/flag-id-here",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "content", "review", "flag-id-here"]
+								},
+								"description": "Actions: APPROVE, REMOVE, BAN_USER"
+							}
+						}
+					]
+				},
+				{
+					"name": "Email & Notifications",
+					"item": [
+						{
+							"name": "Broadcast Email",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"subject\": \"Important Announcement\",\n    \"body\": \"Hello everyone, this is a broadcast message.\",\n    \"targetRole\": \"ALL\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/email/broadcast",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "email", "broadcast"]
+								},
+								"description": "Target roles: ALL, ADMIN, PROJECT_OWNER, APPLICANT"
+							}
+						},
+						{
+							"name": "Send Targeted Email",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"subject\": \"Direct Message\",\n    \"body\": \"This is a targeted email.\",\n    \"userIds\": [\"user-id-1\"]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/email/targeted",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "email", "targeted"]
+								}
+							}
+						},
+						{
+							"name": "Schedule Email",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"subject\": \"Scheduled Announcement\",\n    \"body\": \"This will be sent later.\",\n    \"targetRole\": \"ALL\",\n    \"scheduledAt\": \"2026-06-15T10:00:00\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/email/schedule",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "email", "schedule"]
+								}
+							}
+						},
+						{
+							"name": "List Scheduled Emails",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/email/scheduled",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "email", "scheduled"]
+								}
+							}
+						},
+						{
+							"name": "Cancel Scheduled Email",
+							"request": {
+								"method": "DELETE",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/email/scheduled/schedule-id-here",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "email", "scheduled", "schedule-id-here"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Data Export",
+					"item": [
+						{
+							"name": "Export Users CSV",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/export/users",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "export", "users"]
+								},
+								"description": "Download all users as CSV file."
+							}
+						},
+						{
+							"name": "Export Projects CSV",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/export/projects",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "export", "projects"]
+								}
+							}
+						},
+						{
+							"name": "Export Applications CSV",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/export/applications",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "export", "applications"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Data Import",
+					"item": [
+						{
+							"name": "Import Users CSV",
+							"request": {
+								"method": "POST",
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": "",
+											"description": "CSV with columns: email,firstName,lastName,role,password"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/import/users",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "import", "users"]
+								}
+							}
+						},
+						{
+							"name": "Import Projects CSV",
+							"request": {
+								"method": "POST",
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": "",
+											"description": "CSV with columns: title,description,ownerEmail,status,maxTeamSize,category,requiredSkills"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/import/projects",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "import", "projects"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "System",
+					"item": [
+						{
+							"name": "Service Health",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/health/services",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "health", "services"]
+								}
+							}
+						},
+						{
+							"name": "Get Configuration",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/config",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "config"]
+								}
+							}
+						},
+						{
+							"name": "Update Configuration",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"key1\": \"value1\",\n    \"key2\": \"value2\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/config",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "config"]
+								}
+							}
+						},
+						{
+							"name": "Get Feature Flags",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/feature-flags",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "feature-flags"]
+								}
+							}
+						},
+						{
+							"name": "Update Feature Flag",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"enabled\": true,\n    \"description\": \"Feature description\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/feature-flags/feature-key",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "feature-flags", "feature-key"]
+								}
+							}
+						},
+						{
+							"name": "Get Maintenance Status",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/maintenance",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "maintenance"]
+								}
+							}
+						},
+						{
+							"name": "Toggle Maintenance Mode",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"enabled\": true\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/maintenance",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "maintenance"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Sessions",
+					"item": [
+						{
+							"name": "List Active Sessions",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/sessions",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "sessions"]
+								}
+							}
+						},
+						{
+							"name": "Invalidate User Sessions",
+							"request": {
+								"method": "DELETE",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/sessions/{{user_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "sessions", "{{user_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Invalidate All Sessions",
+							"request": {
+								"method": "DELETE",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/sessions",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "sessions"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "IP Ban Management",
+					"item": [
+						{
+							"name": "Ban IP",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"ipAddress\": \"192.168.1.100\",\n    \"reason\": \"Suspicious activity\",\n    \"expiresAt\": \"2026-07-15T10:00:00\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/ip-bans",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "ip-bans"]
+								}
+							}
+						},
+						{
+							"name": "Unban IP",
+							"request": {
+								"method": "DELETE",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/ip-bans/192.168.1.100",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "ip-bans", "192.168.1.100"]
+								}
+							}
+						},
+						{
+							"name": "List Banned IPs",
+							"request": {
+								"method": "GET",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/ip-bans",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "ip-bans"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Elasticsearch",
+					"item": [
+						{
+							"name": "Reindex Projects",
+							"request": {
+								"method": "POST",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/elasticsearch/reindex/projects",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "elasticsearch", "reindex", "projects"]
+								}
+							}
+						},
+						{
+							"name": "Reindex Users",
+							"request": {
+								"method": "POST",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/elasticsearch/reindex/users",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "elasticsearch", "reindex", "users"]
+								}
+							}
+						},
+						{
+							"name": "Delete All Indexes",
+							"request": {
+								"method": "DELETE",
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/elasticsearch/indexes",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "elasticsearch", "indexes"]
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

@@ -1,14 +1,11 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.security.filter;
 
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.BannedIpRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.BannedIpEntity;
+import com.iyte_yazilim.proje_pazari.application.services.BanCheckService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -25,7 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Order(0)
 public class IpBanFilter extends OncePerRequestFilter {
 
-    private final BannedIpRepository bannedIpRepository;
+    private final BanCheckService banCheckService;
 
     @Override
     protected void doFilterInternal(
@@ -58,16 +55,7 @@ public class IpBanFilter extends OncePerRequestFilter {
 
     private boolean isIpBanned(String ip) {
         try {
-            Optional<BannedIpEntity> banned = bannedIpRepository.findByIpAddress(ip);
-            if (banned.isEmpty()) {
-                return false;
-            }
-            BannedIpEntity ban = banned.get();
-            // Check if ban has expired
-            if (ban.getExpiresAt() != null && ban.getExpiresAt().isBefore(LocalDateTime.now())) {
-                return false;
-            }
-            return true;
+            return banCheckService.isIpBanned(ip);
         } catch (Exception e) {
             log.warn("Failed to check IP ban status for: {}", ip, e);
             return false;

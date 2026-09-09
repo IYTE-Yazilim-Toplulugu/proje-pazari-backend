@@ -4,6 +4,7 @@ import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.IpBanFilter;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.MaintenanceModeFilter;
 import com.iyte_yazilim.proje_pazari.infrastructure.security.filter.RateLimitFilter;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtAuthenticationFilter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,8 +23,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -73,7 +72,8 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers("/api/v1/health")
                                         .permitAll()
-                                        // WebSocket endpoint
+                                        // SockJS opens its transport before browsers send STOMP
+                                        // credentials. Interceptors secure all broker data frames.
                                         .requestMatchers("/ws/**")
                                         .permitAll()
                                         // Public authentication endpoints
@@ -113,7 +113,14 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(frontendUrl, "http://localhost:3000"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(
+                List.of(
+                        "Authorization",
+                        "Content-Type",
+                        "Accept",
+                        "Accept-Language",
+                        "X-Requested-With",
+                        "X-CSRF-TOKEN"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 

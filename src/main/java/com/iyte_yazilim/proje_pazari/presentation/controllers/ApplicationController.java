@@ -3,19 +3,22 @@ package com.iyte_yazilim.proje_pazari.presentation.controllers;
 import com.iyte_yazilim.proje_pazari.application.commands.reviewApplication.ReviewApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.submitApplication.SubmitApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.withdrawApplication.WithdrawApplicationCommand;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationDto;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedApplicationsResult;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectApplications.GetProjectApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserApplications.GetUserApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.domain.models.results.SubmitApplicationCommandResult;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
@@ -76,7 +79,7 @@ public class ApplicationController extends BaseController {
         return send(new GetProjectApplicationsQuery(projectId, requesterId, status));
     }
 
-    @PatchMapping("/api/v1/applications/{applicationId}/review")
+    @PutMapping("/api/v1/applications/{applicationId}/review")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Approve or reject an application")
@@ -86,19 +89,23 @@ public class ApplicationController extends BaseController {
                         responseCode = "200",
                         description = "Application reviewed successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "Authenticated user does not own the application's project"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "Application not found")
             })
     public ResponseEntity<ApiResponse<ReviewApplicationCommandResult>> reviewApplication(
             @PathVariable String applicationId,
-            @RequestBody @Valid ReviewApplicationCommand command,
+            @RequestBody @Valid ReviewApplicationRequest request,
             Authentication auth) {
         return send(
-                ReviewApplicationCommand.class,
-                Map.of("applicationId", applicationId),
-                null,
-                command,
-                auth);
+                new ReviewApplicationCommand(
+                        applicationId,
+                        getCurrentUserId(auth),
+                        RoleType.valueOf(getCurrentUserRole(auth)),
+                        request.status(),
+                        request.reviewMessage()));
     }
 
     @PatchMapping("/api/v1/applications/{applicationId}/withdraw")
@@ -151,4 +158,19 @@ public class ApplicationController extends BaseController {
         String userId = getCurrentUserId(auth);
         return send(new GetUserApplicationsQuery(userId, page, size, status));
     }
+
+    @Schema(
+            name = "ReviewApplicationRequest",
+            description = "Project-owner application review request")
+    public record ReviewApplicationRequest(
+            @Schema(
+                            description = "Review decision",
+                            allowableValues = {"APPROVED", "REJECTED"},
+                            example = "APPROVED")
+                    @NotNull(message = "Status is required")
+                    ApplicationStatus status,
+            @Schema(
+                            description = "Optional message persisted with the review",
+                            example = "Great experience!")
+                    String reviewMessage) {}
 }

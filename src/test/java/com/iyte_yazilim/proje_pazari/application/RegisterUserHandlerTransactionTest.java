@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserHandler;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.models.results.RegisterUserResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import java.util.UUID;
@@ -32,7 +32,7 @@ class RegisterUserHandlerTransactionTest {
 
         // First registration should succeed
         ApiResponse<RegisterUserResult> firstResponse = handler.handle(command);
-        assertEquals(ResponseCode.CREATED, firstResponse.getCode());
+        assertEquals(ResponseCode.REGISTERED_NEEDS_VERIFICATION, firstResponse.getCode());
 
         // When - try to register with same email (should fail due to unique constraint)
         RegisterUserCommand duplicateCommand =
@@ -58,7 +58,7 @@ class RegisterUserHandlerTransactionTest {
 
         // Then
         assertNotNull(response);
-        assertEquals(ResponseCode.CREATED, response.getCode());
+        assertEquals(ResponseCode.REGISTERED_NEEDS_VERIFICATION, response.getCode());
         assertTrue(userRepository.existsByEmail(email), "User was not persisted to the database!");
     }
 }

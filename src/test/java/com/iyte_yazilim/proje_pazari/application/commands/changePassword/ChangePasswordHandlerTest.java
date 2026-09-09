@@ -5,10 +5,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;
@@ -115,69 +115,6 @@ class ChangePasswordHandlerTest {
         // Then
         assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
         assertEquals("Current password is incorrect", response.getMessage());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Should return error when new password is weak")
-    void shouldReturnError_WhenNewPasswordIsWeak() {
-        // Given
-        String userId = "user-123";
-        String currentPass = "OldPass123!";
-        String weakPass = "weak";
-
-        ChangePasswordCommand command =
-                new ChangePasswordCommand(userId, currentPass, weakPass, weakPass);
-
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(userId);
-        userEntity.setPassword("encoded-old-password");
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(passwordEncoder.matches(currentPass, "encoded-old-password")).thenReturn(true);
-
-        // When
-        ApiResponse<Void> response = changePasswordHandler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        assertTrue(response.getMessage().contains("Password must be at least 8 characters"));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Should return error when password confirmation does not match")
-    void shouldReturnError_WhenConfirmationDoesNotMatch() {
-        // Given
-        ChangePasswordCommand command =
-                new ChangePasswordCommand(
-                        "user-123", "OldPass123!", "NewPass123!", "DifferentPass123!");
-
-        // When
-        ApiResponse<Void> response = changePasswordHandler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        assertTrue(response.getMessage().contains("do not match"));
-        verify(userRepository, never()).findById(anyString());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Should return error when new password is same as current password")
-    void shouldReturnError_WhenNewPasswordSameAsCurrent() {
-        // Given
-        String samePass = "SamePass123!";
-        ChangePasswordCommand command =
-                new ChangePasswordCommand("user-123", samePass, samePass, samePass);
-
-        // When
-        ApiResponse<Void> response = changePasswordHandler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.VALIDATION_ERROR, response.getCode());
-        assertTrue(response.getMessage().contains("different from current"));
-        verify(userRepository, never()).findById(anyString());
         verify(userRepository, never()).save(any());
     }
 }

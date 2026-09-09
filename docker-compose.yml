@@ -111,7 +111,7 @@ services:
     image: docker.elastic.co/logstash/logstash:9.0.0
     container_name: proje-pazari-logstash
     volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/pipeline-config:/usr/share/logstash/pipeline:ro
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
     ports:
       - "127.0.0.1:5000:5000/tcp"
@@ -164,6 +164,8 @@ services:
       REDIS_PORT: 6379
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       FRONTEND_URL: ${FRONTEND_URL:-https://projepazari.site}
+      FRONTEND_VERIFY_EMAIL_PATH: ${FRONTEND_VERIFY_EMAIL_PATH:-/verify-email}
+      WEBSOCKET_ALLOWED_ORIGINS: ${WEBSOCKET_ALLOWED_ORIGINS:-${FRONTEND_URL:-https://projepazari.site}}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
@@ -309,6 +311,12 @@ services:
     restart: always
     profiles:
       - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   minio-backup:
     image: minio/mc:latest
@@ -404,5 +412,3 @@ volumes:
 networks:
   proje-pazari-network:
     driver: bridge
-
-

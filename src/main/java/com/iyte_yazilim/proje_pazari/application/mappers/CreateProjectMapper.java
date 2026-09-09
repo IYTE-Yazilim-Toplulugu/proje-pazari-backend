@@ -14,15 +14,15 @@ import org.mapstruct.Mapping;
 public interface CreateProjectMapper {
 
     @Mapping(target = "title", source = "projectName")
+    @Mapping(target = "summary", source = "summary")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "domainEvents", ignore = true)
     @Mapping(target = "owner", expression = "java(createUserWithId(command.ownerId()))")
-    @Mapping(target = "summary", ignore = true)
-    @Mapping(target = "status", ignore = true)
     @Mapping(target = "applications", ignore = true)
-    @Mapping(target = "currentTeamSize", constant = "1") // Owner başlangıçta takımın parçası
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "currentTeamSize", ignore = true)
     @Mapping(
             target = "requiredSkills",
             expression = "java(convertArrayToList(command.requiredSkills()))")
@@ -32,12 +32,11 @@ public interface CreateProjectMapper {
             target = "projectId",
             expression = "java(project.getId() != null ? project.getId().toString() : null)")
     @Mapping(target = "projectName", source = "title")
+    @Mapping(target = "summary", source = "summary")
     @Mapping(
             target = "ownerId",
             expression =
                     "java(project.getOwner() != null ? project.getOwner().getId().toString() : null)")
-    @Mapping(target = "teamMemberIds", expression = "java(new String[0])")
-    @Mapping(target = "tags", expression = "java(new String[0])")
     @Mapping(
             target = "requiredSkills",
             expression = "java(convertListToArray(project.getRequiredSkills()))")
@@ -64,5 +63,13 @@ public interface CreateProjectMapper {
             return new String[0];
         }
         return list.toArray(new String[0]);
+    }
+
+    @org.mapstruct.AfterMapping
+    default void initializeTeamSize(@org.mapstruct.MappingTarget Project domain) {
+        if (domain != null) {
+            // The owner is initially part of the team, so we increment from 0 to 1
+            domain.incrementTeamSize();
+        }
     }
 }

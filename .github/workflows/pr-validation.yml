@@ -2,49 +2,68 @@ name: PR Validation
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    # CI triggers:
+    # - opened/reopened: Initial PR creation (runs if ready, skips if draft)
+    # - synchronize: New commits pushed (runs if ready, skips if draft)
+    # - ready_for_review: Draft → Ready transition (always runs)
+    # Note: converted_to_draft NOT included to avoid wasting CI resources
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   JAVA_VERSION: '21'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  validate-pr:
-    name: Validate Pull Request
+  format:
+    name: Code Formatting
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Skip CI for draft PRs to save resources
+    if: github.event.pull_request.draft == false
+
     permissions:
       contents: read
-      pull-requests: write
-      issues: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v5
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
-          java-version: '21'
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
       - name: Check code formatting
-        id: format-check
-        run: |
-          ./gradlew spotlessCheck
-          echo "status=✅ Code formatting is correct" >> $GITHUB_OUTPUT
-        continue-on-error: true
+        run: chmod +x gradlew && ./gradlew spotlessCheck
+
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Skip CI for draft PRs to save resources
+    if: github.event.pull_request.draft == false
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build application
+        run: chmod +x gradlew && ./gradlew build -x test
 
       - name: Run tests with coverage
-        id: tests
-        run: |
-          ./gradlew test jacocoTestReport jacocoTestCoverageVerification
-          echo "status=✅ All tests passed" >> $GITHUB_OUTPUT
-        continue-on-error: true
+        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification
 
       - name: Upload coverage report
         if: always()
@@ -53,49 +72,132 @@ jobs:
           name: coverage-report
           path: build/reports/jacoco/
 
-      - name: Build application
-        id: build
-        run: |
-          ./gradlew build -x test
-          echo "status=✅ Build successful" >> $GITHUB_OUTPUT
-        continue-on-error: true
+  # Single job set as Required Status Check in branch protection.
+  # Fails explicitly when any upstream job fails — prevents merging
+  # even if GH_PAT is absent and auto-draft didn't trigger.
+  ci-gate:
+    name: CI Gate
+    needs: [format, build-and-test]
+    if: always() && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
 
-      - name: Comment PR
-        uses: actions/github-script@v7
-        if: always()
-        continue-on-error: true
+    steps:
+      - name: Evaluate gate
+        env:
+          FORMAT_RESULT: ${{ needs.format.result }}
+          BUILD_RESULT: ${{ needs.build-and-test.result }}
+        run: |
+          echo "format:         $FORMAT_RESULT"
+          echo "build-and-test: $BUILD_RESULT"
+          if [[ "$FORMAT_RESULT" != "success" || "$BUILD_RESULT" != "success" ]]; then
+            echo "❌ One or more CI checks did not pass — gate blocked"
+            exit 1
+          fi
+          echo "✅ All CI checks passed — gate open"
+
+  pr_summary:
+    name: Post PR Summary
+    needs: [format, build-and-test]
+    # Only run for non-draft PRs — draft PRs have both jobs skipped,
+    # posting a comment with two "skipped" rows is noise.
+    if: always() && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      # Step 1: Post PR summary comment (uses GITHUB_TOKEN — always available)
+      - name: Post validation summary comment
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const formatStatus = '${{ steps.format-check.outcome }}' === 'success' ? '✅' : '❌';
-            const testStatus = '${{ steps.tests.outcome }}' === 'success' ? '✅' : '❌';
-            const buildStatus = '${{ steps.build.outcome }}' === 'success' ? '✅' : '❌';
+            const results = {
+              format: '${{ needs.format.result }}',
+              buildAndTest: '${{ needs.build-and-test.result }}',
+            };
 
-            const body = `## PR Validation Results
+            const icon = (r) => ({ success: '✅', failure: '❌', cancelled: '⏹️', skipped: '⏭️' }[r] ?? '❓');
+            const allPassed = Object.values(results).every(r => r === 'success');
 
-            | Check | Status |
-            |-------|--------|
-            | Code Formatting | ${formatStatus} |
-            | Tests & Coverage | ${testStatus} |
-            | Build | ${buildStatus} |
+            const rows = [
+              `| Code Formatting (Spotless) | ${icon(results.format)} \`${results.format}\` |`,
+              `| Build & Test (Coverage ≥70%) | ${icon(results.buildAndTest)} \`${results.buildAndTest}\` |`,
+            ].join('\n');
 
-            ${formatStatus === '❌' ? '⚠️ Please run `make format` to fix formatting issues\n' : ''}
-            ${testStatus === '❌' ? '⚠️ Some tests are failing or coverage is below 70%. Please fix before merging\n' : ''}
-            ${buildStatus === '❌' ? '⚠️ Build failed. Please check the logs\n' : ''}
+            const actionNote = allPassed
+              ? '> ✅ **All checks passed!** To request code review, manually assign reviewers or mention team members in a comment.'
+              : '> ❌ **Action required:** Fix the failing checks and push your changes. Once resolved, mark this PR as Ready for Review to re-trigger CI.';
 
-            **Commit**: ${context.sha.substring(0, 7)}
-            **Author**: @${context.actor}
-            `;
+            const body = [
+              '<!-- pr-validation-summary -->',
+              `## PR Validation — ${allPassed ? '✅ All checks passed' : '❌ Checks failed'}`,
+              '',
+              '| Job | Result |',
+              '|-----|--------|',
+              rows,
+              '',
+              actionNote,
+              '',
+              `_Commit: \`${context.payload.pull_request.head.sha.slice(0, 7)}\`_`,
+            ].join('\n');
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            // Update existing comment or create new one (no duplicates)
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: body
+              issue_number: context.issue.number,
             });
+            const existing = comments.find(c => c.body.includes('<!-- pr-validation-summary -->'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
 
-      - name: Check if validation passed
-        if: steps.format-check.outcome != 'success' || steps.tests.outcome != 'success' || steps.build.outcome != 'success'
-        run: |
-          echo "❌ PR validation failed. Please fix the issues above."
-          exit 1
+      # Step 2: Auto-convert PR to draft if checks fail (best-effort)
+      # Uses GH_PAT because GITHUB_TOKEN cannot call convertPullRequestToDraft.
+      # If GH_PAT is not configured, the CI Gate job still blocks the merge via
+      # branch protection Required Status Checks — auto-draft is a UX convenience on top.
+      - name: Convert PR to draft on failure
+        uses: actions/github-script@v8
+        if: needs.format.result != 'success' || needs.build-and-test.result != 'success'
+        continue-on-error: true
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        with:
+          github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            if (!process.env.GH_PAT) {
+              console.log('⚠️  GH_PAT not configured — skipping auto-draft (CI Gate blocks merge via branch protection)');
+              return;
+            }
+            const isDraft = context.payload.pull_request.draft;
+            if (isDraft) {
+              console.log('PR is already a draft — nothing to do');
+              return;
+            }
+            try {
+              const prNodeId = context.payload.pull_request.node_id;
+              await github.graphql(`
+                mutation($id: ID!) {
+                  convertPullRequestToDraft(input: { pullRequestId: $id }) {
+                    pullRequest { isDraft }
+                  }
+                }
+              `, { id: prNodeId });
+              console.log('✅ Converted PR to draft due to failing checks');
+            } catch (e) {
+              console.log(`⚠️  Could not convert to draft: ${e.message}`);
+            }

@@ -3,10 +3,12 @@ package com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.HashSet;
 import java.util.List;
@@ -24,25 +26,34 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class BulkUserActionHandlerTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private UserMapper userMapper;
 
     @InjectMocks private BulkUserActionHandler handler;
 
-    private UserEntity testUser;
+    private UserEntity testUserEntity;
 
     @BeforeEach
     void setUp() {
-        testUser = new UserEntity();
-        testUser.setId("user1");
-        testUser.setEmail("test@example.com");
-        testUser.setRoles(new HashSet<>(Set.of(RoleType.USER)));
-        testUser.setIsActive(true);
+        testUserEntity = new UserEntity();
+        testUserEntity.setId("user1");
+        testUserEntity.setEmail("test@example.com");
+        testUserEntity.setRoles(new HashSet<>(Set.of(RoleType.USER)));
+        testUserEntity.setIsActive(true);
+    }
+
+    private User createDomainUser(boolean active, RoleType role) {
+        User user = new User("test@example.com", "pw", "Test", "User");
+        user.reconstituteActive(active);
+        user.assignRole(role);
+        return user;
     }
 
     @Test
     @DisplayName("Should suspend users in bulk")
     void shouldSuspendUsersInBulk() {
-        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any())).thenReturn(testUser);
+        User domainUser = createDomainUser(true, RoleType.USER);
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUserEntity));
+        when(userMapper.entityToDomain(testUserEntity)).thenReturn(domainUser);
 
         BulkUserActionCommand command = new BulkUserActionCommand("SUSPEND", List.of("user1"));
 
@@ -51,22 +62,26 @@ class BulkUserActionHandlerTest {
         assertNotNull(response.getData());
         assertEquals(1, response.getData().getSuccessCount());
         assertEquals(0, response.getData().getFailureCount());
-        assertFalse(testUser.getIsActive());
+        assertFalse(domainUser.isActive());
+        verify(userMapper).applyDomainToEntity(domainUser, testUserEntity);
+        verify(userRepository).save(testUserEntity);
     }
 
     @Test
     @DisplayName("Should activate users in bulk")
     void shouldActivateUsersInBulk() {
-        testUser.setIsActive(false);
-        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any())).thenReturn(testUser);
+        testUserEntity.setIsActive(false);
+        User domainUser = createDomainUser(false, RoleType.USER);
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUserEntity));
+        when(userMapper.entityToDomain(testUserEntity)).thenReturn(domainUser);
 
         BulkUserActionCommand command = new BulkUserActionCommand("ACTIVATE", List.of("user1"));
 
         ApiResponse<BulkActionResult> response = handler.handle(command);
 
         assertEquals(1, response.getData().getSuccessCount());
-        assertTrue(testUser.getIsActive());
+        assertTrue(domainUser.isActive());
+        verify(userMapper).applyDomainToEntity(domainUser, testUserEntity);
     }
 
     @Test
@@ -85,8 +100,9 @@ class BulkUserActionHandlerTest {
     @Test
     @DisplayName("Should promote user to admin — role set becomes {ADMIN} only")
     void shouldPromoteUserToAdmin() {
-        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any())).thenReturn(testUser);
+        User domainUser = createDomainUser(true, RoleType.USER);
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUserEntity));
+        when(userMapper.entityToDomain(testUserEntity)).thenReturn(domainUser);
 
         BulkUserActionCommand command =
                 new BulkUserActionCommand("PROMOTE_TO_ADMIN", List.of("user1"));
@@ -94,15 +110,18 @@ class BulkUserActionHandlerTest {
         ApiResponse<BulkActionResult> response = handler.handle(command);
 
         assertEquals(1, response.getData().getSuccessCount());
-        assertEquals(Set.of(RoleType.ADMIN), testUser.getRoles());
+        assertTrue(domainUser.hasRole(RoleType.ADMIN));
+        assertFalse(domainUser.hasRole(RoleType.USER));
+        verify(userMapper).applyDomainToEntity(domainUser, testUserEntity);
     }
 
     @Test
     @DisplayName("Should promote user already having ADMIN — idempotent, still {ADMIN}")
     void shouldPromoteAlreadyAdminUserIdempotently() {
-        testUser.setRoles(new HashSet<>(Set.of(RoleType.ADMIN)));
-        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any())).thenReturn(testUser);
+        testUserEntity.setRoles(new HashSet<>(Set.of(RoleType.ADMIN)));
+        User domainUser = createDomainUser(true, RoleType.ADMIN);
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUserEntity));
+        when(userMapper.entityToDomain(testUserEntity)).thenReturn(domainUser);
 
         BulkUserActionCommand command =
                 new BulkUserActionCommand("PROMOTE_TO_ADMIN", List.of("user1"));
@@ -110,15 +129,17 @@ class BulkUserActionHandlerTest {
         ApiResponse<BulkActionResult> response = handler.handle(command);
 
         assertEquals(1, response.getData().getSuccessCount());
-        assertEquals(Set.of(RoleType.ADMIN), testUser.getRoles());
+        assertTrue(domainUser.hasRole(RoleType.ADMIN));
+        verify(userMapper).applyDomainToEntity(domainUser, testUserEntity);
     }
 
     @Test
     @DisplayName("Should demote admin to user — role set becomes {USER} only")
     void shouldDemoteAdminToUser() {
-        testUser.setRoles(new HashSet<>(Set.of(RoleType.ADMIN)));
-        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any())).thenReturn(testUser);
+        testUserEntity.setRoles(new HashSet<>(Set.of(RoleType.ADMIN)));
+        User domainUser = createDomainUser(true, RoleType.ADMIN);
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUserEntity));
+        when(userMapper.entityToDomain(testUserEntity)).thenReturn(domainUser);
 
         BulkUserActionCommand command =
                 new BulkUserActionCommand("DEMOTE_TO_USER", List.of("user1"));
@@ -126,14 +147,17 @@ class BulkUserActionHandlerTest {
         ApiResponse<BulkActionResult> response = handler.handle(command);
 
         assertEquals(1, response.getData().getSuccessCount());
-        assertEquals(Set.of(RoleType.USER), testUser.getRoles());
+        assertTrue(domainUser.hasRole(RoleType.USER));
+        assertFalse(domainUser.hasRole(RoleType.ADMIN));
+        verify(userMapper).applyDomainToEntity(domainUser, testUserEntity);
     }
 
     @Test
     @DisplayName("Should demote user who already has only USER role — no-op, USER remains")
     void shouldDemoteUserWithOnlyUserRole() {
-        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any())).thenReturn(testUser);
+        User domainUser = createDomainUser(true, RoleType.USER);
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUserEntity));
+        when(userMapper.entityToDomain(testUserEntity)).thenReturn(domainUser);
 
         BulkUserActionCommand command =
                 new BulkUserActionCommand("DEMOTE_TO_USER", List.of("user1"));
@@ -141,7 +165,8 @@ class BulkUserActionHandlerTest {
         ApiResponse<BulkActionResult> response = handler.handle(command);
 
         assertEquals(1, response.getData().getSuccessCount());
-        assertEquals(Set.of(RoleType.USER), testUser.getRoles());
+        assertTrue(domainUser.hasRole(RoleType.USER));
+        verify(userMapper).applyDomainToEntity(domainUser, testUserEntity);
     }
 
     @Test

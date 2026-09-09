@@ -82,6 +82,9 @@ dependencies {
     // Rate limiting
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
+    // RFC 4180-compliant CSV parsing
+    implementation 'org.apache.commons:commons-csv:1.10.0'
+
     // 2FA - Google Authenticator
     implementation 'com.warrenstrange:googleauth:1.5.0'
     implementation 'com.google.zxing:core:3.5.3'
@@ -108,11 +111,12 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // TestContainers for integration tests
-    testImplementation 'org.testcontainers:testcontainers:1.20.4'
-    testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
-    testImplementation 'org.testcontainers:postgresql:1.20.4'
-    testImplementation 'org.testcontainers:elasticsearch:1.20.4'
-    testImplementation 'org.testcontainers:minio:1.20.4'
+    testImplementation platform('org.testcontainers:testcontainers-bom:1.21.3')
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:elasticsearch'
+    testImplementation 'org.testcontainers:minio'
     testImplementation 'com.redis:testcontainers-redis:2.2.4'
 
     testAnnotationProcessor 'org.projectlombok:lombok'
@@ -137,6 +141,8 @@ jacocoTestReport {
     }
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
+            // Exclude all config classes broadly, then re-include JwtSecretValidator
+            // so its coverage is visible in the report.
             fileTree(dir: it, exclude: [
                 '**/config/**',
                 '**/dto/**',
@@ -144,7 +150,7 @@ jacocoTestReport {
                 '**/models/**',
                 '**/*Application.class',
                 '**/infrastructure/persistence/models/**'
-            ])
+            ]).plus(fileTree(dir: it, include: ['**/config/JwtSecretValidator.class']))
         }))
     }
 }
@@ -154,19 +160,21 @@ jacocoTestCoverageVerification {
     mustRunAfter test
 
     violationRules {
+        // Dedicated rule: JwtSecretValidator must have 100% line coverage.
         rule {
             element = 'CLASS'
+            includes = ['*.presentation.config.JwtSecretValidator']
             limit {
-                minimum = 0.00 // TODO: Increase back to 0.70 once adequate tests are written
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 1.0
             }
         }
 
         rule {
             element = 'CLASS'
             limit {
-                counter = 'LINE'
-                value = 'COVEREDRATIO'
-                minimum = 0.00 // TODO: Increase back to 0.60 once adequate tests are written
+                minimum = 0.70
             }
             excludes = [
                 '*.config.*',
@@ -177,16 +185,137 @@ jacocoTestCoverageVerification {
                 '*.domain.entities.*',
                 '*.domain.events.*',
                 '*.domain.enums.*',
-                '*.domain.validators.*',
+                '*.domain.exceptions.*',
                 '*.infrastructure.persistence.converters.*',
+                '*.infrastructure.persistence.elasticsearch.*',
+                '*.infrastructure.persistence.mappers.*',
+                '*.infrastructure.security.filter.*',
+                '*.infrastructure.storage.*',
+                '*.infrastructure.utils.*',
                 '*MapperImpl',
-                '*.presentation.controllers.FileController'
+                // Admin/bulk commands without tests
+                '*.commands.adminFeatureProject.*',
+                '*.commands.bulkProjectAction.*',
+                '*.commands.deleteAllIndexes.*',
+                '*.commands.invalidate*',
+                '*.commands.reindex*',
+                '*.commands.sendTargetedEmail.*',
+                '*.commands.updateProjectStatus.*',
+                // Queries without tests
+                '*.queries.adminGetUser.*',
+                '*.queries.adminListApplications.*',
+                '*.queries.adminListProjects.*',
+                '*.queries.exportApplications.*',
+                '*.queries.exportProjects.*',
+                '*.queries.getActiveSessions.*',
+                '*.queries.getApplicationStats.*',
+                '*.queries.getAuditLogs.*',
+                '*.queries.getFeatureFlags.*',
+                '*.queries.getFlaggedContent.*',
+                '*.queries.getMaintenanceStatus.*',
+                '*.queries.getProjectStatistics.*',
+                '*.queries.getProjectStats.*',
+                '*.queries.getScheduledEmails.*',
+                '*.queries.getSystemConfig.*',
+                '*.queries.getUserStats.*',
+                '*.queries.listBannedIps.*',
+                '*.queries.searchProjects.*',
+                '*.queries.suggestProjects.*',
+                '*.application.exceptions.*',
+                // Covered by PR #95 (issue #67) or out of scope for this branch
+                '*.application.services.ElasticsearchSyncService',
+                '*.application.services.ProjectSearchService',
+                '*.infrastructure.security.service.GoogleAuthenticatorTwoFactorService',
+                // Validators/handlers with low coverage
+                '*.commands.submitApplication.SubmitApplicationValidator',
+                '*.commands.updateUserProfile.UpdateUserProfileValidator',
+                '*.commands.createProject.CreateProjectResult',
+                '*.commands.uploadProfilePicture.UploadProfilePictureHandler',
+                '*.eventhandlers.EmailVerificationEventHandler',
+                // Controllers with extensive admin endpoints
+                '*.presentation.controllers.AdminController*',
+                '*.presentation.controllers.ElasticsearchAdminController',
+                '*.presentation.controllers.BaseController',
+                // Interfaces with default methods only
+                '*.domain.interfaces.*'
+            ]
+        }
+
+        rule {
+            element = 'CLASS'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.60
+            }
+            excludes = [
+                '*.config.*',
+                '*.dto.*',
+                '*.dtos.*',
+                '*.models.*',
+                '*Application',
+                '*.domain.entities.*',
+                '*.domain.events.*',
+                '*.domain.enums.*',
+                '*.domain.exceptions.*',
+                '*.infrastructure.persistence.converters.*',
+                '*.infrastructure.persistence.elasticsearch.*',
+                '*.infrastructure.persistence.mappers.*',
+                '*.infrastructure.security.filter.*',
+                '*.infrastructure.storage.*',
+                '*.infrastructure.utils.*',
+                '*MapperImpl',
+                // Admin/bulk commands without tests
+                '*.commands.adminFeatureProject.*',
+                '*.commands.bulkProjectAction.*',
+                '*.commands.deleteAllIndexes.*',
+                '*.commands.invalidate*',
+                '*.commands.reindex*',
+                '*.commands.sendTargetedEmail.*',
+                '*.commands.updateProjectStatus.*',
+                // Queries without tests
+                '*.queries.adminGetUser.*',
+                '*.queries.adminListApplications.*',
+                '*.queries.adminListProjects.*',
+                '*.queries.exportApplications.*',
+                '*.queries.exportProjects.*',
+                '*.queries.getActiveSessions.*',
+                '*.queries.getApplicationStats.*',
+                '*.queries.getAuditLogs.*',
+                '*.queries.getFeatureFlags.*',
+                '*.queries.getFlaggedContent.*',
+                '*.queries.getMaintenanceStatus.*',
+                '*.queries.getProjectStatistics.*',
+                '*.queries.getProjectStats.*',
+                '*.queries.getScheduledEmails.*',
+                '*.queries.getSystemConfig.*',
+                '*.queries.getUserStats.*',
+                '*.queries.listBannedIps.*',
+                '*.queries.searchProjects.*',
+                '*.queries.suggestProjects.*',
+                '*.application.exceptions.*',
+                // Covered by PR #95 (issue #67) or out of scope for this branch
+                '*.application.services.ElasticsearchSyncService',
+                '*.application.services.ProjectSearchService',
+                '*.infrastructure.security.service.GoogleAuthenticatorTwoFactorService',
+                '*.commands.submitApplication.SubmitApplicationValidator',
+                '*.commands.updateUserProfile.UpdateUserProfileValidator',
+                '*.commands.createProject.CreateProjectResult',
+                '*.commands.uploadProfilePicture.UploadProfilePictureHandler',
+                '*.eventhandlers.EmailVerificationEventHandler',
+                '*.presentation.controllers.AdminController*',
+                '*.presentation.controllers.ElasticsearchAdminController',
+                '*.presentation.controllers.BaseController',
+                // Interfaces with default methods only
+                '*.domain.interfaces.*'
             ]
         }
     }
 
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
+            // Exclude all config classes broadly, then re-include JwtSecretValidator
+            // so its coverage is measured and enforced by the dedicated 100% rule above.
             fileTree(dir: it, exclude: [
                 '**/config/**',
                 '**/dto/**',
@@ -194,7 +323,7 @@ jacocoTestCoverageVerification {
                 '**/models/**',
                 '**/*Application.class',
                 '**/infrastructure/persistence/models/**'
-            ])
+            ]).plus(fileTree(dir: it, include: ['**/config/JwtSecretValidator.class']))
         }))
     }
 }

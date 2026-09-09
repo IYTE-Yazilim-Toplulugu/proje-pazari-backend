@@ -5,11 +5,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -64,6 +66,7 @@ class GetUserProfileHandlerTest {
         user.setFirstName("John");
         user.setLastName("Doe");
         user.setDescription("Developer");
+        user.setPreferredLanguage("en");
         user.setCreatedAt(LocalDateTime.of(2024, 1, 1, 0, 0));
 
         ProjectEntity project = new ProjectEntity();
@@ -84,34 +87,32 @@ class GetUserProfileHandlerTest {
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertNotNull(response.getData());
-        assertEquals(userId, response.getData().id());
+        assertEquals(userId, response.getData().userId());
         assertEquals("test@std.iyte.edu.tr", response.getData().email());
         assertEquals("John", response.getData().firstName());
         assertEquals("Doe", response.getData().lastName());
         assertEquals("John Doe", response.getData().fullName());
+        assertEquals("en", response.getData().preferredLanguage());
         assertEquals(1, response.getData().projectsCreated());
         assertEquals(2, response.getData().applicationsSubmitted());
         assertEquals(1, response.getData().projects().size());
-        assertEquals("Test Project", response.getData().projects().get(0).title());
+        assertEquals("Test Project", response.getData().projects().get(0).projectName());
         assertEquals("USER", response.getData().role());
     }
 
     @Test
-    @DisplayName("Should return not found when user does not exist")
-    void shouldReturnNotFound_whenUserDoesNotExist() {
+    @DisplayName("Should throw UserNotFoundException when user does not exist")
+    void shouldThrowNotFound_whenUserDoesNotExist() {
         // Given
         String userId = "nonexistent-user";
         GetUserProfileQuery query = new GetUserProfileQuery(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        // When
-        ApiResponse<UserProfileDTO> response = handler.handle(query);
-
-        // Then
-        assertEquals(ResponseCode.NOT_FOUND, response.getCode());
-        assertTrue(response.getMessage().contains("not found"));
-        assertNull(response.getData());
+        // When / Then
+        UserNotFoundException ex =
+                assertThrows(UserNotFoundException.class, () -> handler.handle(query));
+        assertEquals(ErrorCode.USER_NOT_FOUND, ex.getErrorCode());
         verify(projectRepository, never()).findByOwnerId(any());
     }
 

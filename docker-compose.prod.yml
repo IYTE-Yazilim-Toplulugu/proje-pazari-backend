@@ -1,0 +1,60 @@
+# Production overlay — use with:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Requires env var: ELASTIC_PASSWORD (see docs/DEPLOYMENT.md)
+
+services:
+  elasticsearch:
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -u \"elastic:$${ELASTIC_PASSWORD}\" -f http://localhost:9200/_cluster/health || exit 1"]
+    ports: []
+
+  kibana:
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD:?KIBANA_SYSTEM_PASSWORD is required}
+      - xpack.security.enabled=true
+    depends_on:
+      elasticsearch-setup:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:5601:5601" # intentional: localhost-only; use SSH tunnel for remote prod access
+
+  # No `profiles` key here is intentional: elasticsearch in docker-compose.yml also has no profile
+  # (it is always active), so elasticsearch-setup is correctly aligned with it.
+  elasticsearch-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    container_name: proje-pazari-elasticsearch-setup
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:?KIBANA_SYSTEM_PASSWORD is required}
+    command: >
+      /bin/sh -c '
+        curl -fsS -u "elastic:$${ELASTIC_PASSWORD}" \
+          -H "Content-Type: application/json" \
+          -X POST http://elasticsearch:9200/_security/user/kibana_system/_password \
+          -d "{\"password\":\"$${KIBANA_SYSTEM_PASSWORD}\"}"
+      '
+    networks:
+      - proje-pazari-network
+    restart: "no"
+
+  app:
+    image: ${APP_IMAGE:?APP_IMAGE is required}
+    environment:
+      SPRING_ELASTICSEARCH_USERNAME: elastic
+      SPRING_ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+
+  logstash:
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}

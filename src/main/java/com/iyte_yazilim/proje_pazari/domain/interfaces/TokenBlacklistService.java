@@ -7,4 +7,8 @@ public interface TokenBlacklistService {
     void blacklistToken(String token, Duration ttl);
 
     boolean isTokenBlacklisted(String token);
+
+    void blacklistUser(String email, Duration ttl);
+
+    boolean isUserBlacklisted(String email);
 }

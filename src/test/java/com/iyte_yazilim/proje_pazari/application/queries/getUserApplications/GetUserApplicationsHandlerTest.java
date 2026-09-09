@@ -7,11 +7,11 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedApplicationsResult;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -102,6 +102,7 @@ class GetUserApplicationsHandlerTest {
     @DisplayName("Should map application entity fields to ApplicationDto correctly")
     void shouldMapEntityToDto_correctly() {
         ProjectApplicationEntity app = buildApp(ApplicationStatus.PENDING);
+        app.setReviewMessage("Thanks for applying");
         Page<ProjectApplicationEntity> page = new PageImpl<>(List.of(app));
         when(applicationRepository.findWithFilters(
                         isNull(), isNull(), eq(user.getId()), any(Pageable.class)))
@@ -117,6 +118,7 @@ class GetUserApplicationsHandlerTest {
         assertEquals(user.getId(), dto.applicantId());
         assertEquals("Jane Doe", dto.applicantName());
         assertEquals(ApplicationStatus.PENDING, dto.status());
+        assertEquals("Thanks for applying", dto.reviewMessage());
     }
 
     private ProjectApplicationEntity buildApp(ApplicationStatus status) {

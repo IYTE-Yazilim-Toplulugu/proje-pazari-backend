@@ -213,7 +213,7 @@ Source  : RegisterUserHandler.handle()
 
 | Event | When incremented |
 |---|---|
-| `status=success` | User saved, verification email sent, `ApiResponse.created()` returned |
+| `status=success` | User saved, verification email sent, `ApiResponse.registeredNeedsVerification()` returned |
 | `status=failure` | Validation error, invalid IYTE email, duplicate email |
 
 **Example PromQL:**

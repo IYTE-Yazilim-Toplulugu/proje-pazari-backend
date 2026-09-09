@@ -1,16 +1,18 @@
 package com.iyte_yazilim.proje_pazari.domain.exceptions;
 
-public class UserNotFoundException extends RuntimeException {
+import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
+
+public class UserNotFoundException extends DomainException {
 
     public UserNotFoundException(String userId) {
-        super("User not found: " + userId);
+        super(ErrorCode.USER_NOT_FOUND, "User not found: " + userId);
     }
 
     /**
-     * Use this constructor when the lookup key must not be reflected in the API response to prevent
-     * user enumeration attacks (e.g., email-based lookups from public endpoints).
+     * Use this constructor when the lookup key must not be reflected in logs or responses to
+     * prevent user enumeration attacks (e.g., email-based lookups from public endpoints).
      */
     public UserNotFoundException() {
-        super("User not found");
+        super(ErrorCode.USER_NOT_FOUND, "User not found");
     }
 }
