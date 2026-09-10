@@ -146,7 +146,7 @@ class UserJourneyE2ETest {
 
     @Test
     @Order(6)
-    @DisplayName("E2E: User creates a project")
+    @DisplayName("E2E: User creates and opens a project")
     void step6_createProject() throws Exception {
         Map<String, Object> projectRequest =
                 Map.of(
@@ -170,6 +170,14 @@ class UserJourneyE2ETest {
         String projectResponse = projectResult.getResponse().getContentAsString();
         JsonNode projectBody = objectMapper.readTree(projectResponse);
         projectId = projectBody.get("data").get("projectId").asText();
+
+        mockMvc.perform(
+                        patch("/api/v1/projects/{projectId}/status", projectId)
+                                .header("Authorization", "Bearer " + jwtToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"newStatus\": \"OPEN\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.newStatus").value("OPEN"));
     }
 
     @Test
