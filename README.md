@@ -512,7 +512,9 @@ make coverage-verify # Verify coverage meets threshold (70%)
 
 - Use ULID for IDs (sortable UUIDs)
 - Always use `@Transactional` for write operations
-- Use Flyway or Liquibase for migrations (recommended for production)
+- Add deployed schema changes as immutable Flyway migrations
+- Production and staging run Flyway before Hibernate validates the schema
+- Follow the [existing-database baseline procedure](docs/DEPLOYMENT.md#existing-database-mandatory-explicit-v4-baseline) before the first Flyway-enabled production deploy
 
 ### Security
 

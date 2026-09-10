@@ -87,9 +87,9 @@ db-shell: ## Open PostgreSQL shell
 db-logs: ## View database logs
 	docker compose logs -f postgres
 
-db-migrate: ## Run database migrations (if using Flyway/Liquibase)
-	@echo "$(YELLOW)Running database migrations...$(NC)"
-	docker compose exec app ./gradlew flywayMigrate
+db-migrate: ## Run startup Flyway migrations, Hibernate validation, and wait for app health
+	@echo "$(YELLOW)Starting the authoritative Flyway + Hibernate validation workflow...$(NC)"
+	docker compose up -d --wait --wait-timeout 120 app
 
 db-reset: down-volumes dev ## Reset database (⚠️  deletes all data)
 	@echo "$(GREEN)Database reset complete$(NC)"
@@ -197,4 +197,3 @@ coverage-verify: ## Verify code coverage meets minimum threshold
 	./gradlew jacocoTestCoverageVerification
 
 quality: format format-check test coverage ## Run all quality checks (format, test, coverage)
-

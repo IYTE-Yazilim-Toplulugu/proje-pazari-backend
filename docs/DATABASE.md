@@ -210,7 +210,11 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/proje_pazari_db
 spring.datasource.username=yazilim
 spring.datasource.password=yazilim123
 spring.jpa.hibernate.ddl-auto=update
+spring.flyway.enabled=false
 ```
+
+Development retains Hibernate schema updates for the existing local workflow. Do not use this
+configuration for a deployed environment.
 
 ### Production
 
@@ -219,7 +223,22 @@ spring.datasource.url=${SPRING_DATASOURCE_URL}
 spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
 spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.defer-datasource-initialization=false
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+spring.flyway.validate-on-migrate=true
+spring.flyway.baseline-on-migrate=false
+spring.flyway.clean-disabled=true
+spring.sql.init.mode=never
 ```
+
+Production and staging apply the immutable scripts in `src/main/resources/db/migration` before
+Hibernate validates the resulting schema. Startup fails on a missing migration, checksum mismatch,
+or schema drift; Hibernate never mutates a deployed schema. See [DEPLOYMENT.md](DEPLOYMENT.md) for
+the mandatory backup-and-baseline procedure when adopting Flyway on an existing database.
+
+Add every deployed schema change as the next versioned migration. Never edit a migration that may
+already have run, and never enable automatic baselining.
 
 ---
 
