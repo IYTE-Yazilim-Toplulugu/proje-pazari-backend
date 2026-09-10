@@ -12,11 +12,22 @@ import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
@@ -104,6 +115,13 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
     @DisplayName("POST /api/v1/projects/{projectId}/applications")
     class SubmitApplicationTests {
 
+        private final ExecutorService requestExecutor = Executors.newFixedThreadPool(6);
+
+        @AfterEach
+        void stopRequestExecutor() {
+            requestExecutor.shutdownNow();
+        }
+
         @Test
         @DisplayName("1. Submit application to a project returns 201 CREATED")
         void submitApplication_returns201() throws Exception {
@@ -160,7 +178,170 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                             post(submitApplicationUrl(projectId))
                                     .header("Authorization", "Bearer " + applicantToken)
                                     .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isConflict());
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.errorCode").value("APPLICATION_ALREADY_EXISTS"));
+        }
+
+        @Test
+        @DisplayName("Project owner cannot apply to their own project")
+        void submitApplication_asProjectOwner_returns403WithStableCode() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + ownerToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.errorCode").value("SELF_APPLICATION_NOT_ALLOWED"));
+
+            assertThat(applicationRepository.findByProjectId(projectId)).isEmpty();
+        }
+
+        @ParameterizedTest(name = "status {0}")
+        @EnumSource(
+                value = ProjectStatus.class,
+                names = {"DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"})
+        @DisplayName("Only OPEN projects accept applications")
+        void submitApplication_toNonOpenProject_returns409WithStableCode(ProjectStatus status)
+                throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            var project = projectRepository.findById(projectId).orElseThrow();
+            project.setStatus(status);
+            projectRepository.saveAndFlush(project);
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.errorCode").value("PROJECT_NOT_OPEN"));
+
+            assertThat(applicationRepository.findByProjectId(projectId)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Expired projects reject applications")
+        void submitApplication_afterDeadline_returns409WithStableCode() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            var project = projectRepository.findById(projectId).orElseThrow();
+            project.setDeadline(LocalDateTime.now().minusMinutes(1));
+            projectRepository.saveAndFlush(project);
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isConflict())
+                    .andExpect(
+                            jsonPath("$.errorCode").value("PROJECT_APPLICATION_DEADLINE_PASSED"));
+
+            assertThat(applicationRepository.findByProjectId(projectId)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Full projects reject applications")
+        void submitApplication_toFullProject_returns409WithStableCode() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            var project = projectRepository.findById(projectId).orElseThrow();
+            project.setCurrentTeamSize(project.getMaxTeamSize());
+            projectRepository.saveAndFlush(project);
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.errorCode").value("PROJECT_FULL"));
+
+            assertThat(applicationRepository.findByProjectId(projectId)).isEmpty();
+        }
+
+        @ParameterizedTest(name = "existing status {0}")
+        @EnumSource(
+                value = ApplicationStatus.class,
+                names = {"WITHDRAWN", "REJECTED"})
+        @DisplayName("Terminal applications do not permit reapplication")
+        void submitApplication_afterTerminalApplication_returns409WithStableCode(
+                ApplicationStatus terminalStatus) throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated());
+            var existing = applicationRepository.findByProjectId(projectId).getFirst();
+            existing.setStatus(terminalStatus);
+            applicationRepository.saveAndFlush(existing);
+
+            mockMvc.perform(
+                            post(submitApplicationUrl(projectId))
+                                    .header("Authorization", "Bearer " + applicantToken)
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.errorCode").value("APPLICATION_ALREADY_EXISTS"));
+
+            assertThat(applicationRepository.findByProjectId(projectId)).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Concurrent duplicate submissions create exactly one application")
+        void submitApplication_concurrently_isDeterministic() throws Exception {
+            String ownerToken = createProjectOwnerAndGetToken();
+            String projectId = createProjectAndGetId(ownerToken);
+            String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
+            int attemptCount = 6;
+            CountDownLatch ready = new CountDownLatch(attemptCount);
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<MvcResult>> requests = new ArrayList<>();
+
+            for (int attempt = 0; attempt < attemptCount; attempt++) {
+                requests.add(
+                        requestExecutor.submit(
+                                () -> {
+                                    ready.countDown();
+                                    start.await();
+                                    return mockMvc.perform(
+                                                    post(submitApplicationUrl(projectId))
+                                                            .header(
+                                                                    "Authorization",
+                                                                    "Bearer " + applicantToken)
+                                                            .contentType(
+                                                                    MediaType.APPLICATION_JSON))
+                                            .andReturn();
+                                }));
+            }
+
+            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            List<MvcResult> results = new ArrayList<>();
+            for (Future<MvcResult> request : requests) {
+                results.add(request.get(45, TimeUnit.SECONDS));
+            }
+
+            assertThat(results)
+                    .extracting(result -> result.getResponse().getStatus())
+                    .containsExactlyInAnyOrder(201, 409, 409, 409, 409, 409);
+            for (MvcResult result : results) {
+                if (result.getResponse().getStatus() == 409) {
+                    assertThat(
+                                    objectMapper
+                                            .readTree(result.getResponse().getContentAsString())
+                                            .get("errorCode")
+                                            .asText())
+                            .isEqualTo("APPLICATION_ALREADY_EXISTS");
+                }
+            }
+            assertThat(applicationRepository.findByProjectId(projectId)).hasSize(1);
         }
 
         @Test

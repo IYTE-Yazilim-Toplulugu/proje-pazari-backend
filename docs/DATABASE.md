@@ -132,21 +132,21 @@ Stores project applications from users.
 |--------|------|-------------|-------------|
 | `id` | VARCHAR(26) | PRIMARY KEY | ULID identifier |
 | `project_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Reference to projects.id |
-| `applicant_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Reference to users.id |
+| `user_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Reference to users.id |
 | `status` | VARCHAR(50) | DEFAULT 'PENDING' | Application status |
-| `message` | TEXT | | Application message |
-| `response_message` | TEXT | | Owner's response |
+| `review_message` | TEXT | | Owner's review message |
 | `created_at` | TIMESTAMP | | Creation timestamp |
 | `updated_at` | TIMESTAMP | | Last update timestamp |
 
 **Indexes:**
 - `project_applications_pkey` - Primary key on `id`
-- `project_applications_project_id_idx` - Index on `project_id`
-- `project_applications_applicant_id_idx` - Index on `applicant_id`
+- `idx_proj_apps_project_id` - Index on `project_id`
+- `idx_proj_apps_user_id` - Index on `user_id`
+- `uk_project_applications_project_user` - Unique constraint on (`project_id`, `user_id`), enforcing one application per user/project pair regardless of application status
 
 **Foreign Keys:**
 - `project_applications_project_id_fkey` → `projects(id)` ON DELETE CASCADE
-- `project_applications_applicant_id_fkey` → `users(id)` ON DELETE CASCADE
+- `project_applications_user_id_fkey` → `users(id)` ON DELETE CASCADE
 
 ---
 
