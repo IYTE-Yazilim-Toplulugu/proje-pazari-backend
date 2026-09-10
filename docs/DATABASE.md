@@ -55,6 +55,14 @@ erDiagram
         timestamp updated_at
     }
 
+    APPLICATION_MESSAGES {
+        varchar(26) id PK
+        varchar(26) application_id FK
+        varchar(26) sender_id FK
+        text body
+        timestamp created_at
+    }
+
     PROJECT_REQUIRED_SKILLS {
         varchar(26) project_id FK
         varchar(100) skill
@@ -63,6 +71,8 @@ erDiagram
     USERS ||--o{ PROJECTS : "owns"
     USERS ||--o{ PROJECT_APPLICATIONS : "applies"
     PROJECTS ||--o{ PROJECT_APPLICATIONS : "has"
+    PROJECT_APPLICATIONS ||--o{ APPLICATION_MESSAGES : "contains"
+    USERS ||--o{ APPLICATION_MESSAGES : "sends"
     PROJECTS ||--o{ PROJECT_REQUIRED_SKILLS : "requires"
 ```
 
@@ -147,6 +157,34 @@ Stores project applications from users.
 **Foreign Keys:**
 - `project_applications_project_id_fkey` → `projects(id)` ON DELETE CASCADE
 - `project_applications_applicant_id_fkey` → `users(id)` ON DELETE CASCADE
+
+---
+
+### application_messages
+
+Stores the bounded plain-text thread attached to one project application. Only the applicant and
+the corresponding project owner may access the thread through the API.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | VARCHAR(26) | PRIMARY KEY | Message ULID |
+| `application_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Parent application/thread identifier |
+| `sender_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Authenticated applicant or project owner |
+| `body` | TEXT | NOT NULL, 1-2000 characters, not blank | Plain-text message body |
+| `created_at` | TIMESTAMP | NOT NULL | Creation timestamp |
+
+**Indexes:**
+- `idx_application_messages_thread_order` - Deterministic chronological lookup on
+  `(application_id, created_at, id)`
+
+**Foreign Keys:**
+- `fk_application_messages_application` → `project_applications(id)` ON DELETE CASCADE. Deleting
+  the application deletes its entire thread.
+- `fk_application_messages_sender` → `users(id)` ON DELETE RESTRICT. A referenced sender cannot be
+  deleted while the parent application and its messages remain.
+
+The table is introduced by `V6__add_application_messages.sql`; production rollout requires the
+Flyway foundation from #166 and the V5 application-uniqueness migration from #163 first.
 
 ---
 

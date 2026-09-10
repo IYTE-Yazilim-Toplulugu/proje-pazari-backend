@@ -9,6 +9,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ApplicationMessageRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
@@ -75,6 +76,8 @@ public abstract class IntegrationTestBase {
 
     @Autowired private ProjectApplicationRepository projectApplicationRepository;
 
+    @Autowired private ApplicationMessageRepository applicationMessageRepository;
+
     @Autowired private ProjectRepository projectRepository;
 
     @Autowired protected UserRepository userRepository;
@@ -83,6 +86,7 @@ public abstract class IntegrationTestBase {
     void setUp() {
         refreshTokenRepository.deleteAll();
         emailVerificationRepository.deleteAll();
+        applicationMessageRepository.deleteAll();
         projectApplicationRepository.deleteAll();
         projectRepository.deleteAll();
         userRepository.deleteAll();

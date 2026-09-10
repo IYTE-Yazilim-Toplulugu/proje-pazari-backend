@@ -1,11 +1,15 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import com.iyte_yazilim.proje_pazari.application.commands.reviewApplication.ReviewApplicationCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.sendApplicationMessage.SendApplicationMessageCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.submitApplication.SubmitApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.withdrawApplication.WithdrawApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationDto;
+import com.iyte_yazilim.proje_pazari.application.dtos.ApplicationMessageDto;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedApplicationsResult;
+import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
+import com.iyte_yazilim.proje_pazari.application.queries.getApplicationMessages.GetApplicationMessagesQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getProjectApplications.GetProjectApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserApplications.GetUserApplicationsQuery;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
@@ -18,7 +22,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
@@ -77,6 +85,71 @@ public class ApplicationController extends BaseController {
             Authentication auth) {
         String requesterId = getCurrentUserId(auth);
         return send(new GetProjectApplicationsQuery(projectId, requesterId, status));
+    }
+
+    @GetMapping("/api/v1/applications/{applicationId}/messages")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "List messages for an application thread",
+            description =
+                    "Available only to the applicant and project owner. Results are ordered oldest"
+                            + " first by creation time and message ID. Page size is limited to 100.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Messages retrieved successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Invalid pagination parameters"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "Authenticated user is not an application participant"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "Application not found")
+            })
+    public ResponseEntity<ApiResponse<PagedResponse<ApplicationMessageDto>>> getMessages(
+            @PathVariable String applicationId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            Authentication auth) {
+        return send(
+                new GetApplicationMessagesQuery(applicationId, getCurrentUserId(auth), page, size));
+    }
+
+    @PostMapping("/api/v1/applications/{applicationId}/messages")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+            summary = "Send a plain-text application message",
+            description =
+                    "Available only to the applicant and project owner. The authenticated user is"
+                            + " always recorded as sender. Message bodies are limited to 2,000"
+                            + " characters.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "201",
+                        description = "Message sent successfully"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "Blank or over-limit message body"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "Authenticated user is not an application participant"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "Application not found")
+            })
+    public ResponseEntity<ApiResponse<ApplicationMessageDto>> sendMessage(
+            @PathVariable String applicationId,
+            @RequestBody @Valid SendApplicationMessageRequest request,
+            Authentication auth) {
+        return send(
+                new SendApplicationMessageCommand(
+                        applicationId, getCurrentUserId(auth), request.body()));
     }
 
     @PutMapping("/api/v1/applications/{applicationId}/review")
@@ -173,4 +246,16 @@ public class ApplicationController extends BaseController {
                             description = "Optional message persisted with the review",
                             example = "Great experience!")
                     String reviewMessage) {}
+
+    @Schema(
+            name = "SendApplicationMessageRequest",
+            description = "Plain-text application message request")
+    public record SendApplicationMessageRequest(
+            @Schema(
+                            description = "Plain-text message body",
+                            example = "Could you share more details about the project schedule?",
+                            maxLength = 2000)
+                    @NotBlank(message = "Message body is required")
+                    @Size(max = 2000, message = "Message body must not exceed 2000 characters")
+                    String body) {}
 }
