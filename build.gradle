@@ -101,6 +101,8 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     // Database
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly 'org.postgresql:postgresql'
     testRuntimeOnly 'com.h2database:h2'
 
