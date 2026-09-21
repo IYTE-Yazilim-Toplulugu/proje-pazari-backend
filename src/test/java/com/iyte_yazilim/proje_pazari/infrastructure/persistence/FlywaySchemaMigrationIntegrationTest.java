@@ -8,6 +8,8 @@ import java.util.List;
 import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
+import org.flywaydb.core.api.MigrationInfo;
+import org.flywaydb.core.api.MigrationVersion;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -62,8 +64,9 @@ class FlywaySchemaMigrationIntegrationTest {
     @Autowired private DataSource dataSource;
 
     @Test
-    void emptyPostgresMigratesThroughV4BeforeHibernateValidation() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
+    void emptyPostgresMigratesThroughLatestVersionBeforeHibernateValidation() {
+        assertThat(flyway.info().pending()).isEmpty();
+        assertThat(flyway.info().current().getVersion()).isEqualTo(latestMigrationVersion());
 
         List<String> tables =
                 new JdbcTemplate(dataSource)
@@ -97,8 +100,8 @@ class FlywaySchemaMigrationIntegrationTest {
     }
 
     @Test
-    void existingV4SchemaRequiresAnExplicitBaseline() {
-        String schema = "existing_v4_copy";
+    void existingSchemaRequiresAnExplicitBaseline() {
+        String schema = "existing_schema_copy";
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
         try {
             Flyway schemaCopy = flywayForSchema(schema, false);
@@ -110,12 +113,12 @@ class FlywaySchemaMigrationIntegrationTest {
                     .isInstanceOf(FlywayException.class)
                     .hasMessageContaining("non-empty schema");
 
-            Flyway explicitV4Baseline = flywayForSchema(schema, false);
-            explicitV4Baseline.baseline();
+            Flyway explicitBaseline = flywayForSchema(schema, false);
+            explicitBaseline.baseline();
 
-            assertThat(explicitV4Baseline.info().current().getVersion().getVersion())
-                    .isEqualTo("4");
-            assertThat(explicitV4Baseline.validateWithResult().validationSuccessful).isTrue();
+            assertThat(explicitBaseline.info().current().getVersion())
+                    .isEqualTo(latestMigrationVersion());
+            assertThat(explicitBaseline.validateWithResult().validationSuccessful).isTrue();
         } finally {
             jdbc.execute("DROP SCHEMA IF EXISTS " + schema + " CASCADE");
         }
@@ -150,7 +153,13 @@ class FlywaySchemaMigrationIntegrationTest {
                 .locations("classpath:db/migration")
                 .cleanDisabled(true)
                 .baselineOnMigrate(baselineOnMigrate)
-                .baselineVersion("4")
+                .baselineVersion(latestMigrationVersion())
                 .load();
+    }
+
+    /** Highest resolved version on the classpath, so adding a migration keeps this test valid. */
+    private MigrationVersion latestMigrationVersion() {
+        MigrationInfo[] all = flyway.info().all();
+        return all[all.length - 1].getVersion();
     }
 }
