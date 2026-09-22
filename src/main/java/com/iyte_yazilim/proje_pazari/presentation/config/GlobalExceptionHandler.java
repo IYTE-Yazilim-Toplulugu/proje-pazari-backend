@@ -5,6 +5,7 @@ import com.iyte_yazilim.proje_pazari.application.common.ErrorCode;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.DomainException;
 import jakarta.validation.ConstraintViolationException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -68,7 +69,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
-        log.warn("Request body validation failed: {}", ex.getMessage());
+        List<String> fields =
+                ex.getBindingResult().getFieldErrors().stream()
+                        .map(error -> error.getField())
+                        .distinct()
+                        .toList();
+        log.warn("Request body validation failed for fields: {}", fields);
         return respond(ErrorCode.VALIDATION_ERROR);
     }
 
@@ -101,7 +107,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException ex) {
-        log.warn("Request body not readable: {}", ex.getMessage());
+        log.warn("Request body not readable");
         return respond(ErrorCode.MALFORMED_REQUEST);
     }
 
@@ -122,14 +128,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(
             ConstraintViolationException ex) {
-        log.warn("Constraint violation: {}", ex.getMessage());
+        List<String> paths =
+                ex.getConstraintViolations().stream()
+                        .map(violation -> violation.getPropertyPath().toString())
+                        .distinct()
+                        .toList();
+        log.warn("Constraint validation failed for paths: {}", paths);
         return respond(ErrorCode.VALIDATION_ERROR);
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ApiResponse<Void>> handleHandlerMethodValidationException(
             HandlerMethodValidationException ex) {
-        log.warn("Handler method validation error: {}", ex.getMessage());
+        log.warn("Handler method validation failed");
         return respond(ErrorCode.VALIDATION_ERROR);
     }
 
