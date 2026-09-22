@@ -17,7 +17,8 @@ This document covers deployment options for the Proje Pazarı Backend.
 | `SPRING_DATASOURCE_USERNAME` | Database username | Yes | — | — |
 | `SPRING_DATASOURCE_PASSWORD` | Database password | Yes | — | — |
 | `APP_IMAGE` | Backend Docker image tag used by `docker-compose.prod.yml` overlay | Prod compose | — | Compose config fails |
-| `SPRING_JPA_HIBERNATE_DDL_AUTO` | DDL handling strategy | No | `update` | — |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | Production DDL handling strategy | No | `validate` | Startup fails on schema drift |
+| `SPRING_FLYWAY_ENABLED` | Run versioned migrations before JPA starts | No | `true` in prod/staging | — |
 | `SPRING_JPA_SHOW_SQL` | Log SQL statements | No | `false` | — |
 | `APP_UPLOAD_DIR` | File upload directory | No | `./uploads` | — |
 
@@ -119,7 +120,9 @@ Before deploying to production, ensure:
 
 - [ ] JWT_SECRET is a secure, random value
 - [ ] Database credentials are properly secured
-- [ ] `ddl-auto` is set to `validate` or `none`
+- [ ] A verified, recoverable PostgreSQL backup exists
+- [ ] Flyway is enabled and `ddl-auto` is exactly `validate`
+- [ ] Existing databases have completed the explicit V4 baseline procedure below
 - [ ] Logging is configured appropriately
 - [ ] Health endpoints are accessible
 - [ ] SSL/TLS is configured
@@ -138,6 +141,15 @@ spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 # JPA - Don't auto-update schema in production
 spring.jpa.hibernate.ddl-auto=validate
 spring.jpa.show-sql=false
+
+# Flyway - migrate first, never infer an existing schema baseline
+spring.flyway.enabled=true
+spring.flyway.validate-on-migrate=true
+spring.flyway.baseline-on-migrate=false
+spring.flyway.clean-disabled=true
+
+# Never load development sample data
+spring.sql.init.mode=never
 
 # Security
 jwt.secret=${JWT_SECRET}
@@ -214,41 +226,90 @@ git push heroku main
 
 ## Database Migration
 
-### Current Setup
+### Authoritative startup sequence
 
-The application uses Hibernate's `ddl-auto=update` for development, which automatically updates the schema based on entity changes.
+Production and staging use one schema-management path:
 
-> [!WARNING]
-> For production, use `ddl-auto=validate` or `ddl-auto=none` and manage migrations manually.
+1. Spring Boot validates migration order and checksums and applies pending Flyway migrations.
+2. Startup stops immediately if migration or validation fails.
+3. Hibernate starts with `ddl-auto=validate` and checks the resulting schema.
+4. `data.sql` remains disabled, so sample users and projects cannot reach these environments.
 
-### Recommended: Flyway Migration
+Migration files are immutable after release and live in `src/main/resources/db/migration`. V1 is
+the pre-V2 relational baseline; V2 adds project optimistic locking, V3 adds application review
+messages, and V4 adds the failed-index retry queue.
 
-For production, consider adding Flyway:
+For a new database, start the application normally or run:
 
-1. Add dependency:
-```gradle
-implementation 'org.flywaydb:flyway-core'
-implementation 'org.flywaydb:flyway-database-postgresql'
+```bash
+make db-migrate
 ```
 
-2. Create migration files in `src/main/resources/db/migration/`:
-```sql
--- V1__initial_schema.sql
-CREATE TABLE users (
-    id VARCHAR(26) PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    first_name VARCHAR(100),
-    last_name VARCHAR(100),
-    ...
-);
-```
+The Make target recreates the Compose app service and waits for health. It therefore uses the exact
+same Flyway-then-Hibernate sequence as a deployment. It does not invoke a separate migration tool
+with different settings.
 
-3. Configure Flyway:
-```properties
-spring.flyway.enabled=true
-spring.flyway.baseline-on-migrate=true
-```
+### Existing database: mandatory explicit V4 baseline
+
+> [!CAUTION]
+> Never point the first Flyway-enabled build at an existing production database until this
+> procedure has passed on a restored schema copy. `baseline-on-migrate` stays disabled in every
+> committed runtime configuration.
+
+1. Create and verify a recoverable backup:
+
+   ```bash
+   # Use a libpq URL here (postgresql://...), not Spring's jdbc:postgresql:// URL.
+   pg_dump --format=custom --file=proje-pazari-before-flyway.dump \
+     --dbname="$BACKUP_DATABASE_URL"
+   pg_restore --list proje-pazari-before-flyway.dump >/dev/null
+   ```
+
+2. Restore the backup to an isolated PostgreSQL instance. Compare its tables, columns, types,
+   constraints, and indexes with the schema produced by V1-V4. Repair any drift explicitly; do not
+   use Hibernate `update`.
+3. Only when the copy exactly matches V4, explicitly mark that copy as already being at V4. Use
+   the same Flyway major version as the application and credentials for the restored copy:
+
+   ```bash
+   flyway \
+     -url="$BASELINE_JDBC_URL" \
+     -user="$BASELINE_DB_USER" \
+     -password="$BASELINE_DB_PASSWORD" \
+     -locations="filesystem:src/main/resources/db/migration" \
+     -baselineVersion=4 \
+     -baselineDescription="existing schema through V4" \
+     baseline
+
+   flyway \
+     -url="$BASELINE_JDBC_URL" \
+     -user="$BASELINE_DB_USER" \
+     -password="$BASELINE_DB_PASSWORD" \
+     -locations="filesystem:src/main/resources/db/migration" \
+     validate
+   ```
+
+4. Start the application against the restored copy with the production profile. Confirm that
+   Flyway validation succeeds, Hibernate schema validation succeeds, and the application becomes
+   healthy.
+5. Stop writes to production, take another verified backup, and repeat the explicit V4 `baseline`
+   command against production. Deploy only after `flyway validate` succeeds there.
+
+The V4 baseline tells Flyway that the existing schema already contains the effects represented by
+V1-V4. Never baseline a new or empty database; Flyway must create those schemas by applying V1-V4.
+Normal application startup deliberately does not baseline a non-empty untracked database and will
+fail instead.
+
+### Failure and rollback policy
+
+- Migration and checksum failures prevent the application from starting. Investigate before
+  retrying; do not enable Hibernate `update` or `baseline-on-migrate` as a shortcut.
+- Versioned migrations are forward-only and immutable after release. Correct a released schema with
+  a new migration instead of editing an applied file.
+- If a deployment migration cannot be completed safely, keep the application stopped and restore
+  the verified pre-deployment backup. Test the corrective migration on a restored copy first.
+- Use Flyway `repair` only as part of a reviewed recovery procedure after the database state and
+  migration history have both been audited. It is not a rollback mechanism.
 
 ---
 
