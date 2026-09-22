@@ -7,11 +7,12 @@ import java.util.List;
 
 @Schema(description = "Project detail data transfer object")
 public record ProjectDetailDto(
-        @Schema(description = "Project ID", example = "01ARZ3NDEKTSV4RRFFQ69G5FAV") String id,
+        @Schema(description = "Project ID", example = "01ARZ3NDEKTSV4RRFFQ69G5FAV")
+                String projectId,
         @Schema(description = "Owner ID", example = "01ARZ3NDEKTSV4RRFFQ69G5FAV") String ownerId,
         @Schema(description = "Owner name", example = "Jane Smith") String ownerName,
         @Schema(description = "Owner email", example = "janesmith@iyte.edu.tr") String ownerEmail,
-        @Schema(description = "Project title", example = "AI-Powered Chatbot") String title,
+        @Schema(description = "Project name", example = "AI-Powered Chatbot") String projectName,
         @Schema(description = "Project description", example = "A chatbot that uses AI...")
                 String description,
         @Schema(description = "Project summary", example = "Brief summary...") String summary,

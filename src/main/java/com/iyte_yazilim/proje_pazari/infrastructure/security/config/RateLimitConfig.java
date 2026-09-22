@@ -1,38 +1,37 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.security.config;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import java.time.Duration;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/** Rate-limit policies keyed to URL path prefixes. */
 @Configuration
 public class RateLimitConfig {
 
-    private final Cache<String, Bucket> cache =
-            CacheBuilder.newBuilder()
-                    // Evict buckets that have not been accessed for 15 minutes
-                    .expireAfterAccess(15, TimeUnit.MINUTES)
-                    .build();
+    public enum Policy {
+        LOGIN("/api/v1/auth/login", 5, 60),
+        REGISTER("/api/v1/auth/register", 5, 60),
+        FORGOT_PASSWORD("/api/v1/auth/forgot-password", 3, 60),
+        RESET_PASSWORD("/api/v1/auth/reset-password", 5, 60),
+        RESEND_VERIFICATION("/api/v1/auth/resend-verification", 3, 60),
+        REFRESH("/api/v1/auth/refresh", 30, 60),
+        PROFILE_PICTURE("/api/v1/users/me/profile-picture", 10, 3600);
 
-    private final ConcurrentMap<String, Bucket> ipBuckets = cache.asMap();
+        public final String pathPrefix;
+        public final long limit;
+        public final long windowSeconds;
 
-    @Bean
-    public ConcurrentMap<String, Bucket> rateLimitBuckets() {
-        return ipBuckets;
+        Policy(String pathPrefix, long limit, long windowSeconds) {
+            this.pathPrefix = pathPrefix;
+            this.limit = limit;
+            this.windowSeconds = windowSeconds;
+        }
     }
 
-    public Bucket resolveBucket(String ip) {
-        return ipBuckets.computeIfAbsent(ip, this::createNewBucket);
-    }
-
-    private Bucket createNewBucket(String ip) {
-        Bandwidth limit =
-                Bandwidth.builder().capacity(5).refillIntervally(5, Duration.ofMinutes(1)).build();
-        return Bucket.builder().addLimit(limit).build();
+    public static Policy matchPolicy(String path) {
+        for (Policy p : Policy.values()) {
+            if (path.startsWith(p.pathPrefix)) {
+                return p;
+            }
+        }
+        return null;
     }
 }

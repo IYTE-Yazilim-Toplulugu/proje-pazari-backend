@@ -3,7 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.behaviors;
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.application.common.RequestHandlerDelegate;
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IValidator;
+import com.iyte_yazilim.proje_pazari.domain.validators.IValidator;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collections;

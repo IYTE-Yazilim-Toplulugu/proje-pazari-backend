@@ -1,8 +1,5 @@
 package com.iyte_yazilim.proje_pazari.domain.events;
 
-import lombok.Getter;
-import lombok.Setter;
-
 /**
  * Base class for domain events in the event-driven architecture.
  *
@@ -23,8 +20,6 @@ import lombok.Setter;
  * @version 1.0
  * @since 2024-01-01
  */
-@Getter
-@Setter
 public class DomainEvent {
 
     /** Type of event that occurred (e.g., "USER_REGISTERED", "PROJECT_CREATED"). */
@@ -90,5 +85,37 @@ public class DomainEvent {
         result = 31 * result + entityType.hashCode();
         result = 31 * result + timestamp.hashCode();
         return result;
+    }
+
+    public String getEventType() {
+        return this.eventType;
+    }
+
+    public String getEntityId() {
+        return this.entityId;
+    }
+
+    public String getEntityType() {
+        return this.entityType;
+    }
+
+    public String getTimestamp() {
+        return this.timestamp;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
+
+    public void setEntityId(String entityId) {
+        this.entityId = entityId;
+    }
+
+    public void setEntityType(String entityType) {
+        this.entityType = entityType;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
 }

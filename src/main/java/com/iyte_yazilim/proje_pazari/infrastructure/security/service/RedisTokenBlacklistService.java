@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 public class RedisTokenBlacklistService implements TokenBlacklistService {
 
     private static final String BLACKLIST_PREFIX = "token:blacklist:";
+    private static final String USER_BLACKLIST_PREFIX = "user:blacklist:";
     private static final Duration DEFAULT_TTL = Duration.ofHours(24);
 
     private final StringRedisTemplate redisTemplate;
@@ -18,17 +19,26 @@ public class RedisTokenBlacklistService implements TokenBlacklistService {
     @Override
     public void blacklistToken(String token, Duration ttl) {
         String key = BLACKLIST_PREFIX + token;
-
-        if (ttl != null && !ttl.isNegative() && !ttl.isZero()) {
-            redisTemplate.opsForValue().set(key, "blacklisted", ttl);
-        } else {
-            redisTemplate.opsForValue().set(key, "blacklisted", DEFAULT_TTL);
-        }
+        Duration effective =
+                (ttl != null && !ttl.isNegative() && !ttl.isZero()) ? ttl : DEFAULT_TTL;
+        redisTemplate.opsForValue().set(key, "blacklisted", effective);
     }
 
     @Override
     public boolean isTokenBlacklisted(String token) {
-        String key = BLACKLIST_PREFIX + token;
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + token));
+    }
+
+    @Override
+    public void blacklistUser(String email, Duration ttl) {
+        String key = USER_BLACKLIST_PREFIX + email;
+        Duration effective =
+                (ttl != null && !ttl.isNegative() && !ttl.isZero()) ? ttl : DEFAULT_TTL;
+        redisTemplate.opsForValue().set(key, "blacklisted", effective);
+    }
+
+    @Override
+    public boolean isUserBlacklisted(String email) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(USER_BLACKLIST_PREFIX + email));
     }
 }

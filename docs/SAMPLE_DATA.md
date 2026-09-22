@@ -1,6 +1,8 @@
 # Sample Data for Testing
 
-This directory contains sample data that is automatically loaded when the application starts.
+This directory contains development sample data that is loaded by the default local profile when
+the application starts. Production and staging explicitly set `spring.sql.init.mode=never`, so the
+sample accounts, credentials, and projects cannot be initialized there.
 
 ## 📊 Sample Data Overview
 
@@ -151,7 +153,8 @@ DELETE FROM users;
 
 ## 📝 Notes
 
-- Data is loaded using `data.sql` script
+- Data is loaded from `data.sql` only by the default development configuration
+- Production and staging must keep `spring.sql.init.mode=never`
 - BCrypt password hashing is used (all passwords: `Password123!`)
 - ULIDs are used for unique IDs
 - Data includes Turkish and English content for i18n testing
@@ -160,5 +163,5 @@ DELETE FROM users;
 
 ## 🔐 Security Note
 
-**⚠️ IMPORTANT:** These are sample credentials for development/testing only. 
+**⚠️ IMPORTANT:** These are sample credentials for development/testing only.
 **NEVER use these credentials in production!**

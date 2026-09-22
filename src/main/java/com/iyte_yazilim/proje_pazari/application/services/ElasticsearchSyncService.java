@@ -11,7 +11,6 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEn
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserDocument;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import com.iyte_yazilim.proje_pazari.infrastructure.utils.NameUtils;
-import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -22,7 +21,6 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -39,21 +37,6 @@ public class ElasticsearchSyncService {
     private final ProjectDocumentMapper mapper;
     private final ElasticsearchOperations elasticsearchOperations;
 
-    @PostConstruct
-    public void initializeIndexes() {
-        // Create indexes if they don't exist
-        IndexOperations projectIndexOps = elasticsearchOperations.indexOps(ProjectDocument.class);
-        if (!projectIndexOps.exists()) {
-            projectIndexOps.createWithMapping();
-        }
-
-        IndexOperations userIndexOps = elasticsearchOperations.indexOps(UserDocument.class);
-        if (!userIndexOps.exists()) {
-            userIndexOps.createWithMapping();
-        }
-    }
-
-    @Transactional(readOnly = true)
     public void indexProject(String projectId) {
         ProjectEntity project =
                 projectRepository
@@ -64,11 +47,27 @@ public class ElasticsearchSyncService {
         projectSearchRepository.save(document);
     }
 
+    public void indexUser(String userId) {
+        UserEntity user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(
+                                () ->
+                                        new RuntimeException(
+                                                "User not found for indexing: " + userId));
+
+        UserDocument document = toUserDocument(user);
+        userSearchRepository.save(document);
+    }
+
     public void deleteProjectIndex(String projectId) {
         projectSearchRepository.deleteById(projectId);
     }
 
-    @Transactional(readOnly = true)
+    public void deleteUserIndex(String userId) {
+        userSearchRepository.deleteById(userId);
+    }
+
     @Async
     public void reindexAllProjects() {
         projectSearchRepository.deleteAll();
@@ -89,7 +88,6 @@ public class ElasticsearchSyncService {
         } while (page.hasNext());
     }
 
-    @Transactional(readOnly = true)
     @Async
     public void reindexAllUsers() {
         userSearchRepository.deleteAll();

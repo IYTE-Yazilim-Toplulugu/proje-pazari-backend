@@ -56,10 +56,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Upgraded to Spring Boot 4.0.0
 - Using Java 21 features
+- **[BREAKING]** `POST /api/v1/applications/{applicationId}/review` → `PUT /api/v1/applications/{applicationId}/review`
+  - HTTP method changed from `POST` to `PUT` for semantic correctness (update operation)
+  - Existing clients using `POST` will receive `405 Method Not Allowed`
+
+### Removed
+
+- **[BREAKING]** Removed the unused `tags` field from project search and the `?tags=` filter on `GET /api/v1/search/projects` (per #128 — `tags` was never persisted and produced a misleading API contract). Filtering is now limited to `status`; the response continues to expose `requiredSkills`. Requires the same post-deploy reindex of the `projects` index noted below.
 
 ### Fixed
 
 - ProjectStatus default initialization issue
+- Project search response now matches the regular project list shape (flat `ownerId`/`ownerName`/`ownerEmail`, `applicationCount`); requires a post-deploy reindex of the `projects` index (see `docs/DEPLOYMENT.md` → Elasticsearch Index Management)
+- Search no longer returns HTTP 500 when an indexed document carries an unrecognized status value — unknown statuses now degrade to `null`
 
 ### Security
 
@@ -94,7 +103,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### From 0.1.0 to Unreleased
 
-No breaking changes. New features are additive.
+#### Breaking Changes
+
+- **Review Application endpoint method changed**
+  - Before: `POST /api/v1/applications/{applicationId}/review`
+  - After: `PUT /api/v1/applications/{applicationId}/review`
+  - Update all API clients to use `PUT` for this endpoint.
 
 ---
 

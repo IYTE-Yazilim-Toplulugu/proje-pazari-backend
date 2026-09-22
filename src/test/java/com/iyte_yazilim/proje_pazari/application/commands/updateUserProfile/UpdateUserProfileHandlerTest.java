@@ -5,15 +5,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.UserDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
 import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.IUserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,11 +27,13 @@ import org.springframework.context.ApplicationEventPublisher;
 @ExtendWith(MockitoExtension.class)
 class UpdateUserProfileHandlerTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock private IUserRepository userRepository;
 
     @Mock private UserDtoMapper userDtoMapper;
 
     @Mock private MessageService messageService;
+
+    @Mock private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks private UpdateUserProfileHandler handler;
 
@@ -54,6 +56,7 @@ class UpdateUserProfileHandlerTest {
     void shouldUpdateProfile_whenAllFieldsProvided() {
         // Given
         String userId = Ulid.fast().toString();
+        Ulid ulid = Ulid.from(userId);
         UpdateUserProfileCommand command =
                 new UpdateUserProfileCommand(
                         userId,
@@ -64,11 +67,10 @@ class UpdateUserProfileHandlerTest {
                         "https://github.com/johndoe",
                         "en");
 
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(userId);
-        userEntity.setEmail("john@std.iyte.edu.tr");
-        userEntity.setFirstName("OldFirstName");
-        userEntity.setLastName("OldLastName");
+        User user =
+                new User("john@std.iyte.edu.tr", "hashedPassword", "OldFirstName", "OldLastName");
+        user.setId(ulid);
+        user.setPreferredLanguage("tr");
 
         UserDto expectedDto =
                 new UserDto(
@@ -82,9 +84,9 @@ class UpdateUserProfileHandlerTest {
                         "https://github.com/johndoe",
                         "en");
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(userRepository.save(userEntity)).thenReturn(userEntity);
-        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userDtoMapper.domainToDto(user)).thenReturn(expectedDto);
 
         // When
         ApiResponse<UserDto> response = handler.handle(command);
@@ -96,7 +98,12 @@ class UpdateUserProfileHandlerTest {
         assertEquals("John", response.getData().firstName());
         assertEquals("Doe", response.getData().lastName());
         assertEquals("Software Engineer", response.getData().description());
-        verify(userRepository).save(userEntity);
+        assertEquals("en", response.getData().preferredLanguage());
+        assertEquals("John", user.getFirstName());
+        assertEquals("Doe", user.getLastName());
+        assertEquals("en", user.getPreferredLanguage());
+        verify(userRepository).save(user);
+        verify(applicationEventPublisher).publishEvent(any(UserUpdatedEvent.class));
     }
 
     @Test
@@ -104,15 +111,15 @@ class UpdateUserProfileHandlerTest {
     void shouldUpdateProfile_whenPartialFieldsProvided() {
         // Given
         String userId = Ulid.fast().toString();
+        Ulid ulid = Ulid.from(userId);
         UpdateUserProfileCommand command =
                 new UpdateUserProfileCommand(userId, "NewFirstName", null, null, null, null, null);
 
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(userId);
-        userEntity.setEmail("user@std.iyte.edu.tr");
-        userEntity.setFirstName("OldFirstName");
-        userEntity.setLastName("OldLastName");
-        userEntity.setDescription("Old description");
+        User user =
+                new User("user@std.iyte.edu.tr", "hashedPassword", "OldFirstName", "OldLastName");
+        user.setId(ulid);
+        user.setDescription("Old description");
+        user.setPreferredLanguage("tr");
 
         UserDto expectedDto =
                 new UserDto(
@@ -124,21 +131,22 @@ class UpdateUserProfileHandlerTest {
                         null,
                         null,
                         null,
-                        null);
+                        "tr");
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(userRepository.save(userEntity)).thenReturn(userEntity);
-        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userDtoMapper.domainToDto(user)).thenReturn(expectedDto);
 
         // When
         ApiResponse<UserDto> response = handler.handle(command);
 
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals("NewFirstName", userEntity.getFirstName());
-        assertEquals("OldLastName", userEntity.getLastName());
-        assertEquals("Old description", userEntity.getDescription());
-        verify(userRepository).save(userEntity);
+        assertEquals("NewFirstName", user.getFirstName());
+        assertEquals("OldLastName", user.getLastName());
+        assertEquals("Old description", user.getDescription());
+        assertEquals("tr", user.getPreferredLanguage());
+        verify(userRepository).save(user);
     }
 
     @Test
@@ -162,28 +170,29 @@ class UpdateUserProfileHandlerTest {
     void shouldSetUrlToNull_whenBlankUrlProvided() {
         // Given
         String userId = Ulid.fast().toString();
+        Ulid ulid = Ulid.from(userId);
         UpdateUserProfileCommand command =
                 new UpdateUserProfileCommand(userId, null, null, null, "   ", "   ", null);
 
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(userId);
-        userEntity.setLinkedinUrl("https://www.linkedin.com/in/old");
-        userEntity.setGithubUrl("https://github.com/old");
+        User user = new User("user@std.iyte.edu.tr", "hashedPassword", "First", "Last");
+        user.setId(ulid);
+        user.setLinkedinUrl("https://www.linkedin.com/in/old");
+        user.setGithubUrl("https://github.com/old");
 
         UserDto expectedDto = new UserDto(userId, null, null, null, null, null, null, null, null);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(userRepository.save(userEntity)).thenReturn(userEntity);
-        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userDtoMapper.domainToDto(user)).thenReturn(expectedDto);
 
         // When
         ApiResponse<UserDto> response = handler.handle(command);
 
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertNull(userEntity.getLinkedinUrl());
-        assertNull(userEntity.getGithubUrl());
-        verify(userRepository).save(userEntity);
+        assertNull(user.getLinkedinUrl());
+        assertNull(user.getGithubUrl());
+        verify(userRepository).save(user);
     }
 
     @Test
@@ -191,6 +200,7 @@ class UpdateUserProfileHandlerTest {
     void shouldAcceptValidLinkedInUrl_withWww() {
         // Given
         String userId = Ulid.fast().toString();
+        Ulid ulid = Ulid.from(userId);
         UpdateUserProfileCommand command =
                 new UpdateUserProfileCommand(
                         userId,
@@ -201,8 +211,8 @@ class UpdateUserProfileHandlerTest {
                         null,
                         null);
 
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(userId);
+        User user = new User("user@std.iyte.edu.tr", "hashedPassword", "First", "Last");
+        user.setId(ulid);
 
         UserDto expectedDto =
                 new UserDto(
@@ -216,16 +226,16 @@ class UpdateUserProfileHandlerTest {
                         null,
                         null);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(userRepository.save(userEntity)).thenReturn(userEntity);
-        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userDtoMapper.domainToDto(user)).thenReturn(expectedDto);
 
         // When
         ApiResponse<UserDto> response = handler.handle(command);
 
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals("https://www.linkedin.com/in/johndoe", userEntity.getLinkedinUrl());
+        assertEquals("https://www.linkedin.com/in/johndoe", user.getLinkedinUrl());
     }
 
     @Test
@@ -233,12 +243,13 @@ class UpdateUserProfileHandlerTest {
     void shouldAcceptValidLinkedInUrl_withoutWww() {
         // Given
         String userId = Ulid.fast().toString();
+        Ulid ulid = Ulid.from(userId);
         UpdateUserProfileCommand command =
                 new UpdateUserProfileCommand(
                         userId, null, null, null, "https://linkedin.com/in/johndoe", null, null);
 
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(userId);
+        User user = new User("user@std.iyte.edu.tr", "hashedPassword", "First", "Last");
+        user.setId(ulid);
 
         UserDto expectedDto =
                 new UserDto(
@@ -252,16 +263,16 @@ class UpdateUserProfileHandlerTest {
                         null,
                         null);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(userRepository.save(userEntity)).thenReturn(userEntity);
-        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userDtoMapper.domainToDto(user)).thenReturn(expectedDto);
 
         // When
         ApiResponse<UserDto> response = handler.handle(command);
 
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals("https://linkedin.com/in/johndoe", userEntity.getLinkedinUrl());
+        assertEquals("https://linkedin.com/in/johndoe", user.getLinkedinUrl());
     }
 
     @Test
@@ -269,12 +280,13 @@ class UpdateUserProfileHandlerTest {
     void shouldAcceptValidGithubUrl_withPath() {
         // Given
         String userId = Ulid.fast().toString();
+        Ulid ulid = Ulid.from(userId);
         UpdateUserProfileCommand command =
                 new UpdateUserProfileCommand(
                         userId, null, null, null, null, "https://github.com/johndoe/my-repo", null);
 
-        UserEntity userEntity = new UserEntity();
-        userEntity.setId(userId);
+        User user = new User("user@std.iyte.edu.tr", "hashedPassword", "First", "Last");
+        user.setId(ulid);
 
         UserDto expectedDto =
                 new UserDto(
@@ -288,15 +300,91 @@ class UpdateUserProfileHandlerTest {
                         "https://github.com/johndoe/my-repo",
                         null);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        when(userRepository.save(userEntity)).thenReturn(userEntity);
-        when(userDtoMapper.toDto(userEntity)).thenReturn(expectedDto);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userDtoMapper.domainToDto(user)).thenReturn(expectedDto);
 
         // When
         ApiResponse<UserDto> response = handler.handle(command);
 
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals("https://github.com/johndoe/my-repo", userEntity.getGithubUrl());
+        assertEquals("https://github.com/johndoe/my-repo", user.getGithubUrl());
+    }
+
+    @Test
+    @DisplayName("Should update preferredLanguage when provided")
+    void shouldUpdatePreferredLanguage_whenProvided() {
+        // Given
+        String userId = Ulid.fast().toString();
+        Ulid ulid = Ulid.from(userId);
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(userId, null, null, null, null, null, "en");
+
+        User user = new User("user@std.iyte.edu.tr", "hashedPassword", "First", "Last");
+        user.setId(ulid);
+        user.setPreferredLanguage("tr");
+
+        UserDto expectedDto =
+                new UserDto(
+                        userId,
+                        "user@std.iyte.edu.tr",
+                        "First",
+                        "Last",
+                        null,
+                        null,
+                        null,
+                        null,
+                        "en");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userDtoMapper.domainToDto(user)).thenReturn(expectedDto);
+
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
+
+        // Then
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals("en", user.getPreferredLanguage());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    @DisplayName("Should not update preferredLanguage when null")
+    void shouldNotUpdatePreferredLanguage_whenNull() {
+        // Given
+        String userId = Ulid.fast().toString();
+        Ulid ulid = Ulid.from(userId);
+        UpdateUserProfileCommand command =
+                new UpdateUserProfileCommand(userId, "NewFirst", null, null, null, null, null);
+
+        User user = new User("user@std.iyte.edu.tr", "hashedPassword", "First", "Last");
+        user.setId(ulid);
+        user.setPreferredLanguage("tr");
+
+        UserDto expectedDto =
+                new UserDto(
+                        userId,
+                        "user@std.iyte.edu.tr",
+                        "NewFirst",
+                        "Last",
+                        null,
+                        null,
+                        null,
+                        null,
+                        "tr");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userDtoMapper.domainToDto(user)).thenReturn(expectedDto);
+
+        // When
+        ApiResponse<UserDto> response = handler.handle(command);
+
+        // Then
+        assertEquals(ResponseCode.SUCCESS, response.getCode());
+        assertEquals("tr", user.getPreferredLanguage());
+        verify(userRepository).save(user);
     }
 }

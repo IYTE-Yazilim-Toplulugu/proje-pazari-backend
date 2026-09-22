@@ -1,12 +1,14 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.iyte_yazilim.proje_pazari.TestRateLimitConfig;
 import com.iyte_yazilim.proje_pazari.TestRedisConfig;
+import com.iyte_yazilim.proje_pazari.domain.interfaces.TokenBlacklistService;
 import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,14 +18,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import({TestRedisConfig.class, TestRateLimitConfig.class})
+@ActiveProfiles("test")
 @TestPropertySource(
         properties = {
             "spring.data.elasticsearch.enabled=false",
@@ -36,6 +43,12 @@ class AdminControllerIntegrationTest {
     @Autowired private JwtUtil jwtUtil;
 
     private String adminToken;
+
+    @MockitoBean private StringRedisTemplate stringRedisTemplate;
+
+    @MockitoBean private TokenBlacklistService tokenBlacklistService;
+
+    @MockitoBean private JavaMailSender javaMailSender;
 
     @BeforeEach
     void setUp() {
@@ -174,6 +187,52 @@ class AdminControllerIntegrationTest {
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(0));
+        }
+    }
+
+    // --- Promote to Project Owner Access Control Tests ---
+
+    @Nested
+    @DisplayName("POST /api/v1/admin/users/{userId}/promote-to-project-owner - Access Control")
+    class PromoteToProjectOwnerAccessControlTests {
+
+        @Test
+        @DisplayName("Should return 403 when promoting without ADMIN role (PROJECT_OWNER)")
+        @WithMockUser(username = "owner", roles = "PROJECT_OWNER")
+        void shouldReturn403_whenNotAdmin() throws Exception {
+            mockMvc.perform(
+                            post("/api/v1/admin/users/some-user-id/promote-to-project-owner")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when promoting as APPLICANT role")
+        @WithMockUser(username = "applicant", roles = "APPLICANT")
+        void shouldReturn403_whenApplicant() throws Exception {
+            mockMvc.perform(
+                            post("/api/v1/admin/users/some-user-id/promote-to-project-owner")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when promoting as USER role")
+        @WithMockUser(username = "user", roles = "USER")
+        void shouldReturn403_whenUser() throws Exception {
+            mockMvc.perform(
+                            post("/api/v1/admin/users/some-user-id/promote-to-project-owner")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should deny unauthenticated promote request")
+        void shouldDenyUnauthenticatedPromote() throws Exception {
+            mockMvc.perform(
+                            post("/api/v1/admin/users/some-user-id/promote-to-project-owner")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().is4xxClientError());
         }
     }
 }

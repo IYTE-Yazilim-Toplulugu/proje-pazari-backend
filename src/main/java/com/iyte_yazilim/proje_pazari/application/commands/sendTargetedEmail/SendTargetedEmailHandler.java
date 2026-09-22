@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.commands.sendTargetedEmail;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.EmailDto;
 import com.iyte_yazilim.proje_pazari.application.service.EmailService;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;

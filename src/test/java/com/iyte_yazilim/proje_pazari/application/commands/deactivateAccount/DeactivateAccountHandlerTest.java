@@ -1,14 +1,18 @@
 package com.iyte_yazilim.proje_pazari.application.commands.deactivateAccount;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.entities.User;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.IllegalUserStateException;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.UserMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,13 +22,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class DeactivateAccountHandlerTest {
 
     @Mock private UserRepository userRepository;
-
+    @Mock private UserMapper userMapper;
     @Mock private MessageService messageService;
+    @Mock private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks private DeactivateAccountHandler handler;
 
@@ -34,6 +40,12 @@ class DeactivateAccountHandlerTest {
         lenient()
                 .when(messageService.getMessage("user.account.deactivated"))
                 .thenReturn("Account deactivated successfully");
+    }
+
+    private User createDomainUser(boolean active) {
+        User user = new User("test@std.iyte.edu.tr", "pw", "Test", "User");
+        user.reconstituteActive(active);
+        return user;
     }
 
     @Test
@@ -49,7 +61,10 @@ class DeactivateAccountHandlerTest {
         userEntity.setEmail("test@std.iyte.edu.tr");
         userEntity.setIsActive(true);
 
+        User domainUser = createDomainUser(true);
+
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userMapper.entityToDomain(userEntity)).thenReturn(domainUser);
 
         // When
         ApiResponse<Void> response = handler.handle(command);
@@ -57,8 +72,10 @@ class DeactivateAccountHandlerTest {
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals("Account deactivated successfully", response.getMessage());
-        assertFalse(userEntity.getIsActive());
+        assertFalse(domainUser.isActive());
+        verify(userMapper).applyDomainToEntity(domainUser, userEntity);
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent((Object) any());
     }
 
     @Test
@@ -73,7 +90,10 @@ class DeactivateAccountHandlerTest {
         userEntity.setEmail("test@std.iyte.edu.tr");
         userEntity.setIsActive(true);
 
+        User domainUser = createDomainUser(true);
+
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userMapper.entityToDomain(userEntity)).thenReturn(domainUser);
 
         // When
         ApiResponse<Void> response = handler.handle(command);
@@ -81,8 +101,9 @@ class DeactivateAccountHandlerTest {
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertEquals("Account deactivated successfully", response.getMessage());
-        assertFalse(userEntity.getIsActive());
+        assertFalse(domainUser.isActive());
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent((Object) any());
     }
 
     @Test
@@ -94,17 +115,22 @@ class DeactivateAccountHandlerTest {
 
         UserEntity userEntity = new UserEntity();
         userEntity.setId(userId);
+        userEntity.setEmail("test@std.iyte.edu.tr");
         userEntity.setIsActive(true);
 
+        User domainUser = createDomainUser(true);
+
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userMapper.entityToDomain(userEntity)).thenReturn(domainUser);
 
         // When
         ApiResponse<Void> response = handler.handle(command);
 
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertFalse(userEntity.getIsActive());
+        assertFalse(domainUser.isActive());
         verify(userRepository).save(userEntity);
+        verify(applicationEventPublisher).publishEvent((Object) any());
     }
 
     @Test
@@ -123,8 +149,8 @@ class DeactivateAccountHandlerTest {
     }
 
     @Test
-    @DisplayName("Should deactivate already inactive account")
-    void shouldDeactivateAccount_whenAlreadyInactive() {
+    @DisplayName("Should throw IllegalUserStateException when already inactive")
+    void shouldThrowException_whenAlreadyInactive() {
         // Given
         String userId = Ulid.fast().toString();
         DeactivateAccountCommand command = new DeactivateAccountCommand(userId, "Re-deactivating");
@@ -133,14 +159,13 @@ class DeactivateAccountHandlerTest {
         userEntity.setId(userId);
         userEntity.setIsActive(false);
 
+        User domainUser = createDomainUser(false);
+
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(userMapper.entityToDomain(userEntity)).thenReturn(domainUser);
 
-        // When
-        ApiResponse<Void> response = handler.handle(command);
-
-        // Then
-        assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertFalse(userEntity.getIsActive());
-        verify(userRepository).save(userEntity);
+        // When & Then — domain aggregate now guards against double-deactivation
+        assertThrows(IllegalUserStateException.class, () -> handler.handle(command));
+        verify(userRepository, never()).save(any());
     }
 }

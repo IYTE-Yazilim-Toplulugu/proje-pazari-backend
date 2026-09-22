@@ -55,6 +55,14 @@ erDiagram
         timestamp updated_at
     }
 
+    APPLICATION_MESSAGES {
+        varchar(26) id PK
+        varchar(26) application_id FK
+        varchar(26) sender_id FK
+        text body
+        timestamp created_at
+    }
+
     PROJECT_REQUIRED_SKILLS {
         varchar(26) project_id FK
         varchar(100) skill
@@ -63,6 +71,8 @@ erDiagram
     USERS ||--o{ PROJECTS : "owns"
     USERS ||--o{ PROJECT_APPLICATIONS : "applies"
     PROJECTS ||--o{ PROJECT_APPLICATIONS : "has"
+    PROJECT_APPLICATIONS ||--o{ APPLICATION_MESSAGES : "contains"
+    USERS ||--o{ APPLICATION_MESSAGES : "sends"
     PROJECTS ||--o{ PROJECT_REQUIRED_SKILLS : "requires"
 ```
 
@@ -132,21 +142,49 @@ Stores project applications from users.
 |--------|------|-------------|-------------|
 | `id` | VARCHAR(26) | PRIMARY KEY | ULID identifier |
 | `project_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Reference to projects.id |
-| `applicant_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Reference to users.id |
+| `user_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Reference to users.id |
 | `status` | VARCHAR(50) | DEFAULT 'PENDING' | Application status |
-| `message` | TEXT | | Application message |
-| `response_message` | TEXT | | Owner's response |
+| `review_message` | TEXT | | Owner's review message |
 | `created_at` | TIMESTAMP | | Creation timestamp |
 | `updated_at` | TIMESTAMP | | Last update timestamp |
 
 **Indexes:**
 - `project_applications_pkey` - Primary key on `id`
-- `project_applications_project_id_idx` - Index on `project_id`
-- `project_applications_applicant_id_idx` - Index on `applicant_id`
+- `idx_proj_apps_project_id` - Index on `project_id`
+- `idx_proj_apps_user_id` - Index on `user_id`
+- `uk_project_applications_project_user` - Unique constraint on (`project_id`, `user_id`), enforcing one application per user/project pair regardless of application status
 
 **Foreign Keys:**
 - `project_applications_project_id_fkey` → `projects(id)` ON DELETE CASCADE
-- `project_applications_applicant_id_fkey` → `users(id)` ON DELETE CASCADE
+- `project_applications_user_id_fkey` → `users(id)` ON DELETE CASCADE
+
+---
+
+### application_messages
+
+Stores the bounded plain-text thread attached to one project application. Only the applicant and
+the corresponding project owner may access the thread through the API.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | VARCHAR(26) | PRIMARY KEY | Message ULID |
+| `application_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Parent application/thread identifier |
+| `sender_id` | VARCHAR(26) | FOREIGN KEY, NOT NULL | Authenticated applicant or project owner |
+| `body` | TEXT | NOT NULL, 1-2000 characters, not blank | Plain-text message body |
+| `created_at` | TIMESTAMP | NOT NULL | Creation timestamp |
+
+**Indexes:**
+- `idx_application_messages_thread_order` - Deterministic chronological lookup on
+  `(application_id, created_at, id)`
+
+**Foreign Keys:**
+- `fk_application_messages_application` → `project_applications(id)` ON DELETE CASCADE. Deleting
+  the application deletes its entire thread.
+- `fk_application_messages_sender` → `users(id)` ON DELETE RESTRICT. A referenced sender cannot be
+  deleted while the parent application and its messages remain.
+
+The table is introduced by `V6__add_application_messages.sql`; production rollout requires the
+Flyway foundation from #166 and the V5 application-uniqueness migration from #163 first.
 
 ---
 
@@ -210,7 +248,11 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/proje_pazari_db
 spring.datasource.username=yazilim
 spring.datasource.password=yazilim123
 spring.jpa.hibernate.ddl-auto=update
+spring.flyway.enabled=false
 ```
+
+Development retains Hibernate schema updates for the existing local workflow. Do not use this
+configuration for a deployed environment.
 
 ### Production
 
@@ -219,7 +261,22 @@ spring.datasource.url=${SPRING_DATASOURCE_URL}
 spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
 spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.defer-datasource-initialization=false
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+spring.flyway.validate-on-migrate=true
+spring.flyway.baseline-on-migrate=false
+spring.flyway.clean-disabled=true
+spring.sql.init.mode=never
 ```
+
+Production and staging apply the immutable scripts in `src/main/resources/db/migration` before
+Hibernate validates the resulting schema. Startup fails on a missing migration, checksum mismatch,
+or schema drift; Hibernate never mutates a deployed schema. See [DEPLOYMENT.md](DEPLOYMENT.md) for
+the mandatory backup-and-baseline procedure when adopting Flyway on an existing database.
+
+Add every deployed schema change as the next versioned migration. Never edit a migration that may
+already have run, and never enable automatic baselining.
 
 ---
 

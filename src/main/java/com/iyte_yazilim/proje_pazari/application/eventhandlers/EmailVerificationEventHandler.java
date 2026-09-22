@@ -1,5 +1,6 @@
 package com.iyte_yazilim.proje_pazari.application.eventhandlers;
 
+import com.iyte_yazilim.proje_pazari.application.services.FrontendVerificationLinkBuilder;
 import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.VerificationEmailRequestedEvent;
 import jakarta.mail.MessagingException;
@@ -24,9 +25,7 @@ public class EmailVerificationEventHandler {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
-
-    @Value("${app.frontend.url:http://localhost:3000}")
-    private String frontendUrl;
+    private final FrontendVerificationLinkBuilder verificationLinkBuilder;
 
     @Value("${app.email.from:noreply@projepazari.com}")
     private String fromEmail;
@@ -54,8 +53,7 @@ public class EmailVerificationEventHandler {
             helper.setTo(toEmail);
             helper.setSubject("Verify your email - Proje Pazarı");
 
-            // Build verification link
-            String verificationLink = frontendUrl + "/api/v1/auth/verify-email?token=" + token;
+            String verificationLink = verificationLinkBuilder.build(token);
 
             // Prepare template context
             Context context = new Context();

@@ -1,21 +1,34 @@
 package com.iyte_yazilim.proje_pazari.application.commands.uploadProfilePicture;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.exceptions.ValidationException;
 import com.iyte_yazilim.proje_pazari.application.services.FileStorageService;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.events.AvatarReplacedEvent;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import java.net.URI;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Replaces a user's avatar without ever leaving the database and storage backend inconsistent.
+ *
+ * <p>The replacement object is stored and persisted before the previous object is touched at all,
+ * so a storage or persistence failure leaves the previous object and database value exactly as they
+ * were. The previous object is only deleted after the new database value has committed, via {@link
+ * AvatarReplacedEvent} / {@link
+ * com.iyte_yazilim.proje_pazari.application.eventhandlers.AvatarReplacedEventHandler} — never
+ * inline here, since an inline delete could not be rolled back if the commit that follows it fails.
+ */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class UploadProfilePictureHandler
@@ -24,6 +37,7 @@ public class UploadProfilePictureHandler
     private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
     private final MessageService messageService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional(
@@ -41,69 +55,56 @@ public class UploadProfilePictureHandler
             throw new ValidationException("File is required");
         }
 
-        // Delete old profile picture if exists
         String oldUrl = user.getProfilePictureUrl();
-        if (oldUrl != null && !oldUrl.isBlank()) {
-            String oldPath = extractPathFromUrl(oldUrl);
-            if (oldPath != null) {
-                try {
-                    fileStorageService.deleteFile(oldPath);
-                } catch (FileStorageException e) {
-                    // Ignore if old file doesn't exist
-                }
-            }
+
+        // Store the replacement under a new, distinct object key first. Nothing about the
+        // previous object is touched yet, so a storage failure here leaves both the database
+        // value and the previous object completely unchanged.
+        String newUrl = fileStorageService.storeUserAvatar(command.userId(), command.file());
+
+        user.setProfilePictureUrl(newUrl);
+        try {
+            // Flushed immediately rather than left for the transaction's eventual commit, so a
+            // persistence failure surfaces here - while the newly stored object can still be
+            // cleaned up - instead of silently after this method has already returned.
+            userRepository.saveAndFlush(user);
+        } catch (RuntimeException e) {
+            cleanupBestEffort(newUrl);
+            throw e;
         }
 
-        // Store avatar using organized bucket structure.
-        String storedUrl = fileStorageService.storeUserAvatar(command.userId(), command.file());
-
-        // Update user profile picture URL
-        user.setProfilePictureUrl(storedUrl);
-        userRepository.save(user);
+        // Deleting the previous object is deferred until after this transaction commits: if it
+        // never commits, the previous object must still be there for the (unchanged) database
+        // value.
+        if (oldUrl != null && !oldUrl.isBlank()) {
+            applicationEventPublisher.publishEvent(
+                    new AvatarReplacedEvent(command.userId(), oldUrl, newUrl, LocalDateTime.now()));
+        }
 
         return ApiResponse.success(
                 user.getProfilePictureUrl(),
                 messageService.getMessage("user.profile.picture.uploaded"));
     }
 
-    private String extractPathFromUrl(String url) {
-        if (url == null) {
-            return null;
+    /**
+     * Best-effort cleanup of the object just stored, after the database write that was meant to
+     * reference it failed. Never rethrows: the persistence failure being handled by the caller is
+     * the one that must reach the client, not a secondary storage error from this cleanup.
+     */
+    private void cleanupBestEffort(String newUrl) {
+        String newPath = AvatarPathResolver.resolveStoragePath(newUrl);
+        if (newPath == null) {
+            return;
         }
-
-        // Handle API path format: /api/v1/files/profiles/filename.jpg
-        if (url.contains("/api/v1/files/")) {
-            return url.substring(url.indexOf("/api/v1/files/") + "/api/v1/files/".length());
-        }
-
-        // Handle simple storage path format (e.g., "profiles/filename.jpg")
-        // This is the path returned by the storage adapter's store() method
-        if (!url.startsWith("http") && !url.startsWith("/api")) {
-            return url;
-        }
-
-        // Handle presigned URL format and keep bucket + object path.
-        // Example: http://minio:9000/bucket-name/users/user-1/avatar.jpg?...
         try {
-            URI uri = URI.create(url.split("\\?")[0]);
-            String path = uri.getPath();
-            if (path != null && path.length() > 1) {
-                return path.substring(1); // Remove leading slash only
-            }
-        } catch (IllegalArgumentException e) {
-            // Fall back to original behavior if URL parsing fails
+            fileStorageService.deleteFile(newPath);
+        } catch (Exception cleanupException) {
+            log.warn(
+                    "Failed to clean up newly stored avatar object [{}] after a persistence"
+                            + " failure: {}",
+                    newPath,
+                    cleanupException.getMessage(),
+                    cleanupException);
         }
-
-        // Legacy fallback for /profiles/ pattern
-        if (url.contains("/profiles/")) {
-            int profilesIndex = url.indexOf("/profiles/");
-            int queryIndex = url.indexOf("?");
-            if (queryIndex > profilesIndex) {
-                return url.substring(profilesIndex + 1, queryIndex);
-            }
-            return url.substring(profilesIndex + 1);
-        }
-
-        return null;
     }
 }

@@ -3,7 +3,7 @@ package com.iyte_yazilim.proje_pazari.application.commands.flagContent;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.FlaggedContentRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.FlaggedContentEntity;
 import org.junit.jupiter.api.DisplayName;

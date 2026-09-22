@@ -7,7 +7,9 @@ import static org.mockito.Mockito.*;
 import com.iyte_yazilim.proje_pazari.application.commands.adminDeleteUser.AdminDeleteUserCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.bulkUserAction.BulkUserActionCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.flagContent.FlagContentCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.reviewApplication.ReviewApplicationCommand;
 import com.iyte_yazilim.proje_pazari.application.commands.updateSystemConfig.UpdateSystemConfigCommand;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IMediator;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
@@ -21,19 +23,24 @@ import com.iyte_yazilim.proje_pazari.application.queries.getSystemConfig.GetSyst
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemHealth.GetSystemHealthQuery;
 import com.iyte_yazilim.proje_pazari.application.queries.getSystemOverview.GetSystemOverviewQuery;
 import com.iyte_yazilim.proje_pazari.application.services.StorageHealthService;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
+import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.presentation.mappers.IRequestMapper;
+import com.iyte_yazilim.proje_pazari.presentation.security.UserPrincipal;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 @ExtendWith(MockitoExtension.class)
 class AdminControllerTest {
@@ -111,6 +118,51 @@ class AdminControllerTest {
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertEquals(1, response.getBody().getData().getSuccessCount());
+        }
+    }
+
+    @Nested
+    @DisplayName("reviewApplication() method")
+    class ReviewApplicationTests {
+
+        @Test
+        @DisplayName("should use the shared review command and return its result")
+        void shouldUseSharedReviewCommand() {
+            String applicationId = "01HQXV5KXBW9FYMN8CJZSP2R5A";
+            String reviewMessage = "Great experience!";
+            ReviewApplicationCommandResult result =
+                    new ReviewApplicationCommandResult(
+                            applicationId,
+                            "01HQXV5KXBW9FYMN8CJZSP2R4H",
+                            "Test Project",
+                            "APPROVED");
+            ApiResponse<ReviewApplicationCommandResult> apiResponse =
+                    ApiResponse.success(result, "Application reviewed successfully");
+            when(mediator.send(any(ReviewApplicationCommand.class))).thenReturn(apiResponse);
+            Authentication auth = mock(Authentication.class);
+            when(auth.getPrincipal())
+                    .thenReturn(new UserPrincipal("admin-id", "admin@test.com", "ADMIN"));
+
+            ResponseEntity<ApiResponse<ReviewApplicationCommandResult>> response =
+                    adminController.reviewApplication(
+                            applicationId,
+                            new AdminController.ReviewApplicationRequest(
+                                    ApplicationStatus.APPROVED, reviewMessage),
+                            auth);
+
+            ArgumentCaptor<ReviewApplicationCommand> commandCaptor =
+                    ArgumentCaptor.forClass(ReviewApplicationCommand.class);
+            verify(mediator).send(commandCaptor.capture());
+
+            ReviewApplicationCommand command = commandCaptor.getValue();
+            assertEquals(applicationId, command.applicationId());
+            assertEquals("admin-id", command.requesterId());
+            assertEquals(RoleType.ADMIN, command.requesterRole());
+            assertEquals(ApplicationStatus.APPROVED, command.status());
+            assertEquals(reviewMessage, command.reviewMessage());
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertSame(apiResponse, response.getBody());
+            assertSame(result, response.getBody().getData());
         }
     }
 

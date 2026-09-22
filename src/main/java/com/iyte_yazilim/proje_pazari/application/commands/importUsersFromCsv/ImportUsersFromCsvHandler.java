@@ -1,33 +1,30 @@
 package com.iyte_yazilim.proje_pazari.application.commands.importUsersFromCsv;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.ImportResultDTO;
+import com.iyte_yazilim.proje_pazari.application.services.CsvImportService;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class ImportUsersFromCsvHandler
         implements IRequestHandler<ImportUsersFromCsvCommand, ApiResponse<ImportResultDTO>> {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CsvImportService csvImportService;
 
     @Override
     @Transactional
@@ -43,91 +40,59 @@ public class ImportUsersFromCsvHandler
             return ApiResponse.validationError("CSV content is empty");
         }
 
-        List<String> errors = new ArrayList<>();
-        int totalRows = 0;
-        int successCount = 0;
+        CsvImportService.ImportResult<UserEntity> result =
+                csvImportService.parse(csvContent, this::mapRow, "users");
 
-        try (BufferedReader reader = new BufferedReader(new StringReader(csvContent))) {
-            String headerLine = reader.readLine();
-            if (headerLine == null) {
-                return ApiResponse.validationError("CSV file is empty");
-            }
+        result.successes().forEach(userRepository::save);
 
-            // Expected header: email,firstName,lastName,role,password
-            String line;
-            while ((line = reader.readLine()) != null) {
-                totalRows++;
-                try {
-                    String[] fields = line.split(",", -1);
-                    if (fields.length < 5) {
-                        errors.add(
-                                "Row "
-                                        + totalRows
-                                        + ": Expected at least 5 fields (email,firstName,lastName,role,password)");
-                        continue;
-                    }
+        int failedCount = result.totalRows() - result.successes().size();
+        ImportResultDTO dto =
+                new ImportResultDTO(
+                        result.totalRows(),
+                        result.successes().size(),
+                        failedCount,
+                        result.errors());
+        return ApiResponse.success(
+                dto, "Import completed: " + result.successes().size() + " users imported");
+    }
 
-                    String email = fields[0].trim();
-                    String firstName = fields[1].trim();
-                    String lastName = fields[2].trim();
-                    String roleStr = fields[3].trim();
-                    String password = fields[4].trim();
+    // Expected header: email,firstName,lastName,role,password
+    private UserEntity mapRow(CSVRecord r) {
+        String email = r.get(0).trim();
+        String firstName = r.get(1).trim();
+        String lastName = r.get(2).trim();
+        String roleStr = r.get(3).trim();
+        String password = r.get(4).trim();
 
-                    if (email.isBlank()) {
-                        errors.add("Row " + totalRows + ": Email is required");
-                        continue;
-                    }
+        if (email.isBlank()) throw new IllegalArgumentException("Email is required");
+        if (password.isBlank()) throw new IllegalArgumentException("Password is required");
 
-                    if (password.isBlank()) {
-                        errors.add("Row " + totalRows + ": Password is required");
-                        continue;
-                    }
-
-                    RoleType role;
-                    try {
-                        role = RoleType.valueOf(roleStr.toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        errors.add("Row " + totalRows + ": Invalid role: " + roleStr);
-                        continue;
-                    }
-
-                    if (userRepository.existsByEmail(email)) {
-                        errors.add("Row " + totalRows + ": User already exists: " + email);
-                        continue;
-                    }
-
-                    UserEntity user = new UserEntity();
-                    user.setEmail(email);
-                    user.setFirstName(firstName);
-                    user.setLastName(lastName);
-                    user.setRoles(new HashSet<>(Set.of(role)));
-                    user.setPassword(passwordEncoder.encode(password));
-
-                    userRepository.save(user);
-                    successCount++;
-                } catch (Exception e) {
-                    errors.add("Row " + totalRows + ": " + e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            log.error("Failed to parse CSV", e);
-            return ApiResponse.validationError("Failed to parse CSV: " + e.getMessage());
+        RoleType role;
+        try {
+            role = RoleType.valueOf(roleStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role: " + roleStr);
         }
 
-        int failedCount = totalRows - successCount;
-        ImportResultDTO result = new ImportResultDTO(totalRows, successCount, failedCount, errors);
-        return ApiResponse.success(result, "Import completed: " + successCount + " users imported");
+        if (userRepository.existsByEmail(email))
+            throw new IllegalArgumentException("User already exists: " + email);
+
+        UserEntity user = new UserEntity();
+        user.setEmail(email);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRoles(new HashSet<>(Set.of(role)));
+        user.setPassword(passwordEncoder.encode(password));
+        return user;
     }
 
     private String resolveCsvContent(ImportUsersFromCsvCommand command) {
         if (command.csvContent() != null && !command.csvContent().isBlank()) {
             return command.csvContent();
         }
-
         if (command.file() == null || command.file().isEmpty()) {
             return null;
         }
-
         try {
             return new String(command.file().getBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {

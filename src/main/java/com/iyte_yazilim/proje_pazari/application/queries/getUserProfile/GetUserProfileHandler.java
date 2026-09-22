@@ -1,11 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getUserProfile;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectSummaryDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.UserNotFoundException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -29,8 +30,8 @@ public class GetUserProfileHandler
         UserEntity user = userRepository.findById(query.userId()).orElse(null);
 
         if (user == null) {
-            return ApiResponse.notFound(
-                    messageService.getMessage("user.not.found", new Object[] {query.userId()}));
+            // Enumeration-safe: the looked-up id is kept out of the response (logs only).
+            throw new UserNotFoundException();
         }
 
         // Get user statistics
@@ -67,6 +68,7 @@ public class GetUserProfileHandler
                         user.getProfilePictureUrl(),
                         user.getLinkedinUrl(),
                         user.getGithubUrl(),
+                        user.getPreferredLanguage(),
                         user.getCreatedAt(),
                         projectsCreated,
                         applicationsSubmitted,

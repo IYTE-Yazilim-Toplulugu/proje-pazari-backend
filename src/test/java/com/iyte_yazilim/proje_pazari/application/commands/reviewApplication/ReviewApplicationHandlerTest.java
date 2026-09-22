@@ -1,15 +1,20 @@
 package com.iyte_yazilim.proje_pazari.application.commands.reviewApplication;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
+import com.iyte_yazilim.proje_pazari.application.services.ApplicationReviewService;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
+import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationReviewFailure;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationReviewException;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
@@ -17,84 +22,149 @@ import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEn
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.UserEntity;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ReviewApplicationHandlerTest {
 
+    private static final String APPLICATION_ID = "01APPLICATION000000000000";
+    private static final String PROJECT_ID = "01PROJECT00000000000000000";
+    private static final String OWNER_ID = "01OWNER000000000000000000";
+    private static final String APPLICANT_ID = "01APPLICANT00000000000000";
+
     @Mock private ProjectApplicationRepository applicationRepository;
+    @Mock private ApplicationReviewService reviewService;
     @Mock private MessageService messageService;
-    @Mock private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks private ReviewApplicationHandler handler;
 
-    private String applicationId;
-    private ProjectApplicationEntity applicationEntity;
+    private ProjectApplicationEntity application;
 
     @BeforeEach
     void setUp() {
-        applicationId = Ulid.fast().toString();
-
         UserEntity owner = new UserEntity();
-        owner.setId(Ulid.fast().toString());
-        owner.setFirstName("Owner");
-        owner.setEmail("owner@std.iyte.edu.tr");
-
+        owner.setId(OWNER_ID);
         ProjectEntity project = new ProjectEntity();
-        project.setId(Ulid.fast().toString());
-        project.setTitle("Test Project");
+        project.setId(PROJECT_ID);
         project.setOwner(owner);
 
-        UserEntity applicant = new UserEntity();
-        applicant.setId(Ulid.fast().toString());
-        applicant.setFirstName("Applicant");
-        applicant.setEmail("applicant@std.iyte.edu.tr");
+        application = new ProjectApplicationEntity();
+        application.setId(APPLICATION_ID);
+        application.setProject(project);
+        application.setStatus(ApplicationStatus.PENDING);
 
-        applicationEntity = new ProjectApplicationEntity();
-        applicationEntity.setId(applicationId);
-        applicationEntity.setStatus(ApplicationStatus.PENDING);
-        applicationEntity.setProject(project);
-        applicationEntity.setUser(applicant);
-
-        lenient()
-                .when(messageService.getMessage("application.reviewed.success"))
-                .thenReturn("Application reviewed successfully");
+        when(applicationRepository.findById(APPLICATION_ID)).thenReturn(Optional.of(application));
     }
 
     @Test
-    @DisplayName("Should approve application successfully")
-    void shouldApproveApplication_whenApplicationExists() {
-        ReviewApplicationCommand command =
-                new ReviewApplicationCommand(applicationId, ApplicationStatus.APPROVED, "Good fit");
+    void ownerApprovalUsesTheSharedReviewOperation() {
+        ReviewApplicationCommandResult result =
+                new ReviewApplicationCommandResult(
+                        APPLICATION_ID, PROJECT_ID, "Shared Review", "APPROVED");
+        when(reviewService.review(APPLICATION_ID, ApplicationStatus.APPROVED, "Welcome"))
+                .thenReturn(result);
 
-        when(applicationRepository.findById(applicationId))
-                .thenReturn(Optional.of(applicationEntity));
-        when(applicationRepository.save(applicationEntity)).thenReturn(applicationEntity);
+        ApiResponse<ReviewApplicationCommandResult> response =
+                handler.handle(
+                        command(OWNER_ID, RoleType.USER, ApplicationStatus.APPROVED, "Welcome"));
 
-        ApiResponse<ReviewApplicationCommandResult> response = handler.handle(command);
-
-        assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals(ApplicationStatus.APPROVED, applicationEntity.getStatus());
-        verify(applicationEventPublisher).publishEvent(any(Object.class));
+        assertThat(response.getCode()).isEqualTo(ResponseCode.SUCCESS);
+        assertThat(response.getData()).isSameAs(result);
+        verify(reviewService).review(APPLICATION_ID, ApplicationStatus.APPROVED, "Welcome");
     }
 
     @Test
-    @DisplayName("Should throw ApplicationNotFoundException when application does not exist")
-    void shouldThrowException_whenApplicationNotFound() {
-        String unknownId = Ulid.fast().toString();
-        ReviewApplicationCommand command =
-                new ReviewApplicationCommand(unknownId, ApplicationStatus.APPROVED, null);
+    void rejectionUsesTheSameSharedReviewOperation() {
+        ReviewApplicationCommandResult result =
+                new ReviewApplicationCommandResult(
+                        APPLICATION_ID, PROJECT_ID, "Shared Review", "REJECTED");
+        when(reviewService.review(APPLICATION_ID, ApplicationStatus.REJECTED, "No fit"))
+                .thenReturn(result);
 
-        when(applicationRepository.findById(unknownId)).thenReturn(Optional.empty());
+        ApiResponse<ReviewApplicationCommandResult> response =
+                handler.handle(
+                        command(OWNER_ID, RoleType.USER, ApplicationStatus.REJECTED, "No fit"));
 
-        assertThrows(ApplicationNotFoundException.class, () -> handler.handle(command));
-        verify(applicationRepository, never()).save(any());
-        verify(applicationEventPublisher, never()).publishEvent(any(Object.class));
+        assertThat(response.getData()).isSameAs(result);
+        verify(reviewService).review(APPLICATION_ID, ApplicationStatus.REJECTED, "No fit");
+    }
+
+    @Test
+    void administratorCanUseTheSharedReviewOperation() {
+        ReviewApplicationCommandResult result =
+                new ReviewApplicationCommandResult(
+                        APPLICATION_ID, PROJECT_ID, "Shared Review", "APPROVED");
+        when(reviewService.review(APPLICATION_ID, ApplicationStatus.APPROVED, null))
+                .thenReturn(result);
+
+        ApiResponse<ReviewApplicationCommandResult> response =
+                handler.handle(
+                        command(APPLICANT_ID, RoleType.ADMIN, ApplicationStatus.APPROVED, null));
+
+        assertThat(response.getCode()).isEqualTo(ResponseCode.SUCCESS);
+        verify(reviewService).review(APPLICATION_ID, ApplicationStatus.APPROVED, null);
+    }
+
+    @Test
+    void unauthorizedRequesterCannotReachTheSharedReviewOperation() {
+        ApiResponse<ReviewApplicationCommandResult> response =
+                handler.handle(
+                        command(APPLICANT_ID, RoleType.USER, ApplicationStatus.APPROVED, "Forged"));
+
+        assertThat(response.getCode()).isEqualTo(ResponseCode.FORBIDDEN);
+        verify(reviewService, never()).review(APPLICATION_ID, ApplicationStatus.APPROVED, "Forged");
+    }
+
+    @Test
+    void invalidReviewStatusCannotReachTheSharedReviewOperation() {
+        ApiResponse<ReviewApplicationCommandResult> response =
+                handler.handle(command(OWNER_ID, RoleType.USER, ApplicationStatus.WITHDRAWN, null));
+
+        assertThat(response.getCode()).isEqualTo(ResponseCode.BAD_REQUEST);
+        verify(reviewService, never()).review(APPLICATION_ID, ApplicationStatus.WITHDRAWN, null);
+    }
+
+    @Test
+    void missingApplicationStillUsesTheExistingNotFoundContract() {
+        when(applicationRepository.findById(APPLICATION_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(
+                        () ->
+                                handler.handle(
+                                        command(
+                                                OWNER_ID,
+                                                RoleType.USER,
+                                                ApplicationStatus.APPROVED,
+                                                null)))
+                .isInstanceOf(ApplicationNotFoundException.class);
+        verify(reviewService, never()).review(APPLICATION_ID, ApplicationStatus.APPROVED, null);
+    }
+
+    @Test
+    void sharedReviewFailurePropagatesToTheStandardExceptionContract() {
+        ApplicationReviewException failure =
+                new ApplicationReviewException(ApplicationReviewFailure.PROJECT_FULL);
+        when(reviewService.review(APPLICATION_ID, ApplicationStatus.APPROVED, null))
+                .thenThrow(failure);
+
+        assertThatThrownBy(
+                        () ->
+                                handler.handle(
+                                        command(
+                                                OWNER_ID,
+                                                RoleType.USER,
+                                                ApplicationStatus.APPROVED,
+                                                null)))
+                .isSameAs(failure);
+    }
+
+    private static ReviewApplicationCommand command(
+            String requesterId, RoleType role, ApplicationStatus status, String reviewMessage) {
+        return new ReviewApplicationCommand(
+                APPLICATION_ID, requesterId, role, status, reviewMessage);
     }
 }

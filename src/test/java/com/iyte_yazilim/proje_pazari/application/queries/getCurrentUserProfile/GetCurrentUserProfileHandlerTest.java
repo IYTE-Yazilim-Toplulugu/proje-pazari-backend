@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.UserProfileDTO;
 import com.iyte_yazilim.proje_pazari.application.queries.getUserProfile.GetUserProfileQuery;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +45,7 @@ class GetCurrentUserProfileHandlerTest {
                         null,
                         null,
                         null,
+                        null,
                         LocalDateTime.now(),
                         0,
                         0,
@@ -63,7 +64,7 @@ class GetCurrentUserProfileHandlerTest {
         // Then
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertNotNull(response.getData());
-        assertEquals(authenticatedUserId, response.getData().id());
+        assertEquals(authenticatedUserId, response.getData().userId());
 
         // Verify delegation with correct user ID
         ArgumentCaptor<GetUserProfileQuery> captor =

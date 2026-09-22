@@ -30,5 +30,27 @@ public enum ProjectStatus {
     COMPLETED,
 
     /** Project has been cancelled or abandoned. */
-    CANCELLED
+    CANCELLED;
+
+    /**
+     * Safely parses a status string into a {@link ProjectStatus}, returning {@code null} instead of
+     * throwing when the value is {@code null} or does not match any known status.
+     *
+     * <p>Useful when reading status values from external/denormalized sources (e.g. Elasticsearch
+     * documents) where a stale or unexpected value should degrade gracefully rather than fail the
+     * whole request.
+     *
+     * @param value the status string to parse, may be {@code null}
+     * @return the matching {@link ProjectStatus}, or {@code null} if unknown or {@code null}
+     */
+    public static ProjectStatus fromString(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return valueOf(value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 }

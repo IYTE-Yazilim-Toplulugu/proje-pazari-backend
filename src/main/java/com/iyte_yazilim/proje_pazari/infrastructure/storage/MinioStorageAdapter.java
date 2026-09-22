@@ -1,8 +1,10 @@
 package com.iyte_yazilim.proje_pazari.infrastructure.storage;
 
 import com.iyte_yazilim.proje_pazari.domain.exceptions.FileStorageException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.FileValidationException;
 import com.iyte_yazilim.proje_pazari.domain.interfaces.IFileStorageAdapter;
 import com.iyte_yazilim.proje_pazari.domain.models.FileMetadata;
+import com.iyte_yazilim.proje_pazari.domain.models.FileUpload;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
 import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
@@ -17,6 +19,7 @@ import io.minio.StatObjectResponse;
 import io.minio.http.Method;
 import io.minio.messages.Bucket;
 import io.minio.messages.Item;
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -31,7 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * MinIO implementation for local development and self-hosted deployments. Active when
@@ -213,7 +215,7 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
     }
 
     @Override
-    public String store(MultipartFile file, String path) {
+    public String store(FileUpload file, String path) {
         StorageLocation location = resolveLocation(path);
         if (metricsService != null) {
             return metricsService
@@ -226,10 +228,10 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                                                     .bucket(location.bucket())
                                                     .object(location.objectPath())
                                                     .stream(
-                                                            file.getInputStream(),
-                                                            file.getSize(),
+                                                            new ByteArrayInputStream(file.bytes()),
+                                                            file.size(),
                                                             -1)
-                                                    .contentType(file.getContentType())
+                                                    .contentType(file.contentType())
                                                     .build());
 
                                     log.debug(
@@ -250,8 +252,8 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
                     PutObjectArgs.builder()
                             .bucket(location.bucket())
                             .object(location.objectPath())
-                            .stream(file.getInputStream(), file.getSize(), -1)
-                            .contentType(file.getContentType())
+                            .stream(new ByteArrayInputStream(file.bytes()), file.size(), -1)
+                            .contentType(file.contentType())
                             .build());
 
             log.debug("Stored file in MinIO: {}/{}", location.bucket(), location.objectPath());
@@ -516,7 +518,7 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
             String remainder = normalizedPath.substring(firstSlashIndex + 1);
             if (configuredBuckets.contains(firstSegment)) {
                 if (remainder.isBlank()) {
-                    throw new FileStorageException("Invalid file path");
+                    throw new FileValidationException("Invalid file path");
                 }
                 return new StorageLocation(firstSegment, remainder, true);
             }
@@ -527,7 +529,7 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
 
     private String normalizePath(String path) {
         if (path == null) {
-            throw new FileStorageException("Invalid file path");
+            throw new FileValidationException("Invalid file path");
         }
 
         String normalized = path.trim();
@@ -536,7 +538,7 @@ public class MinioStorageAdapter implements IFileStorageAdapter {
         }
 
         if (normalized.isBlank()) {
-            throw new FileStorageException("Invalid file path");
+            throw new FileValidationException("Invalid file path");
         }
 
         return normalized;

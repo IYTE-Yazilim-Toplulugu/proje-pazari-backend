@@ -6,12 +6,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.ProjectDetailDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -66,7 +66,7 @@ class GetProjectQueryHandlerTest {
 
         assertEquals(ResponseCode.SUCCESS, response.getCode());
         assertNotNull(response.getData());
-        assertEquals(projectId, response.getData().id());
+        assertEquals(projectId, response.getData().projectId());
     }
 
     @Test

@@ -1,8 +1,5 @@
 package com.iyte_yazilim.proje_pazari.domain.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 /**
  * Represents the status of a project application in the review process.
  *
@@ -16,11 +13,9 @@ import lombok.Getter;
  *
  * @author IYTE Yazılım Topluluğu
  * @version 1.1
- * @since 2024-01-01
  * @see com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication
+ * @since 2024-01-01
  */
-@Getter
-@AllArgsConstructor
 public enum ApplicationStatus {
     /** Application is awaiting review by project owner. */
     PENDING("pending"),
@@ -36,4 +31,12 @@ public enum ApplicationStatus {
 
     /** String representation of the status for serialization. */
     private final String status;
+
+    private ApplicationStatus(String status) {
+        this.status = status;
+    }
+
+    public String getStatus() {
+        return this.status;
+    }
 }

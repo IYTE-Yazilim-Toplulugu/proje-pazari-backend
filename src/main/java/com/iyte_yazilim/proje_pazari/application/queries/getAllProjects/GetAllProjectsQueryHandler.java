@@ -1,11 +1,11 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getAllProjects;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.ProjectDetailDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -46,7 +46,8 @@ public class GetAllProjectsQueryHandler
         Pageable pageable = PageRequest.of(query.page(), query.size(), Sort.by(direction, sortBy));
 
         // --- 2. Fetch Paged Data from Repository ---
-        Page<ProjectEntity> projectEntityPage = projectRepository.findAllWithApplications(pageable);
+        Page<ProjectEntity> projectEntityPage =
+                projectRepository.findWithFilters(query.status(), null, null, pageable);
 
         // --- 3. Map Entity -> Domain -> DTO ---
         List<ProjectDetailDto> projectDtos =

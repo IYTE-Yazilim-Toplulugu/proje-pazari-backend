@@ -1,8 +1,10 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getAllProjects;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedProjectsResult;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
 
-public record GetAllProjectsQuery(int page, int size, String sortBy, String sortDirection)
+public record GetAllProjectsQuery(
+        int page, int size, String sortBy, String sortDirection, ProjectStatus status)
         implements IRequest<ApiResponse<PagedProjectsResult>> {}

@@ -22,6 +22,7 @@ public class TestRedisConfig {
 
     private static class InMemoryTokenBlacklistService implements TokenBlacklistService {
         private final Map<String, Boolean> blacklist = new ConcurrentHashMap<>();
+        private final Map<String, Boolean> userBlacklist = new ConcurrentHashMap<>();
 
         @Override
         public void blacklistToken(String token, Duration ttl) {
@@ -31,6 +32,16 @@ public class TestRedisConfig {
         @Override
         public boolean isTokenBlacklisted(String token) {
             return blacklist.containsKey(token);
+        }
+
+        @Override
+        public void blacklistUser(String email, Duration ttl) {
+            userBlacklist.put(email, true);
+        }
+
+        @Override
+        public boolean isUserBlacklisted(String email) {
+            return userBlacklist.containsKey(email);
         }
     }
 }

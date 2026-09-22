@@ -1,12 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.commands.updateProject;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.ProjectDetailDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -67,15 +67,21 @@ public class UpdateProjectHandler
             return ApiResponse.forbidden(messageService.getMessage("project.owner.mismatch"));
         }
 
-        // --- 3. Verify Project Status Allows Updates ---
-        if (projectEntity.getStatus() == ProjectStatus.COMPLETED
-                || projectEntity.getStatus() == ProjectStatus.CANCELLED) {
+        // --- 3. Verify Project Status Allows Updates (DELEGATED TO DOMAIN) ---
+        Project projectDomain = projectMapper.entityToDomain(projectEntity);
+        if (!projectDomain.canBeUpdated()) {
             return ApiResponse.forbidden(messageService.getMessage("project.update.not.allowed"));
         }
 
         // --- 4. Apply Updates (null = skip, empty = clear, non-empty = replace) ---
-        projectEntity.setTitle(command.projectName());
-        projectEntity.setDescription(command.description());
+        // Note: These setters are explicitly allowed by the Definition of Done
+        // because they represent non-lifecycle fields with no invariants.
+        if (command.projectName() != null) {
+            projectEntity.setTitle(command.projectName());
+        }
+        if (command.description() != null) {
+            projectEntity.setDescription(command.description());
+        }
 
         if (command.summary() != null) {
             projectEntity.setSummary(command.summary());

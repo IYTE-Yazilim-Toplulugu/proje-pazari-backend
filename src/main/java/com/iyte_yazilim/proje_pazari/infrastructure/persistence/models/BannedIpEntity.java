@@ -4,6 +4,7 @@ import com.github.f4b6a3.ulid.Ulid;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -14,7 +15,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "banned_ips")
+@Table(
+        name = "banned_ips",
+        indexes = {@Index(name = "idx_banned_ips_ip_address", columnList = "ip_address")})
 @Getter
 @Setter
 @NoArgsConstructor

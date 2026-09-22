@@ -1,11 +1,11 @@
 package com.iyte_yazilim.proje_pazari.application.commands.reviewApplication;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ICommand;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.enums.RoleType;
 import com.iyte_yazilim.proje_pazari.domain.models.results.ReviewApplicationCommandResult;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -20,6 +20,8 @@ import jakarta.validation.constraints.NotNull;
  * </ul>
  *
  * @param applicationId ULID of the application to review
+ * @param requesterId authenticated user requesting the review
+ * @param requesterRole authenticated user's role
  * @param status The new status (APPROVED or REJECTED)
  * @param reviewMessage Optional message to include in the review
  * @author IYTE Yazılım Topluluğu
@@ -30,9 +32,9 @@ import jakarta.validation.constraints.NotNull;
  */
 @Schema(description = "Command to review a project application")
 public record ReviewApplicationCommand(
-        @Schema(description = "ID of the application to review", example = "01HQZX...")
-                @NotBlank(message = "Application ID is required")
-                String applicationId,
+        @Schema(hidden = true) String applicationId,
+        @Schema(hidden = true) String requesterId,
+        @Schema(hidden = true) RoleType requesterRole,
         @Schema(description = "New status for the application (APPROVED or REJECTED)")
                 @NotNull(message = "Status is required")
                 ApplicationStatus status,

@@ -47,7 +47,7 @@ Additional defaults:
 
 Current organized naming conventions:
 
-- Avatars: `proje-pazari-avatars/users/{userId}/avatar.{ext}`
+- Avatars: `proje-pazari-avatars/users/{userId}/avatar-{ULID}.{ext}` (each replacement upload gets a distinct key)
 - Project documents: `proje-pazari-documents/projects/{projectId}/{documentId}.{ext}`
 - Generic files: `proje-pazari-files/{domain-specific-path}`
 

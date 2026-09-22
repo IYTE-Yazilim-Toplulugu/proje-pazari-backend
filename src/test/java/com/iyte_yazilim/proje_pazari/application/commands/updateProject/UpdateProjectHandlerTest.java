@@ -5,13 +5,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.github.f4b6a3.ulid.Ulid;
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.ProjectDetailDto;
 import com.iyte_yazilim.proje_pazari.application.mappers.ProjectDetailDtoMapper;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
 import com.iyte_yazilim.proje_pazari.domain.entities.Project;
 import com.iyte_yazilim.proje_pazari.domain.enums.ProjectStatus;
-import com.iyte_yazilim.proje_pazari.domain.enums.ResponseCode;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectEntity;
@@ -200,6 +200,12 @@ class UpdateProjectHandlerTest {
     @DisplayName("Should return 403 when project is COMPLETED")
     void shouldReturnForbidden_whenProjectIsCompleted() {
         projectEntity.setStatus(ProjectStatus.COMPLETED);
+
+        // --- ADDED MOCK BEHAVIOR ---
+        domainProject.reconstitute(ProjectStatus.COMPLETED, 0);
+        when(projectMapper.entityToDomain(any())).thenReturn(domainProject);
+        // ---------------------------
+
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
         when(messageService.getMessage("project.update.not.allowed")).thenReturn("Not allowed");
 
@@ -217,6 +223,12 @@ class UpdateProjectHandlerTest {
     @DisplayName("Should return 403 when project is CANCELLED")
     void shouldReturnForbidden_whenProjectIsCancelled() {
         projectEntity.setStatus(ProjectStatus.CANCELLED);
+
+        // --- ADDED MOCK BEHAVIOR ---
+        domainProject.reconstitute(ProjectStatus.CANCELLED, 0);
+        when(projectMapper.entityToDomain(any())).thenReturn(domainProject);
+        // ---------------------------
+
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectEntity));
         when(messageService.getMessage("project.update.not.allowed")).thenReturn("Not allowed");
 

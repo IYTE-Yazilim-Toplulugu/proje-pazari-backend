@@ -4,7 +4,13 @@ import com.iyte_yazilim.proje_pazari.application.services.ElasticsearchSyncServi
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectCreatedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectDeletedEvent;
 import com.iyte_yazilim.proje_pazari.domain.events.ProjectUpdatedEvent;
+import com.iyte_yazilim.proje_pazari.domain.events.UserDeletedEvent;
+import com.iyte_yazilim.proje_pazari.domain.events.UserRegisteredEvent;
+import com.iyte_yazilim.proje_pazari.domain.events.UserUpdatedEvent;
 import com.iyte_yazilim.proje_pazari.infrastructure.metrics.BusinessMetricsService;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.PendingIndexRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PendingIndexEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.PendingIndexStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,6 +30,7 @@ public class ElasticsearchEventListener {
 
     private final ElasticsearchSyncService syncService;
     private final BusinessMetricsService metricsService;
+    private final PendingIndexRepository pendingIndexRepository;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
@@ -39,6 +46,7 @@ public class ElasticsearchEventListener {
                     event.projectId(),
                     e.getMessage(),
                     e);
+            enqueuePendingIndex(event.projectId());
         }
     }
 
@@ -56,6 +64,46 @@ public class ElasticsearchEventListener {
                     event.projectId(),
                     e.getMessage(),
                     e);
+            enqueuePendingIndex(event.projectId());
+        }
+    }
+
+    /**
+     * Queues a project for retry indexing, skipping the insert when a {@code PENDING} entry for the
+     * same project already exists. Avoids accumulating duplicate rows when a project fails to index
+     * repeatedly during an outage.
+     */
+    private void enqueuePendingIndex(String projectId) {
+        if (pendingIndexRepository.existsByProjectIdAndStatus(
+                projectId, PendingIndexStatus.PENDING)) {
+            return;
+        }
+        pendingIndexRepository.save(PendingIndexEntity.of(projectId));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
+    public void handleUserUpdated(UserUpdatedEvent event) {
+        try {
+            log.debug("Re-indexing updated user: {}", event.userId());
+            syncService.indexUser(event.userId());
+        } catch (Exception e) {
+            log.error("Failed to re-index updated user {}: {}", event.userId(), e.getMessage(), e);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
+    public void handleUserRegistered(UserRegisteredEvent event) {
+        try {
+            log.debug("Indexing newly registered user: {}", event.getUserId());
+            syncService.indexUser(event.getUserId().toString());
+        } catch (Exception e) {
+            log.error(
+                    "Failed to index newly registered user {}: {}",
+                    event.getUserId(),
+                    e.getMessage(),
+                    e);
         }
     }
 
@@ -71,6 +119,23 @@ public class ElasticsearchEventListener {
             log.error(
                     "Failed to remove project {} from index: {}",
                     event.projectId(),
+                    e.getMessage(),
+                    e);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
+    public void handleUserDeleted(UserDeletedEvent event) {
+        try {
+            log.debug("Removing deleted user from index: {}", event.getUserId());
+            syncService.deleteUserIndex(event.getUserId());
+            metricsService.incrementEsDeleteSuccess();
+        } catch (Exception e) {
+            metricsService.incrementEsDeleteFailure();
+            log.error(
+                    "Failed to remove user {} from index: {}",
+                    event.getUserId(),
                     e.getMessage(),
                     e);
         }

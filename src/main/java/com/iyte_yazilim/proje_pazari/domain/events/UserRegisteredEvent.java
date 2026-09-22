@@ -1,9 +1,7 @@
 package com.iyte_yazilim.proje_pazari.domain.events;
 
 import com.github.f4b6a3.ulid.Ulid;
-import lombok.Getter;
 
-@Getter
 public class UserRegisteredEvent extends DomainEvent {
 
     private final Ulid userId;
@@ -22,5 +20,21 @@ public class UserRegisteredEvent extends DomainEvent {
         this.email = email;
         this.firstName = firstName;
         this.verificationToken = verificationToken;
+    }
+
+    public Ulid getUserId() {
+        return this.userId;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+
+    public String getFirstName() {
+        return this.firstName;
+    }
+
+    public String getVerificationToken() {
+        return this.verificationToken;
     }
 }

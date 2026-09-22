@@ -1,270 +1,439 @@
 package com.iyte_yazilim.proje_pazari.presentation.controllers;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iyte_yazilim.proje_pazari.TestRateLimitConfig;
-import com.iyte_yazilim.proje_pazari.TestRedisConfig;
+import com.iyte_yazilim.proje_pazari.IntegrationTestBase;
+import com.iyte_yazilim.proje_pazari.application.commands.loginUser.LoginUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.logout.LogoutRequest;
+import com.iyte_yazilim.proje_pazari.application.commands.registerUser.RegisterUserCommand;
+import com.iyte_yazilim.proje_pazari.application.commands.resendVerificationEmail.ResendVerificationEmailCommand;
+import com.iyte_yazilim.proje_pazari.application.services.VerificationTokenService;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.EmailVerificationRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.EmailVerificationEntity;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.RefreshTokenRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.UserRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.security.service.RefreshTokenService;
+import com.iyte_yazilim.proje_pazari.presentation.security.JwtUtil;
 import java.time.LocalDateTime;
-import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import({TestRedisConfig.class, TestRateLimitConfig.class})
-class AuthControllerIntegrationTest {
+class AuthControllerIntegrationTest extends IntegrationTestBase {
 
-    @Autowired private MockMvc mockMvc;
+    private static final String BASE_URL = "/api/v1/auth";
+    private static final String VALID_EMAIL = "testuser@std.iyte.edu.tr";
+    private static final String VALID_PASSWORD = "SecurePass123!";
+    private static final String VALID_FIRST_NAME = "John";
+    private static final String VALID_LAST_NAME = "Doe";
+
+    @Autowired private UserRepository userRepository;
+
     @Autowired private EmailVerificationRepository emailVerificationRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Test
-    @DisplayName("POST /api/v1/auth/register - should register user successfully")
-    void shouldRegisterUser() throws Exception {
-        Map<String, String> request =
-                Map.of(
-                        "email", "newuser@std.iyte.edu.tr",
-                        "password", "SecurePassword123!",
-                        "firstName", "John",
-                        "lastName", "Doe");
+    @Autowired private RefreshTokenRepository refreshTokenRepository;
 
-        mockMvc.perform(
-                        post("/api/v1/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.message").exists());
+    @Autowired private PasswordEncoder passwordEncoder;
+
+    @Autowired private VerificationTokenService verificationTokenService;
+
+    @Autowired private RefreshTokenService refreshTokenService;
+
+    @Autowired private JwtUtil jwtUtil;
+
+    // ── Helper Methods ──────────────────────────────────────────────────
+
+    private ResultActions registerUser(
+            String email, String password, String firstName, String lastName) throws Exception {
+        var command = new RegisterUserCommand(email, password, firstName, lastName);
+        return mockMvc.perform(
+                post(BASE_URL + "/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)));
     }
 
-    @Test
-    @DisplayName("POST /api/v1/auth/register - should fail for duplicate email")
-    void shouldFailForDuplicateEmail() throws Exception {
-        Map<String, String> request =
-                Map.of(
-                        "email", "duplicate@std.iyte.edu.tr",
-                        "password", "SecurePassword123!",
-                        "firstName", "Jane",
-                        "lastName", "Smith");
-
-        // First registration
-        mockMvc.perform(
-                        post("/api/v1/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated());
-
-        // Second registration with same email - handler returns badRequest
-        mockMvc.perform(
-                        post("/api/v1/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+    private ResultActions loginUser(String email, String password) throws Exception {
+        var command = new LoginUserCommand(email, password);
+        return mockMvc.perform(
+                post(BASE_URL + "/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)));
     }
 
-    @Test
-    @DisplayName("POST /api/v1/auth/login - should login successfully after registration")
-    void shouldLoginSuccessfully() throws Exception {
-        Map<String, String> registerRequest =
-                Map.of(
-                        "email", "logintest@std.iyte.edu.tr",
-                        "password", "SecurePassword123!",
-                        "firstName", "Login",
-                        "lastName", "User");
+    // ── 1. Register Tests ───────────────────────────────────────────────
 
-        mockMvc.perform(
-                        post("/api/v1/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isCreated());
+    @Nested
+    @DisplayName("POST /api/v1/auth/register")
+    class RegisterTests {
 
-        EmailVerificationEntity verification =
-                emailVerificationRepository
-                        .findByEmailAndVerifiedAtIsNull("logintest@std.iyte.edu.tr")
-                        .orElseThrow();
-        verification.setVerifiedAt(LocalDateTime.now());
-        emailVerificationRepository.save(verification);
+        @Test
+        @DisplayName("1. Valid IYTE email and strong password returns 201 CREATED")
+        void register_validData_returns201() throws Exception {
+            registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.code").value(11))
+                    .andExpect(jsonPath("$.data.userId").isNotEmpty())
+                    .andExpect(jsonPath("$.data.email").value(VALID_EMAIL))
+                    .andExpect(jsonPath("$.data.firstName").value(VALID_FIRST_NAME))
+                    .andExpect(jsonPath("$.data.lastName").value(VALID_LAST_NAME));
+        }
 
-        Map<String, String> loginRequest =
-                Map.of(
-                        "email", "logintest@std.iyte.edu.tr",
-                        "password", "SecurePassword123!");
+        @Test
+        @DisplayName("2. Duplicate email returns 400 BAD_REQUEST")
+        void register_duplicateEmail_returns400() throws Exception {
+            registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isCreated());
 
-        mockMvc.perform(
-                        post("/api/v1/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.accessToken").exists())
-                .andExpect(jsonPath("$.data.email").value("logintest@std.iyte.edu.tr"));
+            registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("3. Non-IYTE email returns 400 BAD_REQUEST")
+        void register_nonIyteEmail_returns400() throws Exception {
+            registerUser("test@gmail.com", VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("4. Weak password (no special char) returns 400 BAD_REQUEST")
+        void register_weakPassword_returns400() throws Exception {
+            registerUser(VALID_EMAIL, "WeakPass1", VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("5. Missing required fields (empty body) returns 400 BAD_REQUEST")
+        void register_emptyBody_returns400() throws Exception {
+            mockMvc.perform(
+                            post(BASE_URL + "/register")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("6. Email verification record is created after registration")
+        void register_createsEmailVerificationRecord() throws Exception {
+            registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isCreated());
+
+            var user = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            var verification =
+                    emailVerificationRepository.findTopByUserIdOrderByCreatedAtDesc(user.getId());
+
+            assertThat(verification).isPresent();
+            assertThat(verification.get().getEmail()).isEqualTo(VALID_EMAIL);
+            assertThat(verification.get().getToken()).isNotBlank();
+            assertThat(verification.get().getVerifiedAt()).isNull();
+        }
     }
 
-    @Test
-    @DisplayName("POST /api/v1/auth/login - should fail with wrong password")
-    void shouldFailWithWrongPassword() throws Exception {
-        Map<String, String> registerRequest =
-                Map.of(
-                        "email", "wrongpw@std.iyte.edu.tr",
-                        "password", "SecurePassword123!",
-                        "firstName", "Wrong",
-                        "lastName", "Password");
+    // ── 2. Login Tests ──────────────────────────────────────────────────
 
-        mockMvc.perform(
-                        post("/api/v1/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isCreated());
+    @Nested
+    @DisplayName("POST /api/v1/auth/login")
+    class LoginTests {
 
-        EmailVerificationEntity verification =
-                emailVerificationRepository
-                        .findByEmailAndVerifiedAtIsNull("wrongpw@std.iyte.edu.tr")
-                        .orElseThrow();
-        verification.setVerifiedAt(LocalDateTime.now());
-        emailVerificationRepository.save(verification);
+        @Test
+        @DisplayName("1. Valid credentials (verified user) returns 200 with tokens")
+        void login_validCredentials_returns200() throws Exception {
+            registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
 
-        Map<String, String> loginRequest =
-                Map.of(
-                        "email", "wrongpw@std.iyte.edu.tr",
-                        "password", "WrongPassword!");
+            loginUser(VALID_EMAIL, VALID_PASSWORD)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                    .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
+        }
 
-        mockMvc.perform(
-                        post("/api/v1/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isBadRequest());
+        @Test
+        @DisplayName("2. Non-existent email returns 400 BAD_REQUEST")
+        void login_nonExistentEmail_returns400() throws Exception {
+            loginUser("nonexistent@std.iyte.edu.tr", VALID_PASSWORD)
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("3. Wrong password returns 400 BAD_REQUEST")
+        void login_wrongPassword_returns400() throws Exception {
+            registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+
+            loginUser(VALID_EMAIL, "WrongPass123!").andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("4. Unverified email returns 403 FORBIDDEN")
+        void login_unverifiedEmail_returns403() throws Exception {
+            registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isCreated());
+
+            loginUser(VALID_EMAIL, VALID_PASSWORD).andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("5. JWT contains correct claims (userId, email, role)")
+        void login_jwtContainsCorrectClaims() throws Exception {
+            registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+
+            var result =
+                    loginUser(VALID_EMAIL, VALID_PASSWORD).andExpect(status().isOk()).andReturn();
+
+            var responseBody = result.getResponse().getContentAsString();
+            var jsonNode = objectMapper.readTree(responseBody);
+            var accessToken = jsonNode.get("data").get("accessToken").asText();
+
+            assertThat(jwtUtil.extractEmail(accessToken)).isEqualTo(VALID_EMAIL);
+            assertThat(jwtUtil.extractUserId(accessToken)).isNotBlank();
+            assertThat(jwtUtil.extractRole(accessToken)).isEqualTo("USER");
+        }
     }
 
-    @Test
-    @DisplayName("POST /api/v1/auth/register - should fail with invalid data")
-    void shouldFailWithInvalidData() throws Exception {
-        Map<String, String> request =
-                Map.of(
-                        "email", "not-an-email",
-                        "password", "short",
-                        "firstName", "",
-                        "lastName", "");
+    // ── 3. Verify Email Tests ───────────────────────────────────────────
 
-        mockMvc.perform(
-                        post("/api/v1/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+    @Nested
+    @DisplayName("GET /api/v1/auth/verify-email")
+    class VerifyEmailTests {
+
+        @Test
+        @DisplayName("1. Valid token verifies email successfully")
+        void verifyEmail_validToken_returns200() throws Exception {
+            registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isCreated());
+
+            var user = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            var verification =
+                    emailVerificationRepository
+                            .findTopByUserIdOrderByCreatedAtDesc(user.getId())
+                            .orElseThrow();
+
+            mockMvc.perform(get(BASE_URL + "/verify-email").param("token", verification.getToken()))
+                    .andExpect(status().isOk());
+
+            // Assert email is now verified
+            assertThat(
+                            emailVerificationRepository.existsByUserIdAndVerifiedAtIsNotNull(
+                                    user.getId()))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("2. Invalid token returns 400 BAD_REQUEST")
+        void verifyEmail_invalidToken_returns400() throws Exception {
+            mockMvc.perform(
+                            get(BASE_URL + "/verify-email")
+                                    .param("token", "invalid-token-that-does-not-exist"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("3. Already verified email returns 409 CONFLICT")
+        void verifyEmail_alreadyVerified_returns409() throws Exception {
+            registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isCreated());
+
+            var user = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            var verification =
+                    emailVerificationRepository
+                            .findTopByUserIdOrderByCreatedAtDesc(user.getId())
+                            .orElseThrow();
+            String token = verification.getToken();
+
+            // Verify once
+            mockMvc.perform(get(BASE_URL + "/verify-email").param("token", token))
+                    .andExpect(status().isOk());
+
+            // Try to verify again
+            mockMvc.perform(get(BASE_URL + "/verify-email").param("token", token))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        @DisplayName("4. Expired token returns 400 BAD_REQUEST")
+        void verifyEmail_expiredToken_returns400() throws Exception {
+            registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isCreated());
+
+            var user = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            var verification =
+                    emailVerificationRepository
+                            .findTopByUserIdOrderByCreatedAtDesc(user.getId())
+                            .orElseThrow();
+
+            // Set expiration to the past
+            verification.setExpiresAt(LocalDateTime.now().minusHours(1));
+            emailVerificationRepository.save(verification);
+
+            mockMvc.perform(get(BASE_URL + "/verify-email").param("token", verification.getToken()))
+                    .andExpect(status().isBadRequest());
+        }
     }
 
-    // ── Logout helpers ────────────────────────────────────────────────────────
+    // ── 4. Resend Verification Tests ────────────────────────────────────
 
-    private String registerVerifyAndLogin(String email) throws Exception {
-        Map<String, String> registerRequest =
-                Map.of(
-                        "email", email,
-                        "password", "SecurePassword123!",
-                        "firstName", "Test",
-                        "lastName", "User");
+    @Nested
+    @DisplayName("POST /api/v1/auth/resend-verification")
+    class ResendVerificationTests {
 
-        mockMvc.perform(
-                        post("/api/v1/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isCreated());
+        @Test
+        @DisplayName("1. Valid unverified email returns 200 OK")
+        void resendVerification_validUnverifiedEmail_returns200() throws Exception {
+            registerUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME)
+                    .andExpect(status().isCreated());
 
-        EmailVerificationEntity verification =
-                emailVerificationRepository.findByEmailAndVerifiedAtIsNull(email).orElseThrow();
-        verification.setVerifiedAt(LocalDateTime.now());
-        emailVerificationRepository.save(verification);
+            var command = new ResendVerificationEmailCommand(VALID_EMAIL);
+            mockMvc.perform(
+                            post(BASE_URL + "/resend-verification")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(command)))
+                    .andExpect(status().isOk());
+        }
 
-        MvcResult loginResult =
-                mockMvc.perform(
-                                post("/api/v1/auth/login")
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(
-                                                objectMapper.writeValueAsString(
-                                                        Map.of(
-                                                                "email",
-                                                                email,
-                                                                "password",
-                                                                "SecurePassword123!"))))
-                        .andExpect(status().isOk())
-                        .andReturn();
+        @Test
+        @DisplayName("2. Already verified email returns 409 CONFLICT")
+        void resendVerification_alreadyVerified_returns409() throws Exception {
+            registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
 
-        return loginResult.getResponse().getContentAsString();
+            var command = new ResendVerificationEmailCommand(VALID_EMAIL);
+            mockMvc.perform(
+                            post(BASE_URL + "/resend-verification")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(command)))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        @DisplayName("3. Non-existent email returns 404 NOT_FOUND")
+        void resendVerification_nonExistentEmail_returns404() throws Exception {
+            var command = new ResendVerificationEmailCommand("nonexistent@std.iyte.edu.tr");
+            mockMvc.perform(
+                            post(BASE_URL + "/resend-verification")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(command)))
+                    .andExpect(status().isNotFound());
+        }
     }
 
-    @Test
-    @DisplayName("POST /api/v1/auth/logout - should logout successfully with valid tokens")
-    void shouldLogoutSuccessfully() throws Exception {
-        String loginJson = registerVerifyAndLogin("logout-success@std.iyte.edu.tr");
+    // ── 5. Refresh Token Tests ──────────────────────────────────────────
 
-        String accessToken = objectMapper.readTree(loginJson).at("/data/accessToken").asText();
-        String refreshToken = objectMapper.readTree(loginJson).at("/data/refreshToken").asText();
+    @Nested
+    @DisplayName("POST /api/v1/auth/refresh")
+    class RefreshTokenTests {
 
-        mockMvc.perform(
-                        post("/api/v1/auth/logout")
-                                .header("Authorization", "Bearer " + accessToken)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                Map.of("refreshToken", refreshToken))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").exists());
+        @Test
+        @DisplayName("1. Valid refresh token returns 200 with new tokens")
+        void refresh_validToken_returns200() throws Exception {
+            registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
 
-        // Confirm the blacklisted access token is rejected on subsequent requests.
-        // GlobalExceptionHandler maps AccessDeniedException to 403 for anonymous users
-        // (token blacklisted → no auth set → @PreAuthorize("isAuthenticated()") throws
-        // AccessDeniedException → handled as 403 Forbidden).
-        mockMvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isForbidden());
+            var user = userRepository.findByEmail(VALID_EMAIL).orElseThrow();
+            String refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+            mockMvc.perform(post(BASE_URL + "/refresh").param("refreshToken", refreshToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                    .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
+        }
+
+        @Test
+        @DisplayName("2. Invalid refresh token returns 400 BAD_REQUEST")
+        void refresh_invalidToken_returns400() throws Exception {
+            mockMvc.perform(post(BASE_URL + "/refresh").param("refreshToken", "invalid-token"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("3. Missing refreshToken param returns 400 BAD_REQUEST")
+        void refresh_missingParam_returns400() throws Exception {
+            mockMvc.perform(post(BASE_URL + "/refresh")).andExpect(status().isBadRequest());
+        }
     }
 
-    @Test
-    @DisplayName("POST /api/v1/auth/logout - should fail when refresh token is invalid")
-    void shouldFailLogout_WhenRefreshTokenIsInvalid() throws Exception {
-        String loginJson = registerVerifyAndLogin("logout-invalid-rt@std.iyte.edu.tr");
+    // ── 6. Logout Tests ──────────────────────────────────────────────────
 
-        String accessToken = objectMapper.readTree(loginJson).at("/data/accessToken").asText();
+    @Nested
+    @DisplayName("POST /api/v1/auth/logout")
+    class LogoutTests {
 
-        mockMvc.perform(
-                        post("/api/v1/auth/logout")
-                                .header("Authorization", "Bearer " + accessToken)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                Map.of("refreshToken", "not-a-real-token"))))
-                .andExpect(status().isBadRequest());
-    }
+        private String[] loginAndGetTokens(String email, String password) throws Exception {
+            var command = new LoginUserCommand(email, password);
+            MvcResult result =
+                    mockMvc.perform(
+                                    post(BASE_URL + "/login")
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .content(objectMapper.writeValueAsString(command)))
+                            .andExpect(status().isOk())
+                            .andReturn();
 
-    @Test
-    @DisplayName("POST /api/v1/auth/logout - should fail when request body is missing")
-    void shouldFailLogout_WhenBodyIsMissing() throws Exception {
-        String loginJson = registerVerifyAndLogin("logout-nobody@std.iyte.edu.tr");
-        String accessToken = objectMapper.readTree(loginJson).at("/data/accessToken").asText();
+            var jsonNode = objectMapper.readTree(result.getResponse().getContentAsString());
+            String accessToken = jsonNode.get("data").get("accessToken").asText();
+            String refreshToken = jsonNode.get("data").get("refreshToken").asText();
+            return new String[] {accessToken, refreshToken};
+        }
 
-        mockMvc.perform(
-                        post("/api/v1/auth/logout")
-                                .header("Authorization", "Bearer " + accessToken)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-    }
+        @Test
+        @DisplayName("1. Valid logout returns 200 OK")
+        void logout_validTokens_returns200() throws Exception {
+            registerAndVerifyUser(VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+            String[] tokens = loginAndGetTokens(VALID_EMAIL, VALID_PASSWORD);
+            String accessToken = tokens[0];
+            String refreshToken = tokens[1];
 
-    @Test
-    @DisplayName("POST /api/v1/auth/logout - should fail when called without authentication")
-    void shouldFailLogout_WhenNotAuthenticated() throws Exception {
-        mockMvc.perform(
-                        post("/api/v1/auth/logout")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                Map.of("refreshToken", "some-token"))))
-                .andExpect(status().isForbidden());
+            var body = new LogoutRequest(refreshToken);
+            mockMvc.perform(
+                            post(BASE_URL + "/logout")
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(body)))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("2. Unauthenticated request returns 403 FORBIDDEN")
+        void logout_unauthenticated_returns403() throws Exception {
+            var body = new LogoutRequest("some-refresh-token");
+            mockMvc.perform(
+                            post(BASE_URL + "/logout")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(body)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("3. Missing refresh token in body returns 400 BAD_REQUEST")
+        void logout_missingRefreshToken_returns400() throws Exception {
+            String accessToken =
+                    createVerifiedUserAndGetToken(
+                            VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+
+            mockMvc.perform(
+                            post(BASE_URL + "/logout")
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("4. Invalid refresh token returns 400 BAD_REQUEST")
+        void logout_invalidRefreshToken_returns400() throws Exception {
+            String accessToken =
+                    createVerifiedUserAndGetToken(
+                            VALID_EMAIL, VALID_PASSWORD, VALID_FIRST_NAME, VALID_LAST_NAME);
+
+            var body = new LogoutRequest("invalid-refresh-token");
+            mockMvc.perform(
+                            post(BASE_URL + "/logout")
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(body)))
+                    .andExpect(status().isBadRequest());
+        }
     }
 }

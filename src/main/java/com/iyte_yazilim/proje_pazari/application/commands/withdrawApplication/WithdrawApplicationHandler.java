@@ -1,10 +1,12 @@
 package com.iyte_yazilim.proje_pazari.application.commands.withdrawApplication;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.services.MessageService;
-import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
+import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.IllegalApplicationStateException;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
+import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectApplicationMapper;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,7 @@ public class WithdrawApplicationHandler
         implements IRequestHandler<WithdrawApplicationCommand, ApiResponse<Void>> {
 
     private final ProjectApplicationRepository applicationRepository;
+    private final ProjectApplicationMapper applicationMapper;
     private final MessageService messageService;
 
     @Override
@@ -43,14 +46,17 @@ public class WithdrawApplicationHandler
                     messageService.getMessage("application.withdraw.forbidden"));
         }
 
-        // --- 3. Only PENDING applications can be withdrawn ---
-        if (applicationEntity.getStatus() != ApplicationStatus.PENDING) {
+        // --- 3. Delegate to domain aggregate — enforces PENDING guard ---
+        ProjectApplication application = applicationMapper.entityToDomain(applicationEntity);
+        try {
+            application.withdraw();
+        } catch (IllegalApplicationStateException e) {
             return ApiResponse.badRequest(
                     messageService.getMessage("application.withdraw.not.pending"));
         }
 
-        // --- 4. Withdraw (soft-delete via status transition) ---
-        applicationEntity.setStatus(ApplicationStatus.WITHDRAWN);
+        // --- 4. Sync domain state back to persistence entity ---
+        applicationEntity.setStatus(application.getStatus());
         applicationRepository.save(applicationEntity);
 
         // --- 5. Response ---

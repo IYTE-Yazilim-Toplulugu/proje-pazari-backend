@@ -96,6 +96,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Extract all user info from JWT - NO database lookup!
                 UserPrincipal userPrincipal = jwtUtil.extractUserPrincipal(jwt);
 
+                // Reject tokens belonging to deactivated/deleted users
+                if (tokenBlacklistService.isUserBlacklisted(userPrincipal.getUsername())) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userPrincipal, null, userPrincipal.getAuthorities());

@@ -2,16 +2,12 @@ package com.iyte_yazilim.proje_pazari.domain.entities;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Domain entity representing a single-use password reset token.
  *
  * <p>Tokens expire after a configurable TTL and are invalidated on use.
  */
-@Getter
-@Setter
 public class PasswordResetToken {
 
     private String id;
@@ -37,5 +33,61 @@ public class PasswordResetToken {
 
     public boolean isExpired(Clock clock) {
         return LocalDateTime.now(clock).isAfter(expiresAt);
+    }
+
+    public String getId() {
+        return this.id;
+    }
+
+    public String getUserId() {
+        return this.userId;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+
+    public String getToken() {
+        return this.token;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return this.expiresAt;
+    }
+
+    public LocalDateTime getUsedAt() {
+        return this.usedAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return this.createdAt;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    public void setUsedAt(LocalDateTime usedAt) {
+        this.usedAt = usedAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

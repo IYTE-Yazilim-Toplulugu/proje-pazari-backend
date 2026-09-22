@@ -38,21 +38,9 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
      */
     boolean existsByEmail(String email);
 
-    /**
-     * Counts the number of projects owned by a user.
-     *
-     * @param userId the user's ULID
-     * @return count of projects owned by the user
-     */
     @Query("SELECT COUNT(p) FROM ProjectEntity p WHERE p.owner.id = :userId")
     int countProjectsByUserId(@Param("userId") String userId);
 
-    /**
-     * Counts the number of project applications submitted by a user.
-     *
-     * @param userId the user's ULID
-     * @return count of applications by the user
-     */
     @Query("SELECT COUNT(a) FROM ProjectApplicationEntity a WHERE a.user.id = :userId")
     int countApplicationsByUserId(@Param("userId") String userId);
 
@@ -73,13 +61,24 @@ public interface UserRepository extends JpaRepository<UserEntity, String> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     @Query(
-            "SELECT DISTINCT u FROM UserEntity u LEFT JOIN u.roles r WHERE "
-                    + "(:role IS NULL OR r = :role) AND "
-                    + "(:isActive IS NULL OR u.isActive = :isActive) AND "
-                    + "(:search IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) "
-                    + "OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) "
-                    + "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<UserEntity> findWithFilters(
+            value =
+                    "SELECT DISTINCT u, "
+                            + "(SELECT COUNT(p) FROM ProjectEntity p WHERE p.owner.id = u.id), "
+                            + "(SELECT COUNT(a) FROM ProjectApplicationEntity a WHERE a.user.id = u.id) "
+                            + "FROM UserEntity u LEFT JOIN u.roles r WHERE "
+                            + "(:role IS NULL OR r = :role) AND "
+                            + "(:isActive IS NULL OR u.isActive = :isActive) AND "
+                            + "(:search IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) "
+                            + "OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) "
+                            + "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')))",
+            countQuery =
+                    "SELECT COUNT(DISTINCT u) FROM UserEntity u LEFT JOIN u.roles r WHERE "
+                            + "(:role IS NULL OR r = :role) AND "
+                            + "(:isActive IS NULL OR u.isActive = :isActive) AND "
+                            + "(:search IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) "
+                            + "OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) "
+                            + "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Object[]> findWithFiltersAndCounts(
             @Param("role") RoleType role,
             @Param("isActive") Boolean isActive,
             @Param("search") String search,

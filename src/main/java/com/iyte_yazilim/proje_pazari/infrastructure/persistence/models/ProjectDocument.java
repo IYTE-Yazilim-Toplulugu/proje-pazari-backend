@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,7 +14,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 
-@Document(indexName = "#{@environment.getProperty('app.elasticsearch.project-index')}")
+@Document(indexName = "#{@environment.getProperty('app.elasticsearch.project-index', 'projects')}")
 @Setting(settingPath = "elasticsearch/project-settings.json")
 @Getter
 @Setter
@@ -26,23 +25,38 @@ public class ProjectDocument {
 
     @Id private String id;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String title;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String description;
 
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Text, analyzer = "turkish_search")
     private String summary;
 
     @Field(type = FieldType.Keyword)
     private String status;
 
-    @Field(type = FieldType.Nested)
-    private OwnerInfo owner;
+    @Field(type = FieldType.Keyword)
+    private String category;
 
     @Field(type = FieldType.Keyword)
-    private List<String> tags;
+    private String ownerId;
+
+    @Field(type = FieldType.Text)
+    private String ownerName;
+
+    @Field(type = FieldType.Keyword)
+    private String ownerEmail;
+
+    @Field(type = FieldType.Integer)
+    private Integer maxTeamSize;
+
+    @Field(type = FieldType.Keyword)
+    private List<String> requiredSkills;
+
+    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_fraction)
+    private LocalDateTime deadline;
 
     @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_fraction)
     private LocalDateTime createdAt;
@@ -51,17 +65,5 @@ public class ProjectDocument {
     private LocalDateTime updatedAt;
 
     @Field(type = FieldType.Integer)
-    private int applicationsCount;
-
-    @Data
-    public static class OwnerInfo {
-        @Field(type = FieldType.Keyword)
-        private String id;
-
-        @Field(type = FieldType.Text)
-        private String name;
-
-        @Field(type = FieldType.Keyword)
-        private String email;
-    }
+    private int applicationCount;
 }

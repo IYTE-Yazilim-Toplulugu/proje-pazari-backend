@@ -2,6 +2,7 @@ package com.iyte_yazilim.proje_pazari.application.behaviors;
 
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.application.common.RequestHandlerDelegate;
+import com.iyte_yazilim.proje_pazari.application.common.SensitiveRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
@@ -33,7 +34,16 @@ public class LoggingBehavior<TRequest extends IRequest<TResponse>, TResponse>
             return response;
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
-            logger.error("Request {} failed after {}ms: {}", requestName, duration, e.getMessage());
+            if (request instanceof SensitiveRequest) {
+                logger.error(
+                        "Sensitive request {} failed after {}ms ({})",
+                        requestName,
+                        duration,
+                        e.getClass().getSimpleName());
+            } else {
+                logger.error(
+                        "Request {} failed after {}ms: {}", requestName, duration, e.getMessage());
+            }
             throw e;
         }
     }

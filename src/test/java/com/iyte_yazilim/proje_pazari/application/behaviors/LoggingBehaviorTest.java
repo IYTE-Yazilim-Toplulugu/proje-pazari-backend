@@ -4,14 +4,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.iyte_yazilim.proje_pazari.application.common.IRequest;
 import com.iyte_yazilim.proje_pazari.application.common.RequestHandlerDelegate;
+import com.iyte_yazilim.proje_pazari.application.common.SensitiveRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
+@ExtendWith(OutputCaptureExtension.class)
 class LoggingBehaviorTest {
 
     private LoggingBehavior<TestRequest, String> loggingBehavior;
 
     record TestRequest(String data) implements IRequest<String> {}
+
+    record SensitiveTestRequest(String data) implements IRequest<String>, SensitiveRequest {}
 
     @BeforeEach
     void setUp() {
@@ -45,6 +52,23 @@ class LoggingBehaviorTest {
         RuntimeException thrown =
                 assertThrows(RuntimeException.class, () -> loggingBehavior.handle(request, next));
         assertEquals("Test exception", thrown.getMessage());
+    }
+
+    @Test
+    void handle_shouldNotLogSensitiveExceptionMessages(CapturedOutput output) {
+        String secret = "MESSAGE_BODY_SECRET";
+        SensitiveTestRequest request = new SensitiveTestRequest(secret);
+        LoggingBehavior<SensitiveTestRequest, String> sensitiveLoggingBehavior =
+                new LoggingBehavior<>();
+        RequestHandlerDelegate<String> next =
+                () -> {
+                    throw new RuntimeException(secret);
+                };
+
+        assertThrows(RuntimeException.class, () -> sensitiveLoggingBehavior.handle(request, next));
+
+        assertFalse(output.getAll().contains(secret));
+        assertTrue(output.getAll().contains("RuntimeException"));
     }
 
     @Test

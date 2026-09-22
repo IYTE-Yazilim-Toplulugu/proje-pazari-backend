@@ -1,9 +1,9 @@
 package com.iyte_yazilim.proje_pazari.application.queries.getAuditLogs;
 
+import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
+import com.iyte_yazilim.proje_pazari.application.common.IRequestHandler;
 import com.iyte_yazilim.proje_pazari.application.dtos.AuditLogDTO;
 import com.iyte_yazilim.proje_pazari.application.dtos.PagedResponse;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
-import com.iyte_yazilim.proje_pazari.domain.models.ApiResponse;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.AuditLogRepository;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.AuditLogEntity;
 import java.util.List;

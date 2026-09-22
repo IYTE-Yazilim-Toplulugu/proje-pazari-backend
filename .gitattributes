@@ -1,3 +1,43 @@
-/gradlew text eol=lf
-*.bat text eol=crlf
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Shell scripts must have executable permissions preserved
+*.sh text eol=lf
+gradlew text eol=lf
+gradlew.bat text eol=crlf
+
+# Java source files
+*.java text eol=lf diff=java
+*.gradle text eol=lf
+*.properties text eol=lf
+*.xml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Documentation
+*.md text eol=lf
+*.txt text eol=lf
+
+# Docker files
+Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+
+# Git files
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Binary files (no text processing)
 *.jar binary
+*.war binary
+*.class binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar.gz binary
+
+# SQL files
+*.sql text eol=lf

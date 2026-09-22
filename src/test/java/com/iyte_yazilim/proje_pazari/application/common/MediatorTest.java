@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.iyte_yazilim.proje_pazari.application.behaviors.IPipelineBehavior;
-import com.iyte_yazilim.proje_pazari.domain.interfaces.IRequestHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
