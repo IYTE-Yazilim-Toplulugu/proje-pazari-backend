@@ -53,6 +53,9 @@ jobs:
       - name: Build application
         run: chmod +x gradlew && ./gradlew build -x test
 
+      - name: Verify clean Flyway migration and Hibernate validation
+        run: ./gradlew test --tests 'com.iyte_yazilim.proje_pazari.infrastructure.persistence.FlywaySchemaMigrationIntegrationTest'
+
       - name: Run tests with coverage
         run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification
 
@@ -159,7 +162,7 @@ jobs:
             docker compose --env-file .env.prod \
               -f docker-compose.yml \
               -f docker-compose.prod.yml \
-              up -d --no-deps app
+              up -d --no-deps --wait --wait-timeout 120 app
 
             # Clean up dangling image layers to reclaim disk space
             docker image prune -f

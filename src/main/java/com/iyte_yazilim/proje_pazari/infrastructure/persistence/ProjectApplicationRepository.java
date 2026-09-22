@@ -2,17 +2,29 @@ package com.iyte_yazilim.proje_pazari.infrastructure.persistence;
 
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
 import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
+import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /** ProjectApplicationRepository - JPA Repository for persistence layer */
 public interface ProjectApplicationRepository
         extends JpaRepository<ProjectApplicationEntity, String> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            "SELECT pa FROM ProjectApplicationEntity pa "
+                    + "JOIN FETCH pa.project p "
+                    + "JOIN FETCH p.owner "
+                    + "JOIN FETCH pa.user "
+                    + "WHERE pa.id = :id")
+    Optional<ProjectApplicationEntity> findByIdWithLock(@Param("id") String id);
 
     @Query(
             "SELECT pa FROM ProjectApplicationEntity pa "
