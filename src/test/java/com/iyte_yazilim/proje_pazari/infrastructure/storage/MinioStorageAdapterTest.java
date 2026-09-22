@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
  * <p>NOTE: These tests require a running MinIO instance at http://localhost:9000 with credentials:
  * minioadmin/minioadmin123
  *
- * <p>To run these tests: 1. Start MinIO: docker run -p 9000:9000 -p 9001:9001 minio/minio server
- * /data --console-address ":9001" 2. Or use Testcontainers for automated MinIO setup
+ * <p>To run these tests: 1. Start MinIO: docker run -p 9000:9000 -p 9001:9001 quay.io/minio/minio
+ * server /data --console-address ":9001" 2. Or use Testcontainers for automated MinIO setup
  *
  * <p>For unit tests, consider refactoring MinioStorageAdapter to allow dependency injection of
  * MinioClient.
