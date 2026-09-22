@@ -1,22 +1,19 @@
 package com.iyte_yazilim.proje_pazari.application.commands.bulkApplicationAction;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import com.github.f4b6a3.ulid.Ulid;
 import com.iyte_yazilim.proje_pazari.application.common.ApiResponse;
 import com.iyte_yazilim.proje_pazari.application.common.ResponseCode;
 import com.iyte_yazilim.proje_pazari.application.dtos.BulkActionResult;
-import com.iyte_yazilim.proje_pazari.domain.entities.ProjectApplication;
+import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationReviewFailure;
 import com.iyte_yazilim.proje_pazari.domain.enums.ApplicationStatus;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.ProjectApplicationRepository;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.mappers.ProjectApplicationMapper;
-import com.iyte_yazilim.proje_pazari.infrastructure.persistence.models.ProjectApplicationEntity;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationNotFoundException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.ApplicationReviewException;
+import com.iyte_yazilim.proje_pazari.domain.exceptions.IllegalApplicationStateException;
 import java.util.List;
-import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,103 +23,93 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class BulkApplicationActionHandlerTest {
 
-    @Mock private ProjectApplicationRepository applicationRepository;
-    @Mock private ProjectApplicationMapper applicationMapper;
+    private static final String FIRST_ID = "01APPLICATION000000000001";
+    private static final String SECOND_ID = "01APPLICATION000000000002";
+
+    @Mock private BulkApplicationReviewItemProcessor itemProcessor;
 
     @InjectMocks private BulkApplicationActionHandler handler;
 
-    private String appId;
-    private ProjectApplicationEntity applicationEntity;
-
-    @BeforeEach
-    void setUp() {
-        appId = Ulid.fast().toString();
-        applicationEntity = new ProjectApplicationEntity();
-        applicationEntity.setId(appId);
-        applicationEntity.setStatus(ApplicationStatus.PENDING);
-    }
-
     @Test
-    @DisplayName("Should approve applications in bulk")
-    void shouldApproveApplicationsInBulk() {
-        ProjectApplication domainApp = new ProjectApplication();
-
-        when(applicationRepository.findById(appId)).thenReturn(Optional.of(applicationEntity));
-        when(applicationMapper.entityToDomain(applicationEntity)).thenReturn(domainApp);
-        when(applicationRepository.save(any())).thenReturn(applicationEntity);
-
+    void approveRoutesEveryItemThroughTheTransactionalSharedReviewPath() {
         ApiResponse<BulkActionResult> response =
-                handler.handle(new BulkApplicationActionCommand("APPROVE", List.of(appId)));
+                handler.handle(
+                        new BulkApplicationActionCommand("approve", List.of(FIRST_ID, SECOND_ID)));
 
-        assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals(1, response.getData().getSuccessCount());
-        assertEquals(0, response.getData().getFailureCount());
-        assertEquals(ApplicationStatus.APPROVED, applicationEntity.getStatus());
+        assertThat(response.getCode()).isEqualTo(ResponseCode.SUCCESS);
+        assertThat(response.getData().getSuccessCount()).isEqualTo(2);
+        assertThat(response.getData().getFailureCount()).isZero();
+        verify(itemProcessor).process(FIRST_ID, ApplicationStatus.APPROVED, null);
+        verify(itemProcessor).process(SECOND_ID, ApplicationStatus.APPROVED, null);
     }
 
     @Test
-    @DisplayName("Should reject applications in bulk")
-    void shouldRejectApplicationsInBulk() {
-        ProjectApplication domainApp = new ProjectApplication();
-
-        when(applicationRepository.findById(appId)).thenReturn(Optional.of(applicationEntity));
-        when(applicationMapper.entityToDomain(applicationEntity)).thenReturn(domainApp);
-        when(applicationRepository.save(any())).thenReturn(applicationEntity);
-
+    void rejectUsesTheSameSharedReviewPath() {
         ApiResponse<BulkActionResult> response =
-                handler.handle(new BulkApplicationActionCommand("REJECT", List.of(appId)));
+                handler.handle(new BulkApplicationActionCommand("REJECT", List.of(FIRST_ID)));
 
-        assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals(1, response.getData().getSuccessCount());
-        assertEquals(ApplicationStatus.REJECTED, applicationEntity.getStatus());
+        assertThat(response.getData().getSuccessCount()).isOne();
+        verify(itemProcessor).process(FIRST_ID, ApplicationStatus.REJECTED, null);
     }
 
     @Test
-    @DisplayName("Should record failure when application is not found")
-    void shouldRecordFailure_whenApplicationNotFound() {
-        String unknownId = Ulid.fast().toString();
-        when(applicationRepository.findById(unknownId)).thenReturn(Optional.empty());
-
-        ApiResponse<BulkActionResult> response =
-                handler.handle(new BulkApplicationActionCommand("APPROVE", List.of(unknownId)));
-
-        assertEquals(ResponseCode.SUCCESS, response.getCode());
-        assertEquals(0, response.getData().getSuccessCount());
-        assertEquals(1, response.getData().getFailureCount());
-    }
-
-    @Test
-    @DisplayName("Should process partial successes in bulk")
-    void shouldProcessPartialSuccess_whenSomeApplicationsNotFound() {
-        String foundId = Ulid.fast().toString();
-        String missingId = Ulid.fast().toString();
-
-        ProjectApplicationEntity foundEntity = new ProjectApplicationEntity();
-        foundEntity.setId(foundId);
-        foundEntity.setStatus(ApplicationStatus.PENDING);
-
-        ProjectApplication domainApp = new ProjectApplication();
-
-        when(applicationRepository.findById(foundId)).thenReturn(Optional.of(foundEntity));
-        when(applicationMapper.entityToDomain(foundEntity)).thenReturn(domainApp);
-        when(applicationRepository.findById(missingId)).thenReturn(Optional.empty());
-        when(applicationRepository.save(any())).thenReturn(foundEntity);
+    void missingAndIneligibleItemsRemainVisibleAsDeterministicPartialFailures() {
+        when(itemProcessor.process(FIRST_ID, ApplicationStatus.APPROVED, null))
+                .thenThrow(new ApplicationNotFoundException(FIRST_ID));
+        when(itemProcessor.process(SECOND_ID, ApplicationStatus.APPROVED, null))
+                .thenThrow(new ApplicationReviewException(ApplicationReviewFailure.PROJECT_FULL));
 
         ApiResponse<BulkActionResult> response =
                 handler.handle(
-                        new BulkApplicationActionCommand("APPROVE", List.of(foundId, missingId)));
+                        new BulkApplicationActionCommand("APPROVE", List.of(FIRST_ID, SECOND_ID)));
 
-        assertEquals(1, response.getData().getSuccessCount());
-        assertEquals(1, response.getData().getFailureCount());
+        assertThat(response.getData().getSuccessCount()).isZero();
+        assertThat(response.getData().getFailureCount()).isEqualTo(2);
+        assertThat(response.getData().getFailures())
+                .extracting(BulkActionResult.FailureDetail::reason)
+                .containsExactly("APPLICATION_NOT_FOUND", "PROJECT_FULL");
     }
 
     @Test
-    @DisplayName("Should return validation error for empty list")
-    void shouldReturnValidationError_whenApplicationIdsIsEmpty() {
+    void nonPendingItemHasAStableFailureAndLaterItemsStillSucceed() {
+        when(itemProcessor.process(FIRST_ID, ApplicationStatus.APPROVED, null))
+                .thenThrow(
+                        new IllegalApplicationStateException(
+                                "approve", ApplicationStatus.APPROVED));
+
+        ApiResponse<BulkActionResult> response =
+                handler.handle(
+                        new BulkApplicationActionCommand("APPROVE", List.of(FIRST_ID, SECOND_ID)));
+
+        assertThat(response.getData().getSuccessCount()).isOne();
+        assertThat(response.getData().getFailures())
+                .singleElement()
+                .extracting(BulkActionResult.FailureDetail::reason)
+                .isEqualTo("APPLICATION_NOT_PENDING");
+        verify(itemProcessor).process(SECOND_ID, ApplicationStatus.APPROVED, null);
+    }
+
+    @Test
+    void unknownActionFailsEveryItemWithoutStartingTransactions() {
+        ApiResponse<BulkActionResult> response =
+                handler.handle(
+                        new BulkApplicationActionCommand("ARCHIVE", List.of(FIRST_ID, SECOND_ID)));
+
+        assertThat(response.getData().getSuccessCount()).isZero();
+        assertThat(response.getData().getFailureCount()).isEqualTo(2);
+        assertThat(response.getData().getFailures())
+                .extracting(BulkActionResult.FailureDetail::reason)
+                .containsOnly("UNKNOWN_ACTION");
+        verify(itemProcessor, never()).process(FIRST_ID, ApplicationStatus.APPROVED, null);
+        verify(itemProcessor, never()).process(FIRST_ID, ApplicationStatus.REJECTED, null);
+    }
+
+    @Test
+    void emptyApplicationListReturnsValidationError() {
         ApiResponse<BulkActionResult> response =
                 handler.handle(new BulkApplicationActionCommand("APPROVE", List.of()));
 
-        assertNotNull(response);
-        verify(applicationRepository, never()).findById(any());
+        assertThat(response.getCode()).isEqualTo(ResponseCode.VALIDATION_ERROR);
+        verify(itemProcessor, never()).process(FIRST_ID, ApplicationStatus.APPROVED, null);
     }
 }

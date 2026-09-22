@@ -269,6 +269,8 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
             String projectId = createProjectAndGetId(ownerToken);
             String applicantToken = createApplicantAndGetToken(APPLICANT_EMAIL, "Mehmet");
             String applicationId = createApplicationAndGetId(projectId, applicantToken);
+            int teamSizeBeforeReview =
+                    projectRepository.findById(projectId).orElseThrow().getCurrentTeamSize();
 
             String reviewBody =
                     """
@@ -287,6 +289,11 @@ class ApplicationControllerIntegrationTest extends IntegrationTestBase {
                     .andExpect(jsonPath("$.data.applicationId").value(applicationId))
                     .andExpect(jsonPath("$.data.projectId").value(projectId))
                     .andExpect(jsonPath("$.data.status").value("APPROVED"));
+
+            assertThat(projectRepository.findById(projectId).orElseThrow().getCurrentTeamSize())
+                    .isEqualTo(teamSizeBeforeReview + 1);
+            assertThat(applicationRepository.findById(applicationId).orElseThrow().getStatus())
+                    .isEqualTo(ApplicationStatus.APPROVED);
         }
 
         @Test
