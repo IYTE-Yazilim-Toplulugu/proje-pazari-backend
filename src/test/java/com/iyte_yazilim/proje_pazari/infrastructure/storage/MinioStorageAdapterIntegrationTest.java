@@ -18,6 +18,7 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * Integration tests for MinioStorageAdapter using Testcontainers. These tests run against a real
@@ -38,7 +39,11 @@ class MinioStorageAdapterIntegrationTest {
 
     @Container
     static MinIOContainer minioContainer =
-            new MinIOContainer("minio/minio:RELEASE.2024-12-18T13-15-44Z")
+            // MinIO no longer publishes images to Docker Hub; Quay hosts the same tags.
+            new MinIOContainer(
+                            DockerImageName.parse(
+                                            "quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z")
+                                    .asCompatibleSubstituteFor("minio/minio"))
                     .withUserName(ACCESS_KEY)
                     .withPassword(SECRET_KEY)
                     .withStartupTimeout(java.time.Duration.ofSeconds(120));

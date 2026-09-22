@@ -38,7 +38,7 @@ services:
     restart: always
 
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: proje-pazari-minio
     command: server /data --console-address ":9001"
     environment:
@@ -60,7 +60,7 @@ services:
     restart: always
 
   minio-setup:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: proje-pazari-minio-setup
     depends_on:
       minio:
@@ -147,7 +147,12 @@ services:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_VALIDATE_ON_MIGRATE: "true"
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "false"
+      SPRING_FLYWAY_CLEAN_DISABLED: "true"
+      SPRING_SQL_INIT_MODE: never
       SPRING_JPA_SHOW_SQL: "false"
       SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "false"
       JWT_SECRET: ${JWT_SECRET}
@@ -319,7 +324,7 @@ services:
       start_period: 15s
 
   minio-backup:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: proje-pazari-minio-backup
     depends_on:
       minio:
@@ -341,7 +346,7 @@ services:
       - maintenance
 
   minio-backup-scheduler:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: proje-pazari-minio-backup-scheduler
     depends_on:
       minio:
