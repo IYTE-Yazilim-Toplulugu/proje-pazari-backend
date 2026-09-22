@@ -75,6 +75,19 @@ public enum ErrorCode {
     /** A user has already submitted an application to the same project. */
     APPLICATION_ALREADY_EXISTS(ResponseCode.CONFLICT, "application.already.exists"),
 
+    /** A project owner attempted to apply to their own project. */
+    SELF_APPLICATION_NOT_ALLOWED(ResponseCode.FORBIDDEN, "application.self.not.allowed"),
+
+    /** The target project's lifecycle status is not OPEN. */
+    PROJECT_NOT_OPEN(ResponseCode.CONFLICT, "project.not.open"),
+
+    /** The target project's application deadline has passed. */
+    PROJECT_APPLICATION_DEADLINE_PASSED(
+            ResponseCode.CONFLICT, "project.application.deadline.passed"),
+
+    /** The target project has no remaining team capacity. */
+    PROJECT_FULL(ResponseCode.CONFLICT, "project.full"),
+
     // --- Email / verification errors ---
     /** The account's email address has not been verified yet. */
     EMAIL_NOT_VERIFIED(ResponseCode.FORBIDDEN, "auth.email.not.verified"),

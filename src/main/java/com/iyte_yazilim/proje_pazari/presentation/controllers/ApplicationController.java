@@ -43,8 +43,16 @@ public class ApplicationController extends BaseController {
                         responseCode = "201",
                         description = "Application submitted successfully"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "Already applied or invalid data"),
+                        responseCode = "403",
+                        description =
+                                "The project owner cannot apply to their own project"
+                                        + " (SELF_APPLICATION_NOT_ALLOWED)"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description =
+                                "Submission is ineligible: APPLICATION_ALREADY_EXISTS,"
+                                        + " PROJECT_NOT_OPEN, PROJECT_APPLICATION_DEADLINE_PASSED,"
+                                        + " or PROJECT_FULL"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "Project not found")

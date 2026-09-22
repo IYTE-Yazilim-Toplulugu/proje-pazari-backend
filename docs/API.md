@@ -382,6 +382,19 @@ Submits an application to a project.
 POST /projects/{id}/applications
 ```
 
+The applicant must not own the project, and the project must be `OPEN`, before its deadline,
+and below its maximum team size. A user may submit only one application per project. This
+includes applications later marked `WITHDRAWN` or `REJECTED`; those states do not permit a new
+application.
+
+| HTTP | `errorCode` | Condition |
+|------|-------------|-----------|
+| `403` | `SELF_APPLICATION_NOT_ALLOWED` | Applicant owns the project |
+| `409` | `PROJECT_NOT_OPEN` | Project status is not `OPEN` |
+| `409` | `PROJECT_APPLICATION_DEADLINE_PASSED` | Application deadline has passed |
+| `409` | `PROJECT_FULL` | Team capacity has been reached |
+| `409` | `APPLICATION_ALREADY_EXISTS` | An application already exists for this user/project pair |
+
 ---
 
 ### Get Project Applications
